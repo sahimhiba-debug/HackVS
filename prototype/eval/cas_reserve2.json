@@ -1,0 +1,23 @@
+{
+  "_avertissement": "Jeu RÉSERVÉ n°2, rédigé le 28.09.2026 AVANT les améliorations de couverture du lot 3 (pluriels, allemand, paraphrases). Exécuté une seule fois après ces améliorations. Rédigé par Claude, qui connaît le moteur : ce n'est pas une évaluation indépendante.",
+  "cas": [
+    {"id": "r2_vigiles", "categorie": "paraphrase", "texte": "Nous cherchons des vigiles pour la soirée d'ouverture de notre magasin.", "attendus": ["p18"], "interdits": ["p10", "p19"], "abstention": false},
+    {"id": "r2_de_treuhand", "categorie": "allemand", "texte": "Wir brauchen einen Treuhänder für unsere Buchhaltung.", "attendus": ["p12"], "interdits": [], "abstention": false},
+    {"id": "r2_de_uebersetzer", "categorie": "allemand", "texte": "Ich suche einen Übersetzer Französisch-Deutsch für unsere Etiketten.", "attendus": ["p16"], "interdits": [], "abstention": false},
+    {"id": "r2_etiquettes", "categorie": "pluriel", "texte": "Il me faudrait des étiquettes et des cartons pour nos bouteilles.", "attendus": ["p27"], "interdits": [], "abstention": false},
+    {"id": "r2_nacelles", "categorie": "pluriel", "texte": "On cherche des nacelles pour nettoyer les vitres de l'hôtel.", "attendus": ["p25"], "interdits": ["p26"], "abstention": false},
+    {"id": "r2_photographes", "categorie": "pluriel", "texte": "Je cherche des photographes pour un reportage sur notre domaine.", "attendus": ["p15"], "interdits": [], "abstention": false},
+    {"id": "r2_audits_energie", "categorie": "pluriel, sans verbe", "texte": "Qui fait des audits énergétiques de bâtiments en Valais ?", "attendus": ["p22"], "interdits": [], "abstention": false},
+    {"id": "r2_pac_pas_transport", "categorie": "négation", "texte": "Je cherche un installateur de pompes à chaleur, pas un transporteur.", "attendus": ["p03"], "interdits": ["p01", "p02"], "abstention": false},
+    {"id": "r2_tessin_italien", "categorie": "contraintes incompatibles", "texte": "Je cherche un transporteur frigorifique qui parle italien pour le Tessin.", "attendus": [], "interdits": ["p08"], "abstention": true},
+    {"id": "r2_mentor_reprise", "categorie": "paraphrase", "texte": "Nous recherchons un mentor ayant déjà repris une entreprise familiale.", "attendus": ["p29"], "interdits": [], "abstention": false},
+    {"id": "r2_leasing", "categorie": "paraphrase", "texte": "Je cherche un leasing pour une nouvelle presse à vin.", "attendus": ["p23"], "interdits": [], "abstention": false},
+    {"id": "r2_rancongiciels", "categorie": "pluriel", "texte": "Je cherche une entreprise qui sécurise nos ordinateurs contre les rançongiciels.", "attendus": ["p10"], "interdits": ["p18", "p19"], "abstention": false},
+    {"id": "r2_drones", "categorie": "pluriel", "texte": "Je cherche un spécialiste des drones pour filmer nos vignes.", "attendus": ["p15"], "interdits": [], "abstention": false},
+    {"id": "r2_couvreur", "categorie": "absent, faux ami", "texte": "Je cherche un couvreur pour refaire le toit.", "attendus": [], "interdits": ["p22", "p20"], "abstention": true},
+    {"id": "r2_traducteur_pas_anglais", "categorie": "négation de langue", "texte": "Il nous faut un traducteur, mais surtout pas de l'anglais : de l'allemand.", "attendus": ["p16"], "interdits": [], "abstention": false},
+    {"id": "r2_assurance_flotte", "categorie": "paraphrase", "texte": "Je cherche un expert en assurance pour notre flotte de camions.", "attendus": ["p24"], "interdits": [], "abstention": false},
+    {"id": "r2_apero_80", "categorie": "absent", "texte": "Je cherche un partenaire pour organiser un apéro de 80 personnes.", "attendus": [], "interdits": ["p17"], "abstention": true},
+    {"id": "r2_banque", "categorie": "court", "texte": "Je cherche une banque.", "attendus": ["p23"], "interdits": [], "abstention": false}
+  ]
+}
