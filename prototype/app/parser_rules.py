@@ -156,7 +156,10 @@ def analyser(texte: str, tax: Taxonomie) -> Besoin:
                 ex = extrait(m.start(), m.end())
                 d, _ = _clause(n, m.start())
                 avant = n[d:m.start()]
-                if _SOI.search(avant) or not dans_recherche(m.start()):
+                if not dans_recherche(m.start()):
+                    hors_recherche.append(ex)
+                    continue
+                if _SOI.search(avant):
                     contexte.append(f"Votre localisation : {ex} (pas un critère)")
                     continue
                 type_ = "implantation" if _IMPLANTATION.search(avant) else "zone"

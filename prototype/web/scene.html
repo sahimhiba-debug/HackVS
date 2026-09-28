@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scène · Le Fil du Club</title>
+  <meta name="description" content="Deux membres fictifs, une seule base de données : un besoin devient une occasion d'aider.">
+  <link rel="icon" href="/favicon.ico" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+  <style>
+    body { height: 100vh; display: grid; grid-template-rows: auto 1fr; overflow: hidden; }
+    .tete-scene { display: flex; align-items: center; gap: 16px; padding: 10px 20px; border-bottom: 2px solid var(--encre); flex-wrap: wrap; }
+    .tete-scene .marque { margin-right: 0; }
+    .tete-scene p { margin: 0; color: var(--encre-2); font-size: 15px; flex: 1; min-width: 240px; }
+    .scene { display: grid; grid-template-columns: 1fr 150px 1fr; min-height: 0; }
+    .panneau { display: grid; grid-template-rows: auto 1fr; min-height: 0; border-right: 1px solid var(--ligne); }
+    .panneau:last-child { border-right: 0; border-left: 1px solid var(--ligne); }
+    .panneau header { padding: 8px 14px; display: flex; gap: 10px; align-items: baseline; background: var(--surface); border-bottom: 1px solid var(--ligne); }
+    .panneau header strong { font-size: 17px; }
+    .panneau header span { color: var(--encre-2); font-size: 14px; }
+    .panneau iframe { width: 100%; height: 100%; border: 0; background: var(--papier); }
+    .fil-central { position: relative; background: var(--surface); overflow: hidden; display: grid; grid-template-rows: auto 1fr; }
+    .fil-central h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 0; padding: 10px; text-align: center; color: var(--encre-2); border-bottom: 1px solid var(--ligne); }
+    .fil-central::before { content: ""; position: absolute; left: 50%; top: 38px; bottom: 0; border-left: 2px solid var(--rouge); opacity: .25; }
+    .evenements { list-style: none; margin: 0; padding: 10px 8px; display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: 8px; overflow: hidden; position: relative; }
+    .ev { background: var(--surface); border: 1.5px solid var(--ligne); border-radius: 6px; padding: 6px 8px; font-size: 12px; line-height: 1.3; position: relative; animation: entre .4s ease-out both; }
+    .ev.nouveau { border-color: var(--rouge); }
+    .ev .sens { display: block; font-weight: 700; color: var(--rouge); font-size: 13px; }
+    .impulsion { position: fixed; width: 18px; height: 18px; border-radius: 50%; background: var(--rouge); box-shadow: 0 0 0 6px var(--rouge-pale); z-index: 50; pointer-events: none; }
+    @media (max-width: 900px) {
+      body { height: auto; overflow: auto; }
+      .scene { grid-template-columns: 1fr; }
+      .fil-central { display: none; }
+      .panneau { height: 90vh; border: 0; border-bottom: 2px solid var(--encre); }
+    }
+  </style>
+</head>
+<body>
+  <header class="tete-scene">
+    <div class="marque"><span class="logo" aria-hidden="true"></span><span>Le Fil du Club · scène</span></div>
+    <p>Deux membres <strong>fictifs</strong>, une seule base de données. Chaque action d'un côté apparaît de l'autre. Aucune donnée réelle, aucun message envoyé.</p>
+    <span class="badge demo">Démo · données fictives</span>
+    <button class="btn petit" type="button" id="reset">Réinitialiser</button>
+  </header>
+  <div class="scene">
+    <section class="panneau" aria-label="Membre de gauche">
+      <header><strong id="nom-g"></strong><span id="role-g">a un besoin</span></header>
+      <iframe id="cadre-g" title="Application vue par le membre de gauche"></iframe>
+    </section>
+    <aside class="fil-central" aria-label="Événements partagés">
+      <h2>Le fil</h2>
+      <ol class="evenements" id="evenements" aria-live="polite"></ol>
+    </aside>
+    <section class="panneau" aria-label="Membre de droite">
+      <header><strong id="nom-d"></strong><span id="role-d">peut aider</span></header>
+      <iframe id="cadre-d" title="Application vue par le membre de droite"></iframe>
+    </section>
+  </div>
+  <script type="module">
+    const p = new URLSearchParams(location.search);
+    const gauche = p.get("gauche") || "p00", droite = p.get("droite") || "p01";
+    document.getElementById("cadre-g").src = `/?scene=1&membre=${gauche}&vue=${p.get("vue_g") || "nouveau"}`;
+    document.getElementById("cadre-d").src = `/?scene=1&membre=${droite}&vue=${p.get("vue_d") || "bourse"}`;
+    const membres = await (await fetch("/api/membres")).json();
+    const nom = (id) => (membres.find((m) => m.id === id) || { nom: id }).nom;
+    document.getElementById("nom-g").textContent = nom(gauche);
+    document.getElementById("nom-d").textContent = nom(droite);
+    document.getElementById("reset").onclick = async () => {
+      await fetch("/api/demo/reinitialiser", { method: "POST" });
+      document.getElementById("evenements").replaceChildren();
+    };
+    const LIB = { besoin_publie: "Besoin publié", besoin_publier: "Besoin publié", besoin_modifie: "Besoin modifié",
+      relation_proposee: "Mise en relation proposée", relation_accepter: "Acceptée", relation_decliner: "Déclinée",
+      relation_planifier: "Rencontre planifiée", relation_confirmer_rencontre: "Rencontre faite", relation_cloturer: "Résultat noté",
+      besoin_cloturer: "Besoin clos", relation_annulee: "Annulée", consentement: "Consentement modifié", relation_retirer: "Retirée" };
+    const liste = document.getElementById("evenements");
+    function impulsion(deGauche) {
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const g = document.getElementById("cadre-g").getBoundingClientRect(), d = document.getElementById("cadre-d").getBoundingClientRect();
+      const y = window.innerHeight * 0.45;
+      const x0 = deGauche ? g.right - 30 : d.left + 12, x1 = deGauche ? d.left + 12 : g.right - 30;
+      const b = document.createElement("div"); b.className = "impulsion"; document.body.append(b);
+      b.animate([{ transform: `translate(${x0}px, ${y}px) scale(.6)`, opacity: 0 }, { opacity: 1, offset: .15 },
+        { transform: `translate(${x1}px, ${y}px) scale(1)`, opacity: 1, offset: .85 }, { transform: `translate(${x1}px, ${y}px) scale(2)`, opacity: 0 }],
+        { duration: 1100, easing: "cubic-bezier(.4,0,.2,1)" }).onfinish = () => b.remove();
+    }
+    let seq = (await (await fetch("/api/etat")).json()).seq;
+    const es = new EventSource(`/api/flux?depuis=${seq}`);
+    es.onmessage = (m) => {
+      const ev = JSON.parse(m.data);
+      if (ev.type === "reinitialisation") { liste.replaceChildren(); return; }
+      const deGauche = ev.acteur === gauche, deDroite = ev.acteur === droite;
+      if (!deGauche && !deDroite && ev.acteur !== "systeme") return;
+      const sens = deGauche ? "→" : deDroite ? "←" : "⟷";
+      liste.querySelectorAll(".nouveau").forEach((x) => x.classList.remove("nouveau"));
+      const li = document.createElement("li"); li.className = "ev nouveau";
+      const s = document.createElement("span"); s.className = "sens"; s.textContent = sens;
+      li.append(s, LIB[ev.type] || ev.message);
+      liste.append(li);
+      while (liste.children.length > 12) liste.firstElementChild.remove();
+      if (deGauche || deDroite) impulsion(deGauche);
+    };
+  </script>
+</body>
+</html>

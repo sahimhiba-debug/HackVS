@@ -2,110 +2,62 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Le Fil du Club</title>
-  <meta name="description" content="Prototype exploratoire : exprimer un besoin, trouver les bons membres du Club, demander une introduction consentie.">
+  <meta name="description" content="Prototype exploratoire : un besoin de membre devient une occasion d'aider pour un autre membre du Club.">
+  <link rel="icon" href="/favicon.ico" type="image/svg+xml">
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
   <a class="skip" href="#principal">Aller au contenu</a>
   <header class="barre">
-    <div class="marque">
-      <span class="logo" aria-hidden="true"></span>
-      <span class="nom">Le Fil du Club</span>
-    </div>
+    <div class="marque"><span class="logo" aria-hidden="true"></span><span>Le Fil du Club</span></div>
     <div class="badges" id="badges" aria-live="polite"></div>
+    <div class="persona" id="persona" hidden>
+      <label class="etiquette" for="choix-membre">Vous incarnez (démo)</label>
+      <select id="choix-membre" aria-label="Membre incarné (démonstration)"></select>
+    </div>
   </header>
-
   <div class="bandeau-demo" id="bandeau-demo" hidden>
-    Démonstration · toutes les personnes et entreprises sont <strong>fictives</strong> · aucun message n'est envoyé
+    Démonstration · personnes et entreprises <strong>fictives</strong> · aucun message n'est envoyé
   </div>
 
-  <nav class="etapes" aria-label="Étapes">
-    <ol>
-      <li data-etape="1"><span>1</span>Besoin</li>
-      <li data-etape="2"><span>2</span>Critères</li>
-      <li data-etape="3"><span>3</span>Contacts</li>
-      <li data-etape="4"><span>4</span>Introduction</li>
-      <li data-etape="5"><span>5</span>Suivi</li>
-    </ol>
+  <nav class="onglets" role="tablist" aria-label="Sections">
+    <button class="onglet" role="tab" id="tab-nouveau" data-vue="nouveau" aria-controls="vue-nouveau">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nouveau besoin</button>
+    <button class="onglet" role="tab" id="tab-besoins" data-vue="besoins" aria-controls="vue-besoins">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Mes besoins<span class="compteur" data-compteur="besoins" hidden></span></button>
+    <button class="onglet" role="tab" id="tab-bourse" data-vue="bourse" aria-controls="vue-bourse">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12h6l3-7 3 14 3-7h3"/></svg>Bourse<span class="compteur" data-compteur="bourse" hidden></span></button>
+    <button class="onglet" role="tab" id="tab-suivi" data-vue="suivi" aria-controls="vue-suivi">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="6" cy="12" r="2"/><circle cx="18" cy="12" r="2"/><path d="M8 12h8"/></svg>Suivi<span class="compteur" data-compteur="suivi" hidden></span></button>
+    <button class="onglet" role="tab" id="tab-profil" data-vue="profil" aria-controls="vue-profil">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Profil</button>
   </nav>
 
   <main id="principal">
-    <section class="bloc" id="bloc-besoin" aria-labelledby="t-besoin">
-      <p class="surtitre" id="vous"></p>
-      <h1 id="t-besoin">Que cherchez-vous<br>cette semaine&nbsp;?</h1>
-      <label class="sr" for="texte">Votre besoin</label>
-      <textarea id="texte" rows="3" maxlength="1500"
-        placeholder="Ex. : Je cherche un transporteur frigorifique qui livre Zurich deux fois par semaine…"></textarea>
-      <div class="exemples" id="exemples" aria-label="Exemples"></div>
-      <div class="actions">
-        <button class="primaire" id="btn-analyser">Analyser mon besoin</button>
-        <span class="aide" id="aide-analyse"></span>
-      </div>
-    </section>
-
-    <section class="bloc" id="bloc-criteres" hidden aria-labelledby="t-criteres">
-      <h2 id="t-criteres">Ce que j'ai compris</h2>
-      <p class="texte-surligne" id="texte-surligne"></p>
-      <div id="ambiguites"></div>
-      <ul class="criteres" id="criteres"></ul>
-      <div class="ajout">
-        <label for="ajout-concept">Ajouter une compétence</label>
-        <select id="ajout-concept"><option value="">Choisir…</option></select>
-      </div>
-      <div class="options">
-        <label class="bascule"><input type="checkbox" id="opt-concurrents"> Écarter mes concurrents</label>
-        <label class="bascule"><input type="checkbox" id="opt-exposants"> Inclure les exposants de la Foire</label>
-      </div>
-      <p class="contexte" id="contexte"></p>
-      <ul class="avertissements" id="avertissements"></ul>
-      <div class="actions">
-        <button class="primaire" id="btn-rechercher">Trouver des contacts</button>
-      </div>
-    </section>
-
-    <section class="bloc" id="bloc-resultats" hidden aria-labelledby="t-resultats">
-      <h2 id="t-resultats"></h2>
-      <p class="sous" id="resume-resultats"></p>
-      <div id="cartes" class="cartes"></div>
-      <details class="ecartes" id="ecartes" hidden>
-        <summary></summary>
-        <ul></ul>
-      </details>
-      <details class="comparaison" id="comparaison">
-        <summary>Comparer avec une simple recherche par mots-clés</summary>
-        <div id="comparaison-contenu" class="comparaison-contenu"></div>
-      </details>
-    </section>
-
-    <section class="bloc" id="bloc-intro" hidden aria-labelledby="t-intro">
-      <h2 id="t-intro"></h2>
-      <p class="consentement">
-        La personne reçoit votre demande et <strong>choisit</strong> d'accepter ou non.
-        Vos coordonnées respectives ne sont partagées qu'après son accord.
-        <span class="demo-seul">En démonstration, rien n'est envoyé.</span>
-      </p>
-      <label for="message">Votre message (modifiable)</label>
-      <textarea id="message" rows="12"></textarea>
-      <div class="actions">
-        <button class="primaire" id="btn-envoyer">Envoyer la demande</button>
-        <button class="secondaire" id="btn-annuler-intro">Retour</button>
-      </div>
-    </section>
-
-    <section class="bloc" id="bloc-suivi" hidden aria-labelledby="t-suivi">
-      <h2 id="t-suivi">Suivi de vos introductions</h2>
-      <div id="suivi"></div>
-    </section>
+    <section class="vue" id="vue-nouveau" role="tabpanel" aria-labelledby="tab-nouveau" hidden></section>
+    <section class="vue" id="vue-besoins" role="tabpanel" aria-labelledby="tab-besoins" hidden></section>
+    <section class="vue" id="vue-bourse" role="tabpanel" aria-labelledby="tab-bourse" hidden></section>
+    <section class="vue" id="vue-suivi" role="tabpanel" aria-labelledby="tab-suivi" hidden></section>
+    <section class="vue" id="vue-profil" role="tabpanel" aria-labelledby="tab-profil" hidden></section>
   </main>
 
-  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <dialog id="dialogue" aria-labelledby="dialogue-titre">
+    <form method="dialog" class="contenu" id="dialogue-form">
+      <h2 id="dialogue-titre"></h2>
+      <p class="consentement" id="dialogue-consentement"></p>
+      <label class="titre" for="message">Votre message (modifiable)</label>
+      <textarea id="message" rows="10"></textarea>
+      <div class="actions">
+        <button class="btn primaire" id="dialogue-envoyer" value="envoyer">Envoyer</button>
+        <button class="btn" value="annuler" formnovalidate>Annuler</button>
+      </div>
+    </form>
+  </dialog>
 
-  <footer class="pied">
-    Prototype exploratoire préparé avant Hack VS 2026 · <span id="pied-mode"></span>
-    · <button class="lien" id="btn-reset">Réinitialiser la démo</button>
-  </footer>
-  <script src="/static/app.js"></script>
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+  <footer class="pied" id="pied"></footer>
+  <script type="module" src="/static/js/app.js"></script>
 </body>
 </html>

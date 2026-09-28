@@ -1,28 +1,32 @@
 """API du prototype « Le Fil du Club » (prototype exploratoire préparé avant Hack VS).
 
-Modes :
-- HACKVS_MODE=demo (défaut) : profils FICTIFS, réponses des personnes sollicitées simulées.
-- HACKVS_MODE=reel : n'utilise que HACKVS_PROFILS (fichier autorisé). Sans fichier → 503.
-  Pas de simulation de réponse en mode réel.
+Modes (séparation explicite) :
+- HACKVS_MODE=demo (défaut) : profils FICTIFS. L'identité du membre est choisie par l'en-tête
+  X-Membre (ou ?membre=) : c'est la SIMULATION des autres humains (on incarne tour à tour
+  Sophie, Julien…). Rien n'est envoyé à personne.
+- HACKVS_MODE=reel : uniquement HACKVS_PROFILS (fichier autorisé). Sans fichier → 503.
+  Aucune identité simulée : sans authentification (non implémentée) → 501.
 Analyse du besoin : règles locales par défaut ; Claude si HACKVS_LLM=claude + clé API.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import os
+import time
 from pathlib import Path
 from typing import Literal, Optional
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, Header, HTTPException, Query, Request
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import parser_llm, parser_rules
 from .baseline import rechercher_mots_cles
-from .intros import ErreurTransition, Registre
 from .matching import rechercher
 from .models import Besoin, Profil
+from .store import ErreurMetier, Interdit, Magasin
 from .taxonomy import DATA_DIR, charger_taxonomie
 
 RACINE = Path(__file__).resolve().parent.parent
@@ -38,24 +42,59 @@ def _charger_profils() -> tuple[list[Profil], Optional[str]]:
         if not src:
             return [], None
         chemin = Path(src)
-    with open(chemin, encoding="utf-8") as f:
-        brut = json.load(f)
+    brut = json.loads(chemin.read_text(encoding="utf-8"))
     return [Profil(**p) for p in brut["profils"]], brut.get("utilisateur_demo")
 
 
-PROFILS, UTILISATEUR_ID = _charger_profils()
+PROFILS, UTILISATEUR_DEFAUT = _charger_profils()
 PAR_ID = {p.id: p for p in PROFILS}
-REGISTRE = Registre(os.environ.get("HACKVS_DB", str(RACINE / "var" / f"intros_{MODE}.db")))
+MAGASIN = Magasin(os.environ.get("HACKVS_DB", str(RACINE / "var" / f"fil_{MODE}.db")))
 
-app = FastAPI(title="Le Fil du Club — prototype exploratoire", version="0.1.0")
+app = FastAPI(title="Le Fil du Club (prototype exploratoire)", version="0.2.0")
 
 
-def _demandeur() -> Profil:
-    if not PROFILS or UTILISATEUR_ID not in PAR_ID:
+# ---------------------------------------------------------------- identité et données effectives
+def profils_effectifs() -> list[Profil]:
+    """Profils + consentements modifiés depuis l'application (retrait / réactivation)."""
+    surcharges = MAGASIN.consentements()
+    return [p.model_copy(update={"accepte_introductions": surcharges[p.id]}) if p.id in surcharges else p for p in PROFILS]
+
+
+def profil(membre_id: str) -> Profil:
+    for p in profils_effectifs():
+        if p.id == membre_id:
+            return p
+    raise HTTPException(404, "Membre inconnu.")
+
+
+def moi(x_membre: Optional[str], membre_q: Optional[str] = None) -> Profil:
+    if not PROFILS:
         raise HTTPException(503, "Mode réel non configuré : aucune source de profils autorisée n'est branchée.")
-    return PAR_ID[UTILISATEUR_ID]
+    if MODE != "demo":
+        raise HTTPException(501, "Mode réel : authentification des membres non implémentée. Aucune identité simulée n'est acceptée.")
+    mid = x_membre or membre_q or UTILISATEUR_DEFAUT
+    p = profil(mid)
+    if p.type == "visiteur":
+        raise HTTPException(403, "Les visiteurs n'ont pas accès à l'espace du Club.")
+    return p
 
 
+def _pub(p: Profil) -> dict:
+    return p.model_dump(include={"id", "nom", "fonction", "entreprise", "commune", "type"})
+
+
+def _erreurs(fn):
+    try:
+        return fn()
+    except KeyError:
+        raise HTTPException(404, "Élément introuvable.")
+    except Interdit as e:
+        raise HTTPException(403, str(e))
+    except ErreurMetier as e:
+        raise HTTPException(409, str(e))
+
+
+# ---------------------------------------------------------------- schémas d'entrée
 class EntreeAnalyse(BaseModel):
     texte: str
     analyseur: Literal["auto", "regles", "claude"] = "auto"
@@ -65,150 +104,352 @@ class EntreeRecherche(BaseModel):
     besoin: Besoin
 
 
-class EntreeIntro(BaseModel):
-    cible_id: str
+class EntreeBesoin(BaseModel):
     besoin: Besoin
+    publier: bool = False
+    anonyme: bool = False
+
+
+class EntreeModif(BaseModel):
+    besoin: Besoin
+    anonyme: Optional[bool] = None
+
+
+class EntreeActionBesoin(BaseModel):
+    resolu_par: Optional[str] = None
+    note: str = ""
+
+
+class EntreeRelation(BaseModel):
+    besoin_id: str
+    cible_id: Optional[str] = None  # requis pour une demande (auteur → aidant), ignoré pour une offre
     message: str
 
 
 class EntreeTransition(BaseModel):
-    acteur: Literal["demandeur", "cible"]
     date_rencontre: Optional[str] = None
     resultat: Optional[str] = None
 
 
+class EntreeConsentement(BaseModel):
+    accepte: bool
+
+
+# ---------------------------------------------------------------- état et membres
 @app.get("/api/etat")
 def etat():
-    moi = PAR_ID.get(UTILISATEUR_ID) if UTILISATEUR_ID else None
     return {
         "mode": MODE,
         "donnees_fictives": MODE == "demo",
         "analyseur_claude_disponible": parser_llm.llm_configure(),
         "nb_profils": len(PROFILS),
-        "utilisateur": moi.model_dump(include={"id", "nom", "fonction", "entreprise", "commune"}) if moi else None,
+        "utilisateur_defaut": UTILISATEUR_DEFAUT,
         "concepts": [{"valeur": c.id, "libelle": c.libelle} for c in sorted(TAX.concepts.values(), key=lambda c: c.libelle)],
         "zones": list(TAX.zones),
         "langues": [{"valeur": k, "libelle": v["libelle"]} for k, v in TAX.langues.items()],
+        "seq": MAGASIN.dernier_seq(),
     }
 
 
-@app.post("/api/analyser")
-def analyser(e: EntreeAnalyse):
-    texte = e.texte.strip()
+@app.get("/api/membres")
+def membres():
+    """Personnages incarnables en démo (jamais en mode réel)."""
+    if MODE != "demo":
+        raise HTTPException(501, "Pas de changement d'identité en mode réel.")
+    return [_pub(p) | {"accepte_introductions": p.accepte_introductions}
+            for p in profils_effectifs() if p.type != "visiteur"]
+
+
+@app.get("/api/moi")
+def api_moi(x_membre: Optional[str] = Header(None)):
+    p = moi(x_membre)
+    return p.model_dump() | {"zone_implantation": TAX.zone_de_commune(p.commune)}
+
+
+@app.post("/api/moi/consentement")
+def api_consentement(e: EntreeConsentement, x_membre: Optional[str] = Header(None)):
+    p = moi(x_membre)
+    annulees = MAGASIN.changer_consentement(p.id, e.accepte)
+    return {"accepte_introductions": e.accepte, "relations_annulees": annulees}
+
+
+# ---------------------------------------------------------------- analyse du besoin
+def _analyse_regles(texte: str) -> tuple[Besoin, dict]:
+    t0 = time.perf_counter()
+    b = parser_rules.analyser(texte, TAX)
+    return b, {"analyseur": "regles", "latence_ms": round((time.perf_counter() - t0) * 1000, 2)}
+
+
+def _verifier_texte(texte: str) -> str:
+    texte = texte.strip()
     if not texte:
         raise HTTPException(422, "Décrivez votre besoin en une ou deux phrases.")
     if len(texte) > 1500:
         raise HTTPException(422, "Texte trop long (1 500 caractères maximum).")
-    veut_claude = e.analyseur == "claude" or (e.analyseur == "auto" and parser_llm.llm_configure())
-    if veut_claude:
-        if not parser_llm.llm_configure():
-            raise HTTPException(409, "Analyse par Claude non configurée (HACKVS_LLM=claude et clé API requises).")
-        besoin, tele = parser_llm.analyser(texte, TAX)
-    else:
-        import time
-        t0 = time.perf_counter()
-        besoin = parser_rules.analyser(texte, TAX)
-        tele = {"analyseur": "regles", "latence_ms": round((time.perf_counter() - t0) * 1000, 2)}
+    return texte
+
+
+def _veut_claude(analyseur: str) -> bool:
+    if analyseur == "claude" and not parser_llm.llm_configure():
+        raise HTTPException(409, "Analyse par Claude non configurée (HACKVS_LLM=claude et clé API requises).")
+    return analyseur == "claude" or (analyseur == "auto" and parser_llm.llm_configure())
+
+
+@app.post("/api/analyser")
+def analyser(e: EntreeAnalyse):
+    texte = _verifier_texte(e.texte)
+    besoin, tele = parser_llm.analyser(texte, TAX) if _veut_claude(e.analyseur) else _analyse_regles(texte)
     return {"besoin": besoin, "telemetrie": tele}
 
 
+@app.get("/api/analyser/flux")
+def analyser_flux(texte: str = Query(...), analyseur: str = "auto"):
+    """Server-Sent Events : critères provisoires (Claude uniquement) puis résultat final validé."""
+    texte = _verifier_texte(texte)
+
+    def evenements():
+        if _veut_claude(analyseur):
+            for ev in parser_llm.analyser_flux(texte, TAX):
+                yield f"data: {json.dumps(ev, ensure_ascii=False)}\n\n"
+        else:
+            b, tele = _analyse_regles(texte)
+            yield f"data: {json.dumps({'type': 'final', 'besoin': b.model_dump(), 'telemetrie': tele}, ensure_ascii=False)}\n\n"
+    return StreamingResponse(evenements(), media_type="text/event-stream", headers={"Cache-Control": "no-cache"})
+
+
+# ---------------------------------------------------------------- recherche (aperçu avant enregistrement)
 @app.post("/api/rechercher")
-def api_rechercher(e: EntreeRecherche):
-    return rechercher(e.besoin, _demandeur(), PROFILS, TAX, mode=MODE)
+def api_rechercher(e: EntreeRecherche, x_membre: Optional[str] = Header(None)):
+    return rechercher(e.besoin, moi(x_membre), profils_effectifs(), TAX, mode=MODE)
 
 
 @app.post("/api/comparer")
-def comparer(e: EntreeRecherche):
-    moi = _demandeur()
-    return {
-        "moteur": rechercher(e.besoin, moi, PROFILS, TAX, mode=MODE),
-        "reference": rechercher_mots_cles(e.besoin, moi, PROFILS, TAX),
-    }
+def comparer(e: EntreeRecherche, x_membre: Optional[str] = Header(None)):
+    m = moi(x_membre)
+    return {"moteur": rechercher(e.besoin, m, profils_effectifs(), TAX, mode=MODE),
+            "reference": rechercher_mots_cles(e.besoin, m, profils_effectifs(), TAX)}
 
 
-def _resume_besoin(b: Besoin) -> str:
-    """Reformule le besoin à partir des critères validés (le texte brut peut contenir
-    des éléments à ne pas transmettre tels quels, ex. « pas un concurrent »)."""
-    exp = [c.libelle.lower() for c in b.criteres if c.type == "expertise"]
-    zones = [c.libelle for c in b.criteres if c.type == "zone"]
-    if not exp:
-        return ""
-    phrase = f"Je recherche un partenaire pour : {exp[0]}"
-    if zones:
-        phrase += f" ({', '.join(zones)})"
-    if len(exp) > 1:
-        phrase += f", et si possible : {', '.join(exp[1:])}"
-    return phrase + "."
-
-
-@app.post("/api/introductions/brouillon")
-def brouillon(e: EntreeRecherche, cible_id: str):
-    """Brouillon déterministe à partir des preuves vérifiées (aucune invention)."""
-    moi, cible = _demandeur(), PAR_ID.get(cible_id)
-    if not cible:
-        raise HTTPException(404, "Profil inconnu.")
-    res = rechercher(e.besoin, moi, [p for p in PROFILS if p.id in {moi.id, cible_id}], TAX, mode=MODE)
-    raisons = [f"« {p.extrait} »" for s in res.suggestions for p in s.preuves if p.champ in {"offre", "presentation"}]
-    prenom = cible.nom.split(" ")[0]
-    message = (
-        f"Bonjour {prenom},\n\n"
-        f"Je suis {moi.nom}, {moi.fonction.lower()} de {moi.entreprise} à {moi.commune}. "
-        f"{_resume_besoin(e.besoin)}\n\n"
-        + (f"Votre profil du Club mentionne {raisons[0]}, c'est pourquoi je me permets de vous solliciter. " if raisons else "")
-        + "Seriez-vous d'accord pour un échange de 20 minutes ?\n\n"
-        f"Belle journée,\n{moi.nom}"
-    )
-    return {"message": message}
-
-
-@app.post("/api/introductions")
-def creer_intro(e: EntreeIntro):
-    moi, cible = _demandeur(), PAR_ID.get(e.cible_id)
-    if not cible:
-        raise HTTPException(404, "Profil inconnu.")
-    try:
-        intro = REGISTRE.creer(
-            moi.id, cible.id, e.besoin.texte, [c.model_dump() for c in e.besoin.criteres], e.message,
-            cible_accepte=cible.accepte_introductions, cible_eligible=cible.type != "visiteur",
-        )
-    except ErreurTransition as err:
-        raise HTTPException(409, str(err))
-    return _enrichir(intro)
-
-
-def _enrichir(intro):
-    d = intro.model_dump()
-    c = PAR_ID.get(intro.cible_id)
-    d["cible"] = c.model_dump(include={"id", "nom", "fonction", "entreprise", "commune"}) if c else None
-    d["simulation"] = MODE == "demo"
+# ---------------------------------------------------------------- besoins
+def _vue_besoin(b, pour: Profil) -> dict:
+    """Vue d'un besoin pour un membre donné : l'anonymat de l'auteur est levé seulement
+    pour lui-même ou après une mise en relation acceptée."""
+    d = b.model_dump()
+    auteur = PAR_ID.get(b.auteur_id)
+    partage = pour.id == b.auteur_id or any(
+        r.besoin_id == b.id and pour.id in (r.auteur_id, r.aidant_id) and r.coordonnees_partagees
+        for r in MAGASIN.relations(pour.id))
+    if b.anonyme and not partage:
+        secteur = TAX.libelle(auteur.secteurs[0]) if auteur and auteur.secteurs else "secteur non précisé"
+        d["auteur"] = {"id": None, "nom": "Un membre du Club", "entreprise": f"Secteur : {secteur}",
+                       "commune": TAX.zone_de_commune(auteur.commune) if auteur else "", "fonction": "", "anonyme": True}
+        d["auteur_id"] = None
+    else:
+        d["auteur"] = _pub(auteur) if auteur else None
     return d
 
 
-@app.get("/api/introductions")
-def lister_intros():
-    return [_enrichir(i) for i in REGISTRE.lister(_demandeur().id)]
+@app.post("/api/besoins")
+def creer_besoin(e: EntreeBesoin, x_membre: Optional[str] = Header(None)):
+    m = moi(x_membre)
+    return _erreurs(lambda: _vue_besoin(MAGASIN.creer_besoin(m.id, e.besoin, e.publier, e.anonyme), m))
 
 
-@app.post("/api/introductions/{intro_id}/{action}")
-def transition(intro_id: str, action: str, e: EntreeTransition):
-    if e.acteur == "cible" and MODE != "demo":
-        raise HTTPException(403, "En mode réel, seule la personne sollicitée peut répondre (authentification requise).")
-    try:
-        return _enrichir(REGISTRE.transition(intro_id, action, e.acteur, e.date_rencontre, e.resultat))
-    except KeyError:
-        raise HTTPException(404, "Introduction inconnue.")
-    except ErreurTransition as err:
-        raise HTTPException(409, str(err))
+@app.get("/api/besoins")
+def mes_besoins(x_membre: Optional[str] = Header(None)):
+    m = moi(x_membre)
+    return [_vue_besoin(b, m) for b in MAGASIN.besoins() if b.auteur_id == m.id]
+
+
+@app.put("/api/besoins/{besoin_id}")
+def modifier_besoin(besoin_id: str, e: EntreeModif, x_membre: Optional[str] = Header(None)):
+    m = moi(x_membre)
+    return _erreurs(lambda: _vue_besoin(MAGASIN.modifier_besoin(besoin_id, m.id, e.besoin, e.anonyme), m))
+
+
+@app.post("/api/besoins/{besoin_id}/{action}")
+def action_besoin(besoin_id: str, action: Literal["publier", "depublier", "cloturer"], e: EntreeActionBesoin,
+                  x_membre: Optional[str] = Header(None)):
+    m = moi(x_membre)
+    return _erreurs(lambda: _vue_besoin(MAGASIN.action_besoin(besoin_id, m.id, action, e.resolu_par, e.note), m))
+
+
+@app.get("/api/besoins/{besoin_id}/correspondances")
+def correspondances(besoin_id: str, x_membre: Optional[str] = Header(None)):
+    """Pour l'auteur : membres pertinents + état de la mise en relation éventuelle avec chacun."""
+    m = moi(x_membre)
+    b = _erreurs(lambda: MAGASIN.besoin(besoin_id))
+    if b.auteur_id != m.id:
+        raise HTTPException(403, "Seul·e l'auteur·e voit les correspondances de son besoin.")
+    res = rechercher(b.besoin, m, profils_effectifs(), TAX, mode=MODE)
+    res.besoin_id, res.besoin_version = b.id, b.version
+    rels = {r.aidant_id: r for r in MAGASIN.relations(m.id) if r.besoin_id == b.id and r.etat != "retiree"}
+    d = res.model_dump()
+    for s in d["suggestions"]:
+        r = rels.get(s["profil"]["id"])
+        s["relation"] = r.model_dump() if r else None
+    return d
+
+
+# ---------------------------------------------------------------- Bourse (sens inverse)
+@app.get("/api/bourse")
+def bourse(x_membre: Optional[str] = Header(None)):
+    """Besoins publiés par d'autres membres auxquels JE peux répondre, avec la raison.
+
+    Même moteur, mêmes filtres que la recherche de l'auteur : si je vois un besoin ici,
+    l'auteur me voit dans ses correspondances, et inversement.
+    """
+    m = moi(x_membre)
+    eff = profils_effectifs()
+    eff_moi = next(p for p in eff if p.id == m.id)
+    sortie = []
+    for b in MAGASIN.besoins():
+        if b.auteur_id == m.id or b.statut not in ("publie", "en_cours"):
+            continue
+        auteur = next((p for p in eff if p.id == b.auteur_id), None)
+        if auteur is None:
+            continue
+        res = rechercher(b.besoin, auteur, [auteur, eff_moi], TAX, mode=MODE)
+        ma = next((s for s in res.suggestions if s.profil.id == m.id), None)
+        # Une relation terminée (annulée, déclinée, retirée) ne maintient pas un besoin dans la Bourse.
+        rel = next((r for r in MAGASIN.relations(m.id) if r.besoin_id == b.id and r.aidant_id == m.id
+                    and r.etat not in ("retiree", "annulee", "declinee")), None)
+        if ma is None and rel is None:
+            continue
+        sortie.append({"besoin": _vue_besoin(b, m), "correspondance": ma.model_dump() if ma else None,
+                       "relation": rel.model_dump() if rel else None})
+    return sortie
+
+
+# ---------------------------------------------------------------- mises en relation
+@app.get("/api/relations/brouillon")
+def brouillon(besoin_id: str, cible_id: Optional[str] = None, x_membre: Optional[str] = Header(None)):
+    """Message pré-rédigé de façon déterministe à partir des preuves vérifiées (aucune invention)."""
+    m = moi(x_membre)
+    b = _erreurs(lambda: MAGASIN.besoin(besoin_id))
+    auteur = profil(b.auteur_id)
+    if m.id == b.auteur_id and not cible_id:
+        raise HTTPException(422, "Indiquez le membre à solliciter.")
+    aidant = profil(cible_id) if m.id == b.auteur_id else m
+    res = rechercher(b.besoin, auteur, [auteur, aidant], TAX, mode=MODE)
+    preuve = next((p.extrait for s in res.suggestions for p in s.preuves if p.champ in ("offre", "presentation")), None)
+    resume = _resume_besoin(b.besoin)
+    if m.id == b.auteur_id:
+        txt = (f"Bonjour {aidant.nom.split(' ')[0]},\n\nJe suis {m.nom}, {m.fonction.lower()} de {m.entreprise} à {m.commune}. "
+               f"{resume}\n\n" + (f"Votre profil du Club mentionne « {preuve} », c'est pourquoi je me permets de vous solliciter. " if preuve else "")
+               + f"Seriez-vous d'accord pour un échange de 20 minutes ?\n\nBelle journée,\n{m.nom}")
+    else:
+        txt = (f"Bonjour,\n\nJ'ai vu votre besoin dans la Bourse du Club ({_quoi(b.besoin)}).\n\n"
+               + (f"Chez {m.entreprise}, nous proposons « {preuve} ». " if preuve else "")
+               + f"Je serais ravi·e d'en parler lors d'un court échange.\n\n{m.nom}, {m.fonction} · {m.entreprise}")
+    return {"message": txt}
+
+
+def _quoi(b: Besoin) -> str:
+    princ = next((c for c in b.criteres if c.type in ("expertise", "texte_libre")), None)
+    if not princ:
+        return "besoin"
+    quoi = princ.libelle.lower() if princ.type == "expertise" else f"« {princ.valeur} »"
+    zones = [c.libelle for c in b.criteres if c.type == "zone"]
+    return quoi + (f", {', '.join(zones)}" if zones else "")
+
+
+def _resume_besoin(b: Besoin) -> str:
+    """Reformule à partir des critères validés (le texte brut peut contenir « pas un concurrent »…)."""
+    princ = next((c for c in b.criteres if c.type in ("expertise", "texte_libre")), None)
+    if not princ:
+        return ""
+    quoi = princ.libelle.lower() if princ.type == "expertise" else f"« {princ.valeur} »"
+    zones = [c.libelle for c in b.criteres if c.type == "zone"]
+    autres = [c.libelle.lower() for c in b.criteres if c.type == "expertise" and c is not princ]
+    phrase = f"Je recherche un partenaire pour : {quoi}" + (f" ({', '.join(zones)})" if zones else "")
+    if autres:
+        phrase += f", et si possible : {', '.join(autres)}"
+    return phrase + "."
+
+
+@app.post("/api/relations")
+def creer_relation(e: EntreeRelation, x_membre: Optional[str] = Header(None)):
+    """Crée une demande (auteur → aidant) ou une offre (aidant → auteur).
+
+    Le moteur revérifie la correspondance CÔTÉ SERVEUR : on ne peut solliciter que quelqu'un
+    que le moteur propose (demande) ou répondre qu'à un besoin qui nous correspond (offre).
+    """
+    m = moi(x_membre)
+    b = _erreurs(lambda: MAGASIN.besoin(e.besoin_id))
+    auteur = profil(b.auteur_id)
+    # Demande : l'auteur choisit la cible. Offre : la cible est TOUJOURS l'auteur (déterminé ici,
+    # l'aidant ne connaît pas forcément son identité si le besoin est anonyme).
+    cible = profil(e.cible_id) if m.id == b.auteur_id else auteur
+    aidant = cible if m.id == b.auteur_id else m
+    res = rechercher(b.besoin, auteur, [auteur, aidant], TAX, mode=MODE)
+    if cible.type != "visiteur" and cible.accepte_introductions and not any(s.profil.id == aidant.id for s in res.suggestions):
+        raise HTTPException(409, "Ce membre ne correspond pas (ou plus) aux critères de ce besoin.")
+    return _erreurs(lambda: MAGASIN.creer_relation(b.id, m.id, cible.id, e.message,
+                                                   # publier un besoin = accepter les offres pour CE besoin
+                                                   autre_accepte=cible.accepte_introductions or cible.id == b.auteur_id,
+                                                   autre_eligible=cible.type != "visiteur"))
+
+
+def _vue_relation(r, pour: Profil) -> dict:
+    d = r.model_dump()
+    b = MAGASIN.besoin(r.besoin_id)
+    d["besoin"] = _vue_besoin(b, pour)
+    d["besoin_modifie_depuis"] = b.version != r.besoin_version
+    autre_id = r.aidant_id if pour.id == r.auteur_id else r.auteur_id
+    autre = PAR_ID.get(autre_id)
+    masque = b.anonyme and pour.id == r.aidant_id and not r.coordonnees_partagees
+    d["autre"] = ({"nom": "Un membre du Club", "entreprise": d["besoin"]["auteur"]["entreprise"], "anonyme": True}
+                  if masque else (_pub(autre) if autre else None))
+    d["mon_role"] = "auteur" if pour.id == r.auteur_id else "aidant"
+    d["je_suis_destinataire"] = pour.id == r.destinataire_id()
+    if masque:
+        d["auteur_id"] = None
+    return d
+
+
+@app.get("/api/relations")
+def mes_relations(x_membre: Optional[str] = Header(None)):
+    m = moi(x_membre)
+    return [_vue_relation(r, m) for r in MAGASIN.relations(m.id)]
+
+
+@app.post("/api/relations/{relation_id}/{action}")
+def transition(relation_id: str, action: str, e: EntreeTransition, x_membre: Optional[str] = Header(None)):
+    m = moi(x_membre)
+    r = _erreurs(lambda: MAGASIN.transition(relation_id, action, m.id, e.date_rencontre, e.resultat))
+    return _vue_relation(r, m)
+
+
+# ---------------------------------------------------------------- journal et flux temps réel
+@app.get("/api/journal")
+def journal(depuis: int = 0):
+    return MAGASIN.journal(depuis)
+
+
+@app.get("/api/flux")
+async def flux(request: Request, depuis: int = 0):
+    """SSE : pousse chaque nouvel événement du journal (utilisé par la vue « scène » et le rafraîchissement)."""
+    async def generateur():
+        seq = depuis
+        yield "retry: 1500\n\n"
+        while not await request.is_disconnected():
+            for ev in MAGASIN.journal(seq):
+                seq = ev["seq"]
+                yield f"data: {json.dumps(ev, ensure_ascii=False)}\n\n"
+            await asyncio.sleep(0.4)
+    return StreamingResponse(generateur(), media_type="text/event-stream", headers={"Cache-Control": "no-cache"})
 
 
 @app.post("/api/demo/reinitialiser")
 def reinitialiser():
     if MODE != "demo":
         raise HTTPException(403, "Réinitialisation réservée au mode démo.")
-    REGISTRE.reinitialiser()
+    MAGASIN.reinitialiser()
     return {"ok": True}
 
 
+# ---------------------------------------------------------------- pages
 WEB = RACINE / "web"
 app.mount("/static", StaticFiles(directory=WEB), name="static")
 
@@ -216,3 +457,13 @@ app.mount("/static", StaticFiles(directory=WEB), name="static")
 @app.get("/")
 def index():
     return FileResponse(WEB / "index.html")
+
+
+@app.get("/favicon.ico")
+def favicon():
+    return FileResponse(WEB / "favicon.svg", media_type="image/svg+xml")
+
+
+@app.get("/scene")
+def scene():
+    return FileResponse(WEB / "scene.html")
