@@ -7,6 +7,8 @@ function kpi(chiffre, sur, texte) {
     h("p", {}, texte));
 }
 
+let precedents = null;  // compétences à recruter lors du dernier chargement (pour annoncer un manque comblé)
+
 async function charger() {
   const zone = $("#contenu");
   let t;
@@ -18,8 +20,10 @@ async function charger() {
     return;
   }
   const r = t.relations.resultats;
-  zone.replaceChildren(
-    h("div", { class: "kpis" },
+  const actuels = new Set(t.a_recruter.map((m) => m.competence));
+  const combles = precedents ? [...precedents].filter((c) => !actuels.has(c)) : [];
+  precedents = actuels;
+  const kpis = h("div", { class: "kpis" },
       kpi(t.besoins.total, null, `besoins exprimés${t.periode.debut ? ` depuis le ${dateCourte(t.periode.debut)}` : ""}`),
       kpi(t.besoins.avec_mise_en_relation, t.besoins.total, "ont reçu au moins une mise en relation"),
       kpi(t.taux_resolution.resolus, t.taux_resolution.clos, "besoins clos ont été résolus grâce à un membre"),
@@ -27,8 +31,11 @@ async function charger() {
         `rencontres jugées utiles ou suivies d'une affaire (${r.affaire_en_cours} affaire${r.affaire_en_cours > 1 ? "s" : ""} en cours)`),
       t.delai_premiere_relation_h.mediane !== null
         ? kpi(t.delai_premiere_relation_h.mediane < 48 ? `${Math.round(t.delai_premiere_relation_h.mediane)} h` : `${Math.round(t.delai_premiere_relation_h.mediane / 24)} j`, null,
-          `délai médian avant la première mise en relation (sur ${t.delai_premiere_relation_h.n})`) : null),
-    h("section", { class: "bloc deux" },
+          `délai médian avant la première mise en relation (sur ${t.delai_premiere_relation_h.n})`) : null);
+  zone.replaceChildren(...[
+    combles.length ? h("div", { class: "comble", role: "status" }, combles.map((c) =>
+      h("p", {}, h("strong", {}, "Comblé : "), `« ${c} » : un membre propose désormais cette compétence.`))) : null,
+    h("section", { class: "deux" },
       h("div", {},
         h("h2", {}, "Compétences à recruter"),
         h("p", { class: "sous" }, "Des membres les ont cherchées ; aucun membre actuel ne les propose. Autant d'entreprises à inviter au Club."),
@@ -48,7 +55,8 @@ async function charger() {
         h("h2", { style: "margin-top:32px" }, "Communauté"),
         h("p", {}, `${t.membres.acceptent_introductions} membres sur ${t.membres.total} acceptent d'être proposés et sollicités.`),
         h("p", {}, `${t.relations.acceptees} mises en relation acceptées sur ${t.relations.total} proposées.`))),
-    h("p", { class: "aide" }, "Définitions : « résolu » = besoin clos par son auteur avec « résolu grâce à… » ; « à recruter » = aucun membre actuel ne correspond (recalculé maintenant) et aucune mise en relation n'a abouti. Agrégats seulement, aucun nom."));
+    h("section", { class: "bloc" }, h("h2", {}, "Activité"), kpis),
+    h("p", { class: "aide" }, "Définitions : « résolu » = besoin clos par son auteur avec « résolu grâce à… » ; « à recruter » = aucun membre actuel ne correspond (recalculé maintenant) et aucune mise en relation n'a abouti. Agrégats seulement, aucun nom.")].filter(Boolean));
 }
 
 async function copier(m) {

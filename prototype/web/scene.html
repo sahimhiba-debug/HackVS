@@ -59,12 +59,16 @@
   <script type="module">
     const p = new URLSearchParams(location.search);
     const gauche = p.get("gauche") || "p00", droite = p.get("droite") || "p01";
-    document.getElementById("cadre-g").src = `/?scene=1&membre=${gauche}&vue=${p.get("vue_g") || "nouveau"}`;
-    document.getElementById("cadre-d").src = `/?scene=1&membre=${droite}&vue=${p.get("vue_d") || "bourse"}`;
+    // « club » affiche la vue d'animation du Club (acte 2 : le Club se répare).
+    const source = (id, vue) => id === "club" ? "/club" : `/?scene=1&membre=${id}&vue=${vue}`;
+    document.getElementById("cadre-g").src = source(gauche, p.get("vue_g") || "nouveau");
+    document.getElementById("cadre-d").src = source(droite, p.get("vue_d") || "bourse");
     const membres = await (await fetch("/api/membres")).json();
-    const nom = (id) => (membres.find((m) => m.id === id) || { nom: id }).nom;
+    const nom = (id) => id === "club" ? "Vue du Club" : (membres.find((m) => m.id === id) || { nom: id }).nom;
     document.getElementById("nom-g").textContent = nom(gauche);
     document.getElementById("nom-d").textContent = nom(droite);
+    if (gauche === "club") document.getElementById("role-g").textContent = "animation";
+    if (droite !== "p01") document.getElementById("role-d").textContent = "membre";
     document.getElementById("reset").onclick = async () => {
       await fetch("/api/demo/reinitialiser", { method: "POST" });
       document.getElementById("evenements").replaceChildren();
@@ -90,7 +94,7 @@
       const ev = JSON.parse(m.data);
       if (ev.type === "reinitialisation") { liste.replaceChildren(); return; }
       const deGauche = ev.acteur === gauche, deDroite = ev.acteur === droite;
-      if (!deGauche && !deDroite && ev.acteur !== "systeme") return;
+      if (!deGauche && !deDroite && ev.acteur !== "systeme" && gauche !== "club") return;
       const sens = deGauche ? "→" : deDroite ? "←" : "⟷";
       liste.querySelectorAll(".nouveau").forEach((x) => x.classList.remove("nouveau"));
       const li = document.createElement("li"); li.className = "ev nouveau";

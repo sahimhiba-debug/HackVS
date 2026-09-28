@@ -197,7 +197,7 @@ def club_profil_pitch(pw, url: str, sortie: Path) -> None:
     expect(page.locator(".manque").first).to_contain_text("ISO 27001")
     page.wait_for_timeout(700)
     page.screenshot(path=sortie / "30_club.png")
-    page.locator(".bloc.deux").screenshot(path=sortie / "30_club_recruter.png")
+    page.locator("section.deux").screenshot(path=sortie / "30_club_recruter.png")
     sans_null(page.locator("main").inner_text(), "vue du Club")
 
     # Acte 2 : « le Club se répare ». Yann complète son profil ; la demande ISO en attente le trouve.
@@ -215,8 +215,9 @@ def club_profil_pitch(pw, url: str, sortie: Path) -> None:
     yann.wait_for_timeout(1200)
     yann.screenshot(path=sortie / "33_bourse_yann_iso.png")
     expect(page.locator(".recruter")).not_to_contain_text("ISO 27001", timeout=8000)  # la vue du Club se met à jour seule
+    expect(page.locator(".comble")).to_contain_text("ISO 27001")
     page.wait_for_timeout(600)
-    page.locator(".bloc.deux").screenshot(path=sortie / "32_club_repare.png")
+    page.locator("#contenu").screenshot(path=sortie / "32_club_repare.png")
     yann.close()
 
     page.request.post(url + "/api/demo/reinitialiser")
@@ -244,6 +245,42 @@ def club_profil_pitch(pw, url: str, sortie: Path) -> None:
     print("Club, profil et présentation OK")
 
 
+def acte2_video(pw, url: str, sortie: Path) -> None:
+    """Vidéo de l'acte 2 : vue du Club à gauche, Yann à droite ; son profil comble un manque en direct."""
+    nav = lancer_navigateur(pw, lent=True)
+    ctx = nav.new_context(viewport={"width": 1600, "height": 900}, record_video_dir=str(sortie / "_video2"),
+                          record_video_size={"width": 1600, "height": 900})
+    page = ctx.new_page()
+    page.request.post(url + "/api/demo/historique")
+    page.goto(url + "/scene?gauche=club&droite=p10&vue_d=profil")
+    g, d = page.frame_locator("#cadre-g"), page.frame_locator("#cadre-d")
+    expect(g.locator(".manque").first).to_contain_text("ISO 27001")
+    page.wait_for_timeout(3500)
+    d.locator("#texte-profil").press_sequentially("Nous accompagnons les PME valaisannes vers la certification ISO 27001. "
+                                                  "Nous intervenons en Valais et en Suisse romande.", delay=25)
+    d.locator("#btn-proposer-profil").click()
+    expect(d.locator(".proposition")).to_contain_text("ISO 27001")
+    d.locator(".proposition").scroll_into_view_if_needed()
+    page.wait_for_timeout(2500)
+    d.get_by_role("button", name="Valider et enregistrer mon profil").click()
+    expect(g.locator(".comble")).to_contain_text("ISO 27001", timeout=8000)
+    page.wait_for_timeout(2500)
+    page.screenshot(path=sortie / "34_scene_club_repare.png")
+    d.locator("#tab-bourse").click()
+    expect(d.locator(".opportunite")).to_contain_text("ISO 27001")
+    page.wait_for_timeout(4000)
+    page.screenshot(path=sortie / "35_scene_yann_bourse.png")
+    ctx.close()
+    nav.close()
+    videos = list((sortie / "_video2").glob("*.webm"))
+    if videos:
+        shutil.move(str(videos[0]), sortie / "demo_club_repare.webm")
+    shutil.rmtree(sortie / "_video2", ignore_errors=True)
+    page_req = pw.request.new_context()
+    page_req.post(url + "/api/demo/reinitialiser")
+    print("Acte 2 (vidéo) OK")
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--url", default="http://localhost:8000")
@@ -257,3 +294,5 @@ if __name__ == "__main__":
         cas_limites(pw, a.url.rstrip("/"), sortie, 1280, 800, "")
         cas_limites(pw, a.url.rstrip("/"), sortie, 390, 844, "_mobile")
         club_profil_pitch(pw, a.url.rstrip("/"), sortie)
+        if a.video:
+            acte2_video(pw, a.url.rstrip("/"), sortie)
