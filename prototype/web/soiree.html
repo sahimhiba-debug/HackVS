@@ -24,6 +24,13 @@
     .rdv p { margin: 6px 0 0; font-size: 14px; color: var(--encre-2); }
     .rdv .reciproque { display: inline-block; margin-top: 6px; font-size: 12px; font-weight: 700; color: var(--vert); background: var(--vert-pale); padding: 2px 8px; border-radius: 999px; }
     .attente { color: var(--encre-2); }
+    .contraintes { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; padding: 0; list-style: none; }
+    .contraintes li { font-size: 13px; background: var(--surface); border: 1.5px solid var(--ligne); border-radius: 999px; padding: 4px 10px; }
+    .rdv .langue { float: right; font-size: 12px; font-weight: 700; color: var(--encre-2); text-transform: uppercase; }
+    details.absents { margin-top: 18px; background: var(--surface); border: 1.5px solid var(--ligne); border-radius: var(--rayon); padding: 10px 14px; }
+    details.absents summary { cursor: pointer; font-weight: 700; }
+    details.absents ul { margin: 8px 0 0; padding-left: 18px; font-size: 14px; color: var(--encre-2); }
+    .agenda { margin-left: 8px; }
   </style>
 </head>
 <body>
@@ -65,17 +72,22 @@
         h("table", { class: "cmp" },
           h("thead", {}, h("tr", {}, h("th", {}, `${r.participants} participants éligibles sur ${r.membres} membres · ${r.tours} tours`), h("th", {}, "Plan optimisé"), h("th", {}, "Glouton"), h("th", {}, "Aléatoire (moy. 30)"))),
           h("tbody", {}, lignes.map(([lib, k]) => h("tr", {}, h("td", {}, lib), h("td", { class: "opt" }, String(c.optimal[k])), h("td", {}, String(c.glouton[k])), h("td", {}, String(c.aleatoire_moyenne_30[k])))))),
-        h("p", { class: "solveur" }, `Programme linéaire en nombres entiers (HiGHS) : ${r.solveur.optimal_prouve ? "optimum prouvé" : r.solveur.statut} en ${r.solveur.duree_ms ?? 0} ms · ${r.solveur.variables ?? 0} variables · ${r.paires_utiles_possibles} paires utiles possibles.`),
+        h("p", { class: "solveur" }, `Programme linéaire en nombres entiers (HiGHS) : ${r.solveur.optimal_prouve ? "optimum prouvé" : "meilleure solution trouvée, optimum non prouvé (" + r.solveur.statut + ")"} en ${r.solveur.duree_ms ?? 0} ms · ${r.solveur.variables ?? 0} variables · ${r.paires_utiles_possibles} paires utiles possibles` + (r.paires_ecartees_sans_langue_commune ? ` · ${r.paires_ecartees_sans_langue_commune} écartées faute de langue commune.` : ".")),
+        h("ul", { class: "contraintes", "aria-label": "Contraintes respectées" }, r.contraintes.map((c) => h("li", {}, "✓ " + c))),
+        moi ? h("p", {}, h("a", { class: "btn petit agenda", href: `/api/soiree/programme.ics?membre=${encodeURIComponent(moi)}&donnees=${r.donnees}&tours=${r.tours}` }, "Ajouter mon programme à mon agenda (.ics)")) : null,
         h("div", { class: "tours" }, tours.map((liste, t) => h("div", { class: "tour" }, h("h3", {}, `Tour ${t + 1} · ${liste.length} rencontres`),
           liste.filter((m) => !moi || m.a.id === moi || m.b.id === moi).slice(0, moi ? 5 : 12).map((m) =>
             h("article", { class: "rdv" + (moi && (m.a.id === moi || m.b.id === moi) ? " moi" : "") },
-              h("span", { class: "table" }, `Table ${m.table}`),
+              h("span", { class: "table" }, `Table ${m.table}`), h("span", { class: "langue", title: "Langue(s) commune(s)" }, m.langues.join(" · ")),
               h("div", { class: "paire" }, `${m.a.nom} ↔ ${m.b.nom}`),
               aide(m.a, m.b_aide_a, m.b), aide(m.b, m.a_aide_b, m.a),
               m.reciproque ? h("span", { class: "reciproque" }, "Aide dans les deux sens") : null)),
           !moi && liste.length > 12 ? h("p", { class: "attente" }, `+ ${liste.length - 12} autres rencontres`) : null,
           moi && !liste.some((m) => m.a.id === moi || m.b.id === moi) ? h("p", { class: "attente" }, "Pas de rencontre ciblée : réseautage libre.") : null))),
-        r.sans_rencontre.length ? h("p", { class: "aide" }, `Sans rencontre utile identifiée (${r.sans_rencontre.length}) : libres pour le réseautage ouvert.`) : null,
+        r.sans_rencontre.length ? h("details", { class: "absents" },
+          h("summary", {}, `${r.sans_rencontre.length} participant(s) sans rencontre ciblée : pourquoi ?`),
+          h("p", { class: "aide" }, "Ils restent libres pour le réseautage ouvert. Raison pour chacun (information pour l'animateur·rice) :"),
+          h("ul", {}, r.sans_rencontre.map((x) => h("li", {}, `${x.nom} — ${x.raison}`)))) : null,
         h("p", { class: "aide" }, "Valeur d'une rencontre : 1 si l'aide est déclarée (offre qui couvre une recherche), 0,5 si partielle, +0,3 si réciproque. Données fictives."));
     }
     async function calculer(ev) {

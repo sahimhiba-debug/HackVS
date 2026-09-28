@@ -242,6 +242,9 @@ def _verifier_plan(r):
         assert paire not in vus, "même paire deux fois"
         vus.add(paire)
         assert m["b_aide_a"] or m["a_aide_b"], "rencontre sans aide prouvée"
+        assert m["langues"], "rencontre sans langue commune"
+    for x in r["sans_rencontre"]:
+        assert x["raison"], "absence non expliquée"
 
 
 @pytest.mark.parametrize("donnees", ["club", "synthetique"])
@@ -255,6 +258,27 @@ def test_plan_soiree_optimal_et_contraintes(donnees):
     assert objectif(c["optimal"]) >= objectif(c["aleatoire_moyenne_30"]) - 1e-6
     if donnees == "synthetique":
         assert r["membres"] == 150 and c["optimal"]["participants_avec_rencontre_utile"] > c["glouton"]["participants_avec_rencontre_utile"]
+
+
+def test_plan_soiree_langue_commune_et_agenda_ics():
+    from app import soiree
+    from app.models import Profil
+    base = PAR_ID["p00"].model_dump()
+    fr = Profil(**base | {"id": "x1", "nom": "Ana X.", "entreprise": "A", "langues": ["fr"]})
+    de = Profil(**PAR_ID[OBERWALLIS].model_dump() | {"id": "x2", "nom": "Urs Y.", "entreprise": "B", "langues": ["de"]})
+    ecartees = {}
+    soiree.valeurs([fr, de], [], TAX, ecartees)
+    assert not soiree.langues_communes(fr, de)
+    r = client.get("/api/soiree/plan?donnees=synthetique&tours=3").json()
+    assert r["paires_ecartees_sans_langue_commune"] > 0
+    qui = r["rencontres"][0]["a"]["id"]
+    ics = client.get(f"/api/soiree/programme.ics?membre={qui}&donnees=synthetique&tours=3")
+    assert ics.status_code == 200 and ics.headers["content-type"].startswith("text/calendar")
+    lignes = ics.text.split("\r\n")
+    assert lignes[0] == "BEGIN:VCALENDAR" and ics.text.count("BEGIN:VEVENT") == sum(
+        qui in (m["a"]["id"], m["b"]["id"]) for m in r["rencontres"])
+    assert all(len(l.encode()) <= 75 for l in lignes) and "Données fictives" in ics.text.replace("\r\n ", "")
+    assert client.get("/api/soiree/programme.ics?membre=inconnu").status_code == 404
 
 
 def test_plan_soiree_preuves_verbatim_et_besoin_anonyme_jamais_expose():

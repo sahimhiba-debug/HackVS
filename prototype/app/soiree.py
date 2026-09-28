@@ -3,7 +3,8 @@
 1. Valeur d'une rencontre (i, j) = aide que j peut apporter à i + aide que i peut apporter à j.
    « Aide » = une recherche de i (besoin publié ou champ « recherche » du profil) que l'offre DÉCLARÉE de j couvre,
    selon le moteur habituel (filtres, consentement, preuves exactes). Bonus si l'aide est réciproque.
-2. Plan sur R tours : au plus une rencontre par personne et par tour, jamais deux fois la même paire.
+2. Plan sur R tours : au plus une rencontre par personne et par tour, jamais deux fois la même paire,
+   et jamais deux personnes SANS LANGUE COMMUNE déclarée (contrainte dure, comme les filtres de la recherche).
 3. Optimisation exacte par programme linéaire en nombres entiers (scipy.optimize.milp, solveur HiGHS) :
      max Σ v_e·x_{e,r} + λ·Σ_i y_i    avec y_i ≤ Σ_{e∋i, r} x_{e,r}, y_i ≤ 1
    (λ récompense chaque participant qui obtient au moins une rencontre utile : équité).
@@ -49,15 +50,25 @@ def _aide(i: Profil, j: Profil, besoins_i, tax: Taxonomie) -> Optional[dict]:
     return meilleure
 
 
-def valeurs(participants: list[Profil], besoins_publies: list, tax: Taxonomie) -> dict[tuple[str, str], dict]:
+def langues_communes(a: Profil, b: Profil) -> list[str]:
+    return sorted(set(a.langues) & set(b.langues))
+
+
+def valeurs(participants: list[Profil], besoins_publies: list, tax: Taxonomie,
+            ecartees: Optional[dict] = None) -> dict[tuple[str, str], dict]:
+    """Paires utiles. `ecartees` (facultatif) reçoit les paires utiles écartées faute de langue commune."""
     rech = {p.id: _recherches(p, besoins_publies, tax) for p in participants}
     aretes = {}
     for a, b in combinations(participants, 2):
         ab, ba = _aide(a, b, rech[a.id], tax), _aide(b, a, rech[b.id], tax)
         if not ab and not ba:
             continue
+        if not langues_communes(a, b):
+            if ecartees is not None:
+                ecartees[(a.id, b.id)] = True
+            continue
         v = (ab["valeur"] if ab else 0) + (ba["valeur"] if ba else 0) + (BONUS_RECIPROQUE if ab and ba else 0)
-        aretes[(a.id, b.id)] = {"valeur": round(v, 3), "b_aide_a": ab, "a_aide_b": ba}
+        aretes[(a.id, b.id)] = {"valeur": round(v, 3), "b_aide_a": ab, "a_aide_b": ba, "langues": langues_communes(a, b)}
     return aretes
 
 
@@ -144,8 +155,9 @@ def optimal(aretes, participants: list[str], tours: int, limite_s: float = 20.0)
 
 def planifier(participants: list[Profil], besoins_publies: list, tax: Taxonomie, tours: int = 3) -> dict:
     t0 = time.perf_counter()
-    eligibles = [p for p in participants if p.type == "membre_club" and p.accepte_introductions]
-    aretes = valeurs(eligibles, besoins_publies, tax)
+    eligibles = [p for p in participants if p.type == "membre_club" and p.accepte_introductions and p.disponible]
+    sans_langue: dict = {}
+    aretes = valeurs(eligibles, besoins_publies, tax, sans_langue)
     ids = [p.id for p in eligibles]
     t_val = round((time.perf_counter() - t0) * 1000)
     plan_opt, info = optimal(aretes, ids, tours) if aretes else ([[] for _ in range(tours)], {"optimal_prouve": True})
@@ -159,7 +171,8 @@ def planifier(participants: list[Profil], besoins_publies: list, tax: Taxonomie,
         pa, pb = par_id[e[0]], par_id[e[1]]
         pub = lambda p: {"id": p.id, "nom": p.nom, "entreprise": p.entreprise}
         return {"tour": r + 1, "table": table, "a": pub(pa), "b": pub(pb), "valeur": a["valeur"],
-                "b_aide_a": a["b_aide_a"], "a_aide_b": a["a_aide_b"], "reciproque": bool(a["b_aide_a"] and a["a_aide_b"])}
+                "b_aide_a": a["b_aide_a"], "a_aide_b": a["a_aide_b"], "reciproque": bool(a["b_aide_a"] and a["a_aide_b"]),
+                "langues": a["langues"]}
 
     rencontres = [carte(e, r, t + 1) for r, tour in enumerate(plan_opt)
                   for t, e in enumerate(sorted(tour, key=lambda e: -aretes[e]["valeur"]))]
@@ -171,5 +184,71 @@ def planifier(participants: list[Profil], besoins_publies: list, tax: Taxonomie,
         "comparaison": {"optimal": s_opt, "glouton": s_glo,
                         "aleatoire_moyenne_30": {k: moy(k) for k in ("valeur_totale", "rencontres", "participants_avec_rencontre_utile", "aides_couvertes")}},
         "solveur": info, "calcul_valeurs_ms": t_val,
-        "sans_rencontre": sorted(p.nom for p in eligibles if not any(p.id in (m["a"]["id"], m["b"]["id"]) for m in rencontres)),
+        "sans_rencontre": [{"nom": p.nom, "raison": r} for p, r in sorted(
+            ((p, _raison_absence(p, aretes, sans_langue, plan_opt, par_id)) for p in eligibles
+             if not any(p.id in (m["a"]["id"], m["b"]["id"]) for m in rencontres)), key=lambda x: x[0].nom)],
+        "paires_ecartees_sans_langue_commune": len(sans_langue),
+        "contraintes": ["au plus une rencontre par personne et par tour", "jamais deux fois la même paire",
+                        "langue commune déclarée obligatoire", "membres disponibles et acceptant les introductions"],
     }
+
+
+def _raison_absence(p: Profil, aretes, sans_langue, plan, par_id) -> str:
+    """Pourquoi ce membre n'a aucune rencontre ciblée (jamais un reproche : une information pour l'animateur)."""
+    siennes = [e for e in aretes if p.id in e]
+    if not siennes:
+        if any(p.id in e for e in sans_langue):
+            return "complémentarités trouvées, mais aucune langue commune déclarée"
+        return "aucune complémentarité prouvée avec les participants (compléter « je cherche / je propose »)"
+    occupes = {x for tour in plan for e in tour for x in e if x != p.id}
+    autres = sorted({par_id[x].nom for e in siennes for x in e if x != p.id})
+    return (f"ses {len(autres)} partenaire(s) possible(s) ({', '.join(autres[:3])}{'…' if len(autres) > 3 else ''}) "
+            "sont mieux employé(e)s ailleurs à chaque tour" if all(x in occupes for e in siennes for x in e if x != p.id)
+            else "arbitrage de l'optimisation")
+
+
+def _ics_texte(v: str) -> str:
+    return v.replace("\\", "\\\\").replace(";", "\;").replace(",", "\\,").replace("\n", "\\n")
+
+
+def _plier(ligne: str) -> str:
+    """RFC 5545 §3.1 : lignes de 75 octets au plus, continuation par une espace."""
+    b, out = ligne.encode("utf-8"), []
+    while len(b) > 75:
+        coupe = 75 if not out else 74
+        while (b[coupe] & 0xC0) == 0x80:  # ne pas couper un caractère UTF-8
+            coupe -= 1
+        out.append(b[:coupe].decode("utf-8"))
+        b = b[coupe:]
+    out.append(b.decode("utf-8"))
+    return "\r\n ".join(out)
+
+
+def programme_ics(plan: dict, membre_id: str, debut: str, duree_tour_min: int = 15, pause_min: int = 5) -> str:
+    """Programme individuel d'une soirée au format iCalendar (une entrée par rencontre)."""
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
+    t0 = datetime.fromisoformat(debut).replace(tzinfo=ZoneInfo("Europe/Zurich"))
+    utc = lambda d: d.astimezone(ZoneInfo("UTC")).strftime("%Y%m%dT%H%M%SZ")
+    lignes = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Le Fil du Club//Soiree//FR", "CALSCALE:GREGORIAN"]
+    for m in plan["rencontres"]:
+        if membre_id not in (m["a"]["id"], m["b"]["id"]):
+            continue
+        moi, autre = (m["a"], m["b"]) if m["a"]["id"] == membre_id else (m["b"], m["a"])
+        aide_recue = m["b_aide_a"] if m["a"]["id"] == membre_id else m["a_aide_b"]
+        aide_donnee = m["a_aide_b"] if m["a"]["id"] == membre_id else m["b_aide_a"]
+        d = t0 + timedelta(minutes=(m["tour"] - 1) * (duree_tour_min + pause_min))
+        pourquoi = []
+        if aide_recue:
+            pourquoi.append(f"{autre['nom']} peut vous aider : « {aide_recue['preuve']} »")
+        if aide_donnee:
+            pourquoi.append(f"Vous pouvez l'aider : « {aide_donnee['preuve']} »")
+        pourquoi.append("Données fictives (démonstration).")
+        titre = f"Tour {m['tour']} · table {m['table']} · {autre['nom']}"
+        lignes += ["BEGIN:VEVENT", f"UID:soiree-{plan['donnees']}-{m['tour']}-{m['a']['id']}-{m['b']['id']}@le-fil-du-club",
+                   f"DTSTAMP:{utc(t0)}", f"DTSTART:{utc(d)}", f"DTEND:{utc(d + timedelta(minutes=duree_tour_min))}",
+                   f"SUMMARY:{_ics_texte(titre)}",
+                   f"LOCATION:{_ics_texte('Soirée du Club · table ' + str(m['table']))}",
+                   f"DESCRIPTION:{_ics_texte(chr(10).join(pourquoi))}", "END:VEVENT"]
+    lignes.append("END:VCALENDAR")
+    return "\r\n".join(_plier(x) for x in lignes) + "\r\n"

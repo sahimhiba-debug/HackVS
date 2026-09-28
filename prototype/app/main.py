@@ -572,6 +572,10 @@ def tableau_club():
 @app.get("/api/soiree/plan")
 def plan_soiree(donnees: Literal["club", "synthetique"] = "club", tours: int = Query(3, ge=1, le=5)):
     """Plan de rencontres optimisé (MILP) pour une soirée du Club. Démo : tous les membres sont supposés présents."""
+    return _plan(donnees, tours)
+
+
+def _plan(donnees: str, tours: int) -> dict:
     if MODE != "demo":
         raise HTTPException(501, "Liste des inscrits à une soirée non disponible en mode réel.")
     if donnees == "synthetique":
@@ -580,6 +584,17 @@ def plan_soiree(donnees: Literal["club", "synthetique"] = "club", tours: int = Q
     else:
         participants, besoins = profils_effectifs(), MAGASIN.besoins()
     return soiree.planifier(participants, besoins, TAX, tours=tours) | {"donnees": donnees, "donnees_fictives": True}
+
+
+@app.get("/api/soiree/programme.ics")
+def programme_soiree(membre: str, donnees: Literal["club", "synthetique"] = "club", tours: int = Query(3, ge=1, le=5)):
+    """Programme individuel (iCalendar). Date de soirée FICTIVE (HACKVS_SOIREE_DEBUT), démo uniquement."""
+    plan = _plan(donnees, tours)
+    if not any(membre in (m["a"]["id"], m["b"]["id"]) for m in plan["rencontres"]):
+        raise HTTPException(404, "Aucune rencontre ciblée pour ce membre dans ce plan.")
+    ics = soiree.programme_ics(plan, membre, os.environ.get("HACKVS_SOIREE_DEBUT", "2026-10-03T18:30"))
+    return Response(ics, media_type="text/calendar; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="soiree-{membre}.ics"'})
 
 
 @app.post("/api/demo/historique")
