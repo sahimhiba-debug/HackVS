@@ -1,0 +1,15 @@
+{"_note": "Faux amis COMPOSÉS (un mot du catalogue qualifié par un autre qui change le domaine). Rédigé le 2026-09-28 AVANT le mécanisme « composes_trompeurs ». Les cas marqués 'hors_liste' ne seront PAS ajoutés à la liste : ils mesurent ce que le mécanisme ne couvre pas. Le critère : la compétence 'interdit' ne doit pas être extraite.",
+ "cas": [
+  {"texte": "Je cherche quelqu'un pour m'aider à comprendre la comptabilité carbone.", "interdit": "fiduciaire", "hors_liste": false},
+  {"texte": "Nous devons faire notre bilan carbone, qui peut nous accompagner ?", "interdit": "fiduciaire", "hors_liste": false},
+  {"texte": "Je cherche un avocat pour mon divorce.", "interdit": "droit_affaires", "hors_liste": false},
+  {"texte": "Nous cherchons un transporteur de personnes pour une sortie d'équipe.", "interdit": "logistique", "hors_liste": false},
+  {"texte": "Je cherche une assurance maladie pour moi et ma famille.", "interdit": "assurance", "hors_liste": false},
+  {"texte": "Wir suchen einen Anwalt für eine Scheidung.", "interdit": "droit_affaires", "hors_liste": false},
+  {"texte": "Nous cherchons une formation de yoga pour le bien-être de l'équipe.", "interdit": "formation", "hors_liste": true},
+  {"texte": "Je cherche un loueur de voitures pour un week-end.", "interdit": "location_machines", "hors_liste": true},
+  {"texte": "Qui fait de la traduction assermentée d'actes de naissance ?", "interdit": "traduction", "hors_liste": true},
+  {"texte": "Je cherche un photographe de mariage.", "interdit": "photo_video", "hors_liste": true},
+  {"texte": "Nous cherchons un expert en empreinte carbone de nos produits.", "interdit": "fiduciaire", "hors_liste": false},
+  {"texte": "We need a carbon accounting consultant.", "interdit": "fiduciaire", "hors_liste": false}
+ ]}
