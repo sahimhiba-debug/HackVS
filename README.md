@@ -33,6 +33,10 @@ sauf décider à la place du membre.
 | Sécurité | profils = données non fiables ; LLM sans accès aux profils ; injection testée ; télémétrie tierce coupée | [EVALUATION.md §7](docs/EVALUATION.md) |
 | Ingénierie | 53 tests, lint, intégration continue verte, non-régression des évaluations, jeux réservés écrits avant le code | `.github/workflows/ci.yml` |
 
+**Expérience en cours — intentions scellées** (`/scelle`, mode démo) : rapprocher ce que personne n'écrit
+publiquement (céder, reprendre, lever des fonds) sans que le Club puisse le lire ; intersection privée d'ensembles entre
+agents, catégories k-anonymes, révélation simultanée. Pourquoi et mesures : [STRATEGIC_RESEARCH.md](docs/STRATEGIC_RESEARCH.md).
+
 **Simulé / fictif** : 37 profils de démo, 150 profils synthétiques, historique du Club, confirmations du « membre
 simulé », agent scripté de la transcription. **Non vérifié** : Claude et Apertus contre leurs API réelles (pas de clé
 ni d'accès réseau ici ; testés contre des serveurs simulés), utilité auprès de vrais membres. Voir [LIMITATIONS.md](docs/LIMITATIONS.md).

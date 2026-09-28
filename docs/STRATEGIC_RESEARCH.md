@@ -173,6 +173,27 @@ Rôle de chaque brique, sans décor :
 | Coût | 4 032 sessions PSI, 2,3 Mo relayés, **8,3 s** pour toutes les paires (64 participants, CPU) ; ristretto255 : 0,063 ms par opération |
 | **Référence : notre Bourse actuelle** | 74 / 74 intentions **lisibles par le serveur** ; dans le Club de démonstration, **26 membres sur 34** seraient ré-identifiés par leur seul secteur dans une annonce « anonyme » (sur le Club synthétique, plus peuplé : 0 sur 30) |
 
+**H2 — deviner l'auteur d'une intention de cession** (`python -m experiences.mesure_reidentification`, l'annuaire
+public étant supposé connu de tous) :
+
+| Club | Bourse « anonyme » actuelle (lue par TOUS) | Intentions scellées (contrepartie seulement ; autres : 0) |
+|---|---|---|
+| Démo, 34 membres | 82 % en moyenne ; 26 auteurs désignés à coup sûr | 5 % en moyenne ; 17 % au pire |
+| Synthétique, 150 | 19 % en moyenne ; 2 désignés à coup sûr | 14 % en moyenne ; ≤ 33 % (k = 3), ≤ 20 % (k = 5) |
+
+**H3 — y a-t-il assez de volume ?** (`python -m experiences.sensibilite_volume`, Monte-Carlo SYNTHÉTIQUE, 16 % de
+cédants, secteurs en loi de Zipf ; compatibilité au seul niveau du secteur, donc **bornes hautes**) :
+
+| Périmètre | Repreneurs 1 % | 2 % | 4 % |
+|---|---|---|---|
+| 1 club de 100 (≈ 16 cédants) | 2,4 cédants avec un repreneur compatible | 4,4 | 7,0 |
+| 3 clubs fédérés | 17,4 | 25,1 | 32,8 |
+| 10 clubs / CCI | 104 | 125 | 143 |
+
+Verdict : l'idée n'est pas tuée, mais **un seul club ne suffit pas** ; la valeur apparaît en **fédération**, et la PSI
+est précisément ce qui permet à plusieurs clubs (dont la CCI Valais, concurrent local) de confronter leurs intentions
+**sans échanger leurs listes de membres**. Le concurrent devient un partenaire possible.
+
 **Limites honnêtes** : sécurité semi-honnête (un agent qui ment sur son intention n'est pas empêché) ; un faux acheteur
 peut **sonder** l'existence d'un cédant dans une catégorie, mais sans identité (pseudonymes par session, catégories
 k-anonymes), au plus 6 jetons par sens et par tour ; la personne sondée voit la compatibilité et peut ne jamais
@@ -222,6 +243,7 @@ le matching expliqué, la soirée optimisée, l'assistant IA, nous l'avons aussi
   crossiety.ch ; foireduvalais.ch/fr/le-club-foire-du-valais-1604.
 
 ## 13. Prochaines étapes (dans l'ordre)
+0. **Fédération** : démontrer deux clubs (deux relais, aucune donnée partagée) qui trouvent une compatibilité commune.
 1. **Tester l'hypothèse de valeur avec 5 vrais dirigeants** : « Confieriez-vous cette intention à un agent qui ne la
    montre à personne ? » Si la réponse est non, le concept meurt, quelle que soit sa qualité technique.
 2. Brancher la compatibilité révélée sur le parcours existant (mise en relation, disponibilités communes, suivi).
