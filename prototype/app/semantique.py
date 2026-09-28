@@ -205,3 +205,89 @@ def inferer_par_offres(texte: str, profils, tax: Taxonomie) -> Optional[dict]:
     return {"concept": concept, "offre": offre, "membre": membre, "score": round(s1, 4), "z": round(z1, 3),
             "marge_z": round(marge, 3), "accepte": accepte, "seuil_z": s["z"], "seuil_marge": s["marge_z"],
             "latence_ms": round((time.perf_counter() - t0) * 1000, 1)}
+
+
+# ---------------------------------------------------------------------------- suggestions hybrides
+# Idées reprises (voir docs/RECONNAISSANCE.md) : score hybride pondéré dense + lexical (BGE-M3 : w·dense + w'·sparse),
+# score « max » par expression (multi-vecteur). La fusion par rangs réciproques k = 61 (Haystack) a été MESURÉE et
+# écartée : sur la calibration, hit@3 0,870 contre 0,948 pour la somme pondérée. Aucune dépendance ajoutée.
+POIDS_LEXICAL = 0.3  # choisi sur la calibration (0 / 0,3 / 0,5 / 1 testés), pas sur les jeux d'évaluation
+
+
+class IndexLexical:
+    """Lexical « sparse » : préfixes de 5 lettres des mots du libellé et des expressions, pondérés par IDF."""
+
+    def __init__(self, tax: Taxonomie):
+        from .taxonomy import norm
+        self.norm = norm
+        self.vides = set(tax.mots_generiques) | _MOTS_VIDES_SUGG
+        self.termes: dict[str, set[str]] = {}
+        for cid, c in tax.concepts.items():
+            self.termes[cid] = {self._p(m) for t in [c.libelle, *c.expressions] for m in self._mots(t)}
+        import math
+        df: dict[str, int] = {}
+        for ts in self.termes.values():
+            for t in ts:
+                df[t] = df.get(t, 0) + 1
+        n = len(self.termes)
+        self.idf = {t: math.log(1 + n / d) for t, d in df.items()}
+
+    def _mots(self, texte: str) -> list[str]:
+        import re
+        return [m for m in re.findall(r"[a-z0-9]+", self.norm(texte)) if len(m) >= 4 and m not in self.vides]
+
+    @staticmethod
+    def _p(m: str) -> str:
+        return m[:5]
+
+    def scores(self, texte: str) -> dict[str, float]:
+        q = {self._p(m) for m in self._mots(texte)}
+        return {cid: sum(self.idf[t] for t in q & ts) for cid, ts in self.termes.items()}
+
+
+_MOTS_VIDES_SUGG = {"cherche", "cherchons", "recherche", "besoin", "quelqu", "quelqun", "personne", "aurais", "voudrais",
+                    "pourrait", "faudrait", "notre", "votre", "nous", "avec", "pour", "dans", "sont", "that", "with",
+                    "someone", "looking", "need", "want", "help", "brauchen", "suchen", "jemanden", "unsere", "unser",
+                    "wir", "eine", "einen", "aider", "aide", "rencontrer", "travaille", "connait", "bien", "capable"}
+
+
+@lru_cache(maxsize=1)
+def index_lexical() -> IndexLexical:
+    from .taxonomy import charger_taxonomie
+    return IndexLexical(charger_taxonomie())
+
+
+def suggerer(texte: str, tax: Taxonomie, methode: str = "hybride") -> dict:
+    """Classement des compétences pour un besoin, et OPTIONS à montrer au membre (à confirmer, jamais imposées).
+
+    dense   : comportement historique (prototypes e5, 3 options dès que le score frôle τ).
+    hybride : z-score dense (max par expression + prototype) + 0,3 × lexical IDF ; options adaptatives
+              (écart Δ calibré pour montrer la bonne compétence dans ≥ 90 % des cas de calibration).
+    Aucun seuil ne sait reconnaître un besoin hors catalogue (mesuré) : le membre garde toujours « Aucune ».
+    """
+    t0 = time.perf_counter()
+    q = encodeur().encoder([f"query: {texte}"])[0]
+    P = prototypes()
+    moy = P.scores(q)
+    s = seuils()
+    if methode == "dense":
+        opts = [c for c, _ in moy[:3]] if moy[0][1] >= s["tau"] - 0.05 else []
+        return {"classement": [{"concept": c, "score": round(x, 4)} for c, x in moy], "options": opts,
+                "latence_ms": round((time.perf_counter() - t0) * 1000, 1)}
+    mx = np.array([float((P.vecteurs_passages[c] @ q).max()) for c in P.ids])
+    mo = np.array([x for _, x in sorted(moy, key=lambda t: P.ids.index(t[0]))])
+    # z-score dans la distribution de la requête : e5 donne des scores « plats » (0,80–0,87 pour tout)
+    zsum = (mx - mx.mean()) / mx.std() + (mo - mo.mean()) / mo.std()
+    lex = index_lexical().scores(texte)
+    lx = np.array([lex[c] for c in P.ids])
+    score = zsum + POIDS_LEXICAL * lx
+    classement = [P.ids[i] for i in np.argsort(-score)]
+    fus = {c: float(score[P.ids.index(c)]) for c in P.ids}
+    delta = s.get("hybride", {}).get("delta_z", 0.0)
+    z = {c: float(zsum[P.ids.index(c)]) for c in P.ids}
+    top3 = classement[:3]
+    # Nombre d'options ADAPTATIF : on ne montre que les compétences proches de la meilleure (≥ 1 option).
+    options = [c for c in top3 if fus[c] >= fus[top3[0]] - delta]
+    return {"classement": [{"concept": c, "score": round(fus[c], 3), "z": round(z[c], 3),
+                            "dense_max": round(float(mx[P.ids.index(c)]), 4), "lexical": round(lex[c], 3)} for c in classement],
+            "options": options, "latence_ms": round((time.perf_counter() - t0) * 1000, 1)}

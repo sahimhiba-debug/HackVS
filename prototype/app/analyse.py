@@ -3,7 +3,8 @@
 Ordre de confiance :
 1. règles (vocabulaire du Club) : précises, explicables ;
 2. sémantique (multilingual-e5-large, local) : utilisée si AUCUNE compétence n'est reconnue ;
-   - par défaut : QUESTION à l'utilisateur avec les 3 compétences les plus proches (il confirme ou reformule) ;
+   - par défaut : QUESTION à l'utilisateur avec 1 à 3 compétences (classement hybride dense + lexical,
+     nombre adaptatif) ; il confirme ou garde sa formulation ;
    - décision automatique seulement si HACKVS_SEMANTIQUE_AUTO=1 ET seuils calibrés atteints (désactivée : données de
      calibration trop peu nombreuses pour garantir un faible taux de fausses acceptations) ;
    - sinon → la recherche hors catalogue et l'abstention s'appliquent comme avant.
@@ -17,7 +18,6 @@ from .models import Ambiguite, Besoin, Critere, OptionAmbiguite
 from .parser_rules import analyser as analyser_regles
 from .taxonomy import Taxonomie
 
-MARGE_QUESTION = 0.05  # sous τ mais à moins de 0,05 : on propose 3 compétences au lieu de décider
 
 
 def analyser_hybride(texte: str, tax: Taxonomie, semantique_active: bool = True) -> tuple[Besoin, dict]:
@@ -44,10 +44,12 @@ def analyser_hybride(texte: str, tax: Taxonomie, semantique_active: bool = True)
         b.contexte.append("Termes d'origine : " + " ".join(c.valeur for c in libre) if libre else "")
         b.contexte = [x for x in b.contexte if x]
         b.analyseur = "regles+semantique"
-    elif r["score"] >= r["tau"] - MARGE_QUESTION or (r["accepte"] and not auto):
-        # Incertain : l'IA SUGGÈRE, le membre CONFIRME (jamais de décision automatique sous le seuil calibré).
+    else:
+        # L'IA SUGGÈRE (1 à 3 compétences, nombre adaptatif), le membre CONFIRME ou garde sa formulation.
+        sug = semantique.suggerer(texte, tax)
+        info["options"] = sug["options"]
         b.ambiguites.append(Ambiguite(
             terme="votre besoin", extrait=texte[:60] + ("…" if len(texte) > 60 else ""),
-            options=[OptionAmbiguite(valeur=c, libelle=tax.libelle(c)) for c, _ in r["top"][:3]]))
+            options=[OptionAmbiguite(valeur=c, libelle=tax.libelle(c)) for c in sug["options"]]))
         b.analyseur = "regles+semantique (question)"
     return b, info

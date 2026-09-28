@@ -24,7 +24,15 @@
     "precision_positifs_acceptes": 0.95,
     "fausses_acceptations_negatifs": 0.0,
     "acceptes_positifs": 20,
-    "acceptes_negatifs": 0
+    "acceptes_negatifs": 0,
+    "hybride": {
+      "delta_z": 2.45,
+      "rappel_cible": 0.9,
+      "rappel_obtenu": 0.909,
+      "options_moyennes_positifs": 1.97,
+      "options_hors_sujet_positifs": "77/152",
+      "options_moyennes_negatifs": 2.72
+    }
   },
   "seuils_offres": {
     "z": 3.35,

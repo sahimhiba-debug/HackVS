@@ -88,6 +88,29 @@ def main() -> None:
     ok2 = np.array([bool(c1) and tax.meme_famille(c1, c) for (_, _, c1), (_, c) in zip(p2, pos_utiles)])
     m2 = grille(np.array([x[:2] for x in p2]), ok2, n2, np.round(np.arange(1.5, 6.01, 0.05), 3), np.round(np.arange(0, 2.01, 0.05), 3), ("z", "marge_z"))
 
+    # méthode 3 : options HYBRIDES montrées au membre (suggérer, jamais décider).
+    # Constat : sur ces données, aucun score dense ne sépare un besoin hors catalogue d'un vrai besoin
+    # (quantiles confondus) ; on ne calibre donc PAS une abstention, mais le NOMBRE d'options : le plus petit
+    # écart Δ (en z-score) tel que la bonne compétence est montrée dans ≥ 90 % des positifs.
+    RAPPEL_CIBLE = 0.90
+    hp = [(semantique.suggerer(t, tax, methode="hybride")["classement"][:3], c) for t, c in pos_utiles]
+    hn = [semantique.suggerer(t, tax, methode="hybride")["classement"][:3] for t in neg_utiles]
+
+    def montre(top, d):
+        return [x["concept"] for x in top if x["score"] >= top[0]["score"] - d]
+    m3 = None
+    for d in np.round(np.arange(0.0, 3.01, 0.05), 2):
+        opts = [(montre(top, d), c) for top, c in hp]
+        rappel = float(np.mean([any(tax.meme_famille(o, c) for o in os_) for os_, c in opts]))
+        if rappel >= RAPPEL_CIBLE:
+            hs = sum(sum(not tax.meme_famille(o, c) for o in os_) for os_, c in opts)
+            m3 = {"delta_z": float(d), "rappel_cible": RAPPEL_CIBLE, "rappel_obtenu": round(rappel, 3),
+                  "options_moyennes_positifs": round(float(np.mean([len(o) for o, _ in opts])), 2),
+                  "options_hors_sujet_positifs": f"{hs}/{sum(len(o) for o, _ in opts)}",
+                  "options_moyennes_negatifs": round(float(np.mean([len(montre(t, d)) for t in hn])), 2)}
+            break
+    m3 = m3 or {"delta_z": 3.0}
+
     cov = lambda m: m["couverture_positifs"] if m else -1
     methode = "prototypes" if cov(m1) >= cov(m2) else "offres"
     sortie = {
@@ -98,7 +121,7 @@ def main() -> None:
         "negatifs": {"total": len(negs), "utilises_regles_echouent": len(neg_utiles)},
         "top1_correct_sans_seuil": {"prototypes": round(float(ok1.mean()), 3), "offres": round(float(ok2.mean()), 3)},
         "methode": methode,
-        "seuils": m1 or {"tau": 1.0, "delta": 1.0},
+        "seuils": (m1 or {"tau": 1.0, "delta": 1.0}) | {"hybride": m3},
         "seuils_offres": m2 or {"z": 99.0, "marge_z": 99.0},
     }
     (DATA_DIR / "calibration_semantique.json").write_text(json.dumps(sortie, ensure_ascii=False, indent=2), encoding="utf-8")
