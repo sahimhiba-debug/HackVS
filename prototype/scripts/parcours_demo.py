@@ -186,6 +186,64 @@ def cas_limites(pw, url: str, sortie: Path, largeur: int, hauteur: int, suffixe:
     print(f"Cas limites OK ({largeur}x{hauteur})")
 
 
+def club_profil_pitch(pw, url: str, sortie: Path) -> None:
+    """Vue du Club (historique fictif), profil en 30 secondes, support de présentation."""
+    nav = lancer_navigateur(pw)
+    page = nav.new_page(viewport={"width": 1440, "height": 900})
+    erreurs: list[str] = []
+    page.on("pageerror", lambda e: erreurs.append(str(e)))
+    page.request.post(url + "/api/demo/historique")
+    page.goto(url + "/club")
+    expect(page.locator(".manque").first).to_contain_text("ISO 27001")
+    page.wait_for_timeout(700)
+    page.screenshot(path=sortie / "30_club.png")
+    page.locator(".bloc.deux").screenshot(path=sortie / "30_club_recruter.png")
+    sans_null(page.locator("main").inner_text(), "vue du Club")
+
+    # Acte 2 : « le Club se répare ». Yann complète son profil ; la demande ISO en attente le trouve.
+    yann = nav.new_page(viewport={"width": 1280, "height": 900})
+    yann.on("pageerror", lambda e: erreurs.append(str(e)))
+    yann.goto(url + "/?membre=p10&vue=profil")
+    yann.locator("#texte-profil").fill("Nous accompagnons les PME valaisannes vers la certification ISO 27001. "
+                                       "Nous intervenons en Valais et en Suisse romande.")
+    yann.locator("#btn-proposer-profil").click()
+    expect(yann.locator(".proposition")).to_contain_text("ISO 27001")
+    yann.get_by_role("button", name="Valider et enregistrer mon profil").click()
+    expect(yann.locator("#vue-profil .fiche")).to_contain_text("ISO 27001")
+    yann.locator("#tab-bourse").click()
+    expect(yann.locator(".opportunite")).to_contain_text("ISO 27001")
+    yann.wait_for_timeout(1200)
+    yann.screenshot(path=sortie / "33_bourse_yann_iso.png")
+    expect(page.locator(".recruter")).not_to_contain_text("ISO 27001", timeout=8000)  # la vue du Club se met à jour seule
+    page.wait_for_timeout(600)
+    page.locator(".bloc.deux").screenshot(path=sortie / "32_club_repare.png")
+    yann.close()
+
+    page.request.post(url + "/api/demo/reinitialiser")
+    page.goto(url + "/?membre=p15&vue=profil")
+    page.locator("#texte-profil").fill("Nous créons des films d'entreprise et des photos de produits. Nous intervenons en Valais "
+                                       "et en Suisse romande. Nous parlons français, allemand et anglais. Nous cherchons un partenaire "
+                                       "pour la traduction. Nous ne faisons pas d'impression.")
+    page.locator("#btn-proposer-profil").click()
+    expect(page.locator(".proposition")).to_contain_text("Photo et vidéo")
+    page.wait_for_timeout(600)
+    page.locator("#vue-profil section.bloc").screenshot(path=sortie / "31_profil_30s.png")
+    page.get_by_role("button", name="Valider et enregistrer mon profil").click()
+    expect(page.locator("#vue-profil .fiche")).to_contain_text("Nous créons des films")
+
+    page.goto(url + "/presentation#1")
+    for n in (1, 4, 6, 8):
+        page.goto(url + f"/presentation#{n}")
+        page.reload()
+        page.wait_for_timeout(500)
+        page.screenshot(path=sortie / f"40_pitch_{n:02d}.png")
+    page.request.post(url + "/api/demo/reinitialiser")
+    nav.close()
+    if erreurs:
+        raise SystemExit(f"Erreurs JavaScript (club/profil/pitch) : {erreurs}")
+    print("Club, profil et présentation OK")
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--url", default="http://localhost:8000")
@@ -198,3 +256,4 @@ if __name__ == "__main__":
         scene(pw, a.url.rstrip("/"), sortie, a.video)
         cas_limites(pw, a.url.rstrip("/"), sortie, 1280, 800, "")
         cas_limites(pw, a.url.rstrip("/"), sortie, 390, 844, "_mobile")
+        club_profil_pitch(pw, a.url.rstrip("/"), sortie)

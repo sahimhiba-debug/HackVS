@@ -134,6 +134,7 @@ class Magasin:
             CREATE TABLE IF NOT EXISTS besoins (id TEXT PRIMARY KEY, donnees TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS relations (id TEXT PRIMARY KEY, donnees TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS consentements (membre_id TEXT PRIMARY KEY, accepte INTEGER NOT NULL, maj_le TEXT);
+            CREATE TABLE IF NOT EXISTS profils (membre_id TEXT PRIMARY KEY, donnees TEXT NOT NULL, maj_le TEXT);
             CREATE TABLE IF NOT EXISTS journal (seq INTEGER PRIMARY KEY AUTOINCREMENT, horodatage TEXT,
                 type TEXT, acteur TEXT, objet_id TEXT, message TEXT, concerne TEXT);
         """)
@@ -183,6 +184,17 @@ class Magasin:
                           "Consentement aux introductions " + ("activé" if accepte else "retiré"), [membre_id])
             self._db.commit()
         return annulees
+
+    # ------------------------------------------------------------ profils modifiés par les membres
+    def profils_modifies(self) -> dict[str, dict]:
+        with self._verrou:
+            return {m: json.loads(d) for m, d in self._db.execute("SELECT membre_id, donnees FROM profils").fetchall()}
+
+    def modifier_profil(self, membre_id: str, champs: dict) -> None:
+        with self._verrou:
+            self._db.execute("INSERT OR REPLACE INTO profils VALUES (?, ?, ?)", (membre_id, json.dumps(champs, ensure_ascii=False), _maintenant()))
+            self._journal("profil_modifie", membre_id, membre_id, "Profil mis à jour", [membre_id])
+            self._db.commit()
 
     # ------------------------------------------------------------ besoins
     def _besoins(self) -> list[BesoinEnregistre]:
@@ -375,8 +387,20 @@ class Magasin:
         self._journal("relation_annulee", "systeme", r.id, motif, [r.auteur_id, r.aidant_id])
 
     # ------------------------------------------------------------ démo
+    def retrodater(self, table: str, obj_id: str, cree_le: datetime, maj_le: Optional[datetime] = None) -> None:
+        """Démo uniquement : place un objet de l'historique fictif dans le passé."""
+        assert table in ("besoins", "relations")
+        with self._verrou:
+            l = self._db.execute(f"SELECT donnees FROM {table} WHERE id = ?", (obj_id,)).fetchone()
+            d = json.loads(l[0])
+            d["cree_le"] = cree_le.isoformat(timespec="seconds")
+            if maj_le is not None and "maj_le" in d:
+                d["maj_le"] = maj_le.isoformat(timespec="seconds")
+            self._db.execute(f"UPDATE {table} SET donnees = ? WHERE id = ?", (json.dumps(d, ensure_ascii=False), obj_id))
+            self._db.commit()
+
     def reinitialiser(self) -> None:
         with self._verrou:
-            self._db.executescript("DELETE FROM besoins; DELETE FROM relations; DELETE FROM consentements; DELETE FROM journal;")
+            self._db.executescript("DELETE FROM besoins; DELETE FROM relations; DELETE FROM consentements; DELETE FROM profils; DELETE FROM journal;")
             self._journal("reinitialisation", "systeme", "", "Démo réinitialisée", [])
             self._db.commit()

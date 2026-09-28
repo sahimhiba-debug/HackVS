@@ -59,7 +59,7 @@ function carteOpportunite({ besoin: b, correspondance: c, relation: r }) {
       h("strong", {}, b.statut === "en_cours" ? "Besoin en cours" : "Nouveau besoin du Club"),
       h("span", {}, `Publié le ${dateCourte(b.cree_le)}` + (b.version > 1 ? ` · modifié (version ${b.version})` : ""))),
     h("div", { class: "accroche" },
-      h("h2", { class: "titre-opportunite" }, `${qui} cherche : ${principal ? (principal.type === "texte_libre" ? principal.valeur : principal.libelle.toLowerCase()) : "…"}`),
+      h("h2", { class: "titre-opportunite" }, `${qui} cherche : ${principal ? (principal.type === "texte_libre" ? principal.valeur : principal.libelle.charAt(0).toLowerCase() + principal.libelle.slice(1)) : "…"}`),
       h("p", { class: "aide" }, auteur.anonyme ? `${auteur.entreprise} · ${auteur.commune || "Valais"} · nom révélé si la personne accepte votre aide`
         : `${auteur.fonction ? auteur.fonction + " · " : ""}${auteur.entreprise} · ${auteur.commune}`)),
     c ? h("div", { class: "pont" },

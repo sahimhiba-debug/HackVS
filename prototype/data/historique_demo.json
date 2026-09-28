@@ -1,0 +1,19 @@
+{
+  "_avertissement": "HISTORIQUE FICTIF de démonstration (activité inventée sur 6 semaines), chargé uniquement à la demande depuis la vue du Club. Ne pas présenter comme des données réelles.",
+  "besoins": [
+    {"auteur": "p20", "jours": 40, "texte": "Je cherche un installateur de panneaux solaires pour l'atelier.", "aidant": "p22", "delai_h": 20, "resultat": "affaire_en_cours", "statut": "resolu"},
+    {"auteur": "p28", "jours": 35, "texte": "Je cherche quelqu'un pour créer une boutique en ligne pour nos vins.", "aidant": "p26", "delai_h": 6, "resultat": "utile", "statut": "resolu"},
+    {"auteur": "p12", "jours": 30, "texte": "Nous cherchons de l'aide pour l'automatisation de la saisie comptable.", "aidant": "p30", "delai_h": 30, "resultat": "utile", "statut": "resolu"},
+    {"auteur": "p10", "jours": 28, "texte": "Je cherche un financement pour notre croissance.", "aidant": "p23", "delai_h": 48, "resultat": "affaire_en_cours", "statut": "resolu"},
+    {"auteur": "p27", "jours": 25, "texte": "Je cherche un accompagnement vers la certification ISO 27001.", "statut": "retire"},
+    {"auteur": "p35", "jours": 20, "texte": "Je cherche une agence de marketing pour vendre notre miel en ligne.", "aidant": "p15", "delai_h": 4, "resultat": "utile", "statut": "resolu"},
+    {"auteur": "p14", "jours": 18, "texte": "Je cherche un traiteur pour notre apéro clients de 120 personnes.", "statut": "retire"},
+    {"auteur": "p02", "jours": 15, "texte": "Nous cherchons un avocat en droit du travail.", "aidant": "p13", "delai_h": 12, "resultat": "utile", "statut": "resolu"},
+    {"auteur": "p11", "jours": 12, "texte": "Nous cherchons un accompagnement ISO 27001 pour un client.", "statut": "retire"},
+    {"auteur": "p22", "jours": 10, "texte": "Je cherche un couvreur pour préparer des toitures avant la pose.", "statut": "retire"},
+    {"auteur": "p16", "jours": 8, "texte": "Je cherche une fiduciaire germanophone.", "aidant": "p12", "delai_h": 26, "resultat": "pas_pertinent", "statut": "retire"},
+    {"auteur": "p30", "jours": 6, "texte": "Je cherche un traiteur pour notre inauguration.", "statut": "retire"},
+    {"auteur": "p24", "jours": 3, "texte": "Je cherche un expert ISO 27001 pour protéger nos données clients.", "statut": "publie"},
+    {"auteur": "p29", "jours": 2, "texte": "Je cherche une entreprise de déneigement pour le parking.", "statut": "publie"}
+  ]
+}

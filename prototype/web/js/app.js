@@ -32,7 +32,8 @@ async function init() {
   $("#pied").textContent = "Prototype exploratoire préparé avant Hack VS 2026 · "
     + (c.donnees_fictives ? "données fictives, aucun message réel envoyé" : "mode réel");
   if (c.donnees_fictives) {
-    $("#pied").append(" · ", h("button", { class: "lien", type: "button", onclick: reinitialiser }, "Réinitialiser la démo"));
+    $("#pied").append(" · ", h("a", { href: "/club" }, "Vue du Club"), " · ", h("a", { href: "/scene" }, "Scène"),
+      " · ", h("button", { class: "lien", type: "button", onclick: reinitialiser }, "Réinitialiser la démo"));
     await installerPersona();
   }
   try { etat.moi = await api("/api/moi"); }
@@ -153,7 +154,7 @@ function ecouter() {
       const ev = JSON.parse(m.data);
       seq = ev.seq;
       if (ev.type === "reinitialisation") { location.reload(); return; }
-      const concerne = ev.concerne?.includes(etat.membreId) || ["besoin_publie", "besoin_modifie", "besoin_publier", "consentement"].includes(ev.type);
+      const concerne = ev.concerne?.includes(etat.membreId) || ["besoin_publie", "besoin_modifie", "besoin_publier", "consentement", "profil_modifie"].includes(ev.type);
       if (concerne && ev.acteur !== etat.membreId) rafraichir();
     };
     es.onerror = () => { es.close(); setTimeout(connecter, 2000); };

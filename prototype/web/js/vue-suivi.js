@@ -26,9 +26,9 @@ function carte(r) {
     ? (r.initiateur === "auteur" ? "Vous l'avez sollicité·e pour votre besoin" : "Vous propose son aide")
     : (r.initiateur === "aidant" ? "Vous proposez votre aide" : "Vous sollicite pour son besoin");
   const act = (action, corps = {}) => async (ev) => {
-    occupe(ev.currentTarget, "…");
+    occupe(ev.target.closest("button"), "…");
     try { await api(`/api/relations/${r.id}/${action}`, { corps }); emettre("rafraichir"); }
-    catch (e) { toast(e.message, "erreur"); libre(ev.currentTarget); }
+    catch (e) { toast(e.message, "erreur"); libre(ev.target.closest("button")); }
   };
   const boutons = [];
   if (r.etat === "proposee" && r.je_suis_destinataire) {

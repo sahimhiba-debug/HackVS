@@ -46,12 +46,12 @@ async function rendreDetail(b, relations) {
 
   const btnModifs = h("button", { class: "btn primaire", type: "button", hidden: true, onclick: async (ev) => {
     if (!aUneCompetence(brouillon.besoin)) { toast("Gardez au moins une compétence recherchée."); return; }
-    occupe(ev.currentTarget, "Enregistrement…");
+    occupe(ev.target.closest("button"), "Enregistrement…");
     try {
       await api(`/api/besoins/${b.id}`, { methode: "PUT", corps: { besoin: brouillon.besoin, anonyme: brouillon.anonyme } });
       toast(`Nouvelle version enregistrée (version ${b.version + 1}). Correspondances recalculées.`, "info");
       s.brouillon = null; emettre("rafraichir");
-    } catch (e) { toast(e.message, "erreur"); libre(ev.currentTarget); }
+    } catch (e) { toast(e.message, "erreur"); libre(ev.target.closest("button")); }
   } }, `Enregistrer les modifications (version ${b.version + 1})`);
   const btnAnnulerModifs = h("button", { class: "btn", type: "button", hidden: true, onclick: () => { s.brouillon = null; vueBesoins(); } }, "Annuler les modifications");
 
@@ -95,9 +95,9 @@ async function rendreDetail(b, relations) {
 
 function actionsBesoin(b, acceptees) {
   const act = (action, corps = {}) => async (ev) => {
-    occupe(ev.currentTarget, "…");
+    occupe(ev.target.closest("button"), "…");
     try { await api(`/api/besoins/${b.id}/${action}`, { corps }); emettre("rafraichir"); }
-    catch (e) { toast(e.message, "erreur"); libre(ev.currentTarget); }
+    catch (e) { toast(e.message, "erreur"); libre(ev.target.closest("button")); }
   };
   const res = [];
   if (b.statut === "brouillon") res.push(h("button", { class: "btn rouge petit", type: "button", onclick: act("publier") }, "Publier dans la Bourse"));
@@ -136,9 +136,9 @@ function actionCorrespondance(b, sug) {
 
 function carteOffre(r) {
   const act = (action) => async (ev) => {
-    occupe(ev.currentTarget, "…");
+    occupe(ev.target.closest("button"), "…");
     try { await api(`/api/relations/${r.id}/${action}`, { corps: {} }); emettre("rafraichir"); }
-    catch (e) { toast(e.message, "erreur"); libre(ev.currentTarget); }
+    catch (e) { toast(e.message, "erreur"); libre(ev.target.closest("button")); }
   };
   return h("article", { class: "relation a-faire" },
     h("div", { class: "tete" }, h("span", { class: "qui" }, `${r.autre?.nom} · ${r.autre?.entreprise}`),

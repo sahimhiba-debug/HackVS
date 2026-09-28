@@ -18,11 +18,11 @@ from pathlib import Path
 from typing import Literal, Optional
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import parser_llm, parser_rules
+from . import club, parser_llm, parser_rules
 from .baseline import rechercher_mots_cles
 from .matching import rechercher
 from .models import Besoin, Profil
@@ -55,9 +55,15 @@ app = FastAPI(title="Le Fil du Club (prototype exploratoire)", version="0.2.0")
 
 # ---------------------------------------------------------------- identité et données effectives
 def profils_effectifs() -> list[Profil]:
-    """Profils + consentements modifiés depuis l'application (retrait / réactivation)."""
-    surcharges = MAGASIN.consentements()
-    return [p.model_copy(update={"accepte_introductions": surcharges[p.id]}) if p.id in surcharges else p for p in PROFILS]
+    """Profils de référence + modifications faites dans l'application (profil, consentement)."""
+    consent, modifs = MAGASIN.consentements(), MAGASIN.profils_modifies()
+    res = []
+    for p in PROFILS:
+        maj = dict(modifs.get(p.id, {}))
+        if p.id in consent:
+            maj["accepte_introductions"] = consent[p.id]
+        res.append(Profil(**(p.model_dump() | maj)) if maj else p)
+    return res
 
 
 def profil(membre_id: str) -> Profil:
@@ -171,6 +177,55 @@ def api_consentement(e: EntreeConsentement, x_membre: Optional[str] = Header(Non
     p = moi(x_membre)
     annulees = MAGASIN.changer_consentement(p.id, e.accepte)
     return {"accepte_introductions": e.accepte, "relations_annulees": annulees}
+
+
+class EntreeTexte(BaseModel):
+    texte: str
+
+
+class OffreSaisie(BaseModel):
+    concept: Optional[str] = None
+    texte: str
+
+
+class EntreeProfil(BaseModel):
+    offre: list[OffreSaisie]
+    recherche: list[OffreSaisie] = []
+    zones_service: list[str] = []
+    langues: list[str] = []
+    presentation: Optional[str] = None
+
+
+@app.post("/api/profil/analyser")
+def analyser_profil(e: EntreeTexte):
+    """Profil en 30 secondes : description libre → proposition (rien n'est enregistré)."""
+    texte = e.texte.strip()
+    if not texte:
+        raise HTTPException(422, "Décrivez votre entreprise en quelques phrases.")
+    if len(texte) > 3000:
+        raise HTTPException(422, "Texte trop long (3 000 caractères maximum).")
+    return parser_rules.extraire_profil(texte, TAX) | {"analyseur": "regles"}
+
+
+@app.put("/api/moi/profil")
+def modifier_profil(e: EntreeProfil, x_membre: Optional[str] = Header(None)):
+    """Enregistre le profil VALIDÉ par le membre. Vocabulaire fermé vérifié côté serveur."""
+    m = moi(x_membre)
+    for o in e.offre + e.recherche:
+        if o.concept is not None and o.concept not in TAX.concepts:
+            raise HTTPException(422, f"Compétence inconnue : {o.concept}")
+        if not o.texte.strip() or len(o.texte) > 300:
+            raise HTTPException(422, "Chaque offre doit avoir un texte (300 caractères maximum).")
+    if any(z not in TAX.zones for z in e.zones_service) or any(l not in TAX.langues for l in e.langues):
+        raise HTTPException(422, "Zone ou langue inconnue.")
+    if not e.offre:
+        raise HTTPException(422, "Gardez au moins une offre : c'est ce qui permet aux autres membres de vous trouver.")
+    champs = {"offre": [o.model_dump() for o in e.offre], "recherche": [o.model_dump() for o in e.recherche],
+              "zones_service": list(dict.fromkeys(e.zones_service)), "langues": list(dict.fromkeys(e.langues))}
+    if e.presentation is not None:
+        champs["presentation"] = e.presentation.strip()[:600]
+    MAGASIN.modifier_profil(m.id, champs)
+    return profil(m.id).model_dump()
 
 
 # ---------------------------------------------------------------- analyse du besoin
@@ -474,6 +529,23 @@ async def flux(request: Request, depuis: int = 0):
     return StreamingResponse(generateur(), media_type="text/event-stream", headers={"Cache-Control": "no-cache"})
 
 
+# ---------------------------------------------------------------- vue du Club (animation)
+@app.get("/api/club/tableau")
+def tableau_club():
+    if MODE != "demo":
+        raise HTTPException(501, "Vue du Club : rôle d'animateur·rice authentifié non implémenté.")
+    return club.tableau(MAGASIN, profils_effectifs(), TAX) | {"donnees_fictives": True}
+
+
+@app.post("/api/demo/historique")
+def charger_historique():
+    if MODE != "demo":
+        raise HTTPException(403, "Historique fictif réservé au mode démo.")
+    MAGASIN.reinitialiser()
+    n = club.charger_historique(MAGASIN, profils_effectifs(), TAX)
+    return {"besoins_charges": n}
+
+
 @app.post("/api/demo/reinitialiser")
 def reinitialiser():
     if MODE != "demo":
@@ -495,6 +567,51 @@ def index():
 @app.get("/favicon.ico")
 def favicon():
     return FileResponse(WEB / "favicon.svg", media_type="image/svg+xml")
+
+
+CAPTURES = RACINE.parent / "docs" / "captures"
+if CAPTURES.exists():
+    app.mount("/captures", StaticFiles(directory=CAPTURES), name="captures")
+
+
+def _url_publique(request: Request) -> str:
+    return os.environ.get("HACKVS_URL_PUBLIQUE") or str(request.base_url).rstrip("/")
+
+
+@app.get("/api/qr.svg")
+def qr(request: Request, chemin: str = "/"):
+    """QR code généré localement (aucun service externe) vers l'URL publique de l'application."""
+    import io
+
+    import qrcode
+    import qrcode.image.svg
+    if not chemin.startswith("/"):
+        raise HTTPException(422, "Chemin relatif attendu.")
+    img = qrcode.make(_url_publique(request) + chemin, image_factory=qrcode.image.svg.SvgPathImage, box_size=12, border=2)
+    tampon = io.BytesIO()
+    img.save(tampon)
+    return Response(tampon.getvalue(), media_type="image/svg+xml")
+
+
+@app.get("/rejoindre", response_class=HTMLResponse)
+def rejoindre(request: Request):
+    url = _url_publique(request)
+    return f"""<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Essayer · Le Fil du Club</title><link rel="icon" href="/favicon.ico" type="image/svg+xml"><link rel="stylesheet" href="/static/app.css">
+<style>.qr{{display:grid;place-items:center;gap:16px;text-align:center;padding:32px 16px}}.qr img{{width:min(70vw,420px);background:#fff;padding:12px;border:2px solid var(--encre);border-radius:6px}}</style>
+</head><body><main class="qr"><p class="surtitre">Le Fil du Club · démonstration</p><h1>Essayez-le<br>sur votre téléphone</h1>
+<img src="/api/qr.svg?chemin=/" alt="QR code vers {url}"><p class="sous">{url}</p>
+<p>Vous incarnez un membre <strong>fictif</strong> (choix en haut de l'écran). Aucune donnée réelle, aucun message envoyé.</p></main></body></html>"""
+
+
+@app.get("/presentation")
+def presentation():
+    return FileResponse(WEB / "presentation.html")
+
+
+@app.get("/club")
+def page_club():
+    return FileResponse(WEB / "club.html")
 
 
 @app.get("/scene")

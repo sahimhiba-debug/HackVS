@@ -229,3 +229,61 @@ def analyser(texte: str, tax: Taxonomie) -> Besoin:
         ambiguites=ambiguites, contexte=list(dict.fromkeys(contexte)), analyseur="regles",
         avertissements=avertissements,
     )
+
+
+# ---------------------------------------------------------------------------- profil en 30 secondes
+_OFFRE_PROFIL = re.compile(
+    r"\b(?:nous|on|je)\s+(?:assurons|proposons|offrons|livrons|realisons|effectuons|faisons|installons|accompagnons|"
+    r"transportons|fournissons|louons|organisons|vendons|produisons|fabriquons|conseillons|intervenons|travaillons|"
+    r"sommes specialis\w*|sommes)\b|\bspecialis|\bservice(?:s)? de\b|\bnotre (?:offre|metier|specialite)\b"
+)
+_CHERCHE_PROFIL = re.compile(r"\b(?:cherchons|recherchons|cherche|recherche|aimerions trouver|avons besoin|besoin de)\b")
+
+
+def extraire_profil(texte: str, tax: Taxonomie) -> dict:
+    """Description libre d'une entreprise → offres, recherches, zones d'intervention, langues PROPOSÉES.
+
+    Chaque offre garde la phrase d'origine comme texte : c'est elle qui servira de preuve, mot pour mot.
+    Rien n'est enregistré sans validation du membre.
+    """
+    offres, recherches, zones, langues, ignorees = [], [], [], [], []
+    for m in _PHRASE.finditer(texte):
+        phrase = m.group(0).strip().rstrip(".!?").strip()
+        if len(phrase) < 4:
+            continue
+        n, _ = normaliser(phrase)
+        cible = recherches if _CHERCHE_PROFIL.search(n) else offres
+        trouves: list[tuple[int, str]] = []
+        pris: list[tuple[int, int]] = []
+        for expr, cid in sorted(((e, c.id) for c in tax.concepts.values() for e in c.expressions), key=lambda x: -len(x[0])):
+            for mm in motif(expr).finditer(n):
+                if _chevauche(mm.start(), mm.end(), pris):
+                    continue
+                pris.append((mm.start(), mm.end()))
+                d, _f = _clause(n, mm.start())
+                if not _NEGATION_AVANT.search(n[d:mm.start()]):
+                    trouves.append((mm.start(), cid))
+        concepts = list(dict.fromkeys(cid for _, cid in sorted(trouves)))
+        # garder le plus précis quand un concept et sa sous-catégorie sont présents
+        concepts = [c for c in concepts if not any(c in tax.ancetres(o) for o in concepts)]
+        for cid in concepts:
+            cible.append({"concept": cid, "libelle": tax.libelle(cid), "texte": phrase})
+        lieu_ou_langue = any(motif(e).search(n) for ex in tax.zones.values() for e in ex) or any(
+            motif(normaliser(e)[0]).search(n) for spec in tax.langues.values() for e in spec["expressions"])
+        if not concepts:
+            if lieu_ou_langue and cible is offres:
+                pass  # phrase de contexte (« nous intervenons en Valais ») : renseigne zones et langues, pas une offre
+            elif cible is offres and _OFFRE_PROFIL.search(n):
+                offres.append({"concept": None, "libelle": "Hors catalogue (recherche par mots)", "texte": phrase})
+            elif cible is recherches:
+                recherches.append({"concept": None, "libelle": "Hors catalogue", "texte": phrase})
+            else:
+                ignorees.append(phrase)
+        for zone, exprs in tax.zones.items():
+            if zone not in zones and any(motif(e).search(n) for e in exprs) and cible is offres:
+                zones.append(zone)
+        for code, spec in tax.langues.items():
+            if code not in langues and any(motif(normaliser(e)[0]).search(n) for e in spec["expressions"]):
+                langues.append(code)
+    return {"offre": offres, "recherche": recherches, "zones_service": zones, "langues": langues,
+            "phrases_ignorees": ignorees}

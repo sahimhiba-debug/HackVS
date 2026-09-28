@@ -178,15 +178,55 @@ def test_le_serveur_refuse_un_critere_invente():
     assert client.post("/api/besoins", json={"besoin": b, "publier": True}, headers=SOPHIE).status_code == 422
 
 
+def test_profil_en_30_secondes_met_la_bourse_a_jour():
+    b = publier("Je cherche un transporteur frigorifique pour livrer Genève.")
+    chloe = {"X-Membre": "p15"}
+    assert client.get("/api/bourse", headers=chloe).json() == []
+    prop = client.post("/api/profil/analyser", json={"texte": (
+        "Nous livrons des produits frais en camion frigorifique en Valais et à Genève. Nous parlons français et allemand. "
+        "Nous ne faisons pas de déménagements. Nous cherchons des chauffeurs.")}).json()
+    assert [o["concept"] for o in prop["offre"]] == ["transport_frigorifique"]
+    assert set(prop["zones_service"]) == {"Valais", "Suisse romande"} and set(prop["langues"]) == {"fr", "de"}
+    assert "Nous ne faisons pas de déménagements" in prop["phrases_ignorees"] and prop["recherche"]
+    # rien n'est enregistré par l'analyse ; l'enregistrement valide le vocabulaire
+    assert client.put("/api/moi/profil", json={"offre": [{"concept": "teleportation", "texte": "x"}]}, headers=chloe).status_code == 422
+    r = client.put("/api/moi/profil", json={"offre": prop["offre"], "zones_service": prop["zones_service"], "langues": prop["langues"]}, headers=chloe)
+    assert r.status_code == 200
+    bourse = client.get("/api/bourse", headers=chloe).json()
+    assert [x["besoin"]["id"] for x in bourse] == [b["id"]]
+    assert bourse[0]["correspondance"]["preuves"][0]["extrait"] == prop["offre"][0]["texte"]  # la phrase devient la preuve
+
+
+def test_vue_du_club_calcule_les_competences_a_recruter():
+    assert client.post("/api/demo/historique").json()["besoins_charges"] == 14
+    t = client.get("/api/club/tableau").json()
+    assert t["a_recruter"][0]["competence"] == "Accompagnement certification ISO 27001" and t["a_recruter"][0]["demandes"] == 3
+    assert t["besoins"]["total"] == 14 and t["taux_resolution"] == {"resolus": 6, "clos": 12}
+    assert "nom" not in str(t["a_recruter"])  # agrégats seulement
+    # l'historique fictif ne pollue pas la Bourse de la démo principale
+    assert client.get("/api/bourse", headers=JULIEN).json() == []
+    # un membre qui ajoute la compétence manquante la retire de la liste « à recruter »
+    client.put("/api/moi/profil", json={"offre": [{"concept": "certification_iso27001", "texte": "Nous accompagnons les PME vers ISO 27001"}],
+                                        "zones_service": ["Valais"], "langues": ["fr"]}, headers={"X-Membre": "p10"})
+    t = client.get("/api/club/tableau").json()
+    assert all("ISO 27001" not in m["competence"] for m in t["a_recruter"])
+
+
+def test_qr_code_local():
+    r = client.get("/api/qr.svg?chemin=/")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("image/svg")
+    assert client.get("/api/qr.svg?chemin=https://ailleurs.example").status_code == 422
+
+
 def test_mode_reel_ne_simule_rien(tmp_path: Path):
     code = ("from fastapi.testclient import TestClient; from app.main import app; c=TestClient(app); "
             "print(c.get('/api/moi').status_code, c.get('/api/membres').status_code, c.post('/api/demo/reinitialiser').status_code, "
-            "c.get('/api/journal').status_code)")
+            "c.get('/api/journal').status_code, c.get('/api/club/tableau').status_code)")
     env = {**os.environ, "HACKVS_MODE": "reel", "HACKVS_DB": ":memory:"}
     env.pop("HACKVS_PROFILS", None)
     sortie = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True,
                             cwd=Path(__file__).resolve().parent.parent).stdout.split()
-    assert sortie == ["503", "501", "403", "501"]  # le journal (identités) n'est pas exposé hors démo
+    assert sortie == ["503", "501", "403", "501", "501"]  # le journal (identités) n'est pas exposé hors démo
 
 
 # ---------------------------------------------------------------- analyse par Claude (client simulé)

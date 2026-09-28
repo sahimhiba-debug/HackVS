@@ -1,0 +1,6 @@
+.git
+**/__pycache__
+**/.pytest_cache
+prototype/var
+prototype/.venv
+docs/captures/*.webm
