@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends libsodium23 && 
 RUN pip install --no-cache-dir -r prototype/requirements.txt
 COPY prototype/app prototype/app
 COPY prototype/experiences prototype/experiences
+COPY prototype/plateforme prototype/plateforme
+COPY prototype/adaptateurs prototype/adaptateurs
 COPY prototype/data prototype/data
 COPY prototype/web prototype/web
 COPY docs/captures docs/captures
