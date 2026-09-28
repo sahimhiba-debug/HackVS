@@ -158,6 +158,34 @@ de fabriquer des rencontres). Seuls de nouveaux besoins publiés le renouvellent
 cherche à provoquer. Non mesuré : si de vrais membres acceptent les relances et se revoient ; la décroissance des liens
 (demi-vie 30 jours) est une hypothèse de modélisation, pas une mesure.
 
+## 6 quater. Recommandation de connexions : optimiseur contre baselines (`python -m eval.benchmark_reseau`)
+
+**SYNTHETIC_BENCHMARK** — aucune donnée du Club. 60 membres générés, 4 communautés denses reliées par de rares ponts,
+6 membres « populaires », 8 nouveaux sans relation, 20 % d'offres déclarées mais périmées, 10 % sans consentement.
+Toutes les méthodes : mêmes candidats (consentement des deux, pas déjà en relation, au moins un besoin déclaré
+couvert), même budget (≤ 2 introductions par membre). Utilité mesurée contre une vérité LATENTE que personne ne voit.
+Moyennes sur 5 réseaux ; détail : `prototype/eval/resultats_benchmark_reseau.md`.
+
+| Méthode | Intros | Utiles % | Réciproques % | Membres servis (besoin) | Ponts % | Nouveauté % | Isolés restants (sur 11,2) | ms |
+|---|---|---|---|---|---|---|---|---|
+| aléatoire | 47,2 | 85,4 | 2,2 | 32,0 | 82,8 | 91,4 | 1,4 | 0,1 |
+| similarité (« des gens comme vous ») | 47,4 | 84,8 | 12,6 | 33,6 | 67,7 | 88,2 | 1,8 | 0,5 |
+| pertinence gloutonne | 48,4 | 87,2 | 13,1 | 34,4 | 86,3 | 90,3 | 2,0 | 0,4 |
+| réciprocité gloutonne | 47,6 | 88,6 | **17,8** | 35,0 | 86,0 | 90,6 | 2,4 | 0,5 |
+| graphe (ami d'ami) | 47,2 | 85,3 | 10,3 | 32,2 | 70,5 | 64,6 | 2,8 | 0,8 |
+| **optimiseur (plateforme)** | **52,2** | **89,3** | 16,3 | **37,4** | **95,7** | **95,0** | **1,0** | 365 |
+
+Lecture honnête :
+- une première version comparait des candidats DIFFÉRENTS (les baselines complétaient leur budget avec des paires sans
+  besoin couvert) : l'écart d'utilité était gonflé (89 % contre 21-80 %). Corrigé ; l'écart réel est faible (89 % contre 85-89 %) ;
+- l'optimiseur gagne sur plusieurs axes à la fois (introductions possibles sous le même budget, membres servis, ponts,
+  nouveauté, isolés) ; il PERD sur la réciprocité face à la baseline qui ne vise qu'elle (16,3 % contre 17,8 %) : c'est
+  l'arbitrage réciprocité ↔ ponts ; il est 1 000 fois plus lent (0,4 s, acceptable hors ligne) ;
+- « ami d'ami » enferme : nouveauté 65 %, ponts 70 % ; « similarité » aussi (ponts 68 %) : chambre d'écho mesurée ;
+- le biais vers les membres populaires n'est PAS discriminé ici (≈ 21 % pour toutes les méthodes) : le budget par
+  membre, commun à toutes, le neutralise. On ne revendique rien sur ce point ;
+- la frontière de Pareto n'est plus dégénérée : 3 à 10 points supportés selon le réseau (médiane 9).
+
 ## 7. Sécurité, confidentialité, agent (tests automatisés)
 
 | Propriété | Comment c'est vérifié |
