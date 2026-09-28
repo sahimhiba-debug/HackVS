@@ -1,0 +1,19 @@
+{
+  "_avertissement": "Jeu RÉSERVÉ rédigé le 28.09.2026 APRÈS les corrections du lot 2, avec des formulations volontairement différentes des jeux précédents. Exécuté une seule fois ; AUCUNE correction ne doit être faite à partir de ses résultats avant l'audit. Toujours rédigé par Claude, donc pas indépendant.",
+  "cas": [
+    {"id": "r_agents_entree", "categorie": "paraphrase", "texte": "Salut, on organise une soirée clients et il nous faudrait des agents pour gérer l'entrée.", "attendus": ["p18"], "interdits": ["p10", "p19"], "abstention": false},
+    {"id": "r_boutique", "categorie": "sans verbe de recherche", "texte": "Qui pourrait nous aider à refaire notre boutique en ligne ?", "attendus": ["p26"], "interdits": [], "abstention": false},
+    {"id": "r_comptable_viege", "categorie": "contraintes", "texte": "Nous cherchons un comptable qui parle allemand pour notre filiale de Viège.", "attendus": ["p12"], "interdits": [], "abstention": false},
+    {"id": "r_photovoltaique", "categorie": "paraphrase", "texte": "On aimerait installer des panneaux photovoltaïques sur le toit de la cave.", "attendus": ["p22"], "interdits": [], "abstention": false},
+    {"id": "r_droit_societes", "categorie": "familier", "texte": "Besoin d'un coup de main pour nos contrats : quelqu'un de calé en droit des sociétés ?", "attendus": ["p13"], "interdits": [], "abstention": false},
+    {"id": "r_chariots", "categorie": "paraphrase", "texte": "Je cherche un loueur de chariots élévateurs pour la saison des abricots.", "attendus": ["p25"], "interdits": ["p26"], "abstention": false},
+    {"id": "r_epiceries_zurich", "categorie": "hors vocabulaire", "texte": "Je cherche un partenaire pour vendre nos jus dans les épiceries fines zurichoises, idéalement bilingue.", "attendus": ["p32"], "interdits": [], "abstention": false},
+    {"id": "r_formateur_apprentis", "categorie": "absent", "texte": "Il nous faudrait un formateur pour nos apprentis en logistique.", "attendus": [], "interdits": ["p01", "p05", "p20"], "abstention": true},
+    {"id": "r_traduire_site", "categorie": "paraphrase", "texte": "Je veux faire traduire notre site en allemand.", "attendus": ["p16"], "interdits": [], "abstention": false},
+    {"id": "r_chambres_froides", "categorie": "faux ami inverse", "texte": "Nous recherchons un spécialiste des chambres froides pour une panne.", "attendus": ["p03"], "interdits": ["p01", "p02"], "abstention": false},
+    {"id": "r_allemand", "categorie": "allemand", "texte": "Wir suchen einen Kühltransport nach Zürich.", "attendus": ["p01"], "interdits": ["p03"], "abstention": false},
+    {"id": "r_veterinaire", "categorie": "absent", "texte": "Je cherche un vétérinaire pour mes vaches.", "attendus": [], "interdits": [], "abstention": true},
+    {"id": "r_wifi", "categorie": "ambiguïté résolue", "texte": "Je cherche quelqu'un pour sécuriser notre réseau wifi.", "attendus": ["p11", "p10"], "interdits": ["p18", "p19"], "abstention": false},
+    {"id": "r_fiduciaire_pas_sion", "categorie": "négation de lieu", "texte": "Nous cherchons une fiduciaire mais surtout pas à Sion.", "attendus": ["p12"], "interdits": [], "abstention": false}
+  ]
+}
