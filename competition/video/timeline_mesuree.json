@@ -13,7 +13,7 @@
  },
  {
   "etape": 2,
-  "debut_s": 16.6,
+  "debut_s": 16.5,
   "duree_s": 12.0,
   "texte": "Sophie rejoint le Club. Elle ne connaît personne. Le système propose un profil, elle le corrige. Par défaut, elle est invisible."
  },
@@ -31,7 +31,7 @@
  },
  {
   "etape": 5,
-  "debut_s": 54.2,
+  "debut_s": 54.1,
   "duree_s": 11.0,
   "texte": "Il ne donne pas le numéro de Markus. Et pour le Japon, il s'abstient : plutôt aucune proposition qu'un mauvais contact."
  },
@@ -43,13 +43,13 @@
  },
  {
   "etape": 7,
-  "debut_s": 73.5,
+  "debut_s": 73.4,
   "duree_s": 9.0,
   "texte": "Markus accepte. Les coordonnées sont partagées maintenant — pas avant. Une relation naît dans le graphe."
  },
  {
   "etape": 8,
-  "debut_s": 82.7,
+  "debut_s": 82.6,
   "duree_s": 8.0,
   "texte": "Ils se rencontrent. La relation garde son contexte : où, quand, pourquoi."
  },
@@ -61,25 +61,25 @@
  },
  {
   "etape": 10,
-  "debut_s": 105.1,
+  "debut_s": 105.0,
   "duree_s": 9.0,
   "texte": "Markus donne suite. Sophie note une affaire en cours : une opportunité, pas encore un résultat."
  },
  {
   "etape": 11,
-  "debut_s": 114.5,
+  "debut_s": 114.4,
   "duree_s": 15.0,
   "texte": "Le réseau voit ce qu'aucun membre ne voit seul : une présentation, proposée d'abord à Markus. Et un micro-cercle de cinq personnes, avec ses inconnues."
  },
  {
   "etape": 12,
-  "debut_s": 129.7,
+  "debut_s": 129.5,
   "duree_s": 10.0,
   "texte": "Avant d'agir, on simule : deux groupes n'en forment plus qu'un. L'humain décide."
  },
  {
   "etape": 12,
-  "debut_s": 139.7,
+  "debut_s": 139.5,
   "duree_s": 7.0,
   "texte": "Chaque événement crée des rencontres. Nous faisons en sorte qu'elles deviennent quelque chose."
  }

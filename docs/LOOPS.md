@@ -106,3 +106,23 @@ Concurrence vérifiée par recherche web : mise en relation IA et communauté 36
 différenciation.
 
 **Mesures.** 111 tests ; 20/20 ; claims vérifiées ; pitch 3 min ≈ 171 s estimé, démo dès ≈ 22 s, jargon 1,3 %.
+
+## BOUCLE 5 — red team finale (confidentialité, adversarial, démo)
+
+**Défauts trouvés.**
+- Confidentialité : le graphe de la scène dessinait différemment le membre qui refuse les introductions (drapeau de
+  consentement exposé par la vue), en contradiction avec la carte « ni nommé ». Test rouge vérifié sur l'ancien code →
+  drapeau retiré → vert ; vidéo réenregistrée.
+- Historique contradictoire : un refus ancien écrasait une relation devenue vivante. Test rouge → un terminal ne vaut que
+  s'il est postérieur au dernier progrès → vert.
+- Le chiffre « défauts corrigés » du pitch aurait pu devenir périmé : contrôle renforcé (égalité exacte cité =
+  documenté).
+
+**Ajouts.** Matrice des 30 scénarios adversariaux (26 couverts, 3 partiels, 1 non couvert : collision d'événements),
+tests de relation expirée et d'opportunité ancienne.
+
+**Mesures.** 111 → 116 tests ; lint ; 20/20 ; évaluations ; registre des preuves vérifié ; scène attaquée deux fois
+dans le navigateur (bureau et mobile) sans défaut ; vidéo 144 s réenregistrée depuis un serveur neuf.
+
+**Critères de sortie.** A ✓ B ✓ C ✓ D ✓ (routes de démonstration réservées au mode démo) E ✓ F ✓ G ✓ H ✓ I ✓ (matrice,
+1 manque déclaré) J ✓ (aucun défaut critique connu laissé ; limites déclarées dans 16_LIMITATIONS) K ✓ L ✓ M ✓ N ✓ O ✓ P ✓.

@@ -277,8 +277,8 @@ def vue(w: Monde, pos: dict) -> dict:
     t = w.synchroniser()
     g = w.graphe()
     ids = w.par_id()
-    noeuds = [{"id": n, "nom": ids[n].nom if n in ids else n, "x": pos[n][0], "y": pos[n][1], "present": n in ids,
-               "consent": ids[n].accepte_introductions if n in ids else None} for n in pos]
+    # Aucun drapeau de consentement dans la vue : qui refuse les introductions ne doit pas se DEVINER sur le graphe.
+    noeuds = [{"id": n, "nom": ids[n].nom if n in ids else n, "x": pos[n][0], "y": pos[n][1], "present": n in ids} for n in pos]
     liens = [{"a": a, "b": b, "statut": d["statut"].value, "types": sorted(d["types"]),
               "force": me.force(d["derniere"], t)} for a, b, d in sorted(g.edges(data=True))]
     return {"etape": w.etape, "total": len(ETAPES), "le": t.isoformat(), "horloge": "SIMULEE",

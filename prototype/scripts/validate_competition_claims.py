@@ -52,6 +52,9 @@ def _pytest(cible: str) -> tuple[bool, str]:
     return r.returncode == 0, (r.stdout.strip().splitlines() or ["?"])[-1]
 
 
+texte_courant: dict = {"texte": ""}
+
+
 def controle(nom: str) -> tuple[bool, str]:
     import time
     if nom == "aucun":
@@ -109,9 +112,10 @@ def controle(nom: str) -> tuple[bool, str]:
         r = subprocess.run([sys.executable, "-m", "pytest", "-q", "--collect-only"], cwd=PROTO, capture_output=True, text=True, env=os.environ)
         n = int(re.search(r"(\d+) tests? collected", r.stdout).group(1))
         return n >= 100, f"{n} tests"
-    if nom == "failures_18":
+    if nom == "failures_exact":  # le nombre CITÉ doit être exactement le nombre documenté (jamais périmé)
         n = len(re.findall(r"^\| \d+ \|", (COMP / "FAILURES.md").read_text(encoding="utf-8"), re.M))
-        return n >= 18, f"{n} défauts documentés"
+        cite = int(re.search(r"corrigé (\d+) défauts", texte_courant["texte"]).group(1))
+        return n == cite, f"{n} défauts documentés, {cite} cités"
     return False, f"contrôle inconnu : {nom}"
 
 
@@ -130,6 +134,7 @@ def main() -> None:
             ok, detail = True, "non exécuté (--sans-benchmark)"
         else:
             try:
+                texte_courant["texte"] = c["texte"]
                 ok, detail = controle(c["controle"])
             except Exception as e:  # un contrôle qui plante est un échec
                 ok, detail = False, f"{type(e).__name__}: {e}"

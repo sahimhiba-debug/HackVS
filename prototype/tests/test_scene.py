@@ -72,3 +72,11 @@ def test_scene_ne_montre_aucun_champ_prive():
     v = client.post(f"/api/stage/aller/{len(stage.ETAPES)}").json()
     texte = json.dumps(v, ensure_ascii=False)
     assert "creneaux" not in texte and "mar-matin" not in texte and "@" not in texte
+
+
+def test_le_graphe_ne_trahit_pas_qui_refuse_les_introductions():
+    """La carte dit « ni nommé, ni proposé » : le graphe ne doit pas le laisser deviner (défaut trouvé en red team)."""
+    v = client.post(f"/api/stage/aller/{len(stage.ETAPES)}").json()
+    assert all(set(n) == {"id", "nom", "x", "y", "present"} for n in v["noeuds"])
+    html = (stage.DATA_DIR.parent / "web" / "stage.html").read_text(encoding="utf-8")
+    assert ".consent" not in html and ".refus" not in html and '" refus"' not in html

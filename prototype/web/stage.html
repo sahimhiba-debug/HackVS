@@ -24,7 +24,6 @@
     .noeud circle { fill: var(--surface); stroke: var(--encre-2); stroke-width: 2; transition: r .3s; }
     .noeud.sophie circle { fill: var(--rouge); stroke: var(--rouge-fonce); }
     .noeud.focus circle { stroke: var(--rouge); stroke-width: 3.5; }
-    .noeud.refus circle { stroke-dasharray: 3 3; }
     .noeud text { font-size: 13px; fill: var(--encre); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; font-weight: 600; }
     .noeud.sophie text { font-weight: 800; }
     .carte-etape { background: var(--surface); border: 1.5px solid var(--ligne); border-radius: var(--rayon); padding: 22px 24px; min-height: 60vh; }
@@ -131,7 +130,7 @@
       for (const n of vue.noeuds) {
         if (!n.present) continue;
         const [x, y] = P[n.id];
-        const g = el("g", { class: `noeud${n.id === SOPHIE ? " sophie" : ""}${focus.has(n.id) ? " focus" : ""}${n.consent === false ? " refus" : ""}` });
+        const g = el("g", { class: `noeud${n.id === SOPHIE ? " sophie" : ""}${focus.has(n.id) ? " focus" : ""}` });
         g.append(el("circle", { cx: x, cy: y, r: n.id === SOPHIE ? 13 : focus.has(n.id) ? 11 : 8 }));
         const droite = x > W * 0.72;                          // étiquette côté intérieur : jamais coupée au bord
         const t = el("text", { x: droite ? x - 14 : x + 14, y: y + 4, "text-anchor": droite ? "end" : "start" }); t.textContent = court(noms[n.id]); g.append(t);

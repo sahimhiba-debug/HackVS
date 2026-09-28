@@ -89,28 +89,36 @@ LIBELLES = {
 
 
 def etat_relation(m: Memoire, a: str, b: str, maintenant: date) -> dict:
+    """État courant dérivé des FAITS, dans l'ordre chronologique. Un refus ou un « sans suite » n'est terminal que s'il
+    est POSTÉRIEUR au dernier progrès : un refus ancien n'efface pas une relation devenue vivante (historique
+    contradictoire), et il reste visible dans les faits."""
     k = cle(a, b)
-    evs = [e for e in m.evenements(jusqu_au=maintenant) if len(e.acteurs) >= 2 and cle(*e.acteurs[:2]) == k]
+    evs = sorted((e for e in m.evenements(jusqu_au=maintenant) if len(e.acteurs) >= 2 and cle(*e.acteurs[:2]) == k),
+                 key=lambda e: (e.le, e.seq))
     atteint, derniere, faits = -1, None, []
-    terminal = None
-    for e in evs:
+    terminal, rang_terminal, rang_progres = None, -1, -1
+    for i, e in enumerate(evs):
         etape = {"OPPORTUNITE_OUVERTE": "RECOMMANDEE", "INTRO_DEMANDEE": "INTRO_DEMANDEE", "INTRO_ACCEPTEE": "INTRO_ACCEPTEE",
                  "RENCONTRE": "RENCONTREE", "RENCONTRE_CONFIRMEE": "RENCONTREE", "SUIVI": "SUIVI"}.get(e.type)
         if e.type == "RESULTAT":
             etape = {"affaire_en_cours": "OPPORTUNITE", "utile": "RESULTAT_UTILE"}.get(e.donnees.get("resultat"))
             if e.donnees.get("resultat") == "pas_pertinent":
-                terminal = "SANS_SUITE"
+                terminal, rang_terminal = "SANS_SUITE", i
         if e.type == "INTRO_DECLINEE":
-            terminal = "DECLINEE"
+            terminal, rang_terminal = "DECLINEE", i
         if e.type == "RELANCE_REFUSEE":
-            terminal = terminal or "PAS_MAINTENANT"
+            terminal, rang_terminal = "PAS_MAINTENANT", i
         if etape:
             atteint = max(atteint, ORDRE.index(etape))
+            if etape not in ("RECOMMANDEE", "INTRO_DEMANDEE"):   # une nouvelle DEMANDE n'annule pas un refus
+                rang_progres = i
         if e.type in ("RENCONTRE", "SUIVI", "INTRO_ACCEPTEE", "RESULTAT", "RENCONTRE_CONFIRMEE"):
             derniere = e.le if derniere is None else max(derniere, e.le)
         faits.append({"le": e.le.isoformat(), "type": e.type, "statut": e.statut.value,
                       **({"evenement": e.donnees["evenement"]} if "evenement" in e.donnees else {}),
                       **({"resultat": e.donnees["resultat"]} if "resultat" in e.donnees else {})})
+    if rang_terminal < rang_progres:          # le progrès est plus récent que le refus : le refus ne gouverne plus
+        terminal = None
     etat = ORDRE[atteint] if atteint >= 0 else "AUCUNE"
     if terminal and terminal != "PAS_MAINTENANT":
         etat = terminal
