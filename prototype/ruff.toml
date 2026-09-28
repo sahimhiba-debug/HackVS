@@ -1,0 +1,10 @@
+# Lint : erreurs réelles (pyflakes), pièges courants (bugbear), style PEP 8 de base.
+line-length = 160
+target-version = "py311"
+exclude = ["var"]
+
+[lint]
+select = ["E", "F", "W", "B"]
+# Choix de style assumés dans ce code compact : lambdas nommées courtes, `l` en compréhension,
+# plusieurs instructions par ligne dans les boucles de construction de contraintes.
+ignore = ["E731", "E741", "E702"]

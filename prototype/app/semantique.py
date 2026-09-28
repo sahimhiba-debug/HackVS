@@ -154,7 +154,7 @@ class IndexOffres:
         manquants = [t for t in textes if cle(t) not in connus]
         if manquants:
             v = encodeur().encoder([f"passage: {t}" for t in manquants])
-            for t, x in zip(manquants, v):
+            for t, x in zip(manquants, v, strict=True):
                 connus[cle(t)] = x
             CACHE.mkdir(parents=True, exist_ok=True)
             np.savez(cache, **connus)

@@ -83,11 +83,13 @@ def generer(n: int, graine: int = 2026) -> dict:
             if s2 != s:
                 offres.append({"concept": s2, "texte": rng.choice(OFFRES[s2])})
         besoins = BESOINS_TYPE.get(s, [])
-        recherche = [{"concept": c, "texte": f"Nous cherchons : {LIBELLES.get(c, c).lower()}"} for c in rng.sample(besoins, k=min(len(besoins), rng.choice([0, 1, 1, 2])))]
+        tires = rng.sample(besoins, k=min(len(besoins), rng.choice([0, 1, 1, 2])))
+        recherche = [{"concept": c, "texte": f"Nous cherchons : {LIBELLES.get(c, c).lower()}"} for c in tires]
         langues = ["de"] + (["fr"] if rng.random() < 0.5 else []) if region == "haut" else ["fr"] + (["de"] if rng.random() < 0.4 else [])
         if rng.random() < 0.2:
             langues.append("en")
-        zones = ["Valais"] + (["Suisse romande"] if rng.random() < 0.5 else []) + (["Suisse alémanique"] if rng.random() < (0.7 if region == "haut" else 0.3) else [])
+        zones = (["Valais"] + (["Suisse romande"] if rng.random() < 0.5 else [])
+                 + (["Suisse alémanique"] if rng.random() < (0.7 if region == "haut" else 0.3) else []))
         profils.append({
             "id": f"s{k:03d}", "nom": f"{rng.choice(PRENOMS)} {chr(65 + rng.randrange(26))}.", "fonction": "Dirigeant·e",
             "entreprise": f"{LIBELLES[s]} · synthétique n°{k:03d}", "commune": commune, "type": "membre_club",

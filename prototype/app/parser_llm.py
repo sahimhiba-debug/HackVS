@@ -217,7 +217,8 @@ def _morceaux_apertus(texte: str, tax: Taxonomie, http, tele: dict) -> Iterator[
     base = os.environ["APERTUS_BASE_URL"].rstrip("/")
     tele["modele"] = os.environ["APERTUS_MODEL"]
     entetes = {"Authorization": f"Bearer {os.environ['APERTUS_API_KEY']}", "Content-Type": "application/json"}
-    consigne = systeme(tax) + "\nRéponds UNIQUEMENT par un objet JSON valide conforme à ce schéma, sans texte autour :\n" + json.dumps(SCHEMA, ensure_ascii=False)
+    consigne = (systeme(tax) + "\nRéponds UNIQUEMENT par un objet JSON valide conforme à ce schéma, sans texte autour :\n"
+                + json.dumps(SCHEMA, ensure_ascii=False))
     corps = {"model": tele["modele"], "stream": True, "temperature": 0, "max_tokens": 1500,
              "stream_options": {"include_usage": True},
              "messages": [{"role": "system", "content": consigne}, {"role": "user", "content": texte}],

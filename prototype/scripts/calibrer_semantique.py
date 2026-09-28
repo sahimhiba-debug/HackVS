@@ -71,7 +71,7 @@ def main() -> None:
         return cl[0][1], cl[0][1] - cl[1][1], cl[0][0]
     p1 = [proto_feat(v) for v in vp]
     n1 = np.array([proto_feat(v)[:2] for v in vn])
-    ok1 = np.array([tax.meme_famille(c1, c) for (_, _, c1), (_, c) in zip(p1, pos_utiles)])
+    ok1 = np.array([tax.meme_famille(c1, c) for (_, _, c1), (_, c) in zip(p1, pos_utiles, strict=True)])
     m1 = grille(np.array([x[:2] for x in p1]), ok1, n1, np.round(np.arange(0.80, 0.90, 0.0025), 4), np.round(np.arange(0, 0.041, 0.0025), 4), ("tau", "delta"))
 
     # méthode 2 : offres des membres
@@ -85,7 +85,7 @@ def main() -> None:
         return z1, z1 - (autre[0] if autre else 0.0), c1
     p2 = [offre_feat(v) for v in vp]
     n2 = np.array([offre_feat(v)[:2] for v in vn])
-    ok2 = np.array([bool(c1) and tax.meme_famille(c1, c) for (_, _, c1), (_, c) in zip(p2, pos_utiles)])
+    ok2 = np.array([bool(c1) and tax.meme_famille(c1, c) for (_, _, c1), (_, c) in zip(p2, pos_utiles, strict=True)])
     m2 = grille(np.array([x[:2] for x in p2]), ok2, n2, np.round(np.arange(1.5, 6.01, 0.05), 3), np.round(np.arange(0, 2.01, 0.05), 3), ("z", "marge_z"))
 
     # méthode 3 : options HYBRIDES montrées au membre (suggérer, jamais décider).

@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  qualite:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prototype
+    env:
+      HACKVS_SEMANTIQUE: "0"   # le modèle local (2,2 Go) n'est pas téléchargé en CI : son test est ignoré
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Dépendances
+        run: pip install -r requirements.txt -r requirements-dev.txt ruff
+      - name: Lint
+        run: ruff check .
+      - name: Tests (API, garde-fous, planificateur, MCP stdio et HTTP)
+        run: python -m pytest -q
+      - name: Non-régression des évaluations (aucune violation ajoutée, aucun succès perdu)
+        run: python -m eval.run_eval --verifier

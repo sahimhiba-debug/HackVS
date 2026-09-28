@@ -1,0 +1,35 @@
+{
+ "_note": "Référence de non-régression (CI), moteur par règles. Relevée le 2026-09-28 sur le commit courant. Les jeux réservés déjà exécutés servent ici de tests de régression, plus de mesure.",
+ "jeux": {
+  "base": {
+   "succes@3": "16/16",
+   "violations": "0/20",
+   "abstention_correcte": "20/20"
+  },
+  "adversarial": {
+   "succes@3": "13/13",
+   "violations": "0/20",
+   "abstention_correcte": "20/20"
+  },
+  "reserve": {
+   "succes@3": "12/12",
+   "violations": "0/14",
+   "abstention_correcte": "14/14"
+  },
+  "reserve2": {
+   "succes@3": "15/15",
+   "violations": "0/18",
+   "abstention_correcte": "18/18"
+  },
+  "reserve3": {
+   "succes@3": "6/15",
+   "violations": "1/20",
+   "abstention_correcte": "12/20"
+  },
+  "reserve4": {
+   "succes@3": "3/15",
+   "violations": "2/20",
+   "abstention_correcte": "7/20"
+  }
+ }
+}

@@ -110,7 +110,7 @@ def tableau(mag: Magasin, profils: list[Profil], tax: Taxonomie) -> dict:
         "relations": {"total": len(relations),
                       "acceptees": sum(1 for r in relations if r.etat in ("acceptee", "rencontre_planifiee", "rencontre_faite", "cloturee")),
                       "declinees_ou_annulees": sum(1 for r in relations if r.etat in ("declinee", "annulee", "retiree")),
-                      "resultats": {"utile": resultats["utile"], "affaire_en_cours": resultats["affaire_en_cours"], "pas_pertinent": resultats["pas_pertinent"]}},
+                      "resultats": {k: resultats[k] for k in ("utile", "affaire_en_cours", "pas_pertinent")}},
         "delai_premiere_relation_h": {"mediane": round(statistics.median(delais), 1) if delais else None, "n": len(delais)},
         "a_recruter": a_recruter,
         "offres_dormantes": [{"competence": c, "membres": n} for c, n in dormantes[:6]],

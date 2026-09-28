@@ -179,7 +179,8 @@ def planifier(participants: list[Profil], besoins_publies: list, tax: Taxonomie,
     for s in (s_opt, s_glo):
         s.pop("_vus", None)
     return {
-        "membres": len([p for p in participants if p.type == "membre_club"]), "participants": len(eligibles), "tours": tours, "paires_utiles_possibles": len(aretes),
+        "membres": len([p for p in participants if p.type == "membre_club"]), "participants": len(eligibles), "tours": tours,
+        "paires_utiles_possibles": len(aretes),
         "rencontres": rencontres,
         "comparaison": {"optimal": s_opt, "glouton": s_glo,
                         "aleatoire_moyenne_30": {k: moy(k) for k in ("valeur_totale", "rencontres", "participants_avec_rencontre_utile", "aides_couvertes")}},
@@ -208,7 +209,7 @@ def _raison_absence(p: Profil, aretes, sans_langue, plan, par_id) -> str:
 
 
 def _ics_texte(v: str) -> str:
-    return v.replace("\\", "\\\\").replace(";", "\;").replace(",", "\\,").replace("\n", "\\n")
+    return v.replace("\\", "\\\\").replace(";", r"\;").replace(",", "\\,").replace("\n", "\\n")
 
 
 def _plier(ligne: str) -> str:

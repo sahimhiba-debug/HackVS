@@ -155,10 +155,11 @@ def test_modification_versionnee_et_cloture_sans_suite():
     assert m["version"] == 2
     corr = client.get(f"/api/besoins/{b['id']}/correspondances", headers=SOPHIE).json()
     assert corr["besoin_version"] == 2 and "p02" in [s["profil"]["id"] for s in corr["suggestions"]]
-    assert client.get("/api/relations", headers=SOPHIE).json()[0]["besoin_modifie_depuis"]
+    rel = lambda: next(x for x in client.get("/api/relations", headers=SOPHIE).json() if x["id"] == r["id"])
+    assert rel()["besoin_modifie_depuis"]
     assert client.put(f"/api/besoins/{b['id']}", json={"besoin": nouveau}, headers=JULIEN).status_code == 403
     client.post(f"/api/besoins/{b['id']}/cloturer", json={"note": "Trouvé ailleurs"}, headers=SOPHIE)
-    assert client.get("/api/relations", headers=SOPHIE).json()[0]["etat"] == "annulee"  # demande en attente annulée
+    assert rel()["etat"] == "annulee"  # demande en attente annulée
     assert client.put(f"/api/besoins/{b['id']}", json={"besoin": nouveau}, headers=SOPHIE).status_code == 409
 
 

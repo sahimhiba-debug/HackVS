@@ -18,7 +18,7 @@ from collections import Counter
 from typing import Optional
 
 from .models import Besoin, Critere, Ecart, Explication, LigneExplication, Preuve, Profil, ProfilPublic, Resultat, Suggestion
-from .taxonomy import Taxonomie, motif, norm
+from .taxonomy import Taxonomie, norm
 
 _NEGATION = re.compile(r"\b(?:ne|n'|pas|aucun|aucune|jamais|plus de)\b")
 # Une phrase de présentation ne prouve une compétence que si elle affirme une offre…

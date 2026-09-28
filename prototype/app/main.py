@@ -95,11 +95,11 @@ def _erreurs(fn):
     try:
         return fn()
     except KeyError:
-        raise HTTPException(404, "Élément introuvable.")
+        raise HTTPException(404, "Élément introuvable.") from None
     except Interdit as e:
-        raise HTTPException(403, str(e))
+        raise HTTPException(403, str(e)) from e
     except ErreurMetier as e:
-        raise HTTPException(409, str(e))
+        raise HTTPException(409, str(e)) from e
 
 
 # ---------------------------------------------------------------- schémas d'entrée
@@ -658,7 +658,8 @@ def rejoindre(request: Request):
     url = _url_publique(request)
     return f"""<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Essayer · Le Fil du Club</title><link rel="icon" href="/favicon.ico" type="image/svg+xml"><link rel="stylesheet" href="/static/app.css">
-<style>.qr{{display:grid;place-items:center;gap:16px;text-align:center;padding:32px 16px}}.qr img{{width:min(70vw,420px);background:#fff;padding:12px;border:2px solid var(--encre);border-radius:6px}}</style>
+<style>.qr{{display:grid;place-items:center;gap:16px;text-align:center;padding:32px 16px}}
+.qr img{{width:min(70vw,420px);background:#fff;padding:12px;border:2px solid var(--encre);border-radius:6px}}</style>
 </head><body><main class="qr"><p class="surtitre">Le Fil du Club · démonstration</p><h1>Essayez-le<br>sur votre téléphone</h1>
 <img src="/api/qr.svg?chemin=/" alt="QR code vers {url}"><p class="sous">{url}</p>
 <p>Vous incarnez un membre <strong>fictif</strong> (choix en haut de l'écran). Aucune donnée réelle, aucun message envoyé.</p></main></body></html>"""

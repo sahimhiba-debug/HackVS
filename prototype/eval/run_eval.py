@@ -34,7 +34,8 @@ def charger():
     return profils, par_id, par_id[brut["utilisateur_demo"]]
 
 
-JEUX = {"base": "cas.json", "adversarial": "cas_adversariaux.json", "reserve": "cas_reserve.json", "reserve2": "cas_reserve2.json", "reserve3": "cas_reserve3.json", "reserve4": "cas_reserve4.json"}
+JEUX = {"base": "cas.json", "adversarial": "cas_adversariaux.json", "reserve": "cas_reserve.json", "reserve2": "cas_reserve2.json",
+        "reserve3": "cas_reserve3.json", "reserve4": "cas_reserve4.json"}
 
 
 def _critere_ok(attendu: dict, criteres) -> bool:
@@ -124,7 +125,7 @@ def evaluer(claude: bool = False, jeu: str = "base", semantique: bool = False) -
 
 
 def en_markdown(res: dict) -> str:
-    o = [f"# Résultats d'évaluation (exploratoire, données fictives)\n",
+    o = ["# Résultats d'évaluation (exploratoire, données fictives)\n",
          f"Jeu : **{res['jeu']}** · analyseur : **{res['analyseur']}** · {res['nb_cas']} cas · généré par `python -m eval.run_eval --jeu {res['jeu']}`\n",
          (f"Critères extraits conformes (type, valeur, obligatoire/souhaité ; critères interdits absents) : {res['criteres_corrects']}\n"
           if not res['criteres_corrects'].endswith("/0") else ""),
@@ -133,7 +134,8 @@ def en_markdown(res: dict) -> str:
         o.append(f"| {k} | {res['moteur'][k]} | {res['reference'][k]} |")
     o.append(f"\nPreuves citées retrouvées mot pour mot dans le profil : {res['preuves_verifiees']} "
              "(vrai par construction pour l'extraction par règles ; le garde-fou compte surtout si un LLM rédige un jour les explications).")
-    o.append(f"\nLatence médiane : analyse {res['latence_analyse_ms_mediane']} ms, recherche {res['latence_recherche_ms_mediane']} ms (machine locale, {res['nb_profils']} profils).\n")
+    o.append(f"\nLatence médiane : analyse {res['latence_analyse_ms_mediane']} ms, recherche {res['latence_recherche_ms_mediane']} ms "
+             f"(machine locale, {res['nb_profils']} profils).\n")
     o.append("| Cas | Catégorie | Critères extraits | Moteur top 3 | ok | Référence top 3 | ok |")
     o.append("|---|---|---|---|---|---|---|")
     for l in res["detail"]:
@@ -148,13 +150,37 @@ def en_markdown(res: dict) -> str:
     return "\n".join(o) + "\n"
 
 
+def _num(x: str) -> int:
+    return int(x.split("/")[0])
+
+
+def verifier(reference: Path) -> int:
+    """Non-régression (CI) : aucun jeu ne doit perdre un succès, une abstention correcte, ni gagner une violation.
+    N'écrit aucun fichier de résultats (pas d'artefact muté par la CI)."""
+    ref, echecs = json.loads(reference.read_text(encoding="utf-8")), []
+    for jeu, attendu in ref["jeux"].items():
+        m = evaluer(claude=False, jeu=jeu, semantique=False)["moteur"]
+        for k in ("succes@3", "abstention_correcte"):
+            if _num(m[k]) < _num(attendu[k]):
+                echecs.append(f"{jeu} : {k} {m[k]} < référence {attendu[k]}")
+        if _num(m["violations"]) > _num(attendu["violations"]):
+            echecs.append(f"{jeu} : violations {m['violations']} > référence {attendu['violations']}")
+        print(f"{jeu:12} succès@3 {m['succes@3']:>6}  violations {m['violations']:>5}  abstention {m['abstention_correcte']:>6}")
+    for e in echecs:
+        print("RÉGRESSION :", e)
+    return 1 if echecs else 0
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--claude", action="store_true", help="analyse par le LLM configuré (HACKVS_LLM=claude|apertus)")
     ap.add_argument("--jeu", choices=list(JEUX) + ["tous"], default="tous")
     ap.add_argument("--semantique", action="store_true", help="analyse hybride : règles + IA sémantique locale calibrée")
     ap.add_argument("--archive", help="étiquette : copie aussi le résultat dans eval/archives/<étiquette>_<jeu>.md")
+    ap.add_argument("--verifier", action="store_true", help="CI : compare à eval/reference_ci.json, code de sortie 1 si régression")
     a = ap.parse_args()
+    if a.verifier:
+        raise SystemExit(verifier(ICI / "reference_ci.json"))
     for jeu in (list(JEUX) if a.jeu == "tous" else [a.jeu]):
         res = evaluer(claude=a.claude, jeu=jeu, semantique=a.semantique)
         suffixe = "_claude" if a.claude else ("_semantique" if a.semantique else "")
