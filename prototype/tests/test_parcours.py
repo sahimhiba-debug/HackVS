@@ -517,3 +517,12 @@ def test_creneaux_communs_prives_et_apres_acceptation():
     ok = client.put("/api/moi/profil", headers=JULIEN, json={"offre": [{"texte": "Transport frigorifique", "concept": "transport_frigorifique"}],
                                                              "creneaux": ["ven-matin", "ven-matin", "lun-matin"]})
     assert ok.status_code == 200 and ok.json()["creneaux"] == ["ven-matin", "lun-matin"]
+
+
+def test_valeurs_de_soiree_identiques_a_la_version_par_paire():
+    """Optimisation O(n) des valeurs de paires : exactement les mêmes paires, valeurs et preuves que la version O(n²)."""
+    from app import soiree
+    from app.models import Profil
+    brut = json.loads((Path(__file__).resolve().parent.parent / "data" / "profils_synthetiques.json").read_text(encoding="utf-8"))
+    el = [p for p in (Profil(**x) for x in brut["profils"][:60]) if p.accepte_introductions and p.disponible]
+    assert soiree.valeurs(el, [], TAX) == soiree.valeurs_par_paire(el, [], TAX)

@@ -57,18 +57,44 @@ def langues_communes(a: Profil, b: Profil) -> list[str]:
 def valeurs(participants: list[Profil], besoins_publies: list, tax: Taxonomie,
             ecartees: Optional[dict] = None, deja: frozenset = frozenset()) -> dict[tuple[str, str], dict]:
     """Paires utiles. `ecartees` (facultatif) reçoit les paires utiles écartées faute de langue commune.
-    `deja` : paires déjà en relation (coordonnées échangées) : inutile de leur réserver une table."""
-    rech = {p.id: _recherches(p, besoins_publies, tax) for p in participants}
+    `deja` : paires déjà en relation (coordonnées échangées) : inutile de leur réserver une table.
+
+    Une recherche par (participant, recherche) sur TOUS les autres, au lieu d'une par paire : O(n) recherches au lieu
+    de O(n²). Même résultat : qu'un membre soit proposé ne dépend pas des autres profils (seul le classement en dépend),
+    et la preuve retenue est la même (vérifié par test d'équivalence)."""
+    par_id = {p.id: p for p in participants}
+    aides: dict[tuple[str, str], dict] = {}  # (i, j) → meilleure aide que j apporte à i
+    for i in participants:
+        for source, besoin in _recherches(i, besoins_publies, tax):
+            res = rechercher(besoin, i, participants, tax, limite=len(participants))
+            for s_ in res.suggestions:
+                valeur = 1.0 if s_.niveau == "forte" else 0.5
+                cle = (i.id, s_.profil.id)
+                if cle not in aides or valeur > aides[cle]["valeur"]:
+                    aides[cle] = {"valeur": valeur, "besoin": source, "preuve": s_.preuves[0].extrait, "niveau": s_.niveau}
     aretes = {}
-    for a, b in combinations(participants, 2):
+    ordre = {p.id: k for k, p in enumerate(participants)}
+    for a_id, b_id in {tuple(sorted(k, key=ordre.get)) for k in aides}:
+        a, b = par_id[a_id], par_id[b_id]
         if frozenset((a.id, b.id)) in deja:
             continue
-        ab, ba = _aide(a, b, rech[a.id], tax), _aide(b, a, rech[b.id], tax)
-        if not ab and not ba:
-            continue
+        ab, ba = aides.get((a.id, b.id)), aides.get((b.id, a.id))
         if not langues_communes(a, b):
             if ecartees is not None:
                 ecartees[(a.id, b.id)] = True
+            continue
+        v = (ab["valeur"] if ab else 0) + (ba["valeur"] if ba else 0) + (BONUS_RECIPROQUE if ab and ba else 0)
+        aretes[(a.id, b.id)] = {"valeur": round(v, 3), "b_aide_a": ab, "a_aide_b": ba, "langues": langues_communes(a, b)}
+    return dict(sorted(aretes.items(), key=lambda kv: (ordre[kv[0][0]], ordre[kv[0][1]])))
+
+
+def valeurs_par_paire(participants: list[Profil], besoins_publies: list, tax: Taxonomie) -> dict[tuple[str, str], dict]:
+    """Version de référence O(n²) (une recherche par paire), conservée pour le test d'équivalence."""
+    rech = {p.id: _recherches(p, besoins_publies, tax) for p in participants}
+    aretes = {}
+    for a, b in combinations(participants, 2):
+        ab, ba = _aide(a, b, rech[a.id], tax), _aide(b, a, rech[b.id], tax)
+        if (not ab and not ba) or not langues_communes(a, b):
             continue
         v = (ab["valeur"] if ab else 0) + (ba["valeur"] if ba else 0) + (BONUS_RECIPROQUE if ab and ba else 0)
         aretes[(a.id, b.id)] = {"valeur": round(v, 3), "b_aide_a": ab, "a_aide_b": ba, "langues": langues_communes(a, b)}
