@@ -55,11 +55,14 @@ def langues_communes(a: Profil, b: Profil) -> list[str]:
 
 
 def valeurs(participants: list[Profil], besoins_publies: list, tax: Taxonomie,
-            ecartees: Optional[dict] = None) -> dict[tuple[str, str], dict]:
-    """Paires utiles. `ecartees` (facultatif) reçoit les paires utiles écartées faute de langue commune."""
+            ecartees: Optional[dict] = None, deja: frozenset = frozenset()) -> dict[tuple[str, str], dict]:
+    """Paires utiles. `ecartees` (facultatif) reçoit les paires utiles écartées faute de langue commune.
+    `deja` : paires déjà en relation (coordonnées échangées) : inutile de leur réserver une table."""
     rech = {p.id: _recherches(p, besoins_publies, tax) for p in participants}
     aretes = {}
     for a, b in combinations(participants, 2):
+        if frozenset((a.id, b.id)) in deja:
+            continue
         ab, ba = _aide(a, b, rech[a.id], tax), _aide(b, a, rech[b.id], tax)
         if not ab and not ba:
             continue
@@ -153,11 +156,12 @@ def optimal(aretes, participants: list[str], tours: int, limite_s: float = 20.0)
     return plan, info
 
 
-def planifier(participants: list[Profil], besoins_publies: list, tax: Taxonomie, tours: int = 3) -> dict:
+def planifier(participants: list[Profil], besoins_publies: list, tax: Taxonomie, tours: int = 3,
+              deja_en_relation: frozenset = frozenset()) -> dict:
     t0 = time.perf_counter()
     eligibles = [p for p in participants if p.type == "membre_club" and p.accepte_introductions and p.disponible]
     sans_langue: dict = {}
-    aretes = valeurs(eligibles, besoins_publies, tax, sans_langue)
+    aretes = valeurs(eligibles, besoins_publies, tax, sans_langue, deja_en_relation)
     ids = [p.id for p in eligibles]
     t_val = round((time.perf_counter() - t0) * 1000)
     plan_opt, info = optimal(aretes, ids, tours) if aretes else ([[] for _ in range(tours)], {"optimal_prouve": True})
@@ -189,8 +193,10 @@ def planifier(participants: list[Profil], besoins_publies: list, tax: Taxonomie,
             ((p, _raison_absence(p, aretes, sans_langue, plan_opt, par_id)) for p in eligibles
              if not any(p.id in (m["a"]["id"], m["b"]["id"]) for m in rencontres)), key=lambda x: x[0].nom)],
         "paires_ecartees_sans_langue_commune": len(sans_langue),
+        "paires_deja_en_relation": len(deja_en_relation),
         "contraintes": ["au plus une rencontre par personne et par tour", "jamais deux fois la même paire",
-                        "langue commune déclarée obligatoire", "membres disponibles et acceptant les introductions"],
+                        "langue commune déclarée obligatoire", "membres disponibles et acceptant les introductions",
+                        "pas de table pour deux membres déjà en relation"],
     }
 
 

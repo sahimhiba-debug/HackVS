@@ -582,9 +582,12 @@ def _plan(donnees: str, tours: int) -> dict:
     if donnees == "synthetique":
         brut = json.loads((DATA_DIR / "profils_synthetiques.json").read_text(encoding="utf-8"))
         participants, besoins = [Profil(**p) for p in brut["profils"]], []
+        deja = frozenset()
     else:
         participants, besoins = profils_effectifs(), MAGASIN.besoins()
-    return soiree.planifier(participants, besoins, TAX, tours=tours) | {"donnees": donnees, "donnees_fictives": True}
+        deja = frozenset(frozenset((r.auteur_id, r.aidant_id)) for r in MAGASIN.relations()
+                         if r.etat in ("acceptee", "rencontre_planifiee", "rencontre_faite", "cloturee"))
+    return soiree.planifier(participants, besoins, TAX, tours=tours, deja_en_relation=deja) | {"donnees": donnees, "donnees_fictives": True}
 
 
 @app.get("/api/soiree/programme.ics")

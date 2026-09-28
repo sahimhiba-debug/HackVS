@@ -479,3 +479,18 @@ def test_faux_amis_composes_de_la_liste():
     assert r["evites_liste"] == "8/8"
     b = analyser("Je cherche un avocat pour relire un contrat commercial.", TAX)
     assert crit(b, "expertise")[0].valeur == "droit_affaires"  # le contexte trompeur ne s'applique qu'à sa phrase
+
+
+def test_pas_de_double_introduction_ni_de_table_pour_deux_membres_deja_en_relation():
+    b = publier()
+    r = client.post("/api/relations", json={"besoin_id": b["id"], "cible_id": "p01", "message": "Bonjour"}, headers=SOPHIE)
+    assert r.status_code == 200
+    for qui, corps in ((SOPHIE, {"besoin_id": b["id"], "cible_id": "p01", "message": "Encore"}),
+                       (JULIEN, {"besoin_id": b["id"], "message": "Je peux aider"})):
+        assert client.post("/api/relations", json=corps, headers=qui).status_code == 409  # dans les deux sens
+    avant = client.get("/api/soiree/plan?tours=3").json()
+    paire = {"p00", "p01"}
+    assert any({m["a"]["id"], m["b"]["id"]} == paire for m in avant["rencontres"])  # sans relation : table utile
+    client.post(f"/api/relations/{r.json()['id']}/accepter", json={}, headers=JULIEN)
+    apres = client.get("/api/soiree/plan?tours=3").json()
+    assert not any({m["a"]["id"], m["b"]["id"]} == paire for m in apres["rencontres"]) and apres["paires_deja_en_relation"] == 1
