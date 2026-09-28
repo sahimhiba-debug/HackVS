@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cycle des relations</title>
+  <meta name="description" content="Une rencontre à une soirée, dix jours plus tard une raison documentée de reprendre contact, un suivi, une nouvelle opportunité, la soirée suivante.">
+  <link rel="icon" href="/favicon.ico" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+  <style>
+    .fil { list-style: none; margin: 24px 0 0; padding: 0; position: relative; }
+    .fil::before { content: ""; position: absolute; left: 15px; top: 6px; bottom: 6px; width: 2px; background: var(--ligne); }
+    .etape { position: relative; padding: 0 0 26px 48px; }
+    .etape::before { content: attr(data-n); position: absolute; left: 0; top: 0; width: 32px; height: 32px; border-radius: 50%;
+      display: grid; place-items: center; font-weight: 700; font-size: 14px; background: var(--surface); border: 2px solid var(--ligne); color: var(--encre-3); }
+    .etape.faite::before { content: "✓"; border-color: var(--vert); color: var(--vert); }
+    .etape.active::before { border-color: var(--rouge); color: var(--rouge); }
+    .etape h2 { font-size: 19px; margin: 4px 0 6px; }
+    .etape.a-venir h2 { color: var(--encre-3); }
+    .etape .corps { max-width: 760px; }
+    .etape .corps > * + * { margin-top: 10px; }
+    .quand { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--encre-2); font-weight: 700; }
+    .boite { background: var(--surface); border: 1.5px solid var(--ligne); border-radius: var(--rayon); padding: 12px 14px; }
+    .boite.forte { border-color: var(--rouge); box-shadow: 0 0 0 3px var(--rouge-pale); }
+    .rdv { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 15px; }
+    .puce { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em; padding: 2px 8px; border-radius: 999px;
+      background: var(--ambre-pale); color: var(--ambre); vertical-align: middle; }
+    .puce.DECLARE, .puce.OBSERVE { background: var(--vert-pale); color: var(--vert); }
+    .preuves { margin: 8px 0 0; padding: 0; list-style: none; font-size: 14px; }
+    .preuves li { padding: 4px 0; border-top: 1px solid var(--ligne); }
+    .preuves q { font-style: italic; }
+    textarea { width: 100%; font: inherit; padding: 10px 12px; border: 1.5px solid var(--ligne); border-radius: var(--rayon);
+      background: var(--surface); color: var(--encre); min-height: 64px; box-sizing: border-box; }
+    .tuiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+    .tuile { background: var(--surface); border: 1.5px solid var(--ligne); border-radius: var(--rayon); padding: 12px 14px; }
+    .tuile .lib { font-size: 13px; color: var(--encre-2); }
+    .tuile .val { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .tuile .avant { font-size: 13px; color: var(--encre-2); font-variant-numeric: tabular-nums; }
+    .note { font-size: 13px; color: var(--encre-2); }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .horloge { font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#principal">Aller au contenu</a>
+  <header class="barre">
+    <div class="marque"><span class="logo" aria-hidden="true"></span><span>Cycle des relations</span></div>
+    <div class="badges"><span class="badge demo">Démo · membres fictifs · horloge simulée</span></div>
+    <div class="barre-actions"><a class="btn petit" href="/decision">Décision</a><a class="btn petit" href="/">Espace membre</a></div>
+  </header>
+  <main id="principal">
+    <section class="vue">
+      <p class="surtitre">Après la soirée</p>
+      <h1 style="font-size:clamp(28px,4vw,48px)">Une rencontre ne vaut<br>que par sa suite.</h1>
+      <p class="sous">Dix jours après une soirée, la plateforme ne relance que s'il existe une raison <strong>nouvelle et documentée</strong>. Sinon elle se tait, et le dit. Le membre décide ; le suivi ouvre de nouvelles opportunités pour la soirée suivante.</p>
+      <div class="actions">
+        <label style="font-weight:700;font-size:14px;display:grid;gap:6px">Membre suivi
+          <select id="membre"></select></label>
+        <span class="note horloge" id="horloge"></span>
+        <button class="btn petit" type="button" id="reinit">Recommencer</button>
+      </div>
+      <ol class="fil" id="fil" aria-live="polite"></ol>
+    </section>
+  </main>
+  <div class="toasts" role="region" aria-label="Notifications"><div role="status" aria-live="polite" id="toasts-live"></div></div>
+  <script type="module">
+    import { $, api, h, occupe, libre, toast } from "/static/js/outils.js";
+    const S = { etape: 0, plan1: null, plan2: null, relances: null, reponse: null, besoinTexte: null, opps: null };
+    let membres = [], etat = null;
+    const nom = (id) => membres.find((m) => m.id === id)?.nom || id;
+    const prenom = (id) => nom(id).split(" ")[0];
+    const moi = () => $("#membre").value;
+    const puce = (st) => h("span", { class: `puce ${st}`, title: "statut de l'information" }, st);
+
+    function rencontresDe(run, id) {
+      const aides = run.graphe.preuves_par_rencontre || {};
+      return run.retenue.rencontres.filter(([, a, b]) => a === id || b === id).map(([t, a, b]) => ({ t, autre: a === id ? b : a, cle: [a, b].sort().join("|"), nb: (aides[[a, b].sort().join("|")] || []).length }));
+    }
+
+    async function action(bouton, fn) {
+      occupe(bouton, "…");
+      try { await fn(); etat = await api("/api/cycle/etat"); rendre(); } catch (e) { toast(e.message, "erreur"); libre(bouton); }
+    }
+
+    function etape(n, titre, quand, corps, fait) {
+      const cls = fait ? "faite" : n === S.etape ? "active" : "a-venir";
+      return h("li", { class: `etape ${cls}`, "data-n": String(n + 1) }, h("p", { class: "quand" }, quand), h("h2", {}, titre),
+        n <= S.etape ? h("div", { class: "corps" }, corps) : null);
+    }
+
+    function btn(texte, fn, primaire = true) {
+      const b = h("button", { class: "btn petit" + (primaire ? " primaire" : ""), type: "button" }, texte);
+      b.addEventListener("click", () => action(b, fn));
+      return b;
+    }
+
+    function tuiles() {
+      const c = etat.croissance;
+      if (!c.length) return null;
+      const der = c[c.length - 1], av = c.length > 1 ? c[c.length - 2] : null;
+      const t = (lib, k, aide) => h("div", { class: "tuile" }, h("div", { class: "lib" }, lib), h("div", { class: "val" }, String(der[k])),
+        h("div", { class: "avant" }, av ? `après ${av.apres} : ${av[k]}` : aide));
+      return h("div", { class: "tuiles" },
+        t("Liens entre membres", "liens", "première soirée"), t("Personnes à 2 poignées de main (moyenne)", "portee_moyenne_2_sauts", "par membre relié"),
+        t("Membres reliés", "membres_relies", ""), t("Plus grand groupe connecté", "plus_grande_composante", ""));
+    }
+
+    function rendre() {
+      $("#horloge").textContent = `Aujourd'hui (simulé) : ${etat.aujourdhui} · ${etat.evenements} événements dans la mémoire`;
+      const id = moi(), soirees = etat.soirees.length;
+      const els = [];
+      // 1. soirée
+      els.push(etape(0, "La soirée du Club", "Soirée 1", [
+        S.plan1 ? h("p", {}, `Plan optimisé : ${S.plan1.run.retenue.rencontres.length} rencontres, toutes fondées sur une aide prouvée. Décision de la plateforme : ${S.plan1.certificat.mediation.decision}.`)
+          : btn("Préparer le plan de la soirée", async () => { S.plan1 = await api("/api/cycle/soiree", { methode: "POST", corps: {} }); }),
+        S.plan1 && soirees < 1 ? btn("J'approuve : la soirée a lieu", async () => { await api(`/api/cycle/soiree/${S.plan1.run.run_id}/approuver`, { methode: "POST", corps: {} }); S.etape = 1; }) : null,
+      ], soirees >= 1));
+      // 2. rencontres de la personne suivie
+      const mes = S.plan1 ? rencontresDe(S.plan1.run, id) : [];
+      els.push(etape(1, `${prenom(id)} rencontre ${mes.map((r) => prenom(r.autre)).join(", ") || "…"}`, "Pendant la soirée", [
+        h("div", { class: "boite" }, h("div", { class: "rdv" }, mes.map((r) => h("span", {}, `Tour ${r.t} : ${nom(r.autre)}`))),
+          h("p", { class: "note" }, "Chaque rencontre a été proposée parce que l'un peut aider l'autre (preuve citée dans le plan).")),
+        mes.length ? null : h("p", { class: "note" }, "Ce membre n'a pas de rencontre utile dans ce plan."),
+        S.etape === 1 ? btn("Fin de la soirée", async () => { S.etape = 2; }) : null,
+      ], S.etape > 1));
+      // 3. relations créées
+      const liens = etat.liens.filter((l) => l.a === id || l.b === id);
+      els.push(etape(2, "Des relations sont créées", "Fin de soirée", [
+        h("p", {}, `${S.plan1 ? S.plan1.run.retenue.rencontres.length : 0} relations entrent dans la mémoire du réseau. `, puce("SIMULE"), " tant qu'un membre ne déclare pas « nous nous sommes vus ». Rien n'est inventé : la présence n'est pas constatée."),
+        liens.length && S.etape <= 3 ? h("div", { class: "actions" }, liens.map((l) => {
+          const autre = l.a === id ? l.b : l.a;
+          return l.statut === "SIMULE" ? btn(`${prenom(id)} déclare avoir vu ${prenom(autre)}`, () => api("/api/cycle/confirmer", { methode: "POST", corps: { a: l.a, b: l.b, par: id } }), false)
+            : h("span", { class: "note" }, `${prenom(autre)} : `, puce(l.statut));
+        })) : null,
+        S.etape === 2 ? btn("La soirée est finie : avancer de 6 jours", async () => { await api("/api/cycle/avancer", { methode: "POST", corps: { jours: 6 } }); S.etape = 3; }) : null,
+      ], S.etape > 2));
+      // 4. un besoin nouveau
+      els.push(etape(3, "La vie continue : un besoin nouveau", "6 jours plus tard", [
+        S.besoinTexte ? h("div", { class: "boite" }, h("q", {}, S.besoinTexte), " ", puce("SIMULE"), h("p", { class: "note" }, "Publié dans l'application par le membre fictif (scénario de démonstration).")) : [
+          h("p", { class: "note" }, `Scénario fictif : ${prenom(id)} publie un besoin. Modifiable ; analysé par les règles habituelles.`),
+          h("textarea", { id: "besoin", "aria-label": "Texte du besoin" }, id === "p00" ? "Nous cherchons un agent commercial pour placer nos jus dans les épiceries fines de Berne cet automne" : ""),
+          h("div", { class: "actions" },
+            btn(`Publier ce besoin`, async () => { const texte = $("#besoin").value; await api("/api/cycle/besoin", { methode: "POST", corps: { auteur: id, texte } }); S.besoinTexte = texte; }),
+            btn("Ne rien publier", async () => { S.besoinTexte = "(aucun besoin publié)"; }, false))],
+        S.besoinTexte && S.etape === 3 ? btn("Avancer de 4 jours", async () => { await api("/api/cycle/avancer", { methode: "POST", corps: { jours: 4 } }); S.relances = await api("/api/cycle/relances"); S.etape = 4; }) : null,
+      ], S.etape > 3));
+      // 5. pourquoi reprendre contact ?
+      const rl = S.relances, props = rl ? rl.propositions : [];
+      els.push(etape(4, "Pourquoi reprendre contact ?", "10 jours après la soirée", rl ? [
+        h("p", {}, h("strong", {}, `${props.length} relance${props.length > 1 ? "s" : ""}`), ` proposée${props.length > 1 ? "s" : ""} ; `,
+          h("strong", {}, `${rl.abstentions.rien_de_nouveau} paires sans relance`), " : rien de nouveau depuis la rencontre. « Restez en contact » n'est pas une raison."),
+        ...props.map((p) => h("div", { class: "boite" + (p.paire.includes(id) ? " forte" : "") },
+          h("p", { style: "margin:0;font-weight:700" }, `${p.noms[0]} ↔ ${p.noms[1]}`, h("span", { class: "note" }, ` · lien ${p.statut_du_lien}, force ${p.force_du_lien} (${p.jours} jours)`)),
+          ...p.raisons.map((r) => h("div", {}, h("p", { style: "margin:6px 0 0" }, r.message),
+            h("ul", { class: "preuves" }, r.preuves.map((x) => h("li", {}, puce(x.statut), ` ${x.quoi} : `, h("q", {}, x.extrait)))),
+            !S.reponse && p.paire.includes(id) ? h("div", { class: "actions", style: "margin-top:8px" },
+              btn(`${prenom(id)} accepte de reprendre contact`, async () => { S.reponse = await api(`/api/cycle/relances/${r.id}`, { methode: "POST", corps: { accepte: true, par: id } }); S.opps = (await api("/api/cycle/etat")).opportunites; S.etape = 6; }),
+              btn("Pas maintenant", async () => { S.reponse = await api(`/api/cycle/relances/${r.id}`, { methode: "POST", corps: { accepte: false, par: id } }); S.opps = (await api("/api/cycle/etat")).opportunites; S.etape = 6; }, false)) : null)))),
+        !props.some((p) => p.paire.includes(id)) && S.etape === 4 ? btn("Continuer sans relance", async () => { S.reponse = { suivi: false }; S.opps = (await api("/api/cycle/etat")).opportunites; S.etape = 6; }, false) : null,
+      ] : [], S.etape > 4));
+      // 6. suivi
+      els.push(etape(5, "Le suivi existe", "Décision du membre", [
+        h("p", {}, S.reponse?.suivi ? ["Suivi enregistré, ", puce("DECLARE"), " par le membre. Le lien est ravivé."] : "Aucun suivi : la plateforme n'insiste pas."),
+      ], S.etape > 5));
+      // 7. opportunité
+      const opps = S.opps ?? etat.opportunites;  // instantané pris au moment du suivi (après la soirée 2, elle est réalisée)
+      els.push(etape(6, "Une nouvelle opportunité", "Grâce au suivi", [
+        opps.length ? opps.map((o) => h("div", { class: "boite" }, h("p", { style: "margin:0" }, o.raison, " ", puce("INFERE")),
+          h("p", { class: "note" }, `${prenom(o.via)} connaît ${prenom(o.a)} et ${prenom(o.c)} ; ils ne se sont jamais rencontrés.`)))
+          : h("p", { class: "note" }, "Aucune opportunité documentée : on ne fabrique pas de « contacts suggérés »."),
+        S.etape === 6 ? btn("Avancer de 20 jours jusqu'à la prochaine soirée", async () => { await api("/api/cycle/avancer", { methode: "POST", corps: { jours: 20 } }); S.etape = 7; }) : null,
+      ], S.etape > 6));
+      // 8. soirée suivante
+      const m2 = S.plan2 ? rencontresDe(S.plan2.run, id) : [];
+      const oppCles = new Set(opps.map((o) => [o.a, o.c].sort().join("|")));
+      els.push(etape(7, "La soirée suivante", "Soirée 2", [
+        S.plan2 ? [h("p", {}, `${S.plan2.run.retenue.rencontres.length} rencontres nouvelles : aucune paire de la soirée 1 n'est reproposée (déjà en relation). Décision : ${S.plan2.certificat.mediation.decision}.`),
+          h("div", { class: "boite" }, h("div", { class: "rdv" }, m2.length ? m2.map((r) => h("span", {}, `Tour ${r.t} : ${nom(r.autre)}`, oppCles.has(r.cle) ? [" ", h("span", { class: "puce DECLARE" }, "opportunité réalisée")] : "")) : `${prenom(id)} : aucune rencontre utile nouvelle.`))]
+          : btn("Préparer la soirée 2 (avec les opportunités)", async () => { S.plan2 = await api("/api/cycle/soiree", { methode: "POST", corps: {} }); }),
+        S.plan2 && soirees < 2 ? btn("J'approuve : la soirée 2 a lieu", async () => { await api(`/api/cycle/soiree/${S.plan2.run.run_id}/approuver`, { methode: "POST", corps: {} }); S.etape = 8; }) : null,
+      ], soirees >= 2));
+      // 9. le réseau grandit
+      els.push(etape(8, "Le réseau grandit", "Mesuré, pas affirmé", [
+        tuiles(),
+        h("p", { class: "note" }, "Indicateurs recalculés depuis le journal d'événements. Sur 37 membres fictifs, le Club de démonstration épuise vite les rencontres utiles : sans besoins nouveaux, la soirée 2 n'a que peu de paires possibles. C'est l'argument du cycle — ce sont les suites qui nourrissent le réseau."),
+      ], S.etape > 8));
+      $("#fil").replaceChildren(...els);
+    }
+
+    async function init() {
+      membres = await api("/api/membres");
+      $("#membre").replaceChildren(...membres.map((m) => h("option", { value: m.id }, m.nom)));
+      $("#membre").value = membres.some((m) => m.id === "p00") ? "p00" : membres[0].id;
+      etat = await api("/api/cycle/etat");
+      if (etat.evenements) { await api("/api/cycle/reinitialiser", { methode: "POST" }); etat = await api("/api/cycle/etat"); }
+      rendre();
+    }
+    $("#membre").addEventListener("change", rendre);
+    $("#reinit").addEventListener("click", async () => { await api("/api/cycle/reinitialiser", { methode: "POST" }); Object.assign(S, { etape: 0, plan1: null, plan2: null, relances: null, reponse: null, besoinTexte: null, opps: null }); etat = await api("/api/cycle/etat"); rendre(); });
+    init().catch((e) => toast(e.message, "erreur"));
+  </script>
+</body>
+</html>

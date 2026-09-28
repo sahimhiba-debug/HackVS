@@ -32,6 +32,7 @@ DOMAINE = Domaine(
         "couverture": Terme(nom="couverture", description="participants ayant au moins une rencontre utile"),
         "diversite": Terme(nom="diversite", description="rencontres entre secteurs différents"),
         "reciprocite": Terme(nom="reciprocite", description="rencontres où chacun peut aider l'autre"),
+        "opportunite": Terme(nom="opportunite", description="présentations ouvertes par la mémoire du réseau (ami d'un ami qui peut aider)"),
     },
     contraintes={
         "une_rencontre_par_tour": Terme(nom="une_rencontre_par_tour", description="au plus une rencontre par personne et par tour"),
@@ -57,6 +58,8 @@ GRAMMAIRE = Grammaire(
         Regle(motif=r"entre secteurs|inter.?sector|croiser|diversit|decloisonn|autres? secteurs?|transversal",
               effet="objectif:diversite", libelle="diversité sectorielle"),
         Regle(motif=r"reciproq|donnant.donnant|deux sens|mutuel", effet="objectif:reciprocite", libelle="réciprocité"),
+        Regle(motif=r"opportunit|presentations? (ouvertes?|proposees?)|ami[es]* d.(un|une) ami|suites? de la derniere",
+              effet="objectif:opportunite:2", libelle="opportunités ouvertes par le réseau"),
         Regle(motif=r"\d+ tours?", effet="parametre:tours", libelle="nombre de tours"),
         Regle(motif=r"(sans|ignorer|ignorant|peu importe|quelle que soit|sans tenir compte de|sans regarder)( la)? langues?|toutes langues",
               effet="retirer_contrainte:langue_commune", libelle="lever la contrainte de langue"),
@@ -75,6 +78,7 @@ class Instantane(BaseModel):
     affirmations: list[dict]
     aides: dict[str, dict]            # « i→j » → aide prouvée que j apporte à i (+ ids d'affirmations)
     deja_en_relation: list[str]       # clés « a|b »
+    opportunites: dict[str, dict] = {}  # « a|c » → {via, raison, affirmation} (mémoire du réseau)
 
     def empreinte(self) -> str:
         return hashlib.sha256(json.dumps(self.model_dump(), sort_keys=True, ensure_ascii=False).encode()).hexdigest()
@@ -85,7 +89,8 @@ def _statut_source(source: str) -> Statut:
 
 
 def instantane(profils: list[Profil], besoins_publies: list, tax: Taxonomie, source: str,
-               relations_observees: Optional[list[tuple[str, str]]] = None) -> Instantane:
+               relations_observees: Optional[list[tuple[str, str]]] = None,
+               opportunites: Optional[list[dict]] = None) -> Instantane:
     base = _statut_source(source)
     reg = Registre()
     membres = [p for p in profils if p.type == "membre_club"]
@@ -113,17 +118,26 @@ def instantane(profils: list[Profil], besoins_publies: list, tax: Taxonomie, sou
         else:  # déduit d'une phrase de présentation, ou autre champ : c'est NOTRE inférence
             preuve_id = reg.ajouter(Affirmation(sujet=j, predicat="peut_aider_sur", objet=aide["besoin"][:80], extrait=aide["preuve"],
                                                 source=f"moteur:matching({i}→{j})", type_source="deduction", statut=Statut.INFERE))
-        if besoin_id is None:  # besoin publié dans l'application (pas dans le profil)
+        if besoin_id is None:  # besoin publié dans l'application (pas dans le profil) ; SIMULE s'il vient d'un scénario
+            st = next((getattr(b, "statut_affirmation", None) for b in besoins_publies
+                       if b.auteur_id == i and f"besoin publié : {b.besoin.texte}" == aide["besoin"]), None) or Statut.OBSERVE
             besoin_id = reg.ajouter(Affirmation(sujet=i, predicat="besoin_publie", objet=aide["besoin"][:80],
-                                                source=f"application:bourse({i})", type_source="application", statut=Statut.OBSERVE))
+                                                source=f"application:bourse({i})", type_source="application", statut=st))
         aides[f"{i}→{j}"] = aide | {"affirmations": [besoin_id, preuve_id]}
     for a, b in relations_observees or []:
         reg.ajouter(Affirmation(sujet=cle(a, b), predicat="deja_en_relation", objet="true", source="application:relations",
                                 type_source="application", statut=Statut.OBSERVE))
+    opps = {}
+    for o in opportunites or []:  # déduites par la mémoire (fermeture de triade) : INFÉRÉES, jamais plus
+        k = cle(o["a"], o["c"])
+        aid = reg.ajouter(Affirmation(sujet=k, predicat="opportunite_ouverte", objet=o["via"], extrait=o.get("raison", ""),
+                                      source=f"memoire:fermeture({o['a']},{o['via']},{o['c']})", type_source="deduction",
+                                      statut=Statut.INFERE))
+        opps[k] = {"via": o["via"], "raison": o.get("raison", ""), "affirmation": aid}
     parts = {p.id: {"secteurs": p.secteurs, "langues": p.langues, "consentement": p.accepte_introductions,
                     "disponible": p.disponible, "nom": p.nom} for p in par_id.values()}
     return Instantane(source=source, participants=parts, affirmations=reg.exporter(), aides=aides,
-                      deja_en_relation=sorted(cle(a, b) for a, b in relations_observees or []))
+                      deja_en_relation=sorted({cle(a, b) for a, b in relations_observees or []}), opportunites=opps)
 
 
 def probleme(inst: Instantane, spec: SpecDecision, tax: Taxonomie) -> tuple[Probleme, dict[str, str], dict[str, list[str]]]:
@@ -153,8 +167,10 @@ def probleme(inst: Instantane, spec: SpecDecision, tax: Taxonomie) -> tuple[Prob
         ab, ba = inst.aides.get(f"{a}→{b}"), inst.aides.get(f"{b}→{a}")
         valeur = (ab["valeur"] if ab else 0) + (ba["valeur"] if ba else 0)
         diverse = not any(tax.meme_famille(x, y) for x in pa["secteurs"] for y in pb["secteurs"])
-        aretes[k] = {"valeur_aide": valeur, "reciprocite": float(bool(ab and ba)), "diversite": float(diverse)}
-        preuves[k] = [aid for x in (ab, ba) if x for aid in x["affirmations"]]
+        aretes[k] = {"valeur_aide": valeur, "reciprocite": float(bool(ab and ba)), "diversite": float(diverse),
+                     "opportunite": float(k in inst.opportunites)}
+        preuves[k] = [aid for x in (ab, ba) if x for aid in x["affirmations"]] + (
+            [inst.opportunites[k]["affirmation"]] if k in inst.opportunites else [])
     return (Probleme(participants=eligibles, aretes=aretes, exclues=exclues, tours=spec.parametres.get("tours", 3)),
             ecartes, preuves)
 
@@ -219,12 +235,13 @@ class AdaptateurClub:
     domaine = DOMAINE
     grammaire = GRAMMAIRE
 
-    def __init__(self, fournisseur: Callable[[], tuple[list[Profil], list, list[tuple[str, str]], str]], tax: Taxonomie):
+    def __init__(self, fournisseur: Callable[[], tuple], tax: Taxonomie):
+        """fournisseur() → (profils, besoins, relations, source) ou (…, source, opportunites)."""
         self.fournisseur, self.tax = fournisseur, tax
 
     def instantane_courant(self) -> dict:
-        profils, besoins, relations, source = self.fournisseur()
-        return instantane(profils, besoins, self.tax, source, relations).model_dump()
+        profils, besoins, relations, source, *reste = self.fournisseur()
+        return instantane(profils, besoins, self.tax, source, relations, reste[0] if reste else None).model_dump()
 
     def probleme(self, inst: dict, spec: SpecDecision):
         return probleme(Instantane(**inst), spec, self.tax)

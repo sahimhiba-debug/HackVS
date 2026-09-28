@@ -93,6 +93,8 @@ adaptateur de challenge séparé du cœur générique.
 | Certificat dérivé des enregistrements | fait | `plateforme/certificat.py` |
 | Passerelle de modèles (annoncé / configuré / vérifié, repli tracé) | fait ; **aucun fournisseur vérifié** (pas de clé ici) | `plateforme/modeles.py`, `/api/modeles` |
 | Espace de décision | fait (mode démo) | `/decision` |
+| Mémoire du réseau (journal d'événements, horloge explicite, graphe dérivé, décroissance, croissance) | fait | `plateforme/memoire.py` |
+| Cycle des relations (relance documentée ou abstention, suivi, opportunité, soirée suivante) | fait (mode démo, horloge simulée) | `adaptateurs/club/cycle.py`, `/cycle` |
 | Évaluation de la plateforme | 20/20 scénarios, en CI | `eval/eval_decisions.py` |
 | Plan d'action : décision humaine enregistrée (non réécrivable) → aperçu à blanc → exécution SIMULÉE → vérification → dossier de preuves | fait ; aucun canal d'envoi réel (refusé explicitement en mode réel) | `plateforme/action.py` |
 | Pare-feu de contexte / d'outils | **pas fait** (aucun LLM dans la boucle de décision : rien à filtrer pour l'instant) | — |

@@ -84,9 +84,10 @@ def executer(ad: Adaptateur, demande: str, journal: Journal, inst: Optional[dict
         poids = {o.nom: o.poids for o in spec.objectifs}
         frontiere = op.frontiere(pb, AXES_PARETO)
         budget.appels_solveur += 3 ** len(AXES_PARETO) - 1
-        retenue = max(frontiere, key=lambda s: (sum(poids.get(k, 0) * s.objectifs.get(k, 0) for k in AXES_PARETO),
-                                                 tuple(s.objectifs.get(k, 0) for k in AXES_PARETO))) if frontiere \
-            else op.resoudre(pb, poids)
+        # La solution retenue est l'OPTIMUM des poids demandés (pas un point de la frontière choisi après coup) ;
+        # la frontière sert de contexte : que coûterait un autre arbitrage ?
+        retenue = op.resoudre(pb, poids)
+        budget.appels_solveur += 1
         run.frontiere = [s.model_dump() for s in frontiere]
         run.retenue = retenue.model_dump()
         r.update(points_pareto=len(frontiere), rencontres=len(retenue.rencontres), optimum_prouve=retenue.optimum_prouve)

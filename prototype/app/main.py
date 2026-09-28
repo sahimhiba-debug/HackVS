@@ -706,6 +706,18 @@ if MODE == "demo":  # espace de décision (plateforme + adaptateur Club) : insta
                                           os.environ.get("HACKVS_DECISIONS_DB", str(RACINE / "var" / "decisions_demo.db"))))
 
 
+if MODE == "demo":  # cycle de vie des relations : horloge simulée, membres fictifs
+    from .cycle_api import creer_routeur as _routeur_cycle
+    app.include_router(_routeur_cycle(profils_effectifs, TAX, os.environ.get("HACKVS_CYCLE_DB", str(RACINE / "var" / "cycle_demo.db"))))
+
+
+@app.get("/cycle")
+def page_cycle():
+    if MODE != "demo":
+        raise HTTPException(501, "Cycle des relations réservé au mode démo.")
+    return FileResponse(WEB / "cycle.html")
+
+
 @app.get("/api/modeles")
 def registre_modeles():
     """Passerelle de modèles : capacités ANNONCÉES vs état CONSTATÉ (configuré, vérifié). Aucune valeur de clé."""

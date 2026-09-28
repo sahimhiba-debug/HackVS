@@ -30,6 +30,7 @@ sauf décider à la place du membre.
 | Boucle « IA propose, membre confirme » | jeux réservés les plus durs : succès@3 3/15 → **15/15**, 0 mauvais contact ajouté (borne haute : membre simulé) | [EVALUATION.md §3](docs/EVALUATION.md) |
 | Plan de soirée | programme linéaire, **optimum prouvé** (< 0,1 s) ; 150 membres : 92 participants avec une rencontre utile contre 74 (glouton) ; langue commune ; export agenda | `/soiree`, `36_soiree` |
 | Espace de décision | intention → spécification → preuves → solveur → validation indépendante L0-L8 → critique / gardien → certificat → **décision humaine** ; rejeu identique, branches « et si », test de stress ; aucun LLM | `/decision`, [EVALUATION.md §6 bis](docs/EVALUATION.md) (20/20 scénarios) |
+| Cycle des relations | soirée → rencontres → 10 jours plus tard « pourquoi reprendre contact ? » **seulement avec une raison nouvelle et prouvée** (sinon abstention) → suivi accepté → opportunité « ami d'un ami » → soirée suivante ; journal d'événements rejouable | `/cycle`, [EVALUATION.md §6 ter](docs/EVALUATION.md) |
 | Agent IA (MCP) | 10 outils, confirmation humaine obligatoire, jetons + portées en HTTP, erreurs à code stable | [transcription](docs/captures/agent_mcp.md) |
 | Sécurité | profils = données non fiables ; LLM sans accès aux profils ; injection testée ; télémétrie tierce coupée | [EVALUATION.md §7](docs/EVALUATION.md) |
 | Ingénierie | 84 tests, lint, intégration continue verte, non-régression des évaluations, jeux réservés écrits avant le code | `.github/workflows/ci.yml` |
@@ -49,7 +50,7 @@ pip install -r requirements.txt            # + requirements-dev.txt pour tests e
 python scripts/telecharger_modele.py       # facultatif : IA locale (2,2 Go, sans clé)
 uvicorn app.main:app                       # http://localhost:8000
 ```
-Pages : `/` espace membre · `/decision` espace de décision · `/soiree` plan de soirée · `/club` vue du Club · `/scene` deux membres en direct ·
+Pages : `/` espace membre · `/decision` espace de décision · `/cycle` cycle des relations · `/soiree` plan de soirée · `/club` vue du Club · `/scene` deux membres en direct ·
 `/presentation` pitch hors ligne. Docker : `docker build -t fil-du-club . && docker run -p 8080:8080 fil-du-club`.
 
 Brancher un assistant IA : `claude mcp add fil-du-club -e HACKVS_API_URL=http://localhost:8000 -e HACKVS_MCP_MEMBRE=p00 -- python <chemin>/prototype/scripts/mcp_club.py` (détails : [HANDOFF.md](docs/HANDOFF.md)).

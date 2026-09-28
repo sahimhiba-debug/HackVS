@@ -131,6 +131,33 @@ Ce qui ne l'est PAS : la qualité des rencontres pour de vrais membres. Sur nos 
 presque dégénérée (1 point sur le club synthétique, 1 à 2 sur la démo) : le générateur synthétique ne produit
 aucune réciprocité. La capacité existe ; on ne la présente pas comme un résultat.
 
+## 6 ter. Cycle des relations (`/cycle`, `tests/test_cycle.py`)
+
+Boucle : soirée approuvée → rencontres (SIMULE tant qu'un membre ne déclare pas les avoir faites) → 10 jours →
+« pourquoi reprendre contact ? » **seulement** s'il existe une raison nouvelle et documentée → le membre accepte →
+suivi (DECLARE) → opportunité « ami d'un ami » (INFERE) → la soirée suivante l'optimise, sans répéter aucune paire.
+
+Scénario de démonstration (fictif, un seul besoin écrit à la main, publié 6 jours après la soirée) :
+
+| Étape | Mesure |
+|---|---|
+| 10 jours après la soirée 1 | **1 relance** (Sophie ↔ Reto : besoin nouveau + offre citée mot pour mot) ; **21 abstentions** (« rien de nouveau ») |
+| Suivi accepté | 1 opportunité : Grégoire peut aider Sophie, Reto les connaît tous deux |
+| Soirée 2 | Sophie–Grégoire planifiés ; 0 paire répétée ; 0 validateur en échec |
+
+Croissance sans aucun besoin nouveau (horloge simulée, 30 jours entre soirées, mêmes contraintes) :
+
+| Club | Rencontres utiles S1 · S2 · S3 | Groupes connectés S1 → S3 | Portée à 2 poignées de main S1 → S3 |
+|---|---|---|---|
+| Démo (37 fictifs) | 22 · 6 · **abstention** | 3 → 3 (S2) | 4,67 → 6,1 (S2) |
+| Synthétique (150) | 91 · 74 · 52 | **11 → 1** | **4,4 → 14,3** |
+
+Lecture honnête : la croissance est mécanique (plus de soirées, plus de liens) et le vivier de rencontres UTILES
+s'épuise (91 → 52 ; le Club de démo n'a plus rien à proposer à la 3e soirée, et la plateforme s'abstient plutôt que
+de fabriquer des rencontres). Seuls de nouveaux besoins publiés le renouvellent — c'est ce que la relance documentée
+cherche à provoquer. Non mesuré : si de vrais membres acceptent les relances et se revoient ; la décroissance des liens
+(demi-vie 30 jours) est une hypothèse de modélisation, pas une mesure.
+
 ## 7. Sécurité, confidentialité, agent (tests automatisés)
 
 | Propriété | Comment c'est vérifié |

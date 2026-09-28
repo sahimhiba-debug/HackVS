@@ -3,3 +3,4 @@ import os
 
 os.environ.setdefault("HACKVS_DB", ":memory:")
 os.environ.setdefault("HACKVS_DECISIONS_DB", ":memory:")
+os.environ.setdefault("HACKVS_CYCLE_DB", ":memory:")
