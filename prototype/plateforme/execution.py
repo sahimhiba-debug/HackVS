@@ -14,6 +14,7 @@ import time
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Optional
 
 from pydantic import BaseModel
@@ -89,6 +90,8 @@ class Journal:
     """Persistance des exécutions et de leurs instantanés (SQLite)."""
 
     def __init__(self, chemin: str = ":memory:"):
+        if chemin != ":memory:":
+            Path(chemin).parent.mkdir(parents=True, exist_ok=True)
         self._db = sqlite3.connect(chemin, check_same_thread=False)
         self._verrou = threading.Lock()
         with self._verrou:
