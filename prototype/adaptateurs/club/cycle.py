@@ -87,7 +87,9 @@ def _traitees(m: Memoire) -> set[str]:
 
 def relances(m: Memoire, profils: list[Profil], tax: Taxonomie, maintenant: date, delai: int = DELAI_RELANCE_JOURS) -> dict:
     par_id = {p.id: p for p in profils}
+    from .reseau import graphe_actuel
     g = graphe(m, maintenant)
+    actuel = graphe_actuel(m, maintenant)
     deja, propositions, trop_tot, sans_raison = _traitees(m), [], [], []
     besoins = besoins_publies(m, maintenant)
     suivis = {cle(*e.acteurs) for e in m.evenements("SUIVI", jusqu_au=maintenant)}
@@ -130,9 +132,9 @@ def relances(m: Memoire, profils: list[Profil], tax: Taxonomie, maintenant: date
                                              "quoi": f"profil de {par_id[y].nom}", "extrait": rp["votre_offre"]}],
                                 "id": _id(x, y, "RECIPROCITE_OUVERTE")})
         for x, via in ((a, b), (b, a)):  # ami d'un ami : via a eu un suivi avec x, et connaît z qui peut aider x
-            if cle(x, via) not in suivis:
+            if cle(x, via) not in suivis or not actuel.has_edge(x, via):
                 continue
-            for z in sorted(g.neighbors(via)):
+            for z in sorted(actuel.neighbors(via)):   # lien via–z ACTUEL : pas une rencontre d'il y a deux ans
                 if z in (x, via) or g.has_edge(x, z) or z not in par_id:
                     continue
                 aide = calculer_aides([par_id[x], par_id[z]], besoins, tax).get((x, z))
@@ -213,9 +215,10 @@ def opportunites(m: Memoire, profils: list[Profil], tax: Taxonomie, maintenant: 
     res = {cle(*e.acteurs): {"a": e.acteurs[0], "c": e.acteurs[1], "via": e.donnees["via"], "raison": e.donnees["raison"]}
            for e in m.evenements("OPPORTUNITE_OUVERTE", jusqu_au=maintenant)}
     besoins = besoins_publies(m, maintenant)
-    for a, via, c in fermetures(g):
+    from .reseau import graphe_actuel
+    for a, via, c in fermetures(graphe_actuel(m, maintenant)):   # triades sur les liens ACTUELS seulement
         k = cle(a, c)
-        if k in res or a not in par_id or c not in par_id or not ({cle(a, via), cle(via, c)} & suivis):
+        if g.has_edge(a, c) or k in res or a not in par_id or c not in par_id or not ({cle(a, via), cle(via, c)} & suivis):
             continue
         aides = calculer_aides([par_id[a], par_id[c]], besoins, tax)
         if aides:

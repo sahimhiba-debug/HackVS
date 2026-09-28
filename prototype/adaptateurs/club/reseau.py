@@ -93,8 +93,12 @@ def etat_relation(m: Memoire, a: str, b: str, maintenant: date) -> dict:
     est POSTÉRIEUR au dernier progrès : un refus ancien n'efface pas une relation devenue vivante (historique
     contradictoire), et il reste visible dans les faits."""
     k = cle(a, b)
-    evs = sorted((e for e in m.evenements(jusqu_au=maintenant) if len(e.acteurs) >= 2 and cle(*e.acteurs[:2]) == k),
-                 key=lambda e: (e.le, e.seq))
+    return _etat(sorted((e for e in m.evenements(jusqu_au=maintenant) if len(e.acteurs) >= 2 and cle(*e.acteurs[:2]) == k),
+                        key=lambda e: (e.le, e.seq)), maintenant)
+
+
+def _etat(evs: list[Evt], maintenant: date) -> dict:
+    """Règle unique d'état d'une relation, à partir de SES faits triés (partagée par etat_relation et graphe_actuel)."""
     atteint, derniere, faits = -1, None, []
     terminal, rang_terminal, rang_progres = None, -1, -1
     for i, e in enumerate(evs):
@@ -151,6 +155,26 @@ def graphe_de_confiance(m: Memoire, maintenant: date) -> nx.Graph:
     return g
 
 
+ETATS_NON_ACTUELS = ("DECLINEE", "SANS_SUITE", "A_RAVIVER")
+
+
+def graphe_actuel(m: Memoire, maintenant: date, g: Optional[nx.Graph] = None) -> nx.Graph:
+    """Relations ACTUELLES seulement : une relation historique ne devient pas automatiquement une relation actuelle.
+    Retire du graphe de confiance les liens sans interaction depuis plus de JOURS_AVANT_STALE jours, déclinés ou déclarés
+    sans suite (état calculé par la MÊME règle que etat_relation). Sert à tout ce qui s'appuie sur un lien pour agir
+    (présentation par un intermédiaire, opportunités) ; le graphe historique reste la mémoire (« à raviver »)."""
+    g = (g if g is not None else graphe_de_confiance(m, maintenant)).copy()
+    par_paire: dict[tuple, list[Evt]] = {}
+    for e in m.evenements(jusqu_au=maintenant):          # une seule passe sur les faits
+        if len(e.acteurs) >= 2:
+            par_paire.setdefault(cle(*e.acteurs[:2]), []).append(e)
+    for a, b in list(g.edges()):
+        evs = sorted(par_paire.get(cle(a, b), []), key=lambda e: (e.le, e.seq))
+        if _etat(evs, maintenant)["etat"] in ETATS_NON_ACTUELS:
+            g.remove_edge(a, b)
+    return g
+
+
 def chemin_chaud(g: nx.Graph, x: str, c: str, par_id: dict[str, Profil]) -> dict:
     if g.has_edge(x, c):
         return {"distance": 1, "type": "DIRECT", "message": "vous êtes déjà en relation"}
@@ -194,9 +218,13 @@ def dimensions(m: Memoire, x: Profil, suggestion: dict, par_id: dict[str, Profil
     recip = reciprocite_prouvee(x, c, tax, besoins_publies or []) if tax is not None else None
     # Vue MEMBRE : seulement des faits sur SES relations. La position de c dans le réseau (contacts communs, groupes,
     # distance, degré) appartient à d'autres membres : elle sert en interne (organisation, simulation), jamais ici.
-    chemin = ({"type": "DIRECT", "message": "vous êtes déjà en relation"} if g.has_edge(x.id, c.id)
-              else {"type": "AUCUNE", "message": "aucune relation enregistrée entre vous"})
     etat = etat_relation(m, x.id, c.id, maintenant)
+    if g.has_edge(x.id, c.id) and etat["etat"] not in ETATS_NON_ACTUELS:
+        chemin = {"type": "DIRECT", "message": "vous êtes déjà en relation"}
+    elif g.has_edge(x.id, c.id):   # historique ≠ actuel : on ne dit pas « en relation » d'un lien ancien ou clos
+        chemin = {"type": "ANCIENNE", "message": f"relation passée ({etat['libelle']})"}
+    else:
+        chemin = {"type": "AUCUNE", "message": "aucune relation enregistrée entre vous"}
     deja_demandes = sum(1 for e in m.evenements("INTRO_DEMANDEE", jusqu_au=maintenant) if set(e.acteurs[:2]) == {x.id, c.id})
     inconnu = []
     if etat["etat"] == "AUCUNE":

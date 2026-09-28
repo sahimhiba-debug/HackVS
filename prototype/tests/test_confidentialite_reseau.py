@@ -72,6 +72,6 @@ def test_une_carte_ne_revele_rien_du_graphe_des_autres():
     for cand in ("p06", "p07", "p11", "p20", "p32"):
         s = {"profil": {"id": cand}, "preuves": [{"critere": "x", "extrait": "y", "nature": "declare", "champ": "offre"}], "niveau": "forte"}
         d = reseau.dimensions(m, ids["p00"], s, ids, j)
-        assert d["reseau"]["type"] in ("DIRECT", "AUCUNE"), (cand, d["reseau"])
+        assert d["reseau"]["type"] in ("DIRECT", "ANCIENNE", "AUCUNE"), (cand, d["reseau"])
         texte = json.dumps(d, ensure_ascii=False)
         assert "contact" not in texte.lower() and "groupe" not in texte and "poignées" not in texte, (cand, texte)

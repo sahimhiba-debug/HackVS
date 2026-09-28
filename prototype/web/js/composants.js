@@ -235,7 +235,7 @@ export function carteCorrespondance(s, { piste = false, action = null, besoin = 
       besoin ? pliExplication(besoin, p.id, "Pourquoi cette personne ? Critère par critère") : null));
 }
 
-const RESEAU = { DIRECT: "Déjà en relation", AUCUNE: "Pas encore en relation" };
+const RESEAU = { DIRECT: "Déjà en relation", ANCIENNE: "Relation passée (ancienne ou close)", AUCUNE: "Pas encore en relation" };
 
 // Pourquoi maintenant / comment nous le savons / ce qui reste inconnu — jamais un score, jamais une coordonnée.
 function blocDimensions(d) {
