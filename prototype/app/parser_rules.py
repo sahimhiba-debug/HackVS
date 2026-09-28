@@ -1,146 +1,169 @@
 """Analyse d'un besoin en texte libre par règles (hors ligne, déterministe).
 
 Ce n'est PAS de l'IA générative : correspondance d'expressions de la taxonomie,
-désambiguïsation par indices de contexte, marqueurs « idéalement / si possible ».
-Son intérêt : reproductible, sans réseau, explicable. Sa limite : vocabulaire fermé.
+désambiguïsation par indices de contexte, portée des marqueurs limitée à la clause.
+Intérêt : reproductible, sans réseau, explicable. Limite : vocabulaire et tournures fermés.
+
+Règles principales (chacune couverte par le jeu adversarial) :
+- seules les phrases qui expriment une recherche comptent (« je cherche », « il me faut »…) ;
+- « idéalement », « si possible »… rendent SOUHAITÉ le critère de la même clause ;
+  « impérativement », « uniquement »… le rendent OBLIGATOIRE ;
+- une compétence niée (« pas de cybersécurité ») devient une EXCLUSION ;
+- « basé / implanté à X » = implantation du prestataire ; « livrer / intervenir à X » = zone
+  d'intervention ; « nous sommes basés à X » = contexte sur le demandeur, pas un critère ;
+- sans compétence reconnue, les mots significatifs restants forment un critère « hors catalogue ».
 """
 from __future__ import annotations
 
 import re
 
-from .models import Ambiguite, Besoin, Critere, OptionAmbiguite
+from .models import Ambiguite, Besoin, Critere, Exclusion, OptionAmbiguite
 from .taxonomy import Taxonomie, motif, normaliser
 
-_SEPARATEURS_CLAUSE = re.compile(r"[,.;!?\n]|\bmais\b")
+_SEPARATEURS_CLAUSE = re.compile(r"[,.;:!?()\n]|\bmais\b")
 _CONTEXTE = [
     re.compile(r"\b(?:\d+|une|deux|trois|quatre|cinq)\s+fois\s+par\s+(?:jour|semaine|mois|an)\b"),
     re.compile(r"\bd'ici\s+[\w']+(?:\s+[\w']+){0,2}"),
     re.compile(r"\bavant\s+(?:le\s+|la\s+|l')?(?:\w+\s+){0,2}\d{4}\b"),
     re.compile(r"\bbudget\s+(?:de\s+)?[\w\s'.]{0,20}?(?:chf|francs|fr\.)"),
+    re.compile(r"\b\d+\s+(?:personnes|colis|palettes|bouteilles|m2)\b"),
 ]
+_RECHERCHE = re.compile(
+    r"\b(?:cherche|cherchons|recherche|recherchons|besoin|il me faut|il nous faut|trouver|"
+    r"aimerais|aimerions|voudrais|voudrions|souhaite|souhaitons|qui peut|quelqu'un|recrute|recrutons|dois|devons)\b"
+)
+_PHRASE = re.compile(r"[^.!?\n]+[.!?\n]?")
+_NEGATION_AVANT = re.compile(
+    r"(?:\bpas\b|\bne\b|\bn'|\bsans\b|\bsauf\b|\bhors\b|\bni\b|\bnon\b|\bplutot que\b|\bautre que\b)"
+    r"(?:\s+[\w'-]+){0,4}\s*$"
+)
+_IMPL = (r"(?:base|basee|bases|basees|implante|implantee|implantes|implantees|installe|installee|installes|"
+         r"installees|situe|situee|situes|situees|localise|localisee|localises|localisees)")
+_PREP = r"(?:a|en|au|aux|dans|pres de|du|dans la region de|dans le|dans la|sur)"
+_SOI = re.compile(
+    r"(?:nous sommes|je suis|nous nous trouvons|on est|notre (?:entreprise|societe|siege|atelier|cave|domaine|bureau) est)"
+    rf"\s+(?:{_IMPL}\s+)?{_PREP}\s+(?:la\s+|le\s+|l')?$"
+)
+_IMPLANTATION = re.compile(rf"{_IMPL}\s+{_PREP}\s+(?:la\s+|le\s+|l')?$")
+_TOKEN = re.compile(r"[a-z0-9][a-z0-9-]*")
 
 
-def _clause(norm: str, pos: int) -> str:
+def _clause(n: str, p: int) -> tuple[int, int]:
     debut = 0
-    for m in _SEPARATEURS_CLAUSE.finditer(norm):
-        if m.end() <= pos:
+    for m in _SEPARATEURS_CLAUSE.finditer(n):
+        if m.end() <= p:
             debut = m.end()
-        elif m.start() > pos:
-            return norm[debut:m.start()]
-    return norm[debut:]
+        elif m.start() > p:
+            return debut, m.start()
+    return debut, len(n)
 
 
 def _chevauche(debut: int, fin: int, pris: list[tuple[int, int]]) -> bool:
     return any(debut < f and d < fin for d, f in pris)
 
 
-_RECHERCHE = re.compile(
-    r"\b(?:cherche|cherchons|recherche|recherchons|besoin|il me faut|il nous faut|trouver|"
-    r"aimerais|aimerions|voudrais|voudrions|souhaite|souhaitons|qui peut|quelqu'un)\b"
-)
-_PHRASE = re.compile(r"[^.!?\n]+[.!?\n]?")
-
-
-def _zones_recherche(n: str) -> list[tuple[int, int]]:
-    """Phrases qui expriment la recherche. Si aucune, tout le texte compte.
-
-    Évite de prendre « nous produisons des jus » pour le besoin : on ne garde que
-    les phrases contenant un verbe de recherche (« je cherche », « il me faut »…).
-    """
-    phrases = [(m.start(), m.end()) for m in _PHRASE.finditer(n)]
-    cibles = [(d, f) for d, f in phrases if _RECHERCHE.search(n[d:f])]
-    return cibles or [(0, len(n))]
-
-
 def analyser(texte: str, tax: Taxonomie) -> Besoin:
     n, pos = normaliser(texte)
-    zones_utiles = _zones_recherche(n)
-
-    def dans_recherche(debut: int) -> bool:
-        return any(d <= debut < f for d, f in zones_utiles)
 
     def extrait(debut: int, fin: int) -> str:
         return texte[pos[debut]: pos[fin - 1] + 1] if fin > debut else ""
 
-    def souple(debut: int) -> bool:
-        cl = _clause(n, debut)
-        return any(motif(m).search(cl) for m in tax.marqueurs_souples)
+    phrases = [(m.start(), m.end()) for m in _PHRASE.finditer(n)]
+    zones_utiles = [(d, f) for d, f in phrases if _RECHERCHE.search(n[d:f])] or [(0, len(n))]
+
+    def dans_recherche(p: int) -> bool:
+        return any(d <= p < f for d, f in zones_utiles)
+
+    def force(p: int) -> bool | None:
+        """True = obligatoire explicite, False = souhaité explicite, None = aucun marqueur dans la clause."""
+        d, f = _clause(n, p)
+        cl = n[d:f]
+        if any(motif(m).search(cl) for m in tax.marqueurs_souples):
+            return False
+        if any(motif(m).search(cl) for m in tax.marqueurs_forts):
+            return True
+        return None
+
+    def nie(p: int) -> bool:
+        d, _ = _clause(n, p)
+        return bool(_NEGATION_AVANT.search(n[d:p]))
 
     pris: list[tuple[int, int]] = []
     trouves: list[tuple[int, Critere]] = []
+    exclusions: list[tuple[str, str]] = []
     hors_recherche: list[str] = []
+    contexte: list[str] = []
 
-    # 1. Expressions de compétences, les plus longues d'abord (évite « transporteur » seul
-    #    quand « transporteur frigorifique » est présent).
-    candidats = sorted(
-        ((e, c.id) for c in tax.concepts.values() for e in c.expressions),
-        key=lambda x: -len(x[0]),
-    )
+    # 1. Compétences, expressions les plus longues d'abord.
+    candidats = sorted(((e, c.id) for c in tax.concepts.values() for e in c.expressions), key=lambda x: -len(x[0]))
     for expr, cid in candidats:
         for m in motif(expr).finditer(n):
             if _chevauche(m.start(), m.end(), pris):
                 continue
             pris.append((m.start(), m.end()))
+            ex = extrait(m.start(), m.end())
             if not dans_recherche(m.start()):
-                hors_recherche.append(extrait(m.start(), m.end()))
-                continue
-            trouves.append((m.start(), Critere(
-                type="expertise", valeur=cid, libelle=tax.libelle(cid),
-                obligatoire=not souple(m.start()), extrait=extrait(m.start(), m.end()),
-            )))
+                hors_recherche.append(ex)
+            elif nie(m.start()):
+                exclusions.append((cid, ex))
+            else:
+                trouves.append((m.start(), Critere(type="expertise", valeur=cid, libelle=tax.libelle(cid),
+                                                   obligatoire=force(m.start()) is True, extrait=ex)))
 
     # 2. Termes ambigus restants : résolus seulement si un seul sens a des indices dans le texte.
     ambiguites: list[Ambiguite] = []
-    for terme, spec in tax.ambigus.items():
-        for m in motif(terme).finditer(n):
+    for spec_terme, spec in tax.ambigus.items():
+        for m in motif(spec_terme).finditer(n):
             if _chevauche(m.start(), m.end(), pris) or not dans_recherche(m.start()):
                 continue
             pris.append((m.start(), m.end()))
             options = spec["options"]
-            indices = {
-                cid: [i for i in hints if motif(normaliser(i)[0]).search(n)]
-                for cid, hints in options.items()
-            }
-            gagnants = [cid for cid, trouves_i in indices.items() if trouves_i]
+            indices = {cid: [i for i in hints if motif(normaliser(i)[0]).search(n)] for cid, hints in options.items()}
+            gagnants = [cid for cid, t in indices.items() if t]
             ex = extrait(m.start(), m.end())
+            if nie(m.start()):
+                if len(gagnants) == 1:
+                    exclusions.append((gagnants[0], ex))
+                continue
             if len(gagnants) == 1:
                 cid = gagnants[0]
                 trouves.append((m.start(), Critere(
-                    type="expertise", valeur=cid, libelle=tax.libelle(cid),
-                    obligatoire=not souple(m.start()), extrait=ex,
-                    note=f"« {spec['libelle']} » compris comme « {tax.libelle(cid)} » (indice : {indices[cid][0]})",
-                )))
+                    type="expertise", valeur=cid, libelle=tax.libelle(cid), obligatoire=force(m.start()) is True,
+                    extrait=ex, note=f"« {spec['libelle']} » compris comme « {tax.libelle(cid)} » (indice : {indices[cid][0]})")))
             else:
-                ambiguites.append(Ambiguite(
-                    terme=spec["libelle"], extrait=ex,
-                    options=[OptionAmbiguite(valeur=c, libelle=tax.libelle(c)) for c in options],
-                ))
+                ambiguites.append(Ambiguite(terme=spec["libelle"], extrait=ex,
+                                            options=[OptionAmbiguite(valeur=c, libelle=tax.libelle(c)) for c in options]))
 
-    # 3. Langues.
+    # 3. Langues : obligatoires par défaut, souhaitées si un marqueur souple est dans la clause.
     for code, spec in tax.langues.items():
         for expr in spec["expressions"]:
             m = next((x for x in motif(normaliser(expr)[0]).finditer(n) if dans_recherche(x.start())), None)
             if m and not _chevauche(m.start(), m.end(), pris):
                 pris.append((m.start(), m.end()))
-                trouves.append((m.start(), Critere(
-                    type="langue", valeur=code, libelle=spec["libelle"],
-                    obligatoire=not souple(m.start()), extrait=extrait(m.start(), m.end()),
-                )))
+                if not nie(m.start()):
+                    trouves.append((m.start(), Critere(type="langue", valeur=code, libelle=spec["libelle"],
+                                                       obligatoire=force(m.start()) is not False,
+                                                       extrait=extrait(m.start(), m.end()))))
                 break
 
-    # 4. Zones desservies.
+    # 4. Lieux : implantation du prestataire, zone d'intervention, ou localisation du demandeur.
     for zone, exprs in tax.zones.items():
         for expr in sorted(exprs, key=len, reverse=True):
-            m = next((x for x in motif(expr).finditer(n) if dans_recherche(x.start())), None)
-            if m and not _chevauche(m.start(), m.end(), pris):
+            for m in motif(expr).finditer(n):
+                if _chevauche(m.start(), m.end(), pris):
+                    continue
                 pris.append((m.start(), m.end()))
-                trouves.append((m.start(), Critere(
-                    type="zone", valeur=zone, libelle=zone,
-                    obligatoire=not souple(m.start()), extrait=extrait(m.start(), m.end()),
-                )))
-                break
+                ex = extrait(m.start(), m.end())
+                d, _ = _clause(n, m.start())
+                avant = n[d:m.start()]
+                if _SOI.search(avant) or not dans_recherche(m.start()):
+                    contexte.append(f"Votre localisation : {ex} (pas un critère)")
+                    continue
+                type_ = "implantation" if _IMPLANTATION.search(avant) else "zone"
+                trouves.append((m.start(), Critere(type=type_, valeur=zone, libelle=zone,
+                                                   obligatoire=force(m.start()) is not False, extrait=ex)))
 
-    # Dédoublonnage (même type + valeur), ordre d'apparition dans le texte.
+    # Ordre d'apparition + dédoublonnage.
     trouves.sort(key=lambda x: x[0])
     criteres: list[Critere] = []
     vus: set[tuple[str, str]] = set()
@@ -149,39 +172,56 @@ def analyser(texte: str, tax: Taxonomie) -> Besoin:
             vus.add((c.type, c.valeur))
             criteres.append(c)
 
-    # Si une compétence et l'une de ses sous-catégories sont présentes (« avocat » + « droit du
-    # travail »), on retire la plus générale : le besoin réel est le plus précis.
+    # Le plus précis l'emporte (« avocat » + « droit du travail » → droit du travail).
     presents = {c.valeur for c in criteres if c.type == "expertise"}
     criteres = [c for c in criteres if c.type != "expertise"
                 or not any(c.valeur in tax.ancetres(autre) for autre in presents)]
 
-    # La première compétence est le besoin principal (obligatoire) ; les suivantes sont
-    # « souhaitées » par défaut, l'utilisateur peut les rendre obligatoires.
-    premiere = True
-    for c in criteres:
-        if c.type == "expertise":
-            if premiere:
-                c.obligatoire = True
-                premiere = False
-            else:
-                c.obligatoire = False
+    # Une exclusion contredite par une recherche positive du même concept est ignorée
+    # (« marketing, mais pas pour les réseaux sociaux » : on garde le marketing).
+    presents = {c.valeur for c in criteres if c.type == "expertise"}
+    excl: list[Exclusion] = []
+    for cid, ex in exclusions:
+        if cid in presents:
+            contexte.append(f"À éviter : {ex}")
+        elif not any(e.valeur == cid for e in excl):
+            excl.append(Exclusion(valeur=cid, libelle=tax.libelle(cid), extrait=ex))
 
-    contexte = []
+    # Besoin principal = première compétence, toujours obligatoire ; les suivantes restent
+    # souhaitées sauf marqueur fort (calculé plus haut).
+    principale = next((c for c in criteres if c.type == "expertise"), None)
+    if principale:
+        principale.obligatoire = True
+
+    # Hors catalogue : sans compétence reconnue, on garde les mots significatifs restants.
+    if principale is None and not ambiguites:
+        libres = []
+        for d, f in zones_utiles:
+            for m in _TOKEN.finditer(n, d, f):
+                mot = m.group(0).strip("-")
+                if (len(mot) >= 3 and mot not in tax.mots_generiques and not mot.isdigit()
+                        and not _chevauche(m.start(), m.end(), pris)):
+                    libres.append(extrait(m.start(), m.end()))
+        libres = list(dict.fromkeys(libres))
+        if libres:
+            criteres.insert(0, Critere(type="texte_libre", valeur=" ".join(libres), libelle="Compétence hors catalogue",
+                                       obligatoire=True, extrait=None,
+                                       note="Aucune catégorie du Club reconnue : recherche par mots dans les offres déclarées."))
+
     for rx in _CONTEXTE:
         for m in rx.finditer(n):
             contexte.append(extrait(m.start(), m.end()))
-
     if hors_recherche:
         contexte.append("À propos de vous : " + ", ".join(dict.fromkeys(hors_recherche)))
 
-    exclure = any(motif(mc).search(n) for mc in tax.marqueurs_concurrents)
-
     avertissements = []
-    if not any(c.type == "expertise" for c in criteres) and not ambiguites:
-        avertissements.append("Aucune compétence reconnue dans le texte. Choisissez-en une dans la liste ou reformulez.")
+    if not any(c.type in ("expertise", "texte_libre") for c in criteres) and not ambiguites:
+        avertissements.append("Je n'ai pas compris quelle compétence vous cherchez. Précisez-la en une phrase "
+                              "ou choisissez-la dans la liste.")
 
     return Besoin(
-        texte=texte, criteres=criteres, exclure_concurrents=exclure,
-        ambiguites=ambiguites, contexte=contexte, analyseur="regles",
+        texte=texte, criteres=criteres, exclusions=excl,
+        exclure_concurrents=any(motif(mc).search(n) for mc in tax.marqueurs_concurrents),
+        ambiguites=ambiguites, contexte=list(dict.fromkeys(contexte)), analyseur="regles",
         avertissements=avertissements,
     )

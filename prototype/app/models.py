@@ -1,4 +1,4 @@
-"""Schémas de données partagés par l'API, le moteur et l'évaluation."""
+"""Schémas de données partagés par l'API, le moteur, la Bourse et l'évaluation."""
 from __future__ import annotations
 
 from typing import Literal, Optional
@@ -16,13 +16,13 @@ class Profil(BaseModel):
     nom: str
     fonction: str
     entreprise: str
-    commune: str
+    commune: str  # IMPLANTATION (où l'entreprise est installée)
     type: Literal["membre_club", "exposant", "visiteur"]
     secteurs: list[str] = []
     offre: list[Offre] = []
     recherche: list[Offre] = []
     langues: list[str] = []
-    zones_service: list[str] = []
+    zones_service: list[str] = []  # INTERVENTION (où elle travaille) : ≠ commune
     accepte_introductions: bool = False
     disponible: bool = True
     note_disponibilite: str = ""
@@ -31,7 +31,7 @@ class Profil(BaseModel):
 
 
 class ProfilPublic(BaseModel):
-    """Ce qui peut être montré au demandeur (pas de coordonnées)."""
+    """Ce qui peut être montré aux autres membres (pas de coordonnées)."""
     id: str
     nom: str
     fonction: str
@@ -39,15 +39,27 @@ class ProfilPublic(BaseModel):
     commune: str
     type: str
     maj: str
+    langues: list[str] = []
+    zones_service: list[str] = []
+
+
+TypeCritere = Literal["expertise", "langue", "zone", "implantation", "texte_libre"]
 
 
 class Critere(BaseModel):
-    type: Literal["expertise", "langue", "zone"]
+    type: TypeCritere
     valeur: str
     libelle: str
     obligatoire: bool = True
     extrait: Optional[str] = None  # passage du texte d'origine qui a produit ce critère
     note: Optional[str] = None     # ex. « interprété d'après l'indice : stand »
+
+
+class Exclusion(BaseModel):
+    """Compétence explicitement écartée (« pas de cybersécurité »)."""
+    valeur: str
+    libelle: str
+    extrait: Optional[str] = None
 
 
 class OptionAmbiguite(BaseModel):
@@ -64,6 +76,7 @@ class Ambiguite(BaseModel):
 class Besoin(BaseModel):
     texte: str = ""
     criteres: list[Critere] = []
+    exclusions: list[Exclusion] = []
     exclure_concurrents: bool = False
     inclure_exposants: bool = False
     ambiguites: list[Ambiguite] = []
@@ -74,9 +87,9 @@ class Besoin(BaseModel):
 
 class Preuve(BaseModel):
     critere: str
-    champ: Literal["offre", "presentation", "langues", "zones_service", "recherche"]
+    champ: Literal["offre", "presentation", "langues", "zones_service", "recherche", "commune"]
     extrait: str
-    nature: Literal["declare", "deduit"]
+    nature: Literal["declare", "deduit", "textuel"]
 
 
 class Suggestion(BaseModel):
@@ -85,7 +98,7 @@ class Suggestion(BaseModel):
     preuves: list[Preuve]
     a_verifier: list[str] = []
     reciprocite: Optional[Preuve] = None
-    score: float = Field(description="Score interne de classement, non affiché comme pourcentage")
+    score: float = Field(description="Score interne de classement, jamais affiché comme pourcentage")
 
 
 class Ecart(BaseModel):
@@ -102,3 +115,5 @@ class Resultat(BaseModel):
     ecartes: list[Ecart] = []
     nb_profils_examines: int = 0
     duree_ms: float = 0.0
+    besoin_id: Optional[str] = None
+    besoin_version: Optional[int] = None

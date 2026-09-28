@@ -1,7 +1,13 @@
 """Moteur de correspondance : contraintes dures (code) → pertinence → explications vérifiées.
 
-Principe : le code décide qui est éligible (consentement, disponibilité, zone,
-langue, concurrence). Aucun modèle de langage ne peut rendre éligible un profil exclu.
+Principe : le code décide qui est éligible (consentement, disponibilité, zone, implantation,
+langue, concurrence, exclusions). Aucun modèle de langage ne peut rendre éligible un profil exclu.
+
+Hiérarchie des preuves de compétence :
+1. « declare »  : offre structurée du profil (le membre l'a déclarée) → peut donner « forte » ;
+2. « deduit »   : phrase de présentation qui AFFIRME une offre (« nous assurons… »), sans négation,
+                  sans formulation de besoin ni de clientèle → « partielle » ;
+3. « textuel »  : besoin hors catalogue, mots retrouvés dans une offre déclarée → « partielle ».
 """
 from __future__ import annotations
 
@@ -11,10 +17,20 @@ import time
 from collections import Counter
 from typing import Optional
 
-from .models import Besoin, Ecart, Preuve, Profil, ProfilPublic, Resultat, Suggestion
+from .models import Besoin, Critere, Ecart, Preuve, Profil, ProfilPublic, Resultat, Suggestion
 from .taxonomy import Taxonomie, motif, norm
 
 _NEGATION = re.compile(r"\b(?:ne|n'|pas|aucun|aucune|jamais|plus de)\b")
+# Une phrase de présentation ne prouve une compétence que si elle affirme une offre…
+_AFFIRME_OFFRE = re.compile(
+    r"\b(?:nous|on|je)\s+(?:assurons|proposons|offrons|livrons|realisons|effectuons|faisons|installons|"
+    r"accompagnons|transportons|fournissons|louons|organisons|assure|propose|offre|livre|realise|installe)\b"
+    r"|\bspecialis|\bservice(?:s)? de\b|\bnous sommes (?:un|une|des)\b"
+)
+# …et ne décrit ni un besoin du membre ni sa clientèle.
+_BESOIN_OU_CLIENTELE = re.compile(
+    r"\b(?:cherchons|recherchons|cherche|recherche|besoin|nos clients|clients\s*:|clientele|nos fournisseurs)\b"
+)
 _PHRASES = re.compile(r"[^.!?]+[.!?]?")
 _MOTS_VIDES = set(norm(
     "le la les un une des de du d l et ou a au aux en pour par avec sans sur dans qui que quoi "
@@ -28,33 +44,65 @@ def _public(p: Profil) -> ProfilPublic:
     return ProfilPublic(**p.model_dump(include=set(ProfilPublic.model_fields)))
 
 
-def couverture(p: Profil, concept: str, tax: Taxonomie) -> Optional[Preuve]:
-    """Preuve qu'un profil couvre un concept : déclarée (offre) ou déduite (présentation)."""
+def _racine(mot: str) -> str:
+    """Racinisation grossière (6 premiers caractères) : pollinisation ≈ polliniser."""
+    return mot[:6]
+
+
+def _mots(texte: str) -> list[str]:
+    return [t for t in re.findall(r"[a-z0-9]+", norm(texte)) if len(t) >= 3 and t not in _MOTS_VIDES]
+
+
+def _exclu(concept: Optional[str], besoin: Besoin, tax: Taxonomie) -> bool:
+    return concept is not None and any(tax.couvre(concept, e.valeur) for e in besoin.exclusions)
+
+
+def couverture(p: Profil, concept: str, tax: Taxonomie, besoin: Optional[Besoin] = None) -> Optional[Preuve]:
+    """Preuve qu'un profil couvre un concept : déclarée (offre) ou déduite (présentation affirmative)."""
     lib = tax.libelle(concept)
     for o in p.offre:
-        if tax.couvre(o.concept, concept):
+        if o.concept and tax.couvre(o.concept, concept) and not (besoin and _exclu(o.concept, besoin, tax)):
             return Preuve(critere=lib, champ="offre", extrait=o.texte, nature="declare")
-    # Déduction depuis la présentation libre, phrase par phrase, en ignorant les phrases négatives
-    # (« nous réparons les groupes froid, nous ne livrons pas »).
     for m in _PHRASES.finditer(p.presentation):
         phrase = m.group(0).strip()
         np_ = norm(phrase)
-        if _NEGATION.search(np_):
+        if _NEGATION.search(np_) or _BESOIN_OU_CLIENTELE.search(np_) or not _AFFIRME_OFFRE.search(np_):
             continue
-        if any(motif(e).search(np_) for e in tax.expressions_de(concept)):
+        presents = tax.concepts_dans(np_)
+        if any(c in presents for c in tax.descendants(concept) if not (besoin and _exclu(c, besoin, tax))):
             return Preuve(critere=lib, champ="presentation", extrait=phrase, nature="deduit")
     return None
 
 
-def couverture_parent(p: Profil, concept: str, tax: Taxonomie) -> Optional[tuple[Preuve, int]]:
-    """Le profil couvre seulement une catégorie plus large (piste à vérifier).
+def couverture_textuelle(p: Profil, critere: Critere, besoin: Besoin, tax: Taxonomie) -> Optional[Preuve]:
+    """Besoin hors catalogue : une MÊME offre déclarée doit contenir assez de mots du besoin.
 
-    Retourne aussi la distance dans la taxonomie (1 = parent direct) pour classer les pistes.
+    Seuil : au moins 2 racines communes ET au moins la moitié des racines du besoin.
+    Volontairement strict : « droit maritime » ne doit pas trouver « droit des sociétés ».
     """
-    for distance, anc in enumerate(tax.ancetres(concept), start=1):
+    requete = {_racine(m) for m in _mots(critere.valeur)}
+    if not requete:
+        return None
+    seuil = max(2, math.ceil(len(requete) / 2))
+    meilleur = None
+    for o in p.offre:
+        if _exclu(o.concept, besoin, tax):
+            continue
+        communs = requete & {_racine(m) for m in _mots(o.texte)}
+        if len(communs) >= seuil and (meilleur is None or len(communs) > meilleur[0]):
+            meilleur = (len(communs), o.texte)
+    if meilleur:
+        return Preuve(critere="Mots de votre besoin dans son offre", champ="offre", extrait=meilleur[1], nature="textuel")
+    return None
+
+
+def couverture_parent(p: Profil, concept: str, tax: Taxonomie) -> Optional[tuple[Preuve, int]]:
+    """Le profil couvre seulement la catégorie parente directe (piste à vérifier)."""
+    ancetres = tax.ancetres(concept)[:1]
+    for anc in ancetres:
         for o in p.offre:
             if o.concept == anc:
-                return Preuve(critere=tax.libelle(anc), champ="offre", extrait=o.texte, nature="declare"), distance
+                return Preuve(critere=tax.libelle(anc), champ="offre", extrait=o.texte, nature="declare"), 1
     return None
 
 
@@ -70,11 +118,13 @@ def preuve_valide(p: Profil, pr: Preuve) -> bool:
         return pr.extrait in p.langues
     if pr.champ == "zones_service":
         return pr.extrait in p.zones_service
+    if pr.champ == "commune":
+        return pr.extrait == p.commune
     return False
 
 
 def _tokens(texte: str) -> list[str]:
-    return [t.rstrip("s") for t in re.findall(r"[a-z0-9]+", norm(texte)) if len(t) > 2 and t not in _MOTS_VIDES]
+    return [t.rstrip("s") for t in _mots(texte)]
 
 
 def texte_profil(p: Profil) -> str:
@@ -97,13 +147,11 @@ class _Tfidf:
         return num / (nq * nd) if nq and nd else 0.0
 
 
-def filtres_durs(
-    besoin: Besoin, demandeur: Profil, p: Profil, tax: Taxonomie
-) -> Optional[str]:
-    """Retourne la raison d'exclusion, ou None si le profil est éligible.
+def filtres_durs(besoin: Besoin, demandeur: Profil, p: Profil, tax: Taxonomie) -> Optional[str]:
+    """Raison d'exclusion, ou None si le profil est éligible.
 
-    Partagé avec la référence « mots-clés » pour que la comparaison porte
-    uniquement sur la qualité du classement.
+    Partagé avec la référence « mots-clés » et avec la Bourse : les trois vues appliquent
+    exactement les mêmes règles.
     """
     if p.id == demandeur.id or p.entreprise == demandeur.entreprise:
         return "vous-même"
@@ -120,38 +168,41 @@ def filtres_durs(
             continue
         if c.type == "zone":
             if not p.zones_service:
-                return "zone desservie non renseignée"
+                return "zone d'intervention non renseignée"
             if c.valeur not in p.zones_service:
-                return f"ne dessert pas : {c.libelle}"
+                return f"n'intervient pas en : {c.libelle}"
+        elif c.type == "implantation":
+            z = tax.zone_de_commune(p.commune)
+            if z is None:
+                return "implantation inconnue"
+            if z != c.valeur:
+                return f"pas implanté·e en : {c.libelle}"
         elif c.type == "langue":
             if not p.langues:
                 return "langues non renseignées"
             if c.valeur not in p.langues:
                 return f"ne parle pas {c.libelle}"
-    if besoin.exclure_concurrents and any(
-        tax.meme_famille(a, b) for a in p.secteurs for b in demandeur.secteurs
-    ):
+    if besoin.exclure_concurrents and any(tax.meme_famille(a, b) for a in p.secteurs for b in demandeur.secteurs):
         return "concurrent potentiel (même secteur que vous)"
     return None
 
 
-# Raisons non affichées au demandeur (pas d'information utile ou risque de révéler un refus nominatif).
+# Raisons non affichées au demandeur (pas utiles, ou risque de révéler un refus nominatif).
 _RAISONS_SILENCIEUSES = {"vous-même", "hors communauté (visiteur)"}
 
 
 def rechercher(
     besoin: Besoin, demandeur: Profil, profils: list[Profil], tax: Taxonomie,
-    mode: str = "demo", limite: int = 5,
+    mode: str = "demo", limite: int = 5, texte_libre: bool = True,
 ) -> Resultat:
     t0 = time.perf_counter()
     expertises = [c for c in besoin.criteres if c.type == "expertise"]
-    if not expertises:
-        return Resultat(
-            mode=mode, suggestions=[], abstention=True,
-            message="Précisez la compétence recherchée : aucune n'a été reconnue ou choisie.",
-            nb_profils_examines=0, duree_ms=(time.perf_counter() - t0) * 1000,
-        )
-    principale = next((c for c in expertises if c.obligatoire), expertises[0])
+    libre = next((c for c in besoin.criteres if c.type == "texte_libre"), None) if texte_libre else None
+    if not expertises and not libre:
+        return Resultat(mode=mode, suggestions=[], abstention=True,
+                        message="Précisez la compétence recherchée : aucune n'a été reconnue ou choisie.",
+                        duree_ms=round((time.perf_counter() - t0) * 1000, 2))
+    principale = next((c for c in expertises if c.obligatoire), expertises[0]) if expertises else libre
     tfidf = _Tfidf({p.id: texte_profil(p) for p in profils})
 
     suggestions: list[Suggestion] = []
@@ -163,19 +214,18 @@ def rechercher(
         if p.id == demandeur.id:
             continue
         examines += 1
-        pr_princ = couverture(p, principale.valeur, tax)
-        pr_parent = None if pr_princ else couverture_parent(p, principale.valeur, tax)
-        if pr_parent and pr_parent[1] > 1:
-            pr_parent = None  # au-delà du parent direct, la piste devient du bruit
+        if principale.type == "texte_libre":
+            pr_princ, pr_parent = couverture_textuelle(p, principale, besoin, tax), None
+        else:
+            pr_princ = couverture(p, principale.valeur, tax, besoin)
+            pr_parent = None if pr_princ else couverture_parent(p, principale.valeur, tax)
         if not pr_princ and not pr_parent:
-            continue  # pas pertinent : on ne compte pas comme « écarté »
+            continue  # pas pertinent : non compté comme « écarté »
 
         raison = filtres_durs(besoin, demandeur, p, tax)
         if raison is None:
             for c in expertises:
-                if c is principale or not c.obligatoire:
-                    continue
-                if not couverture(p, c.valeur, tax):
+                if c is not principale and c.obligatoire and not couverture(p, c.valeur, tax, besoin):
                     raison = f"ne couvre pas : {c.libelle}"
                     break
         if raison:
@@ -188,42 +238,49 @@ def rechercher(
         score = 0.0
         if pr_princ:
             preuves.append(pr_princ)
-            score += 1.0 if pr_princ.nature == "declare" else 0.5
+            score += {"declare": 1.0, "deduit": 0.5, "textuel": 0.6}[pr_princ.nature]
             if pr_princ.nature == "deduit":
-                a_verifier.append(f"{principale.libelle} : déduit de sa présentation, pas déclaré comme offre")
+                a_verifier.append(f"{principale.libelle} : mentionné dans sa présentation, pas déclaré comme offre")
+            if pr_princ.nature == "textuel":
+                a_verifier.append("Compétence hors catalogue : correspondance par mots, à confirmer avec la personne")
         else:
             preuves.append(pr_parent[0])
             score += 0.5 / pr_parent[1]
         toutes_declarees = pr_princ is not None and pr_princ.nature == "declare"
 
         for c in besoin.criteres:
-            if c is principale:
+            if c is principale or c.type == "texte_libre":
                 continue
             if c.type == "expertise":
-                pr = couverture(p, c.valeur, tax)
+                pr = couverture(p, c.valeur, tax, besoin)
                 if pr:
                     preuves.append(pr)
                     score += 0.3 if pr.nature == "declare" else 0.15
-                    toutes_declarees &= pr.nature == "declare" or not c.obligatoire
-                elif not c.obligatoire:
-                    a_verifier.append(f"{c.libelle} : non mentionné dans le profil")
+                else:
+                    a_verifier.append(f"{c.libelle} (souhaité) : non mentionné dans le profil")
             elif c.type == "zone":
                 if c.valeur in p.zones_service:
-                    preuves.append(Preuve(critere=f"Dessert : {c.libelle}", champ="zones_service", extrait=c.valeur, nature="declare"))
+                    preuves.append(Preuve(critere=f"Intervient en : {c.libelle}", champ="zones_service", extrait=c.valeur, nature="declare"))
                     score += 0.1
                 elif not c.obligatoire:
-                    a_verifier.append(f"Zone {c.libelle} : " + ("non renseignée" if not p.zones_service else "non desservie selon le profil"))
+                    a_verifier.append(f"Intervention en {c.libelle} (souhaité) : " + ("non renseignée" if not p.zones_service else "non indiquée"))
+            elif c.type == "implantation":
+                if tax.zone_de_commune(p.commune) == c.valeur:
+                    preuves.append(Preuve(critere=f"Implanté·e en : {c.libelle}", champ="commune", extrait=p.commune, nature="declare"))
+                    score += 0.1
+                elif not c.obligatoire:
+                    a_verifier.append(f"Implantation en {c.libelle} (souhaité) : implanté·e à {p.commune}")
             elif c.type == "langue":
                 if c.valeur in p.langues:
                     preuves.append(Preuve(critere=f"Parle {c.libelle}", champ="langues", extrait=c.valeur, nature="declare"))
                     score += 0.1
                 elif not c.obligatoire:
-                    a_verifier.append(f"{c.libelle.capitalize()} : " + ("langues non renseignées" if not p.langues else "non indiqué dans le profil"))
+                    a_verifier.append(f"{c.libelle.capitalize()} (souhaité) : " + ("langues non renseignées" if not p.langues else "non indiqué"))
 
         reciprocite = None
         for r in p.recherche:
-            if any(tax.meme_famille(r.concept, s) for s in demandeur.secteurs):
-                reciprocite = Preuve(critere="Cherche elle-même / lui-même votre type d'activité", champ="recherche", extrait=r.texte, nature="declare")
+            if r.concept and any(tax.meme_famille(r.concept, s) for s in demandeur.secteurs):
+                reciprocite = Preuve(critere="Réciprocité", champ="recherche", extrait=r.texte, nature="declare")
                 score += 0.1
                 break
 
@@ -234,21 +291,19 @@ def rechercher(
         if reciprocite and not preuve_valide(p, reciprocite):
             reciprocite = None
 
-        s = Suggestion(
-            profil=_public(p), niveau="forte" if toutes_declarees else "partielle",
-            preuves=preuves, a_verifier=a_verifier, reciprocite=reciprocite, score=round(score, 4),
-        )
+        s = Suggestion(profil=_public(p), niveau="forte" if toutes_declarees else "partielle",
+                       preuves=preuves, a_verifier=a_verifier, reciprocite=reciprocite, score=round(score, 4))
         (suggestions if pr_princ else pistes).append(s)
 
     suggestions.sort(key=lambda s: (-s.score, s.profil.nom))
     pistes.sort(key=lambda s: (-s.score, s.profil.nom))
     abstention = not suggestions
+    message = ""
     if abstention:
-        message = f"Aucune correspondance fiable pour « {principale.libelle} » parmi les profils disponibles."
+        cible = principale.libelle if principale.type != "texte_libre" else f"« {principale.valeur} »"
+        message = f"Aucune correspondance fiable pour {cible} parmi les membres disponibles."
         if pistes:
             message += " Des pistes plus larges existent, sans garantie qu'elles couvrent votre besoin précis."
-    else:
-        message = ""
     return Resultat(
         mode=mode, suggestions=suggestions[:limite], abstention=abstention, message=message,
         pistes_elargies=pistes[:3] if abstention else [],

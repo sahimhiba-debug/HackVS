@@ -59,9 +59,19 @@ class Taxonomie:
         self.langues: dict[str, dict] = brut["langues"]
         self.marqueurs_souples = tuple(norm(m) for m in brut.get("marqueurs_souples", []))
         self.marqueurs_concurrents = tuple(norm(m) for m in brut.get("marqueurs_concurrents", []))
+        self.marqueurs_forts = tuple(norm(m) for m in brut.get("marqueurs_forts", []))
+        self.mots_generiques = frozenset(norm(m) for m in brut.get("mots_generiques", []))
         for c in self.concepts.values():
             if c.parent and c.parent not in self.concepts:
                 raise ValueError(f"Parent inconnu pour {c.id}: {c.parent}")
+
+    def zone_de_commune(self, commune: str) -> str | None:
+        """Zone d'IMPLANTATION déduite de la commune (différente des zones d'intervention)."""
+        n = norm(commune)
+        for zone, exprs in self.zones.items():
+            if any(motif(e).search(n) for e in exprs):
+                return zone
+        return None
 
     def libelle(self, cid: str) -> str:
         return self.concepts[cid].libelle if cid in self.concepts else cid
@@ -79,6 +89,26 @@ class Taxonomie:
 
     def meme_famille(self, a: str, b: str) -> bool:
         return self.couvre(a, b) or self.couvre(b, a)
+
+    def concepts_dans(self, texte_norm: str) -> set[str]:
+        """Concepts présents dans un texte normalisé, expression la plus longue d'abord.
+
+        « sécurité informatique » compte comme cybersécurité, pas comme informatique générale.
+        """
+        if not hasattr(self, "_triees"):
+            self._triees = sorted(((e, c.id) for c in self.concepts.values() for e in c.expressions), key=lambda x: -len(x[0]))
+        pris: list[tuple[int, int]] = []
+        trouves: set[str] = set()
+        for expr, cid in self._triees:
+            for m in motif(expr).finditer(texte_norm):
+                if not any(m.start() < f and d < m.end() for d, f in pris):
+                    pris.append((m.start(), m.end()))
+                    trouves.add(cid)
+        return trouves
+
+    def descendants(self, cid: str) -> list[str]:
+        """Le concept lui-même et toutes ses sous-catégories."""
+        return [cid] + [c.id for c in self.concepts.values() if cid in self.ancetres(c.id)]
 
     def expressions_de(self, cid: str) -> list[str]:
         """Expressions du concept et de ses descendants (pour l'inférence depuis un texte libre)."""
