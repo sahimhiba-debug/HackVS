@@ -326,9 +326,31 @@
         "schlosserei"
       ]
     },
+    "energie": {
+      "libelle": "Énergie (solaire, efficacité, renouvelables)",
+      "parent": null,
+      "expressions": [
+        "energie",
+        "energies",
+        "energetique",
+        "energetiques",
+        "energies renouvelables",
+        "energie renouvelable",
+        "renouvelables",
+        "transition energetique",
+        "systemes energetiques",
+        "energy",
+        "renewable energy",
+        "renewables",
+        "energie erneuerbare",
+        "erneuerbare energien",
+        "erneuerbare energie",
+        "energietechnik"
+      ]
+    },
     "energie_solaire": {
       "libelle": "Énergie solaire",
-      "parent": null,
+      "parent": "energie",
       "expressions": [
         "photovoltaique",
         "panneaux solaires",
@@ -340,7 +362,7 @@
     },
     "efficacite_energetique": {
       "libelle": "Efficacité énergétique et rénovation",
-      "parent": null,
+      "parent": "energie",
       "expressions": [
         "audit energetique",
         "cecb",

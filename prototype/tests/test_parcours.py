@@ -398,3 +398,13 @@ def test_evaluation_sans_violation_ni_fausse_proposition(jeu):
         v = res["moteur"][k] if k in res["moteur"] else res[k]
         ok, total = v.split("/")
         assert ok == total, (jeu, k, v)
+
+
+def test_energie_categorie_parente_couvre_solaire_et_efficacite():
+    b = analyser("Je cherche un expert en énergie, idéalement dans les renouvelables.", TAX)
+    assert [c.valeur for c in crit(b, "expertise")][:1] == ["energie"]
+    concepts = {o.concept for s in rechercher(b, PAR_ID["p00"], PROFILS, TAX, limite=10).suggestions
+                for o in PAR_ID[s.profil.id].offre}
+    assert {"energie_solaire", "efficacite_energetique"} <= concepts
+    # le plus spécifique gagne toujours
+    assert crit(analyser("Je cherche un installateur photovoltaïque.", TAX), "expertise")[0].valeur == "energie_solaire"
