@@ -1,89 +1,107 @@
-# Dossier d'audit, cycle 1 (28.09.2026)
+# Dossier d'audit, lot 2 : version de répétition générale (28.09.2026)
 
-Destinataire : auditeur externe (ChatGPT), via Hiba. **Aucun retour d'audit reçu à ce jour.**
+Destinataire : auditeur externe (ChatGPT), via Hiba. **Aucun retour d'audit sur ce lot n'a été reçu.** Le lot 2 s'appuie sur un
+*résumé* des fragilités du premier audit, transmis par Hiba ; le texte complet (sources officielles, cas adversariaux transmis) **n'a
+pas été reçu**. Les cas adversariaux utilisés ont donc été rédigés par Claude à partir de ce résumé.
 
-## 1. Objectif du cycle et critères d'acceptation
-Objectif : valider la direction avec une tranche fonctionnelle complète, locale et reproductible.
+## 1. Accès
+- Dépôt : https://github.com/sahimhiba-debug/HackVS
+- Branche : `claude/modest-bohr-xvk53n`
+- Commit audité : voir la dernière ligne de `git log` ; le hash exact est donné dans le message de livraison.
+- Archive (si le dépôt n'est pas accessible) : `hackvs-lot2.zip`, produite par `git archive` du même commit et transmise par Hiba.
+- Aucune clé ni donnée confidentielle dans le dépôt ; données 100 % fictives (`prototype/data/profils_demo.json`).
 
-| Critère | Atteint ? |
-|---|---|
-| Recherche sourcée avec statut par information | Oui, mais **uniquement via des extraits de recherche** : lecture des pages bloquée par le proxy |
-| 3 concepts comparés, direction recommandée | Oui (DECISIONS.md §1) |
-| Parcours besoin → critères → contacts → introduction → suivi, dans un vrai navigateur | Oui (Playwright, bureau et mobile) |
-| Cas d'absence de correspondance reconnu | Oui (abstention + pistes étiquetées) |
-| Mode démo signalé ; mode réel sans simulation | Oui (badge, bandeau, 503/403 vérifiés) |
-| Évaluation contre une référence simple | Oui (20 cas, exploratoire) |
-| Pitch et plan de secours | Oui (DEMO.md) |
-
-## 2. Ce qui rend le projet distinctif (thèse à challenger)
-1. **Déclenché par un besoin, entre les événements.** Brella et Swapcard vivent le temps d'un événement ; Hivebrite est un annuaire qu'il faut interroger soi-même.
-2. **Des raisons vérifiables.** Chaque raison est une citation exacte du profil, vérifiée par le code avant affichage.
-3. **Un système qui sait dire non.** Abstention explicite ; les pistes plus larges sont séparées et étiquetées « non vérifiées ».
-4. **« Le LLM pour la nuance, le code pour les règles ».** Le LLM ne voit pas les profils et ne décide pas de l'éligibilité.
-5. **Le consentement comme mécanique centrale.** Double consentement, coordonnées partagées après acceptation, exclusions anonymes.
-6. **Transformation visible.** Les mots du besoin sont soulignés, puis deviennent des critères modifiables.
-
-## 3. Modifications et fichiers
-Tout est nouveau (dépôt vide au départ) :
-- `prototype/app/` : `main.py`, `matching.py`, `parser_rules.py`, `parser_llm.py`, `baseline.py`, `intros.py`, `models.py`, `taxonomy.py`
-- `prototype/data/` : `taxonomie.json` (35 concepts, 5 termes ambigus), `profils_demo.json` (33 profils fictifs, dont des pièges volontaires)
-- `prototype/web/` : `index.html`, `app.css`, `app.js`
-- `prototype/eval/` : `cas.json`, `run_eval.py`, `resultats.md`
-- `prototype/tests/test_parcours.py`, `prototype/scripts/parcours_demo.py`
-- `docs/` : RESEARCH, DECISIONS, ASSUMPTIONS, DEMO, HANDOFF, LEARNING, ce dossier, `captures/` (16 PNG)
-
-## 4. Reproduire
+## 2. Reproduire (≈ 5 minutes)
 ```bash
-cd prototype && pip install -r requirements.txt
-python -m pytest -q tests
-python -m eval.run_eval
-uvicorn app.main:app &  python scripts/parcours_demo.py
+cd prototype
+python -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt
+python -m pytest -q tests                  # attendu : 19 passed
+python -m eval.run_eval                    # régénère eval/resultats_{base,adversarial,reserve}.md
+uvicorn app.main:app                       # http://localhost:8000 et http://localhost:8000/scene
+python scripts/parcours_demo.py            # (autre terminal) attendu : « Scène OK », « Cas limites OK » ×2
 ```
+Installation vérifiée depuis un clone neuf et un environnement virtuel vide (Python 3.11). Playwright utilise Chromium
+(`playwright install chromium` si absent).
 
-## 5. Captures (réellement produites)
-`docs/captures/01_accueil.png` … `08_ambiguite.png`, plus les variantes `_mobile`. Générées par Playwright/Chromium
-sur le vrai serveur local, le 28.09.2026.
+## 3. Ce qui rend le projet distinctif (thèse à challenger)
+1. **Le besoin va vers ceux qui peuvent aider.** La Bourse d'un membre ne montre que les besoins qui correspondent à *son* offre, avec la raison. Même
+   moteur et mêmes règles que la recherche de l'auteur : la symétrie est testée sur tous les membres.
+2. **Pas de suggestion sans preuve exacte, et abstention assumée.** Trois niveaux de preuve (déclarée, mentionnée, textuelle) ; seule la preuve déclarée donne « forte ».
+3. **« Le LLM pour la nuance, le code pour les règles ».** Critères provisoires en flux, jamais utilisés pour décider ; le modèle ne voit pas les profils.
+4. **Entre les événements, pour une seule communauté**, et non une plateforme événementielle.
 
-## 6. Tests et résultats
-- `pytest` : **12 passed** (garde-fous de consentement, zone inconnue, abstention, filtrage de la sortie LLM, repli en cas de panne LLM, machine à états, API de bout en bout, non-régression de l'évaluation).
-- Parcours Playwright : **OK** en 1280×800 et 390×844, sans erreur JavaScript.
-- Mode réel sans données : 503 sur la recherche, 403 sur la simulation et la réinitialisation (vérifié manuellement).
-- Évaluation exploratoire (analyse par règles, 20 cas, top 3) :
+**Ce qui n'est plus revendiqué** (correction après vérification des sources officielles) : le double consentement (Brella le fait),
+les recommandations expliquées (Swapcard le fait), le matching par intention (Brella).
 
-| Mesure | Le Fil du Club | Mots-clés + mêmes filtres |
-|---|---|---|
-| Succès@3 (16 cas avec une réponse attendue) | 16/16 | 14/16 |
-| Cas avec une violation dans le top 3 (profil interdit : contrainte ou faux ami) | 0/20 | 9/20 |
-| Abstention correcte | 20/20 | 18/20 |
-| Preuves retrouvées mot pour mot | 41/41 (vrai par construction avec les règles) | — |
-| Latence médiane (locale) | analyse ≈ 1 ms, recherche ≈ 6 ms | — |
+## 4. Ce qui fonctionne réellement (vérifié)
+| Élément | Preuve |
+|---|---|
+| Boucle : besoin → critères → clarification → visibilité (publique, privée, anonyme) → Bourse → proposition → acceptation → rencontre → clôture « résolu grâce à X » | `scripts/parcours_demo.py` (scène) ; `test_boucle_bourse_complete_avec_anonymat` ; captures 10 à 16 ; vidéo |
+| Cas crédibles : information manquante, aucune correspondance, refus, retrait du consentement, besoin modifié, besoin clos | tests `test_retrait_du_consentement_en_cascade`, `test_modification_versionnee_et_cloture_sans_suite` ; captures 21 à 26 |
+| Autorisations et machine à états (rôles, 403/409 par appel direct) | tests + sondage manuel de 15 tentatives de contournement (toutes bloquées après correction du critère inventé) |
+| Moteur : négations, préférences, implantation ou zone d'intervention, citations non probantes, spécialités, hors catalogue | jeu adversarial (EVALUATION.md) |
+| Interface : bureau, mobile (onglets en bas), projecteur (scène 1600 px) | captures ; axe-core : **0 violation** sur 4 vues × 2 tailles (animations désactivées pendant la mesure) |
+| Mode réel : sans données → 503 ; aucune identité simulée → 501 ; journal non exposé → 501 | `test_mode_reel_ne_simule_rien` |
 
-**Historique honnête** : la première exécution donnait 19/20 en abstention. Le moteur proposait un transporteur
-pour un besoin de « traiteur », parce que « restauration » figurait dans les synonymes de « traiteur ». Autre défaut :
-« avocat en droit du travail » devenait « conseil juridique » générique. Les deux ont été corrigés (taxonomie + règle
-« le plus précis l'emporte »). Les cas d'évaluation n'ont pas été modifiés.
+## 5. Simulé ou fictif (séparé explicitement)
+- **Données** : 37 profils fictifs, dont des pièges volontaires (frigoriste qui « ne livre pas », client qui « cherche un transporteur », garage dont les « clients sont des transporteurs », profil incomplet, refus d'introduction, visiteur, exposant, concurrent).
+- **Autres humains** : en démo, on *incarne* tour à tour chaque membre (sélecteur « Vous incarnez (démo) » ou `/scene`). Chaque action est faite par le rôle autorisé. Aucun bouton « simuler la réponse ».
+- **Envois** : aucun message, aucune coordonnée réelle ; « coordonnées partagées » est un état.
 
-## 7. Réel, simulé, manquant
-- **Réel** : analyse par règles, filtres, classement, explications, abstention, machine à états, persistance SQLite, UI responsive, comparaison avec la référence, dictée (code présent, non testée en salle).
-- **Simulé** : profils (fictifs), réponse de la personne sollicitée, envoi du message (rien n'est envoyé).
-- **Manquant / non prouvé** : **analyse par Claude jamais exécutée contre l'API réelle** (pas de clé ; testée avec un client simulé, donc latence et coût non mesurés). Pas de données ni d'utilisateurs réels. Pas de sens inverse (Bourse des besoins). Pas de serveur MCP. Interface uniquement en français. Brief et règlement inconnus.
+## 6. Ce qui reste à prouver
+- **Utilité** : aucun membre réel interrogé. Le problème (H1) est une hypothèse.
+- **Claude en conditions réelles** : jamais exécuté contre l'API (pas de clé). Le schéma de sortie structurée n'a jamais été soumis ; latence, coût et qualité inconnus. Harnais prêt : `scripts/verifier_claude.py`.
+- **Généralisation** : jeu réservé (14 cas, une exécution) : **0 violation, mais 3 fausses abstentions**. Aucun jeu indépendant.
 
-## 8. Risques restants
-1. **Circularité de l'évaluation** : cas, taxonomie et profils écrits par le même auteur. Les chiffres prouvent le mécanisme, pas la valeur.
-2. **Problème non confirmé** : aucun membre du Club interrogé.
-3. **Règlement** : la réutilisation du prototype pourrait être interdite. Un plan de reconstruction est prévu (HANDOFF.md).
-4. **Vocabulaire fermé** : un besoin réel hors des 35 concepts aboutit à une abstention (sûr, mais frustrant). Le LLM ne l'élargit pas, par conception.
-5. **Heuristique de négation fragile** (« ne… pas » dans la même phrase).
-6. **Brouillon de message** : générique ; il reformule le besoin à partir des critères.
+## 7. Évaluation (détails et définitions : EVALUATION.md)
 
-## 9. Trois questions précises pour l'auditeur
-1. **Évaluation** : quels 10 cas d'évaluation écririez-vous *sans voir les profils* pour casser le moteur ? Notre protocole (même filtres pour la référence, top 3, abstention) est-il équitable envers la référence ?
-2. **Concept** : pour un jury de 24 h, vaut-il mieux montrer le sens inverse (« 3 besoins du Club auxquels vous pouvez répondre », concept B) ou brancher Claude en direct avec affichage des critères en flux ? Lequel renforce le plus la thèse « communauté » plutôt qu'« annuaire » ?
-3. **Confiance** : l'argument « le LLM ne voit pas les profils et ne décide pas de l'éligibilité » est-il convaincant, ou le jury attendra-t-il que le LLM fasse davantage (par exemple, rédiger les explications) ? Où placer la frontière ?
+| Jeu (statut) | succès@3 | violations | abstention correcte | critères conformes |
+|---|---|---|---|---|
+| Base (régression) | 16/16 (réf. 14/16) | 0/20 (réf. 8/20) | 20/20 (réf. 17/20) | — |
+| Adversarial **avant** corrections | 10/13 (réf. 12/13) | 2/20 (réf. 6/20) | 17/20 (réf. 15/20) | 12/18 |
+| Adversarial **après** corrections (entraînement) | 13/13 (réf. 12/13) | 0/20 (réf. 5/20) | 20/20 (réf. 16/20) | 18/18 |
+| **Réservé** (une exécution) | **9/12** (réf. 11/12) | **0/14** (réf. 4/14) | **11/14** (réf. 13/14) | — |
 
-## 10. Prochaine amélioration proposée (cycle 2)
-Par ordre de valeur pour la démonstration :
-1. **Brancher Claude en réel** (dès qu'une clé est disponible) : `eval --claude` pour mesurer latence, coût et accord avec les règles ; affichage en flux des critères.
-2. **Sens inverse, « Besoins auxquels vous pouvez répondre »** : vue de Julien, même moteur. Rend la communauté visible (concept B).
-3. **Interface bilingue FR/DE**, pertinente pour le Valais.
-4. **10 cas d'évaluation écrits à l'aveugle** (par l'équipe ou l'auditeur).
+« réf. » = mots-clés avec les mêmes filtres durs. Historique : `eval/archives/` (v1 avant le lot 2 ; première exécution du jeu réservé).
+Le texte « 33 profils » dans l'archive v1 est une coquille du gabarit de l'époque : 37 profils étaient chargés.
+Chronologie vérifiable dans git : jeu adversarial commité (`829e956`) **avant** les corrections ; jeu réservé commité (`0b47ceb`) **avant** sa première exécution.
+
+## 8. Problèmes connus (non corrigés à ce jour)
+| # | Problème | Gravité | Piste |
+|---|---|---|---|
+| 1 | Claude non vérifié contre l'API réelle (schéma, latence, coût) | Haute pour la démo « IA » | Clé API + `verifier_claude.py --confirmer` |
+| 2 | Couverture du vocabulaire : pluriels non reconnus (« photovoltaïques »), paraphrases (« des agents pour gérer l'entrée »), « épiceries fines zurichoises » | Moyenne | Claude ; racinisation des expressions ; volontairement **non corrigé** avant l'audit (jeu réservé) |
+| 3 | Négation d'un lieu non gérée (« surtout pas à Sion » → zone Valais obligatoire) | Faible à moyenne | Exclusion de lieu |
+| 4 | Zones à la granularité canton ou région (Sion = Valais) ; pas de rayon kilométrique | Moyenne en réel | Communes et distances |
+| 5 | Détection des phrases de recherche par liste de verbes ; sans verbe, tout le texte compte | Faible | Claude |
+| 6 | Hors catalogue : racinisation grossière (6 lettres), seuil fixe | Moyenne | Mesurer contre Claude ou des embeddings avec de vraies données |
+| 7 | Anonymat : le **texte libre** du besoin, visible par les aidants, peut révéler l'identité | Moyenne | Avertissement à la publication, ou reformulation |
+| 8 | Journal d'événements avec identités (démo seulement ; fermé en mode réel) | Faible en démo | Flux filtré par membre authentifié |
+| 9 | Pas d'authentification ni d'édition de profil ; le consentement est le seul réglage | Attendu (prototype) | — |
+| 10 | Après un « décliner », le besoin peut réapparaître dans la Bourse du membre qui a décliné, avec « Proposer mon aide » | Faible ; choix discutable | À trancher (question 3) |
+| 11 | Un exposant incarné peut publier un besoin (politique non décidée) | Faible | Dépend du brief |
+| 12 | Dictée vocale non testée en salle ; Chrome envoie l'audio à Google | Faible (bonus) | Ne pas l'utiliser en secours |
+| 13 | Les notifications peuvent masquer le bas des panneaux étroits de la scène | Cosmétique | — |
+| 14 | Interface uniquement en français | Moyenne en Valais | Bilingue FR/DE |
+
+## 9. Fichiers principaux modifiés dans ce lot
+`prototype/app/{store.py (nouveau), main.py, matching.py, parser_rules.py, parser_llm.py, models.py, taxonomy.py}` ;
+`prototype/web/{index.html, scene.html (nouveau), app.css, js/*.js (nouveau)}` ; `prototype/data/{taxonomie.json, profils_demo.json}` ;
+`prototype/eval/{cas_adversariaux.json, cas_reserve.json, run_eval.py, archives/}` ; `prototype/tests/test_parcours.py` ;
+`prototype/scripts/{parcours_demo.py, verifier_claude.py (nouveau)}` ; `docs/*` ; `docs/captures/*` (captures et vidéo).
+Supprimés : `prototype/app/intros.py` (remplacé par `store.py`), `prototype/web/app.js` (remplacé par les modules).
+
+## 10. Captures et vidéo (réellement produites par Playwright sur le vrai serveur)
+`docs/captures/` : 10 à 16 (scène, 1600×900), 20 à 26 (cas limites, 1280×800, plus variantes `_mobile` 390×844), `demo_scene.webm` (49 s).
+
+## 11. Trois questions précises pour l'auditeur
+1. **Preuve** : le jeu réservé montre un moteur qui ne se trompe jamais (0/14) mais se tait trop (3/14). Pour un jury, vaut-il mieux montrer cet arbitrage tel quel, ou activer Claude en démo **avant** d'avoir mesuré qu'il ne réintroduit pas de violations ? Quel seuil de mesure exigeriez-vous avant de l'activer ?
+2. **Différenciation** : après correction de la veille concurrentielle (Brella, Swapcard, Hivebrite), la thèse « le besoin va vers ceux qui peuvent aider, avec preuve et abstention » vous paraît-elle distinctive, ou un Hivebrite configuré ferait-il de même ? Quelle vérification suggéreriez-vous ?
+3. **Consentement et Bourse** : trois choix discutables : (a) publier un besoin vaut consentement à recevoir des offres pour ce besoin ; (b) le retrait du consentement annule les demandes en attente mais conserve les relations acceptées ; (c) après un « décliner », le besoin peut réapparaître dans la Bourse de la personne. Lesquels changeriez-vous ?
+
+## 12. Décisions demandées à Hiba (regroupées)
+1. **Clé API Anthropic** pour mesurer Claude (≈ 0,56 USD estimés, 40 appels). Sans elle, la démo reste en mode « règles locales », et il faut le dire.
+2. **Accès réseau** aux sites officiels (paramètres réseau de l'environnement) pour lire les sources complètes, *ou* transmission du brief dès sa publication.
+3. **Texte complet de l'audit précédent** (sources et cas adversariaux), à déposer dans `docs/audits/`.
+4. **Arbitrage produit** (facultatif, réversible) : garder la Bourse comme cœur de la démo (recommandé), ou revenir au seul parcours « je cherche → je sollicite » si le brief l'exige.
