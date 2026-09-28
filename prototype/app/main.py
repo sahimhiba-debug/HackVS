@@ -706,6 +706,13 @@ if MODE == "demo":  # espace de décision (plateforme + adaptateur Club) : insta
                                           os.environ.get("HACKVS_DECISIONS_DB", str(RACINE / "var" / "decisions_demo.db"))))
 
 
+@app.get("/api/modeles")
+def registre_modeles():
+    """Passerelle de modèles : capacités ANNONCÉES vs état CONSTATÉ (configuré, vérifié). Aucune valeur de clé."""
+    from plateforme import modeles
+    return modeles.registre()
+
+
 @app.get("/decision")
 def page_decision():
     if MODE != "demo":

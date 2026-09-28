@@ -53,6 +53,8 @@ def resoudre(pb: Probleme, poids: dict[str, float], couverture_min: int = 0, lim
     termes = sorted({t for v in pb.aretes.values() for t in v})
     nx = nE * R
     n = nx + P
+    if n == 0:  # aucun participant : rien à résoudre (et HiGHS refuse un vecteur vide)
+        return Solution(poids=poids, statut="probleme_vide", optimum_prouve=False, duree_ms=0.0, rencontres=[], objectifs={})
     c = np.zeros(n)
     gain = np.array([sum(poids.get(t, 0.0) * pb.aretes[e].get(t, 0.0) for t in termes) for e in E])
     for r in range(R):

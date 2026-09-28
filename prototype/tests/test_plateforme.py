@@ -191,3 +191,37 @@ def test_api_decisions_parcours_complet(tmp_path, monkeypatch):
     # aucun champ privé (créneaux, intentions) dans une réponse
     texte = json.dumps(r)
     assert "creneaux" not in texte and "intention_scellee" not in texte
+
+
+# ------------------------------------------------------------------ passerelle de modèles
+def test_passerelle_sans_cle_retombe_sur_le_deterministe(tmp_path):
+    from plateforme import modeles
+    r = modeles.router("extraction_besoin", env={}, dossier=tmp_path)
+    assert r.choisi == "regles_locales" and r.etat == "DETERMINISTE" and "PAS une inférence" in r.raison
+
+
+def test_passerelle_configure_n_est_pas_verifie(tmp_path):
+    from plateforme import modeles
+    env = {"APERTUS_API_KEY": "x", "APERTUS_BASE_URL": "http://h", "APERTUS_MODEL": "m"}
+    r = modeles.router("extraction_besoin", preference="apertus", env=env, dossier=tmp_path)
+    assert r.choisi == "apertus" and r.etat == "CONFIGUREE" and "jamais vérifié" in r.raison
+    (tmp_path / "telemetrie_apertus.json").write_text(json.dumps({"synthese": {"appels": 40}}))
+    assert modeles.router("extraction_besoin", env=env, dossier=tmp_path).etat == "VERIFIEE"
+
+
+def test_taches_de_surete_jamais_routees_vers_un_llm(tmp_path):
+    from plateforme import modeles
+    env = {"ANTHROPIC_API_KEY": "x"}
+    for t in ("optimisation", "politique"):
+        assert modeles.router(t, env=env, dossier=tmp_path).etat == "DETERMINISTE"
+
+
+def test_registre_n_expose_aucune_valeur_de_cle(tmp_path):
+    from plateforme import modeles
+    texte = json.dumps(modeles.registre(env={"ANTHROPIC_API_KEY": "sk-secret-123"}, dossier=tmp_path))
+    assert "sk-secret-123" not in texte and "ANTHROPIC_API_KEY" in texte
+
+
+def test_aucun_participant_abstention_sans_plantage():
+    run = pl.executer(AdaptateurClub(lambda: ([], [], [], "demo"), TAX), "des rencontres utiles", Journal(), sensibilite=False)
+    assert run.mediation["decision"] == "S_ABSTENIR"

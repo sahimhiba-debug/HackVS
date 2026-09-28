@@ -29,3 +29,5 @@ jobs:
         run: python -m pytest -q
       - name: Non-régression des évaluations (aucune violation ajoutée, aucun succès perdu)
         run: python -m eval.run_eval --verifier
+      - name: Plateforme de décision (20 scénarios, attendus fixés avant exécution)
+        run: python -m eval.eval_decisions

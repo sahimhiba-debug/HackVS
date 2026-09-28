@@ -115,6 +115,22 @@ membres disponibles et consentants. Objectif : aides prouvées + 0,5 par partici
 Sur un petit Club, l'optimisation n'apporte presque rien ; elle compte à l'échelle d'une vraie soirée. Le temps est
 dominé par le calcul des valeurs de paires (≈ 1,2 s pour 122 participants), pas par le solveur.
 
+## 6 bis. Plateforme de décision (`python -m eval.eval_decisions`)
+
+20 scénarios dont l'attendu est fixé AVANT l'exécution (données fictives, aucun LLM) ; résultats détaillés dans
+`prototype/eval/resultats_decisions.md`, rejoués en CI. **20/20 conformes** après correction d'un vrai défaut trouvé
+par le scénario S09 (le solveur plantait sur un problème vide ; il s'abstient désormais).
+
+Ce qui est vérifié : décisions (proposer / s'abstenir / escalader / bloquer) sur demandes nominales, vagues,
+hors bornes, injectées ou contournant le consentement ; rejeu bit à bit identique (démo et 150 membres synthétiques) ;
+branches contre-factuelles et refus par la politique ; test de stress structurel et aléatoire reproductible ; blocage
+si la politique exige des preuves VÉRIFIÉES ou si les affirmations sont périmées ; paires déjà en relation exclues ;
+certificat dérivé des enregistrements ; honnêteté sur données fictives.
+
+Ce qui ne l'est PAS : la qualité des rencontres pour de vrais membres. Sur nos données, la frontière de Pareto est
+presque dégénérée (1 point sur le club synthétique, 1 à 2 sur la démo) : le générateur synthétique ne produit
+aucune réciprocité. La capacité existe ; on ne la présente pas comme un résultat.
+
 ## 7. Sécurité, confidentialité, agent (tests automatisés)
 
 | Propriété | Comment c'est vérifié |

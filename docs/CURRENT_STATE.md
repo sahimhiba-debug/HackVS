@@ -79,3 +79,23 @@ Registre d'affirmations avec statuts ; spécification de décision typée ; comp
 rejeu d'exécutions ; certificat de décision ; échelle de validation explicite ; critique et gardien ; passerelle de
 modèles avec capacités vérifiées ; graphe explicite ; Pareto, sensibilité, contre-factuels, tests de stress ;
 adaptateur de challenge séparé du cœur générique.
+
+## 12. Mise à jour : tranche verticale livrée (après l'audit ci-dessus)
+
+| Capacité de la cible | État | Où |
+|---|---|---|
+| Registre d'affirmations, 9 statuts, transitions contrôlées | fait, testé | `plateforme/affirmations.py` |
+| Compilateur d'intention → spécification (agir / s'abstenir / escalader) | fait (grammaire FR, sans LLM) | `plateforme/compilateur.py`, `adaptateurs/club/` |
+| Optimisation MILP, frontière de Pareto (points supportés), sensibilité | fait ; Pareto presque dégénéré sur nos données | `plateforme/optimisation.py` |
+| Échelle de validation L0-L8, validateurs indépendants du solveur | fait (L1 = Pydantic ; L4 = gardien ; L7 = critique) | `plateforme/validation.py` |
+| Critique / gardien / médiateur | fait, déterministes | `plateforme/critique.py` |
+| Exécution persistée, instantané, rejeu identique, branches, stress + réparation | fait | `plateforme/execution.py`, `pipeline.py` |
+| Certificat dérivé des enregistrements | fait | `plateforme/certificat.py` |
+| Passerelle de modèles (annoncé / configuré / vérifié, repli tracé) | fait ; **aucun fournisseur vérifié** (pas de clé ici) | `plateforme/modeles.py`, `/api/modeles` |
+| Espace de décision | fait (mode démo) | `/decision` |
+| Évaluation de la plateforme | 20/20 scénarios, en CI | `eval/eval_decisions.py` |
+| Pare-feu de contexte / d'outils, plan d'action (dry run → exécution) | **pas fait** | — |
+| Failles des intentions scellées (§10) | **non corrigées** | — |
+
+Exigences non tenues à dessein : pas de bus d'événements, pas de Kubernetes, pas de base de graphe (une seule
+instance, < 200 nœuds : NetworkX en mémoire suffit ; voir TARGET_ARCHITECTURE).

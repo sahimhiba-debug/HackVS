@@ -18,6 +18,7 @@ from typing import Iterator, Optional
 
 from pydantic import BaseModel
 
+from plateforme import modeles
 from .models import Besoin, Critere, Exclusion
 from .parser_rules import analyser as analyser_regles
 from .taxonomy import Taxonomie, norm
@@ -267,7 +268,8 @@ def analyser_flux(texte: str, tax: Taxonomie, client=None, http=None) -> Iterato
     """Événements : {"type": "provisoire", "critere": …} puis {"type": "final", "besoin": …, "telemetrie": …}."""
     t0 = time.perf_counter()
     f = fournisseur() or "claude"
-    tele: dict = {"analyseur": f}
+    route = modeles.router("extraction_besoin", preference=f)
+    tele: dict = {"analyseur": f, "passerelle": {"etat": route.etat if route.choisi == f else "NON_CONFIGUREE", "raison": route.raison}}
     try:
         tampon, emis, premier_ms, suite, sortie = "", set(), None, (), None
         tele["reessais"] = 0
