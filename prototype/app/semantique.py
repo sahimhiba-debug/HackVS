@@ -208,7 +208,7 @@ def inferer_par_offres(texte: str, profils, tax: Taxonomie) -> Optional[dict]:
 
 
 # ---------------------------------------------------------------------------- suggestions hybrides
-# Idées reprises (voir docs/RECONNAISSANCE.md) : score hybride pondéré dense + lexical (BGE-M3 : w·dense + w'·sparse),
+# Idées reprises (voir docs/OPEN_SOURCE_RECON.md) : score hybride pondéré dense + lexical (BGE-M3 : w·dense + w'·sparse),
 # score « max » par expression (multi-vecteur). La fusion par rangs réciproques k = 61 (Haystack) a été MESURÉE et
 # écartée : sur la calibration, hit@3 0,870 contre 0,948 pour la somme pondérée. Aucune dépendance ajoutée.
 POIDS_LEXICAL = 0.3  # choisi sur la calibration (0 / 0,3 / 0,5 / 1 testés), pas sur les jeux d'évaluation
