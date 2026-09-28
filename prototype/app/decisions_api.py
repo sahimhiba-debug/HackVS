@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from adaptateurs.club.adaptateur import AdaptateurClub
+from plateforme import action as ac
 from plateforme import pipeline as pl
 from plateforme.certificat import certificat
 from plateforme.execution import Journal
@@ -105,6 +106,29 @@ def creer_routeur(profils_effectifs: Callable[[], list[Profil]], magasin, tax: T
             raise HTTPException(409, "Exécution sans spécification : rien à éprouver.")
         enfant, d = pl.stress(ad, journal, run_id, s.n, s.regle, s.graine)
         return vue(enfant, {"stress": d})
+
+    @r.post("/{run_id}/decision")
+    def decision_humaine(run_id: str, d: ac.DecisionHumaine):
+        ad_de(run_id)
+        try:
+            return vue(ac.decider(journal, run_id, d))
+        except ac.ErreurAction as e:
+            raise HTTPException(409, str(e)) from None
+
+    @r.get("/{run_id}/action/apercu")
+    def apercu_action(run_id: str):
+        ad_de(run_id)
+        run = journal.lire(run_id)
+        return ac.apercu(run, ac.noms_depuis(journal, run))
+
+    @r.post("/{run_id}/action")
+    def executer_action(run_id: str):
+        ad_de(run_id)
+        run = journal.lire(run_id)
+        try:
+            return ac.executer(journal, run_id, ac.noms_depuis(journal, run))
+        except ac.ErreurAction as e:
+            raise HTTPException(409, str(e)) from None
 
     @r.get("/{run_id}/arbre")
     def arbre(run_id: str):

@@ -94,7 +94,8 @@ adaptateur de challenge séparé du cœur générique.
 | Passerelle de modèles (annoncé / configuré / vérifié, repli tracé) | fait ; **aucun fournisseur vérifié** (pas de clé ici) | `plateforme/modeles.py`, `/api/modeles` |
 | Espace de décision | fait (mode démo) | `/decision` |
 | Évaluation de la plateforme | 20/20 scénarios, en CI | `eval/eval_decisions.py` |
-| Pare-feu de contexte / d'outils, plan d'action (dry run → exécution) | **pas fait** | — |
+| Plan d'action : décision humaine enregistrée (non réécrivable) → aperçu à blanc → exécution SIMULÉE → vérification → dossier de preuves | fait ; aucun canal d'envoi réel (refusé explicitement en mode réel) | `plateforme/action.py` |
+| Pare-feu de contexte / d'outils | **pas fait** (aucun LLM dans la boucle de décision : rien à filtrer pour l'instant) | — |
 | Failles des intentions scellées (§10) | **non corrigées** | — |
 
 Exigences non tenues à dessein : pas de bus d'événements, pas de Kubernetes, pas de base de graphe (une seule

@@ -188,6 +188,16 @@ def test_api_decisions_parcours_complet(tmp_path, monkeypatch):
     assert esc["run"]["compilation"]["decision"] == "ESCALADER_A_L_HUMAIN"
     assert c.post(f"/api/decisions/{esc['run']['run_id']}/branche", json={}).status_code == 409
     assert c.get("/api/decisions/run_inexistant").status_code == 404
+    # action : refusée sans approbation, aperçu à blanc, puis simulée et vérifiée après approbation
+    assert c.post(f"/api/decisions/{rid}/action").status_code == 409
+    ap = c.get(f"/api/decisions/{rid}/action/apercu").json()
+    assert ap["destinataires"] > 0 and ap["canal"].startswith("aucun")
+    assert c.post(f"/api/decisions/{esc['run']['run_id']}/decision", json={"verdict": "APPROUVER", "par": "hiba"}).status_code == 409
+    assert c.post(f"/api/decisions/{rid}/decision", json={"verdict": "APPROUVER", "par": "hiba", "motif": "test"}).status_code == 200
+    assert c.post(f"/api/decisions/{rid}/decision", json={"verdict": "REJETER", "par": "x"}).status_code == 409
+    a = c.post(f"/api/decisions/{rid}/action").json()
+    assert a["statut"] == "SIMULE" and a["verification"]["conforme"] and all(e["etat"] == "SIMULE" for e in a["effectue"])
+    assert c.post(f"/api/decisions/{rid}/rejouer").json()["identique"] is True
     # aucun champ privé (créneaux, intentions) dans une réponse
     texte = json.dumps(r)
     assert "creneaux" not in texte and "intention_scellee" not in texte

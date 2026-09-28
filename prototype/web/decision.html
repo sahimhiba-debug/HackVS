@@ -90,7 +90,17 @@
       const cartes = [
         h("div", { class: "panneau" }, h("h2", {}, "Décision de la plateforme"), h("p", { class: `decision ${cls}` }, lib),
           h("ul", {}, (run.mediation?.raisons || [run.compilation.raison]).filter(Boolean).map((r) => h("li", {}, r))),
-          h("p", { class: "note" }, "L'approbation humaine est requise : rien n'est envoyé, rien n'est réservé.")),
+          h("p", { class: "note" }, "L'approbation humaine est requise : rien n'est envoyé, rien n'est réservé."),
+          dec === "PROPOSER_A_L_HUMAIN" && !run.decision_humaine ? h("div", { class: "pile" },
+            h("button", { class: "btn petit primaire", type: "button", "data-verdict": "APPROUVER" }, "J'approuve"),
+            h("button", { class: "btn petit", type: "button", "data-verdict": "REJETER" }, "Je rejette"),
+            h("button", { class: "btn petit", type: "button", id: "apercu" }, "Aperçu des invitations")) : null,
+          run.decision_humaine ? h("p", { class: "note" }, `Décision humaine : ${run.decision_humaine.verdict} par ${run.decision_humaine.par} le ${run.decision_humaine.le}`) : null,
+          run.decision_humaine?.verdict === "APPROUVER" ? h("button", { class: "btn petit", type: "button", id: "agir" }, "Envoyer les invitations (simulé)") : null,
+          extra.apercu ? h("details", { open: "" }, h("summary", {}, `${extra.apercu.destinataires} invitations (à blanc, rien n'est envoyé)`),
+            h("ul", {}, extra.apercu.invitations.slice(0, 5).map((i) => h("li", { class: "note" }, i.message)))) : null,
+          extra.action ? kv({ statut: extra.action.statut, "traitées / attendues": `${extra.action.verification.traites} / ${extra.action.verification.attendus}`,
+            conforme: extra.action.verification.conforme, avertissement: extra.action.avertissement }) : null),
         h("div", { class: "panneau" }, h("h2", {}, "Compilation de l'intention"),
           kv({ ...(run.parent_id ? { branche: `de ${run.parent_id}`, intervention: run.intervention } : { compris: c.compilation.reconnu.join(" · ") || "rien" }), ...(run.parent_id ? {} : { "non compris": c.compilation.non_reconnu.join(", ") || "—" }),
                ...(run.spec ? { contraintes: run.spec.contraintes_dures.join(" · "), tours: run.spec.parametres.tours,
@@ -141,6 +151,9 @@
         if (t.dataset.run) { courant = await api(`/api/decisions/${t.dataset.run}`); await rendre(); }
         else if (t.dataset.branche) { const r = await api(`/api/decisions/${racine}/branche`, { methode: "POST", corps: JSON.parse(t.dataset.branche) }); courant = r; await rendre({ delta: r.delta }); }
         else if (t.id === "stress") { const r = await api(`/api/decisions/${racine}/stress`, { methode: "POST", corps: { n: 3 } }); courant = r; await rendre({ stress: r.stress }); }
+        else if (t.dataset.verdict) { courant = await api(`/api/decisions/${courant.run.run_id}/decision`, { methode: "POST", corps: { verdict: t.dataset.verdict, par: "organisatrice (démo)" } }); await rendre(); }
+        else if (t.id === "apercu") { await rendre({ apercu: await api(`/api/decisions/${courant.run.run_id}/action/apercu`) }); }
+        else if (t.id === "agir") { await rendre({ action: await api(`/api/decisions/${courant.run.run_id}/action`, { methode: "POST" }) }); }
         else if (t.id === "rejouer") { const r = await api(`/api/decisions/${courant.run.run_id}/rejouer`, { methode: "POST" }); await rendre({ rejeu: r }); }
       } catch (e) { toast(e.message, "erreur"); }
     });
