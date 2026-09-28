@@ -21,7 +21,7 @@ from typing import Literal, Optional
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 import threading
 
@@ -29,7 +29,7 @@ from . import agenda, analyse, club, parser_llm, parser_rules, securite, semanti
 from .baseline import rechercher_mots_cles
 from .matching import expliquer, rechercher
 from .models import Besoin, Profil
-from .store import ErreurMetier, Interdit, Magasin
+from .store import STATUTS_PUBLICS, ErreurMetier, Interdit, Magasin
 from .taxonomy import DATA_DIR, charger_taxonomie
 from adaptateurs.club import cycle as cycle_club
 from adaptateurs.club import reseau
@@ -53,7 +53,11 @@ def _charger_profils() -> tuple[list[Profil], Optional[str]]:
 
 
 PROFILS, UTILISATEUR_DEFAUT = _charger_profils()
-PAR_ID = {p.id: p for p in PROFILS}
+
+
+def par_id() -> dict[str, Profil]:
+    """Profils EFFECTIFS par identifiant (référence + nouveaux membres + modifications) : jamais une copie figée."""
+    return {p.id: p for p in profils_effectifs()}
 MAGASIN = Magasin(os.environ.get("HACKVS_DB", str(RACINE / "var" / f"fil_{MODE}.db")))
 # Mémoire du réseau : journal d'événements temporel. Le magasin y est PROJETÉ (source unique par fait, cf. adaptateurs/club/reseau.py).
 CHEMIN_MEMOIRE = os.environ.get("HACKVS_CYCLE_DB", str(RACINE / "var" / f"reseau_{MODE}.db"))
@@ -76,7 +80,7 @@ def profils_effectifs() -> list[Profil]:
     """Profils de référence + modifications faites dans l'application (profil, consentement)."""
     consent, modifs = MAGASIN.consentements(), MAGASIN.profils_modifies()
     res = []
-    for p in PROFILS:
+    for p in PROFILS + [Profil(**d) for d in MAGASIN.membres_ajoutes()]:
         maj = dict(modifs.get(p.id, {}))
         if p.id in consent:
             maj["accepte_introductions"] = consent[p.id]
@@ -365,7 +369,7 @@ def _vue_besoin(b, pour: Profil) -> dict:
     """Vue d'un besoin pour un membre donné : l'anonymat de l'auteur est levé seulement
     pour lui-même ou après une mise en relation acceptée."""
     d = b.model_dump()
-    auteur = PAR_ID.get(b.auteur_id)
+    auteur = par_id().get(b.auteur_id)
     partage = pour.id == b.auteur_id or any(
         r.besoin_id == b.id and pour.id in (r.auteur_id, r.aidant_id) and r.coordonnees_partagees
         for r in MAGASIN.relations(pour.id))
@@ -419,12 +423,13 @@ def correspondances(besoin_id: str, x_membre: Optional[str] = Header(None)):
     d = res.model_dump()
     t = aujourdhui_reseau()
     g = reseau.graphe_de_confiance(MEMOIRE, t)
-    par_id = {p.id: p for p in profils_effectifs()}
+    ids = par_id()
+    besoins_publics = MAGASIN.besoins()  # filtrés à la source (soiree._recherches : STATUTS_PUBLICS, non anonymes)
     publie = next((date.fromisoformat(e.horodatage[:10]) for e in b.historique if e.action.startswith("creer")), None)
     for s in d["suggestions"]:
         r = rels.get(s["profil"]["id"])
         s["relation"] = r.model_dump() if r else None
-        s["dimensions"] = reseau.dimensions(MEMOIRE, m, s, par_id, t, publie, g)
+        s["dimensions"] = reseau.dimensions(MEMOIRE, m, s, ids, t, publie, g, TAX, besoins_publics)
     return d
 
 
@@ -441,7 +446,7 @@ def bourse(x_membre: Optional[str] = Header(None)):
     eff_moi = next(p for p in eff if p.id == m.id)
     sortie = []
     for b in MAGASIN.besoins():
-        if b.auteur_id == m.id or b.statut not in ("publie", "en_cours"):
+        if b.auteur_id == m.id or b.statut not in STATUTS_PUBLICS:
             continue
         auteur = next((p for p in eff if p.id == b.auteur_id), None)
         if auteur is None:
@@ -534,7 +539,7 @@ def _vue_relation(r, pour: Profil) -> dict:
     d["besoin"] = _vue_besoin(b, pour)
     d["besoin_modifie_depuis"] = b.version != r.besoin_version
     autre_id = r.aidant_id if pour.id == r.auteur_id else r.auteur_id
-    autre = PAR_ID.get(autre_id)
+    autre = par_id().get(autre_id)
     masque = b.anonyme and pour.id == r.aidant_id and not r.coordonnees_partagees
     d["autre"] = ({"nom": "Un membre du Club", "entreprise": d["besoin"]["auteur"]["entreprise"], "anonyme": True}
                   if masque else (_pub(autre) if autre else None))
@@ -642,6 +647,49 @@ def programme_soiree(membre: str, donnees: Literal["club", "synthetique"] = "clu
                     headers={"Content-Disposition": f'attachment; filename="soiree-{membre}.ics"'})
 
 
+class Adhesion(BaseModel):
+    nom: str = Field(min_length=2, max_length=80)
+    fonction: str = Field("", max_length=80)
+    entreprise: str = Field(min_length=2, max_length=120)
+    commune: str = Field(min_length=2, max_length=60)
+    offre: list[OffreSaisie]
+    recherche: list[OffreSaisie] = []
+    secteurs: list[str] = []
+    langues: list[str] = []
+    zones_service: list[str] = []
+    accepte_introductions: bool = False     # confidentialité par défaut : invisible tant que le membre ne choisit pas
+
+
+@app.post("/api/demo/rejoindre")
+def rejoindre_club(a: Adhesion):
+    """Démo : un nouveau membre (FICTIF) rejoint le Club avec un profil qu'il a VALIDÉ (cf. /api/profil/analyser).
+    Par défaut il n'est recommandé à personne : il le choisit. En mode réel : adhésion et authentification absentes → 501."""
+    if MODE != "demo":
+        raise HTTPException(501, "Adhésion en ligne non implémentée en mode réel.")
+    for o in a.offre + a.recherche:
+        if o.concept is not None and o.concept not in TAX.concepts:
+            raise HTTPException(422, f"Compétence inconnue : {o.concept}")
+        if not o.texte.strip() or len(o.texte) > 300:
+            raise HTTPException(422, "Chaque offre doit avoir un texte (300 caractères maximum).")
+    if not a.offre:
+        raise HTTPException(422, "Au moins une offre : c'est ce qui permet aux autres membres de vous trouver.")
+    if any(z not in TAX.zones for z in a.zones_service) or any(l not in TAX.langues for l in a.langues):
+        raise HTTPException(422, "Zone ou langue inconnue.")
+    if any(x not in TAX.concepts for x in a.secteurs):
+        raise HTTPException(422, "Secteur inconnu.")
+    secteurs = a.secteurs or list(dict.fromkeys(o.concept for o in a.offre if o.concept))[:2]
+    n = len(MAGASIN.membres_ajoutes()) + 1
+    nouveau = Profil(id=f"n{n:02d}", nom=a.nom.strip(), fonction=a.fonction.strip(), entreprise=a.entreprise.strip(),
+                     commune=a.commune.strip(), type="membre_club", secteurs=secteurs,
+                     offre=[o.model_dump() for o in a.offre], recherche=[o.model_dump() for o in a.recherche],
+                     langues=list(dict.fromkeys(a.langues)), zones_service=list(dict.fromkeys(a.zones_service)),
+                     accepte_introductions=a.accepte_introductions, maj=date.today().isoformat())
+    _erreurs(lambda: MAGASIN.ajouter_membre(nouveau.model_dump()))
+    return {"membre": _pub(nouveau), "secteurs_deduits_des_offres": not a.secteurs,
+            "visible_pour_les_autres": nouveau.accepte_introductions,
+            "confidentialite": "aucune coordonnée enregistrée ; recommandé à d'autres seulement si vous l'acceptez"}
+
+
 @app.post("/api/demo/historique")
 def charger_historique():
     if MODE != "demo":
@@ -747,7 +795,7 @@ def boite_reseau(x_membre: Optional[str] = Header(None)):
 def memoire_relation(autre_id: str, x_membre: Optional[str] = Header(None)):
     """Où nous sommes-nous rencontrés ? Que s'est-il passé ensuite ? — uniquement pour une relation dont je fais partie."""
     m = moi(x_membre)
-    if autre_id not in PAR_ID:
+    if autre_id not in par_id():
         raise HTTPException(404, "Membre inconnu.")
     return reseau.memoire_relation(MEMOIRE, m.id, autre_id, aujourdhui_reseau())
 

@@ -229,7 +229,8 @@ export function carteCorrespondance(s, { piste = false, action = null, besoin = 
     h("div", { class: "corps" },
       listePreuves(s.preuves),
       s.a_verifier?.length ? h("ul", { class: "averifier" }, s.a_verifier.map((a) => h("li", {}, a))) : null,
-      s.reciprocite ? h("p", { class: "reciproque" }, `Réciprocité : cherche aussi « ${s.reciprocite.extrait} »`) : null,
+      // Sans dimensions : indice sectoriel du moteur (ce n'est PAS une réciprocité prouvée, et c'est dit).
+      !s.dimensions && s.reciprocite ? h("p", { class: "reciproque" }, `Cherche aussi dans votre secteur : « ${s.reciprocite.extrait} »`) : null,
       s.dimensions ? blocDimensions(s.dimensions) : null,
       besoin ? pliExplication(besoin, p.id, "Pourquoi cette personne ? Critère par critère") : null));
 }
@@ -241,9 +242,10 @@ const RESEAU = { DIRECT: "Déjà en relation", PRESENTATION: "Un de vos contacts
 function blocDimensions(d) {
   return h("div", { class: "dimensions" },
     h("ul", { class: "puces-dim", "aria-label": "Dimensions de la recommandation" },
-      h("li", {}, d.reciprocite.etablie ? "✓ Intérêt réciproque documenté" : "Réciprocité non établie"),
+      h("li", {}, d.reciprocite.etablie ? "✓ Vous pouvez aussi l'aider" : "Réciprocité non établie"),
       h("li", {}, RESEAU[d.reseau.type] || d.reseau.type),
       h("li", {}, d.contexte.libelle)),
+    d.reciprocite.etablie ? h("p", { class: "reciproque" }, `Dans l'autre sens : elle ou il cherche « ${d.reciprocite.son_besoin.replace(/^(recherche|besoin publié) : /, "")} » ; votre offre : « ${d.reciprocite.votre_offre} »`) : null,
     d.pourquoi_maintenant.length ? h("p", {}, h("strong", {}, "Pourquoi maintenant : "), d.pourquoi_maintenant.join(" · ")) : null,
     h("details", { class: "savoir" }, h("summary", {}, "Comment nous le savons · ce qui reste inconnu"),
       d.comment_nous_savons.connu.length ? h("p", {}, h("strong", {}, "Connu : "), d.comment_nous_savons.connu.join(" · ")) : null,

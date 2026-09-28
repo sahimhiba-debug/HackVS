@@ -21,6 +21,7 @@ import numpy as np
 
 from .matching import rechercher
 from .models import Besoin, Critere, Profil
+from .store import STATUTS_PUBLICS
 from .taxonomy import Taxonomie
 
 BONUS_RECIPROQUE = 0.3
@@ -29,7 +30,9 @@ LAMBDA_EQUITE = 0.5
 
 def _recherches(p: Profil, besoins_publies: list, tax: Taxonomie) -> list[tuple[str, Besoin]]:
     """Ce que p cherche : besoins publiés NON anonymes + champ « recherche » du profil (concepts connus)."""
-    res = [(f"besoin publié : {b.besoin.texte}", b.besoin) for b in besoins_publies if b.auteur_id == p.id and not b.anonyme]
+    # Jamais un brouillon ni un besoin clos : ils ne sont pas publics (même règle que la Bourse, store.STATUTS_PUBLICS).
+    res = [(f"besoin publié : {b.besoin.texte}", b.besoin) for b in besoins_publies
+           if b.auteur_id == p.id and not b.anonyme and getattr(b, "statut", "publie") in STATUTS_PUBLICS]
     for r in p.recherche:
         if r.concept:
             res.append((f"recherche : {r.texte}", Besoin(texte=r.texte, criteres=[

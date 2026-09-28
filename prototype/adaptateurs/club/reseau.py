@@ -144,8 +144,21 @@ def chemin_chaud(g: nx.Graph, x: str, c: str, par_id: dict[str, Profil]) -> dict
     return {"distance": None, "type": "NOUVEAU", "message": "aucune relation enregistrée pour l'un de vous deux : premier lien dans le réseau"}
 
 
+def reciprocite_prouvee(x: Profil, c: Profil, tax, besoins_publies: list) -> Optional[dict]:
+    """x peut-il aider c ? Le MÊME moteur, en sens inverse : un besoin public ou une recherche de c, couvert par une
+    offre de x citée mot pour mot. (x consulte : son propre refus d'être recommandé ne s'applique pas ici.)"""
+    from app.soiree import _aide, _recherches
+    x_ici = x.model_copy(update={"accepte_introductions": True})
+    aide = _aide(c, x_ici, _recherches(c, besoins_publies, tax), tax)
+    if not aide:
+        return None
+    return {"son_besoin": aide["besoin"], "votre_offre": aide["preuve"], "niveau": aide["niveau"],
+            "nature": aide["nature_preuve"]}
+
+
 def dimensions(m: Memoire, x: Profil, suggestion: dict, par_id: dict[str, Profil], maintenant: date,
-               besoin_le: Optional[date] = None, g: Optional[nx.Graph] = None) -> dict:
+               besoin_le: Optional[date] = None, g: Optional[nx.Graph] = None, tax=None,
+               besoins_publies: Optional[list] = None) -> dict:
     """Quatre dimensions EXPLIQUÉES (jamais un score de valeur d'une personne) : pertinence, réciprocité, réseau, contexte,
     et ce qui est CONNU / DÉDUIT / INCONNU."""
     g = g if g is not None else graphe_de_confiance(m, maintenant)
@@ -154,7 +167,7 @@ def dimensions(m: Memoire, x: Profil, suggestion: dict, par_id: dict[str, Profil
     connu = [f"{p['critere']} : « {p['extrait']} » ({'déclaré' if p['nature'] == 'declare' else 'déduit'} dans son profil, {p['champ']})"
              for p in preuves if p["nature"] == "declare"]
     deduit = [f"{p['critere']} : « {p['extrait']} » (déduit d'un texte libre)" for p in preuves if p["nature"] != "declare"]
-    recip = suggestion.get("reciprocite")
+    recip = reciprocite_prouvee(x, c, tax, besoins_publies or []) if tax is not None else None
     chemin = chemin_chaud(g, x.id, c.id, par_id)
     etat = etat_relation(m, x.id, c.id, maintenant)
     deja_demandes = sum(1 for e in m.evenements("INTRO_DEMANDEE", jusqu_au=maintenant) if set(e.acteurs[:2]) == {x.id, c.id})
@@ -162,7 +175,7 @@ def dimensions(m: Memoire, x: Profil, suggestion: dict, par_id: dict[str, Profil
     if etat["etat"] == "AUCUNE":
         inconnu.append("aucune interaction enregistrée entre vous")
     if not recip:
-        inconnu.append(f"intérêt de {c.nom.split(' ')[0]} pour vous : rien dans son profil ne l'indique")
+        inconnu.append(f"ce que vous pourriez apporter à {c.nom.split(' ')[0]} : aucune de ses recherches ne correspond à vos offres")
     if not (set(x.creneaux) & set(c.creneaux)):
         inconnu.append("disponibilités communes : non établies")
     if c.maj:
@@ -183,7 +196,7 @@ def dimensions(m: Memoire, x: Profil, suggestion: dict, par_id: dict[str, Profil
         pourquoi_maintenant.append("un contact commun peut faciliter la prise de contact (il sera sollicité d'abord)")
     return {
         "pertinence": {"niveau": suggestion["niveau"], "preuves": len(preuves)},
-        "reciprocite": {"etablie": bool(recip), "preuve": recip["extrait"] if recip else None},
+        "reciprocite": {"etablie": bool(recip), **(recip or {})},
         "reseau": {k: v for k, v in chemin.items() if not k.startswith("_")} | {"deja_demandee": deja_demandes},
         "contexte": {"etat_relation": etat["etat"], "libelle": etat["libelle"]},
         "pourquoi_cette_personne": [p["extrait"] for p in preuves[:2]],

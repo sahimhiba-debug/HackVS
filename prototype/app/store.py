@@ -30,6 +30,7 @@ from pydantic import BaseModel
 from .models import Besoin
 
 StatutBesoin = Literal["brouillon", "publie", "en_cours", "resolu", "retire"]
+STATUTS_PUBLICS = ("publie", "en_cours")  # seuls ces besoins sont visibles d'autres membres (Bourse, soirées, réseau)
 EtatRelation = Literal["proposee", "acceptee", "declinee", "retiree", "annulee",
                        "rencontre_planifiee", "rencontre_faite", "cloturee"]
 
@@ -135,6 +136,7 @@ class Magasin:
             CREATE TABLE IF NOT EXISTS relations (id TEXT PRIMARY KEY, donnees TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS consentements (membre_id TEXT PRIMARY KEY, accepte INTEGER NOT NULL, maj_le TEXT);
             CREATE TABLE IF NOT EXISTS profils (membre_id TEXT PRIMARY KEY, donnees TEXT NOT NULL, maj_le TEXT);
+            CREATE TABLE IF NOT EXISTS membres (id TEXT PRIMARY KEY, donnees TEXT NOT NULL, cree_le TEXT);
             CREATE TABLE IF NOT EXISTS journal (seq INTEGER PRIMARY KEY AUTOINCREMENT, horodatage TEXT,
                 type TEXT, acteur TEXT, objet_id TEXT, message TEXT, concerne TEXT);
         """)
@@ -184,6 +186,19 @@ class Magasin:
                           "Consentement aux introductions " + ("activé" if accepte else "retiré"), [membre_id])
             self._db.commit()
         return annulees
+
+    # ------------------------------------------------------------ nouveaux membres (démo : adhésion en direct)
+    def ajouter_membre(self, profil: dict) -> None:
+        with self._verrou:
+            if self._db.execute("SELECT 1 FROM membres WHERE id = ?", (profil["id"],)).fetchone():
+                raise ErreurMetier("Ce membre existe déjà.")
+            self._db.execute("INSERT INTO membres VALUES (?, ?, ?)", (profil["id"], json.dumps(profil, ensure_ascii=False), _maintenant()))
+            self._journal("adhesion", profil["id"], profil["id"], f"{profil['nom']} rejoint le Club", [profil["id"]])
+            self._db.commit()
+
+    def membres_ajoutes(self) -> list[dict]:
+        with self._verrou:
+            return [json.loads(d) for (d,) in self._db.execute("SELECT donnees FROM membres ORDER BY cree_le, id").fetchall()]
 
     # ------------------------------------------------------------ profils modifiés par les membres
     def profils_modifies(self) -> dict[str, dict]:
@@ -406,6 +421,7 @@ class Magasin:
 
     def reinitialiser(self) -> None:
         with self._verrou:
-            self._db.executescript("DELETE FROM besoins; DELETE FROM relations; DELETE FROM consentements; DELETE FROM profils; DELETE FROM journal;")
+            self._db.executescript("DELETE FROM besoins; DELETE FROM relations; DELETE FROM consentements; "
+                                   "DELETE FROM profils; DELETE FROM membres; DELETE FROM journal;")
             self._journal("reinitialisation", "systeme", "", "Démo réinitialisée", [])
             self._db.commit()
