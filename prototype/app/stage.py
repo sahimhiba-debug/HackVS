@@ -133,18 +133,15 @@ def _e3_candidats(w: Monde) -> dict:
     cartes = []
     for s in res.suggestions:
         d = reseau.dimensions(w.memoire, ids[SOPHIE], s.model_dump(), ids, t, t, g, w.tax, w.magasin.besoins())
-        sim = reseau.simuler(g, [(SOPHIE, s.profil.id)], t, focus=[SOPHIE])
         cartes.append({"id": s.profil.id, "nom": s.profil.nom, "entreprise": s.profil.entreprise, "niveau": s.niveau,
                        "preuves": [{"extrait": p.extrait, "nature": p.nature, "champ": p.champ} for p in s.preuves],
-                       "a_verifier": s.a_verifier, "dimensions": d,
-                       "simulation": {"groupes": [sim["avant"]["composantes"], sim["apres"]["composantes"]],
-                                      "portee_sophie": [sim["portee_a_2_sauts"][SOPHIE]["avant"], sim["portee_a_2_sauts"][SOPHIE]["apres"]],
-                                      "premier_lien": bool(sim["premiers_liens"]), "nouveau_pont": bool(sim["nouveaux_ponts"])}})
+                       "a_verifier": s.a_verifier, "dimensions": d})
+        # (pas de simulation sur la carte : « portée après le lien » révélerait le nombre de relations du candidat)
     w.ctx["candidat"] = cartes[0]["id"] if cartes else None
     return {"titre": "Le réseau cherche", "dit": "Pas une liste de noms : seulement les personnes dont le profil PROUVE qu'elles peuvent aider.",
             "faits": {"candidats": cartes, "examines": res.nb_profils_examines,
-                      "ecartes_par_leur_choix": sum(e.nombre for e in res.ecartes if "introductions" in e.raison),
-                      "ecartes_autres": [{"raison": e.raison, "nombre": e.nombre} for e in res.ecartes if "introductions" not in e.raison]}}
+                      "ecartes_par_leur_choix": sum(e.nombre for e in res.ecartes if "sollicités" in e.raison),
+                      "ecartes_autres": [{"raison": e.raison, "nombre": e.nombre} for e in res.ecartes if "sollicités" not in e.raison]}}
 
 
 def _e4_limites(w: Monde) -> dict:

@@ -192,7 +192,10 @@ def dimensions(m: Memoire, x: Profil, suggestion: dict, par_id: dict[str, Profil
              for p in preuves if p["nature"] == "declare"]
     deduit = [f"{p['critere']} : « {p['extrait']} » (déduit d'un texte libre)" for p in preuves if p["nature"] != "declare"]
     recip = reciprocite_prouvee(x, c, tax, besoins_publies or []) if tax is not None else None
-    chemin = chemin_chaud(g, x.id, c.id, par_id)
+    # Vue MEMBRE : seulement des faits sur SES relations. La position de c dans le réseau (contacts communs, groupes,
+    # distance, degré) appartient à d'autres membres : elle sert en interne (organisation, simulation), jamais ici.
+    chemin = ({"type": "DIRECT", "message": "vous êtes déjà en relation"} if g.has_edge(x.id, c.id)
+              else {"type": "AUCUNE", "message": "aucune relation enregistrée entre vous"})
     etat = etat_relation(m, x.id, c.id, maintenant)
     deja_demandes = sum(1 for e in m.evenements("INTRO_DEMANDEE", jusqu_au=maintenant) if set(e.acteurs[:2]) == {x.id, c.id})
     inconnu = []
@@ -216,12 +219,10 @@ def dimensions(m: Memoire, x: Profil, suggestion: dict, par_id: dict[str, Profil
         pourquoi_maintenant.append(f"votre besoin est publié depuis le {besoin_le.isoformat()}")
     if c.disponible:
         pourquoi_maintenant.append("se déclare disponible")
-    if chemin["type"] == "PRESENTATION":
-        pourquoi_maintenant.append("un contact commun peut faciliter la prise de contact (il sera sollicité d'abord)")
     return {
         "pertinence": {"niveau": suggestion["niveau"], "preuves": len(preuves)},
         "reciprocite": {"etablie": bool(recip), **(recip or {})},
-        "reseau": {k: v for k, v in chemin.items() if not k.startswith("_")} | {"deja_demandee": deja_demandes},
+        "reseau": chemin | {"deja_demandee": deja_demandes},
         "contexte": {"etat_relation": etat["etat"], "libelle": etat["libelle"]},
         "pourquoi_cette_personne": [p["extrait"] for p in preuves[:2]],
         "pourquoi_maintenant": pourquoi_maintenant,

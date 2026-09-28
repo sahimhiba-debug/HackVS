@@ -534,7 +534,10 @@ def creer_relation(e: EntreeRelation, x_membre: Optional[str] = Header(None)):
     cible = profil(e.cible_id) if m.id == b.auteur_id else auteur
     aidant = cible if m.id == b.auteur_id else m
     res = rechercher(b.besoin, auteur, [auteur, aidant], TAX, mode=MODE)
-    if cible.type != "visiteur" and cible.accepte_introductions and not any(s.profil.id == aidant.id for s in res.suggestions):
+    # Même réponse que le membre refuse d'être sollicité ou qu'il ne corresponde pas : sinon, en sondant des
+    # identifiants, on énumérerait le consentement de chacun (inférence de refus).
+    refuse = cible.id != b.auteur_id and not cible.accepte_introductions   # publier un besoin = accepter les offres
+    if cible.type != "visiteur" and (refuse or not any(s.profil.id == aidant.id for s in res.suggestions)):
         raise HTTPException(409, "Ce membre ne correspond pas (ou plus) aux critères de ce besoin.")
     return _erreurs(lambda: MAGASIN.creer_relation(b.id, m.id, cible.id, e.message,
                                                    # publier un besoin = accepter les offres pour CE besoin

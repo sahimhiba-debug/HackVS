@@ -62,7 +62,7 @@ def test_nouveau_membre_reciprocite_prouvee_et_non_prouvee():
     web = _correspondances("Nous cherchons un développeur pour créer une boutique en ligne", N)
     ines = next(s for s in web["suggestions"] if s["profil"]["id"] == "p26")["dimensions"]
     assert ines["reciprocite"]["etablie"] and "référencement" in ines["reciprocite"]["votre_offre"]
-    assert ines["reseau"]["type"] == "NOUVEAU"                   # démarrage à froid : aucun lien encore
+    assert ines["reseau"]["type"] == "AUCUNE"                    # démarrage à froid : aucun lien encore
     fin = _correspondances("Nous cherchons un financement pour notre croissance", N)
     assert fin["suggestions"] and not any(s["dimensions"]["reciprocite"]["etablie"] for s in fin["suggestions"])
     _verifier_coherence(nid, web)

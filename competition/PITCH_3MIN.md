@@ -27,7 +27,7 @@ qu'un. L'humain décide.
 **[2:05 — diapositive benchmark]**
 Nous avons mesuré, pas affirmé. Sur un benchmark synthétique, à budget égal, face à 5 autres méthodes, notre
 optimiseur crée plus de ponts entre communautés et sert plus de membres. Il perd sur la réciprocité face à la méthode
-qui ne vise qu'elle — et nous le montrons. Nous avons aussi trouvé et corrigé 20 défauts en essayant de casser notre
+qui ne vise qu'elle — et nous le montrons. Nous avons aussi trouvé et corrigé 22 défauts en essayant de casser notre
 propre système.
 
 **[2:30 — diapositive architecture]**

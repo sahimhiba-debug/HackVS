@@ -32,7 +32,7 @@ def test_boucle_p0_de_bout_en_bout():
     assert set(d) >= {"pertinence", "reciprocite", "reseau", "contexte", "pourquoi_cette_personne", "pourquoi_maintenant",
                       "comment_nous_savons", "inconnu", "confidentialite"}
     assert d["contexte"]["etat_relation"] == "AUCUNE" and "aucune interaction enregistrée entre vous" in d["inconnu"]
-    assert d["reseau"]["type"] in ("NOUVEAU", "PONT")
+    assert d["reseau"]["type"] == "AUCUNE"                       # seulement des faits sur SES relations
     texte = json.dumps(corr, ensure_ascii=False)
     assert "@" not in texte and "telephone" not in texte and "creneaux" not in texte   # aucune coordonnée, aucun créneau
 

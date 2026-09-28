@@ -28,7 +28,7 @@ def test_histoire_racontee_par_le_moteur():
     cand = t[3]["candidats"]
     assert cand[0]["nom"] == "Markus Heinzmann" and cand[0]["niveau"] == "forte"
     assert cand[0]["dimensions"]["reciprocite"]["etablie"] is True
-    assert t[3]["ecartes_par_leur_choix"] == 1                       # Stefan refuse les introductions : jamais nommé
+    assert t[3]["ecartes_par_leur_choix"] == 0                       # Stefan refuse : ni nommé, ni compté (k < 3)
     assert "Kalbermatten" not in json.dumps(t, ensure_ascii=False)
     assert t[4]["decision"] == "S_ABSTENIR"                           # Japon : le système s'abstient
     assert t[5]["coordonnees_partagees"] is False and t[6]["coordonnees_partagees"] is True

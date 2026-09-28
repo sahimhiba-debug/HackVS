@@ -309,12 +309,25 @@ def rechercher(
     return Resultat(
         mode=mode, suggestions=suggestions[:limite], abstention=abstention, message=message,
         pistes_elargies=pistes[:3] if abstention else [],
-        ecartes=[Ecart(raison=r, nombre=n) for r, n in ecarts.most_common()],
+        ecartes=_ecartes_k_anonymes(ecarts),
         nb_profils_examines=examines, duree_ms=round((time.perf_counter() - t0) * 1000, 2),
     )
 
 
 # Raisons d'exclusion qui touchent au consentement ou à la situation personnelle : jamais divulguées nominativement.
+K_ANONYMAT = 3  # en dessous, un compte de refus permettrait d'identifier la personne dans un petit club
+
+
+def _ecartes_k_anonymes(ecarts: Counter) -> list[Ecart]:
+    """Les raisons tenant au CHOIX ou à la situation d'un membre (refus, indisponibilité) sont fusionnées et ne sont
+    comptées qu'à partir de K_ANONYMAT personnes ; en dessous, elles ne sont pas mentionnées du tout."""
+    opaques = sum(n for r, n in ecarts.items() if r in _RAISONS_OPAQUES)
+    res = [Ecart(raison=r, nombre=n) for r, n in ecarts.most_common() if r not in _RAISONS_OPAQUES]
+    if opaques >= K_ANONYMAT:
+        res.append(Ecart(raison="indisponibles ou ne souhaitant pas être sollicités", nombre=opaques))
+    return res
+
+
 _RAISONS_OPAQUES = {"ne souhaite pas recevoir d'introductions", "indisponible actuellement"}
 
 

@@ -67,7 +67,7 @@ def controle(nom: str) -> tuple[bool, str]:
     if nom == "scene_double_accord":
         return s[5]["coordonnees_partagees"] is False and s[6]["coordonnees_partagees"] is True, "avant : non ; après accord : oui"
     if nom == "scene_refus_non_nomme":
-        return s[3]["ecartes_par_leur_choix"] == 1 and "Kalbermatten" not in json.dumps(s, ensure_ascii=False), "1 écarté, jamais nommé"
+        return s[3]["ecartes_par_leur_choix"] == 0 and "Kalbermatten" not in json.dumps(s, ensure_ascii=False), "jamais nommé, non compté (k < 3)"
     if nom == "scene_relances":
         n = sum(len(p["raisons"]) for p in s[8]["relances"])
         return n == 1 and s[8]["silences"]["rien_de_nouveau"] == 17, f"{n} relance, {s[8]['silences']['rien_de_nouveau']} silences"

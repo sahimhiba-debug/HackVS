@@ -154,7 +154,7 @@
           h("dt", {}, "Réciprocité"), h("dd", {}, d.reciprocite.etablie ? [puce("prouvée", "ok"), ` il cherche « ${d.reciprocite.son_besoin.split(" : ").pop()} » — vous offrez « ${d.reciprocite.votre_offre} »`] : puce("non établie")),
           h("dt", {}, "Pourquoi maintenant"), h("dd", {}, d.pourquoi_maintenant.join(" · ")),
           h("dt", {}, "Inconnu"), h("dd", {}, d.inconnu.join(" · ")),
-          h("dt", {}, "Simulation"), h("dd", {}, `personnes à 2 poignées de main pour Sophie : ${c.simulation.portee_sophie[0]} → ${c.simulation.portee_sophie[1]}`, c.simulation.premier_lien ? " · premier lien de Sophie" : "")));
+          h("dt", {}, "Relation"), h("dd", {}, d.reseau.message)));
     }
 
     const RENDUS = {
@@ -167,7 +167,9 @@
       2: (f) => [bloc("Compris", h("ul", {}, f.compris.map((x) => h("li", {}, x)))), h("p", { class: "note" }, f.analyse)],
       3: (f) => [h("p", {}, `${f.examines} profils examinés → ${f.candidats.length} personnes proposées.`),
         ...f.candidats.map(candidat),
-        bloc("Écartés", h("p", {}, `${f.ecartes_par_leur_choix} membre pertinent ne souhaite pas recevoir d'introductions : il n'est ni nommé, ni proposé.`))],
+        bloc("Et ceux qui ne veulent pas être sollicités ?", h("p", {}, f.ecartes_par_leur_choix
+          ? `${f.ecartes_par_leur_choix} membres indisponibles ou ne souhaitant pas être sollicités : ni nommés, ni proposés.`
+          : "Ils ne sont ni nommés, ni proposés — ni même comptés tant qu'ils sont moins de 3 : sinon, on pourrait deviner qui."))],
       4: (f) => [bloc("Contact privé", h("p", {}, "Aucun numéro, aucune adresse. ", f.coordonnees, ".")),
         bloc("Et quand il ne sait pas ?", h("p", {}, h("q", {}, f.autre_demande)),
           h("div", { class: "abst" }, h("strong", {}, f.decision === "S_ABSTENIR" ? "Abstention. " : ""), f.message, " Plutôt aucune proposition qu'un mauvais contact."))],

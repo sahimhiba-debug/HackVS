@@ -235,8 +235,7 @@ export function carteCorrespondance(s, { piste = false, action = null, besoin = 
       besoin ? pliExplication(besoin, p.id, "Pourquoi cette personne ? Critère par critère") : null));
 }
 
-const RESEAU = { DIRECT: "Déjà en relation", PRESENTATION: "Un de vos contacts la connaît", LOINTAIN: "Chemin indirect",
-  PONT: "Relierait deux groupes du réseau", NOUVEAU: "Premier lien dans le réseau" };
+const RESEAU = { DIRECT: "Déjà en relation", AUCUNE: "Pas encore en relation" };
 
 // Pourquoi maintenant / comment nous le savons / ce qui reste inconnu — jamais un score, jamais une coordonnée.
 function blocDimensions(d) {
@@ -251,7 +250,7 @@ function blocDimensions(d) {
       d.comment_nous_savons.connu.length ? h("p", {}, h("strong", {}, "Connu : "), d.comment_nous_savons.connu.join(" · ")) : null,
       d.comment_nous_savons.deduit.length ? h("p", {}, h("strong", {}, "Déduit : "), d.comment_nous_savons.deduit.join(" · ")) : null,
       h("p", {}, h("strong", {}, "Inconnu : "), d.inconnu.join(" · ") || "rien de signalé"),
-      h("p", { class: "aide" }, d.reseau.message + ". " + d.confidentialite + ".")));
+      h("p", { class: "aide" }, d.confidentialite + ".")));
 }
 
 export function blocResultats(res, { action, titre = true, besoin = null } = {}) {

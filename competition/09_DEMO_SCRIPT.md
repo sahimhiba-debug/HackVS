@@ -10,7 +10,7 @@ Commandes : **→ / espace** suivant · **←** précédent · **R** réinitiali
 | 1 | → | 16 membres, 2 groupes séparés, rencontres sans suite depuis plus de 90 jours | « Des rencontres ont eu lieu ; le réseau reste fait d'îlots. » | Le problème, visible |
 | 2 | → | Proposition de profil → validation par Sophie ; invisible par défaut | « Le système propose, elle corrige. C'est elle qui choisit d'être recommandée. » | Humain aux commandes, confidentialité par défaut |
 | 3 | → | Besoin compris : « Développement commercial en Allemagne (obligatoire) » | « Compris localement, sans modèle externe. » | Pas de dépendance cachée |
-| 4 | → | 2 candidats : Markus (fort, réciprocité PROUVÉE), Claudia (partielle, preuve déduite, profil ancien) ; 1 membre écarté par son choix, non nommé | « Pas une liste : des preuves. Et ce qui reste inconnu. » | Pourquoi / pourquoi maintenant / comment nous savons / inconnu |
+| 4 | → | 2 candidats : Markus (fort, réciprocité PROUVÉE), Claudia (partielle, preuve déduite, profil ancien) ; qui refuse d'être sollicité n'est ni nommé, ni proposé, ni compté (moins de 3) | « Pas une liste : des preuves. Et ce qui reste inconnu. » | Pourquoi / pourquoi maintenant / comment nous savons / inconnu |
 | 5 | → | Aucune coordonnée ; « distributeur au Japon » → abstention | « Nous avons préféré une abstention à une hallucination. » | **Moment intelligent n° 1** |
 | 6 | → | Demande d'introduction ; boîte de Markus : 1 introduction à répondre ; coordonnées non partagées | « Il peut refuser. » | Consentement |
 | 7 | → | Markus accepte : coordonnées partagées ; un trait plein apparaît dans le graphe | « Maintenant seulement. » | La relation naît |
