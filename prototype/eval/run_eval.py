@@ -34,10 +34,19 @@ def charger():
     return profils, par_id, par_id[brut["utilisateur_demo"]]
 
 
-def evaluer(claude: bool = False) -> dict:
+JEUX = {"base": "cas.json", "adversarial": "cas_adversariaux.json"}
+
+
+def _critere_ok(attendu: dict, criteres) -> bool:
+    return any(c.type == attendu["type"] and c.valeur == attendu["valeur"]
+               and ("obligatoire" not in attendu or c.obligatoire == attendu["obligatoire"]) for c in criteres)
+
+
+def evaluer(claude: bool = False, jeu: str = "base") -> dict:
     tax = charger_taxonomie()
     profils, par_id, moi = charger()
-    cas = json.loads((ICI / "cas.json").read_text(encoding="utf-8"))["cas"]
+    cas = json.loads((ICI / JEUX[jeu]).read_text(encoding="utf-8"))["cas"]
+    crit_ok = crit_total = 0
     interdits_globaux = {p.id for p in profils if p.type == "visiteur" or not p.accepte_introductions}
     lignes, agg = [], {"moteur": [], "reference": []}
     latences_analyse, preuves_total, preuves_ok = [], 0, 0
@@ -53,6 +62,12 @@ def evaluer(claude: bool = False) -> dict:
             "moteur": rechercher(besoin, moi, profils, tax),
             "reference": rechercher_mots_cles(besoin, moi, profils, tax),
         }
+        for a in c.get("criteres_attendus", []):
+            crit_total += 1
+            crit_ok += _critere_ok(a, besoin.criteres)
+        for a in c.get("criteres_interdits", []):
+            crit_total += 1
+            crit_ok += not _critere_ok(a, besoin.criteres)
         ligne = {"id": c["id"], "categorie": c["categorie"],
                  "criteres": [f"{x.type}:{x.valeur}{'' if x.obligatoire else '?'}" for x in besoin.criteres]}
         for nom, r in resultats.items():
@@ -80,7 +95,9 @@ def evaluer(claude: bool = False) -> dict:
 
     return {
         "analyseur": "claude" if claude else "regles",
+        "jeu": jeu,
         "nb_cas": len(cas),
+        "criteres_corrects": f"{crit_ok}/{crit_total}",
         "moteur": synthese(agg["moteur"]),
         "reference": synthese(agg["reference"]),
         "preuves_verifiees": f"{preuves_ok}/{preuves_total}",
@@ -92,7 +109,8 @@ def evaluer(claude: bool = False) -> dict:
 
 def en_markdown(res: dict) -> str:
     o = [f"# Résultats d'évaluation (exploratoire, données fictives)\n",
-         f"Analyseur : **{res['analyseur']}** · {res['nb_cas']} cas · généré par `python -m eval.run_eval`\n",
+         f"Jeu : **{res['jeu']}** · analyseur : **{res['analyseur']}** · {res['nb_cas']} cas · généré par `python -m eval.run_eval --jeu {res['jeu']}`\n",
+         f"Critères extraits conformes (type, valeur, obligatoire/souhaité ; critères interdits absents) : {res['criteres_corrects']}\n",
          "| Mesure | Le Fil du Club | Mots-clés + mêmes filtres |", "|---|---|---|"]
     for k in ("succes@3", "violations", "abstention_correcte"):
         o.append(f"| {k} | {res['moteur'][k]} | {res['reference'][k]} |")
@@ -116,7 +134,14 @@ def en_markdown(res: dict) -> str:
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--claude", action="store_true")
+    ap.add_argument("--jeu", choices=list(JEUX) + ["tous"], default="tous")
+    ap.add_argument("--archive", help="étiquette : copie aussi le résultat dans eval/archives/<étiquette>_<jeu>.md")
     a = ap.parse_args()
-    res = evaluer(claude=a.claude)
-    (ICI / "resultats.md").write_text(en_markdown(res), encoding="utf-8")
-    print(json.dumps({k: v for k, v in res.items() if k != "detail"}, ensure_ascii=False, indent=2))
+    for jeu in (list(JEUX) if a.jeu == "tous" else [a.jeu]):
+        res = evaluer(claude=a.claude, jeu=jeu)
+        suffixe = "_claude" if a.claude else ""
+        (ICI / f"resultats_{jeu}{suffixe}.md").write_text(en_markdown(res), encoding="utf-8")
+        if a.archive:
+            (ICI / "archives").mkdir(exist_ok=True)
+            (ICI / "archives" / f"{a.archive}_{jeu}{suffixe}.md").write_text(en_markdown(res), encoding="utf-8")
+        print(json.dumps({k: v for k, v in res.items() if k != "detail"}, ensure_ascii=False, indent=2))

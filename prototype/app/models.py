@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 
 class Offre(BaseModel):
-    concept: str
+    concept: Optional[str] = None  # None = compétence hors catalogue (texte libre)
     texte: str
 
 
