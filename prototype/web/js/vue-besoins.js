@@ -28,7 +28,7 @@ export async function vueBesoins() {
         + (offres ? ` · ${offres} proposition${offres > 1 ? "s" : ""} d'aide en attente` : "")));
   }));
   const detail = h("div", { id: "detail-besoin" });
-  racine.replaceChildren(h("h1", {}, "Mes besoins"), besoins.length > 1 ? liste : null, detail);
+  racine.replaceChildren(...[h("h1", {}, "Mes besoins"), besoins.length > 1 ? liste : null, detail].filter(Boolean));
   await rendreDetail(besoins.find((b) => b.id === s.ouvert), relations.filter((r) => r.besoin_id === s.ouvert));
 }
 
@@ -68,7 +68,7 @@ async function rendreDetail(b, relations) {
   const offres = relations.filter((r) => r.initiateur === "aidant" && r.etat === "proposee");
   const acceptees = relations.filter((r) => ["acceptee", "rencontre_planifiee", "rencontre_faite", "cloturee"].includes(r.etat));
 
-  zone.replaceChildren(
+  zone.replaceChildren(...[
     h("section", { class: "bloc" },
       h("div", { class: "detail-tete" },
         h("div", {}, h("p", { class: "surtitre" }, `${b.libelle_statut} · version ${b.version}`),
@@ -83,7 +83,7 @@ async function rendreDetail(b, relations) {
       h("div", { class: "actions" }, btnModifs, btnAnnulerModifs)),
     offres.length ? h("section", { class: "bloc" }, h("h2", {}, "Propositions d'aide reçues"),
       offres.map((r) => carteOffre(r))) : null,
-    clos ? null : h("section", { class: "bloc" }, h("h2", {}, "Qui peut vous aider"), zoneResultats));
+    clos ? null : h("section", { class: "bloc" }, h("h2", {}, "Qui peut vous aider"), zoneResultats)].filter(Boolean));
   surChangement();
   if (clos) return;
   try {

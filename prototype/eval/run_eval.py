@@ -50,11 +50,15 @@ def evaluer(claude: bool = False, jeu: str = "base") -> dict:
     interdits_globaux = {p.id for p in profils if p.type == "visiteur" or not p.accepte_introductions}
     lignes, agg = [], {"moteur": [], "reference": []}
     latences_analyse, preuves_total, preuves_ok = [], 0, 0
+    telemetries: list[dict] = []
 
     for c in cas:
         t0 = time.perf_counter()
         if claude:
             besoin, tele = parser_llm.analyser(c["texte"], tax)
+            regles = parser_rules.analyser(c["texte"], tax)
+            cle = lambda b: sorted((x.type, x.valeur, x.obligatoire) for x in b.criteres)
+            telemetries.append({**tele, "id": c["id"], "accord_regles": cle(besoin) == cle(regles)})
         else:
             besoin = parser_rules.analyser(c["texte"], tax)
         latences_analyse.append((time.perf_counter() - t0) * 1000)
@@ -104,6 +108,7 @@ def evaluer(claude: bool = False, jeu: str = "base") -> dict:
         "latence_analyse_ms_mediane": round(statistics.median(latences_analyse), 2),
         "latence_recherche_ms_mediane": round(statistics.median(r["duree_ms"] for r in agg["moteur"]), 2),
         "detail": lignes,
+        "telemetrie_claude": telemetries,
     }
 
 

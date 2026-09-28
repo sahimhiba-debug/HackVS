@@ -26,12 +26,18 @@ BESOIN = ("On lance nos jus d'abricot en Suisse alémanique. Je cherche un trans
           "qui livre Zurich deux fois par semaine, idéalement germanophone, et pas un concurrent.")
 
 
-def lancer_navigateur(pw):
-    return pw.chromium.launch(executable_path=EXE if os.path.exists(EXE) else None)
+def lancer_navigateur(pw, lent: bool = False):
+    # slow_mo ralentit chaque action : la vidéo reste lisible pour un humain.
+    return pw.chromium.launch(executable_path=EXE if os.path.exists(EXE) else None, slow_mo=300 if lent else 0)
+
+
+def sans_null(texte: str, ou: str) -> None:
+    if re.search(r"(^|\n)\s*(null|undefined|NaN)\s*(\n|$)", texte):
+        raise SystemExit(f"Valeur technique affichée à l'écran ({ou})")
 
 
 def scene(pw, url: str, sortie: Path, video: bool) -> None:
-    nav = lancer_navigateur(pw)
+    nav = lancer_navigateur(pw, lent=video)
     ctx = nav.new_context(viewport={"width": 1600, "height": 900}, device_scale_factor=1,
                           record_video_dir=str(sortie / "_video") if video else None,
                           record_video_size={"width": 1600, "height": 900} if video else None)
@@ -42,14 +48,23 @@ def scene(pw, url: str, sortie: Path, video: bool) -> None:
     page.request.post(url + "/api/demo/reinitialiser")
     page.goto(url + "/scene")
     g, d = page.frame_locator("#cadre-g"), page.frame_locator("#cadre-d")
+
+    def pause(ms: int) -> None:  # pauses de lecture, seulement pour la vidéo
+        if video:
+            page.wait_for_timeout(ms)
     expect(g.locator("#texte")).to_be_visible()
     expect(d.locator("#vue-bourse h1")).to_contain_text("pour l'instant")
     page.wait_for_timeout(800)
     page.screenshot(path=sortie / "10_scene_depart.png")
 
     # 1. Sophie écrit et analyse
-    g.locator("#texte").fill(BESOIN)
+    pause(1500)
+    if video:
+        g.locator("#texte").press_sequentially(BESOIN, delay=28)
+    else:
+        g.locator("#texte").fill(BESOIN)
     page.wait_for_timeout(400)
+    pause(800)
     g.locator("#btn-analyser").click()
     expect(g.locator(".critere.principal")).to_contain_text("Transport frigorifique")
     expect(g.locator("#zone-apercu .carte").first).to_contain_text("Julien Morand")
@@ -57,9 +72,11 @@ def scene(pw, url: str, sortie: Path, video: bool) -> None:
     g.locator("#bloc-criteres").scroll_into_view_if_needed()
     page.wait_for_timeout(500)
     page.screenshot(path=sortie / "11_scene_criteres.png")
+    pause(4000)
     g.locator("#bloc-apercu").scroll_into_view_if_needed()
     page.wait_for_timeout(500)
     page.screenshot(path=sortie / "12_scene_apercu.png")
+    pause(4000)
 
     # 2. Publication → apparaît en direct chez Julien
     g.locator("#btn-enregistrer").click()
@@ -67,12 +84,14 @@ def scene(pw, url: str, sortie: Path, video: bool) -> None:
     expect(d.locator(".opportunite h3")).to_contain_text("Sophie")
     page.wait_for_timeout(1600)
     page.screenshot(path=sortie / "13_scene_bourse_julien.png")
+    pause(5000)
 
     # 3. Julien propose son aide
     d.get_by_role("button", name="Proposer mon aide").click()
     expect(d.locator("#message")).to_have_value(re.compile("Bourse du Club"))
     page.wait_for_timeout(500)
     page.screenshot(path=sortie / "14_scene_proposition.png")
+    pause(3000)
     d.locator("#dialogue-envoyer").click()
     expect(d.locator(".opportunite .etat-relation")).to_contain_text("attente")
 
@@ -81,9 +100,11 @@ def scene(pw, url: str, sortie: Path, video: bool) -> None:
     g.locator("#vue-besoins .relation.a-faire").scroll_into_view_if_needed()
     page.wait_for_timeout(600)
     page.screenshot(path=sortie / "15_scene_offre_recue.png")
+    pause(3000)
     g.get_by_role("button", name="Accepter et partager nos coordonnées").click()
     expect(d.locator(".opportunite .etat-relation")).to_contain_text("acceptée", timeout=8000)
     expect(d.locator(".opportunite h3")).to_contain_text("Sophie")
+    pause(2500)
 
     # 5. Julien planifie, rencontre, Sophie clôt le besoin
     d.locator("#tab-suivi").click()
@@ -97,6 +118,9 @@ def scene(pw, url: str, sortie: Path, video: bool) -> None:
     expect(g.locator("#detail-besoin .surtitre")).to_contain_text("Résolu", timeout=8000)
     page.wait_for_timeout(1200)
     page.screenshot(path=sortie / "16_scene_resolu.png")
+    pause(3500)
+    sans_null(g.locator("main").inner_text(), "scène gauche")
+    sans_null(d.locator("main").inner_text(), "scène droite")
     ctx.close()
     nav.close()
     if video:
@@ -151,6 +175,7 @@ def cas_limites(pw, url: str, sortie: Path, largeur: int, hauteur: int, suffixe:
     page.wait_for_timeout(500)
     page.locator("#bloc-apercu").screenshot(path=sortie / f"25_hors_catalogue{suffixe}.png")
 
+    sans_null(page.locator("main").inner_text(), "nouveau besoin")
     page.locator("#tab-profil").click()
     expect(page.locator("#vue-profil h1")).to_contain_text("Sophie")
     page.screenshot(path=sortie / f"26_profil{suffixe}.png")
