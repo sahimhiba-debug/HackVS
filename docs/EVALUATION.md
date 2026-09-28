@@ -69,6 +69,8 @@ Jeu dev (24 besoins FR/DE/EN + 6 hors catalogue) et jeu **réservé** rédigé e
 | **Hybride** | dev | 0,833 | 0,958 | 0,894 | 21/47 | 6/6 |
 | Dense seul (avant) | **réservé** | 0,667 | 0,875 | 0,784 | 50/72 | 6/6 |
 | **Hybride** | **réservé** | **0,792** | **0,917** | **0,865** | **26/48** | 6/6 |
+| Dense seul | **italien** (12, aucune règle italienne) | 1,000 | 1,000 | 1,000 | 23/36 | — |
+| **Hybride** | **italien** | **1,000** | **1,000** | **1,000** | **3/16** | — |
 
 Hybride = z-score dense (max par expression + prototype) + 0,3 × lexical IDF (idée du score hybride de BGE-M3) ;
 poids choisi sur la calibration. La fusion RRF (Haystack) a été **mesurée et écartée** (hit@3 0,870 contre 0,948 sur la
@@ -78,6 +80,11 @@ calibration). n = 24 : l'écart en hit@1 sur le réservé correspond à 3 cas.
 besoins se recouvrent (même après normalisation) : **aucun seuil ne permet à l'IA de s'abstenir seule**. D'où la règle :
 elle suggère, le membre confirme, le moteur s'abstient. La décision automatique existe (`HACKVS_SEMANTIQUE_AUTO=1`) mais
 reste désactivée : avec ~50 négatifs, la règle de trois borne le taux de fausses acceptations à ≈ 5 % seulement.
+
+**Italien** (`suggestions/italien.json`, rédigé avant toute adaptation) : aucune règle italienne n'existe, et pourtant la
+bonne compétence est proposée pour 12/12 besoins dans la chaîne complète (11 par la question de l'IA locale, 1 par les
+règles). Seuls les toponymes (Zurigo, Ginevra…) et les noms de langue ont ensuite été ajoutés au vocabulaire.
+Limite : jeu sans négatif (hors catalogue), 12 cas.
 
 Latence mesurée : ≈ 77 ms en médiane (max 103 ms) par suggestion, 4 cœurs CPU.
 

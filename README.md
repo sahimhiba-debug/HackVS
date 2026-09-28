@@ -26,7 +26,7 @@ sauf décider à la place du membre.
 |---|---|---|
 | Parcours complet | besoin → critères → clarification → membres + preuves → publication → proposition d'aide → acceptation → rencontre → clôture | parcours navigateur bureau et mobile, captures dans `docs/captures` |
 | « Pourquoi / pourquoi pas » | critère par critère ; raison tue si elle touche au consentement | `27_pourquoi`, `28_pourquoi_pas` |
-| IA locale | propose 1 à 3 compétences quand les règles échouent (e5 multilingue, ONNX, CPU, ≈ 77 ms) | jeu réservé : hit@3 0,875 → **0,917**, options hors sujet 69 % → 54 % |
+| IA locale | propose 1 à 3 compétences quand les règles échouent (e5 multilingue, ONNX, CPU, ≈ 77 ms) | jeu réservé : hit@3 0,875 → **0,917**, options hors sujet 69 % → 54 % ; **italien sans aucune règle : 12/12** |
 | Boucle « IA propose, membre confirme » | jeux réservés les plus durs : succès@3 3/15 → **15/15**, 0 mauvais contact ajouté (borne haute : membre simulé) | [EVALUATION.md §3](docs/EVALUATION.md) |
 | Plan de soirée | programme linéaire, **optimum prouvé** (< 0,1 s) ; 150 membres : 92 participants avec une rencontre utile contre 74 (glouton) ; langue commune ; export agenda | `/soiree`, `36_soiree` |
 | Agent IA (MCP) | 10 outils, confirmation humaine obligatoire, jetons + portées en HTTP, erreurs à code stable | [transcription](docs/captures/agent_mcp.md) |

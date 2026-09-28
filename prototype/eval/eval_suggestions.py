@@ -71,7 +71,7 @@ def rapport(r: dict) -> str:
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--jeu", default="dev", choices=["dev", "reserve"])
+    ap.add_argument("--jeu", default="dev", choices=["dev", "reserve", "italien"])
     ap.add_argument("--methode", default="hybride", choices=["dense", "hybride"])
     ap.add_argument("--ecrire", action="store_true")
     a = ap.parse_args()

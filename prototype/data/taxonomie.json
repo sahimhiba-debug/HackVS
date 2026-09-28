@@ -713,9 +713,9 @@
       "haut-valais",
       "bas-valais",
       "valais central",
-      "wallis",
       "oberwallis",
-      "unterwallis"
+      "unterwallis",
+      "vallese"
     ],
     "Suisse romande": [
       "suisse romande",
@@ -727,7 +727,11 @@
       "neuchatel",
       "jura",
       "westschweiz",
-      "genf"
+      "genf",
+      "svizzera romanda",
+      "ginevra",
+      "losanna",
+      "friburgo"
     ],
     "Suisse alémanique": [
       "suisse alemanique",
@@ -741,13 +745,22 @@
       "st-gall",
       "argovie",
       "basel",
-      "bern"
+      "bern",
+      "svizzera tedesca",
+      "zurigo",
+      "basilea",
+      "berna",
+      "lucerna",
+      "san gallo"
     ],
     "Tessin": [
       "tessin",
       "lugano",
       "bellinzone",
-      "ticino"
+      "ticino",
+      "bellinzona",
+      "locarno",
+      "svizzera italiana"
     ]
   },
   "langues": {
@@ -756,7 +769,9 @@
       "expressions": [
         "francais",
         "francophone",
-        "französisch"
+        "französisch",
+        "francese",
+        "in francese"
       ]
     },
     "de": {
@@ -767,7 +782,9 @@
         "suisse-allemand",
         "schwyzerdutsch",
         "deutsch",
-        "bilingue"
+        "bilingue",
+        "tedesco",
+        "in tedesco"
       ]
     },
     "en": {
@@ -776,7 +793,9 @@
         "anglais",
         "anglophone",
         "english",
-        "englisch"
+        "englisch",
+        "inglese",
+        "in inglese"
       ]
     },
     "it": {
@@ -784,7 +803,9 @@
       "expressions": [
         "italien",
         "italophone",
-        "italienisch"
+        "italienisch",
+        "italiano",
+        "in italiano"
       ]
     }
   },
@@ -994,7 +1015,25 @@
     "möchten",
     "ont",
     "avons",
-    "avez"
+    "avez",
+    "cerco",
+    "cerchiamo",
+    "abbiamo",
+    "bisogno",
+    "serve",
+    "vorremmo",
+    "vorrei",
+    "qualcuno",
+    "nostro",
+    "nostra",
+    "nostri",
+    "nostre",
+    "per",
+    "una",
+    "della",
+    "delle",
+    "del",
+    "dei"
   ],
   "composes_trompeurs": {
     "_note": "Expressions contenant un mot du catalogue mais désignant AUTRE CHOSE : elles sont consommées avant la détection des compétences (le besoin devient hors catalogue, donc recherche prudente ou abstention).",

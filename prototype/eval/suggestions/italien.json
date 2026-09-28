@@ -1,0 +1,15 @@
+{"_note": "Besoins en ITALIEN (hors développement : aucune règle italienne n'existe). Rédigé le 2026-09-28 avant toute adaptation ; sert à mesurer ce que la chaîne fait en italien.",
+ "cas": [
+  {"texte": "Cerco un trasportatore refrigerato per consegnare a Zurigo.", "acceptables": ["transport_frigorifique"], "langue": "it"},
+  {"texte": "Abbiamo bisogno di un fiduciario per la contabilità.", "acceptables": ["fiduciaire"], "langue": "it"},
+  {"texte": "Cerchiamo qualcuno per il nostro sito web.", "acceptables": ["developpement_web"], "langue": "it"},
+  {"texte": "Ci serve un traduttore dal tedesco all'italiano.", "acceptables": ["traduction"], "langue": "it"},
+  {"texte": "Vorremmo installare pannelli solari sul tetto.", "acceptables": ["energie_solaire", "energie"], "langue": "it"},
+  {"texte": "Cerco un avvocato per un contratto commerciale.", "acceptables": ["droit_affaires"], "langue": "it"},
+  {"texte": "Abbiamo bisogno di personale stagionale per la vendemmia.", "acceptables": ["recrutement"], "langue": "it"},
+  {"texte": "I nostri computer sono stati attaccati da hacker.", "acceptables": ["cybersecurite", "informatique"], "langue": "it"},
+  {"texte": "Cerchiamo un fotografo per i nostri prodotti.", "acceptables": ["photo_video"], "langue": "it"},
+  {"texte": "Ci serve un'assicurazione per l'azienda.", "acceptables": ["assurance"], "langue": "it"},
+  {"texte": "Cerco un servizio di catering per 80 persone.", "acceptables": ["traiteur"], "langue": "it"},
+  {"texte": "Vorremmo noleggiare un carrello elevatore.", "acceptables": ["location_machines"], "langue": "it"}
+ ]}
