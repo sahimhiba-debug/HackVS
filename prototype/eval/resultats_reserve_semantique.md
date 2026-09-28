@@ -1,6 +1,6 @@
 # Résultats d'évaluation (exploratoire, données fictives)
 
-Jeu : **reserve** · analyseur : **regles** · 14 cas · généré par `python -m eval.run_eval --jeu reserve`
+Jeu : **reserve** · analyseur : **regles+semantique** · 14 cas · généré par `python -m eval.run_eval --jeu reserve`
 
 
 | Mesure | Le Fil du Club | Mots-clés + mêmes filtres |
@@ -11,7 +11,7 @@ Jeu : **reserve** · analyseur : **regles** · 14 cas · généré par `python -
 
 Preuves citées retrouvées mot pour mot dans le profil : 24/24 (vrai par construction pour l'extraction par règles ; le garde-fou compte surtout si un LLM rédige un jour les explications).
 
-Latence médiane : analyse 1.76 ms, recherche 10.71 ms (machine locale, 37 profils).
+Latence médiane : analyse 1.74 ms, recherche 10.8 ms (machine locale, 37 profils).
 
 | Cas | Catégorie | Critères extraits | Moteur top 3 | ok | Référence top 3 | ok |
 |---|---|---|---|---|---|---|

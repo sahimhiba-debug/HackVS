@@ -1,0 +1,25 @@
+{
+  "_avertissement": "Jeu RÉSERVÉ n°4, rédigé le 28.09.2026 APRÈS l'exécution du réservé n°3 et AVANT l'implémentation de la recherche sémantique dans les offres. Paraphrases nouvelles (aucune reprise du n°3), allemand, anglais, faux amis. Exécuté une seule fois. Rédigé par Claude : pas indépendant.",
+  "cas": [
+    {"id": "r4_yaourts_zurich", "categorie": "paraphrase", "texte": "Il faut que nos yaourts restent froids jusqu'aux magasins zurichois.", "attendus": ["p01", "p02", "p05"], "interdits": ["p03", "p33", "p34"], "abstention": false},
+    {"id": "r4_videurs", "categorie": "paraphrase", "texte": "On cherche des gens pour filtrer les entrées lors de notre fête d'entreprise.", "attendus": ["p18"], "interdits": ["p10", "p19"], "abstention": false},
+    {"id": "r4_vendangeurs", "categorie": "paraphrase", "texte": "Il nous manque du monde pour les vendanges en septembre.", "attendus": ["p14"], "interdits": ["p28"], "abstention": false},
+    {"id": "r4_toit_courant", "categorie": "paraphrase", "texte": "On aimerait produire notre propre électricité avec le toit de l'entrepôt.", "attendus": ["p22"], "interdits": ["p20", "p21"], "abstention": false},
+    {"id": "r4_visibilite_web", "categorie": "paraphrase", "texte": "Personne ne nous trouve sur internet, il faudrait améliorer notre visibilité.", "attendus": ["p15", "p26"], "interdits": [], "abstention": false},
+    {"id": "r4_cartons", "categorie": "paraphrase", "texte": "Nous devons changer nos boîtes et nos étiquettes pour l'export.", "attendus": ["p27"], "interdits": ["p16"], "abstention": false},
+    {"id": "r4_retraite_pme", "categorie": "paraphrase", "texte": "Je pars à la retraite dans deux ans et je ne sais pas à qui confier l'entreprise.", "attendus": ["p29"], "interdits": [], "abstention": false},
+    {"id": "r4_employe_licencie", "categorie": "paraphrase", "texte": "Un employé conteste son licenciement, on a besoin d'un avis juridique.", "attendus": ["p13"], "interdits": [], "abstention": false},
+    {"id": "r4_de_logistik", "categorie": "allemand libre", "texte": "Wir brauchen jemanden, der unsere Ware gekühlt nach Bern bringt.", "attendus": ["p01"], "interdits": ["p03", "p02"], "abstention": false},
+    {"id": "r4_en_website", "categorie": "anglais", "texte": "We need someone to build an online shop for our wines.", "attendus": ["p26"], "interdits": [], "abstention": false},
+    {"id": "r4_en_security_event", "categorie": "anglais", "texte": "We need security staff for a trade fair booth.", "attendus": ["p18"], "interdits": ["p10"], "abstention": false},
+    {"id": "r4_emprunt", "categorie": "paraphrase", "texte": "Nous voulons emprunter pour acheter un nouveau pressoir.", "attendus": ["p23"], "interdits": [], "abstention": false},
+    {"id": "r4_ordis_lents", "categorie": "paraphrase", "texte": "Nos ordinateurs sont lents et le wifi coupe tout le temps au bureau.", "attendus": ["p11"], "interdits": ["p10"], "abstention": false},
+    {"id": "r4_video_promo", "categorie": "paraphrase", "texte": "On voudrait un petit film pour présenter notre domaine sur les réseaux.", "attendus": ["p15"], "interdits": [], "abstention": false},
+    {"id": "r4_dentiste", "categorie": "absent", "texte": "Je cherche un dentiste pour mes employés.", "attendus": [], "interdits": [], "abstention": true},
+    {"id": "r4_electricien", "categorie": "faux ami", "texte": "Il nous faut un électricien pour refaire le tableau électrique.", "attendus": [], "interdits": ["p22", "p11"], "abstention": true},
+    {"id": "r4_cuisinier", "categorie": "absent, faux ami", "texte": "Nous cherchons un cuisinier pour la saison d'hiver.", "attendus": [], "interdits": ["p14", "p28"], "abstention": true},
+    {"id": "r4_camion_neuf", "categorie": "faux ami", "texte": "Nous voulons acheter un camion frigorifique neuf.", "attendus": [], "interdits": ["p01", "p02", "p05"], "abstention": true},
+    {"id": "r4_graphiste_logo", "categorie": "paraphrase", "texte": "Il nous faut un nouveau logo et une identité visuelle.", "attendus": ["p15"], "interdits": [], "abstention": false},
+    {"id": "r4_nettoyage", "categorie": "absent", "texte": "Nous cherchons une entreprise pour nettoyer nos locaux chaque semaine.", "attendus": [], "interdits": [], "abstention": true}
+  ]
+}

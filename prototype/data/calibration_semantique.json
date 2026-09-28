@@ -1,0 +1,16 @@
+{
+  "_description": "Seuils de la couche sémantique, choisis par scripts/calibrer_semantique.py (contrôle du taux de fausses acceptations).",
+  "date": "2026-09-28",
+  "modele": "multilingual-e5-large (ONNX, fastembed)",
+  "n_positifs": 376,
+  "n_negatifs": 52,
+  "top1_correct_sans_seuil": 0.79,
+  "budget_fausses_acceptations": 0.02,
+  "seuils": {
+    "tau": 0.865,
+    "delta": 0.005,
+    "couverture_positifs": 0.577,
+    "precision_positifs_acceptes": 0.964,
+    "fausses_acceptations_negatifs": 0.019
+  }
+}

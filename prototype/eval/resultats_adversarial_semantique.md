@@ -1,6 +1,6 @@
 # Résultats d'évaluation (exploratoire, données fictives)
 
-Jeu : **adversarial** · analyseur : **regles** · 20 cas · généré par `python -m eval.run_eval --jeu adversarial`
+Jeu : **adversarial** · analyseur : **regles+semantique** · 20 cas · généré par `python -m eval.run_eval --jeu adversarial`
 
 Critères extraits conformes (type, valeur, obligatoire/souhaité ; critères interdits absents) : 18/18
 
@@ -12,7 +12,7 @@ Critères extraits conformes (type, valeur, obligatoire/souhaité ; critères in
 
 Preuves citées retrouvées mot pour mot dans le profil : 47/47 (vrai par construction pour l'extraction par règles ; le garde-fou compte surtout si un LLM rédige un jour les explications).
 
-Latence médiane : analyse 1.62 ms, recherche 9.94 ms (machine locale, 37 profils).
+Latence médiane : analyse 3.19 ms, recherche 10.95 ms (machine locale, 37 profils).
 
 | Cas | Catégorie | Critères extraits | Moteur top 3 | ok | Référence top 3 | ok |
 |---|---|---|---|---|---|---|

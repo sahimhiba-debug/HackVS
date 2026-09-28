@@ -34,7 +34,7 @@ def charger():
     return profils, par_id, par_id[brut["utilisateur_demo"]]
 
 
-JEUX = {"base": "cas.json", "adversarial": "cas_adversariaux.json", "reserve": "cas_reserve.json", "reserve2": "cas_reserve2.json", "reserve3": "cas_reserve3.json"}
+JEUX = {"base": "cas.json", "adversarial": "cas_adversariaux.json", "reserve": "cas_reserve.json", "reserve2": "cas_reserve2.json", "reserve3": "cas_reserve3.json", "reserve4": "cas_reserve4.json"}
 
 
 def _critere_ok(attendu: dict, criteres) -> bool:
@@ -42,7 +42,7 @@ def _critere_ok(attendu: dict, criteres) -> bool:
                and ("obligatoire" not in attendu or c.obligatoire == attendu["obligatoire"]) for c in criteres)
 
 
-def evaluer(claude: bool = False, jeu: str = "base") -> dict:
+def evaluer(claude: bool = False, jeu: str = "base", semantique: bool = False) -> dict:
     tax = charger_taxonomie()
     profils, par_id, moi = charger()
     cas = json.loads((ICI / JEUX[jeu]).read_text(encoding="utf-8"))["cas"]
@@ -59,6 +59,9 @@ def evaluer(claude: bool = False, jeu: str = "base") -> dict:
             regles = parser_rules.analyser(c["texte"], tax)
             cle = lambda b: sorted((x.type, x.valeur, x.obligatoire) for x in b.criteres)
             telemetries.append({**tele, "id": c["id"], "accord_regles": cle(besoin) == cle(regles)})
+        elif semantique:
+            from app.analyse import analyser_hybride
+            besoin, _ = analyser_hybride(c["texte"], tax)
         else:
             besoin = parser_rules.analyser(c["texte"], tax)
         latences_analyse.append((time.perf_counter() - t0) * 1000)
@@ -98,7 +101,7 @@ def evaluer(claude: bool = False, jeu: str = "base") -> dict:
         }
 
     return {
-        "analyseur": "claude" if claude else "regles",
+        "analyseur": "claude" if claude else ("regles+semantique" if semantique else "regles"),
         "jeu": jeu,
         "nb_cas": len(cas),
         "nb_profils": len(profils),
@@ -142,11 +145,12 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--claude", action="store_true")
     ap.add_argument("--jeu", choices=list(JEUX) + ["tous"], default="tous")
+    ap.add_argument("--semantique", action="store_true", help="analyse hybride : règles + IA sémantique locale calibrée")
     ap.add_argument("--archive", help="étiquette : copie aussi le résultat dans eval/archives/<étiquette>_<jeu>.md")
     a = ap.parse_args()
     for jeu in (list(JEUX) if a.jeu == "tous" else [a.jeu]):
-        res = evaluer(claude=a.claude, jeu=jeu)
-        suffixe = "_claude" if a.claude else ""
+        res = evaluer(claude=a.claude, jeu=jeu, semantique=a.semantique)
+        suffixe = "_claude" if a.claude else ("_semantique" if a.semantique else "")
         (ICI / f"resultats_{jeu}{suffixe}.md").write_text(en_markdown(res), encoding="utf-8")
         if a.archive:
             (ICI / "archives").mkdir(exist_ok=True)
