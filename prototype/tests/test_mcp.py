@@ -29,10 +29,10 @@ def _reinit():
     http.post("/api/demo/reinitialiser")
 
 
-def _repondeur(accepter: bool, journal: list):
+def _repondeur(accepter: bool, journal: list, **champs):
     async def cb(ctx, params: t.ElicitRequestParams):
         journal.append(params.message)
-        return t.ElicitResult(action="accept", content={"confirmer": True}) if accepter else t.ElicitResult(action="decline")
+        return t.ElicitResult(action="accept", content={"confirmer": True, **champs}) if accepter else t.ElicitResult(action="decline")
     return cb
 
 
@@ -144,3 +144,128 @@ def test_planifier_soiree_programme_individuel():
     mid = next(p.id for p in PROFILS if p.nom == qui)
     err, moi = appeler("planifier_soiree", {"tours": 3, "membre_id": mid})
     assert not err and 1 <= len(moi["rencontres"]) <= 3 and all(qui in m["entre"] for m in moi["rencontres"])
+
+
+def test_le_membre_modifie_le_message_avant_envoi():
+    r = appeler("publier_besoin", {"besoin": BESOIN}, elicitation=_repondeur(True, []))[1]
+    aidant = appeler("chercher_membres", {"besoin": BESOIN})[1]["suggestions"][0]["membre_id"]
+    texte = "Bonjour, je peux vous aider dès lundi. Appelez-moi."
+    err, rel = appeler("mettre_en_relation", {"besoin_id": r["besoin_id"]}, membre=aidant,
+                       elicitation=_repondeur(True, [], message=texte))
+    assert not err and rel["message"] == texte and rel["modifie_par_le_membre"]
+    envoye = next(x for x in http.get("/api/relations", headers={"X-Membre": "p00"}).json() if x["id"] == rel["relation_id"])
+    assert envoye["message"] == texte
+
+
+def test_bout_en_bout_stdio_contre_une_vraie_api(tmp_path):
+    """Lancement réel : API uvicorn + `python -m app.mcp_serveur` en stdio, comme le ferait Claude Desktop."""
+    import socket
+    import subprocess
+    import sys
+    import time
+    from pathlib import Path
+
+    import httpx
+    from mcp import StdioServerParameters
+
+    racine = Path(__file__).resolve().parent.parent
+    with socket.socket() as s_:
+        s_.bind(("127.0.0.1", 0))
+        port = s_.getsockname()[1]
+    env = {**os.environ, "HACKVS_DB": str(tmp_path / "e2e.db"), "HACKVS_SEMANTIQUE": "0"}
+    api = subprocess.Popen([sys.executable, "-m", "uvicorn", "app.main:app", "--port", str(port)], cwd=racine, env=env,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        for _ in range(100):
+            try:
+                if httpx.get(f"http://127.0.0.1:{port}/api/etat").status_code == 200:
+                    break
+            except httpx.HTTPError:
+                time.sleep(0.1)
+        params = StdioServerParameters(command=sys.executable, args=["-m", "app.mcp_serveur"], cwd=str(racine),
+                                       env={**env, "HACKVS_API_URL": f"http://127.0.0.1:{port}", "HACKVS_MCP_MEMBRE": "p00"})
+
+        async def run():
+            async with Client(params) as c:
+                noms = {x.name for x in (await c.list_tools()).tools}
+                r = await c.call_tool("chercher_membres", {"besoin": BESOIN})
+                assert not r.is_error, r.content
+                return noms, r.structured_content or json.loads(r.content[0].text)
+        noms, res = asyncio.run(run())
+        assert "chercher_membres" in noms and res["suggestions"] and all(s["preuves"] for s in res["suggestions"])
+    finally:
+        api.terminate()
+        api.wait(10)
+
+
+def test_mcp_http_distant_jetons_et_portees(tmp_path):
+    """HTTP distant : sans jeton → 401 ; « lecture » ne peut pas écrire ; l'identité vient du jeton, pas du client."""
+    import socket
+    import subprocess
+    import sys
+    import time
+    from pathlib import Path
+
+    import httpx
+    import httpx2
+    from mcp.client.streamable_http import streamable_http_client
+
+    racine = Path(__file__).resolve().parent.parent
+
+    def port_libre():
+        with socket.socket() as s_:
+            s_.bind(("127.0.0.1", 0))
+            return s_.getsockname()[1]
+
+    def attendre(url, codes=(200, 401, 404, 405, 406)):
+        for _ in range(150):
+            try:
+                if httpx.get(url).status_code in codes:
+                    return
+            except httpx.HTTPError:
+                time.sleep(0.1)
+        raise RuntimeError(url)
+
+    fichier = tmp_path / "jetons.json"
+    jeton = lambda m, p: subprocess.run([sys.executable, "scripts/creer_jeton_mcp.py", "--membre", m, "--portees", p,
+                                         "--fichier", str(fichier)], cwd=racine, capture_output=True, text=True,
+                                        check=True).stdout.strip()
+    j_lecture, j_ecriture = jeton("p01", "lecture"), jeton("p00", "lecture,ecriture")
+    assert j_lecture not in fichier.read_text() and len(j_lecture) >= 40  # seules les empreintes sont stockées
+
+    p_api, p_mcp = port_libre(), port_libre()
+    env = {**os.environ, "HACKVS_DB": str(tmp_path / "http.db"), "HACKVS_SEMANTIQUE": "0",
+           "HACKVS_API_URL": f"http://127.0.0.1:{p_api}", "HACKVS_MCP_JETONS": str(fichier)}
+    procs = [subprocess.Popen([sys.executable, "-m", "uvicorn", "app.main:app", "--port", str(p_api)], cwd=racine, env=env,
+                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL),
+             subprocess.Popen([sys.executable, "-m", "app.mcp_serveur", "--http", "--port", str(p_mcp)], cwd=racine, env=env,
+                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)]
+    try:
+        attendre(f"http://127.0.0.1:{p_api}/api/etat")
+        url = f"http://127.0.0.1:{p_mcp}/mcp"
+        attendre(url)
+        assert httpx.post(url, json={"jsonrpc": "2.0", "id": 1, "method": "tools/list"}).status_code == 401
+        assert httpx.post(url, json={}, headers={"Authorization": "Bearer faux"}).status_code == 401
+
+        async def session(j, outil, args, elicitation=None):
+            cli = httpx2.AsyncClient(headers={"Authorization": f"Bearer {j}"}, timeout=30)
+            async with Client(streamable_http_client(url, http_client=cli), elicitation_callback=elicitation) as c:
+                r = await c.call_tool(outil, args)
+                texte = "".join(x.text for x in r.content if isinstance(x, t.TextContent))
+                return r.is_error, (texte if r.is_error else (r.structured_content or json.loads(texte)))
+
+        err, moi = asyncio.run(session(j_lecture, "qui_suis_je", {}))
+        assert not err and moi["membre"]["id"] == "p01"
+        err, r = asyncio.run(session(j_lecture, "chercher_membres", {"besoin": BESOIN}))
+        assert not err and r["suggestions"]
+        vus = []
+        err, msg = asyncio.run(session(j_lecture, "publier_besoin", {"besoin": BESOIN}, _repondeur(True, vus)))
+        assert err and "lecture" in msg and vus == []  # refusé AVANT de solliciter le membre
+        err, r = asyncio.run(session(j_ecriture, "publier_besoin", {"besoin": BESOIN}, _repondeur(True, vus)))
+        assert not err and r["statut"] == "publie" and vus
+        besoins = httpx.get(f"http://127.0.0.1:{p_api}/api/besoins", headers={"X-Membre": "p00"}).json()
+        assert [b["id"] for b in besoins] == [r["besoin_id"]]  # publié au nom du titulaire du jeton
+    finally:
+        for p in procs:
+            p.terminate()
+            p.wait(10)
