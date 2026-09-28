@@ -113,3 +113,17 @@ brouillon de message par LLM (le gabarit déterministe n'invente rien) ; serveur
 ## 7. Historique (cycle 1, résumé)
 Trois concepts comparés (A : du besoin à l'introduction ; B : Bourse des besoins ; C : compagnon de soirée). A était démontrable et B portait l'horizon.
 Au lot 2, B a été construit sur le moteur de A ; C reste une extension.
+
+## 8. Lot 3 : ce qui a été ajouté pour gagner, et pourquoi
+
+| Ajout | Problème résolu | Pourquoi ce choix | Compromis | À dire au jury |
+|---|---|---|---|---|
+| **Vue du Club** (`/club`) : compétences à recruter, offres à faire connaître, activité | Le sponsor (le Club) doit voir ce qu'il y gagne ; une abstention était une impasse | Un besoin sans réponse devient une **entreprise à inviter** : c'est l'argument d'affaires du Club, qui vend des adhésions | Historique fictif nécessaire pour la démo (étiqueté) ; agrégats seulement, sans nom | « Un membre aide un membre ; quand personne ne peut aider, le Club sait qui inviter. » |
+| **Profil en 30 secondes** | Risque n°1 : les membres ne rempliront pas de profil structuré | Description libre → offres, recherches, zones, langues **proposées** ; le membre valide ; la phrase devient la preuve | Extraction par règles (même limites de vocabulaire) ; Claude pourrait la reprendre | « Trente secondes, et c'est vous qui validez. » |
+| **Acte 2 « le Club se répare »** (scène Club + membre) | Montrer la boucle membre → communauté → organisation | Deux états réels comparés : « Comblé » n'est affiché que si la compétence a vraiment disparu de la liste | Nécessite l'historique chargé avant la démo | Le jury voit le changement en direct |
+| **Couverture** : pluriels générés, allemand, paraphrases | 3 fausses abstentions sur 14 au lot 2 ; Valais bilingue | Variantes générées au chargement (taxonomie lisible), sans collision | Mesure du gain circulaire (réservé n°2 écrit en connaissant les ajouts) | Chiffre de référence inchangé : première exécution du réservé n°1 |
+| **Présentation intégrée** (`/presentation`) | Pitcher sans improvisation, hors ligne | Le support est servi par l'application et utilise ses vraies captures | Pas d'export .pptx (au besoin : impression PDF depuis le navigateur) | Notes d'orateur avec P1/P2 |
+| **QR et `/rejoindre`** | Faire essayer le jury | QR généré localement (paquet `qrcode`), aucun service externe | Nécessite une URL joignable (Wi-Fi partagé ou déploiement) | « Scannez, vous incarnez un membre fictif. » |
+| **Dockerfile vérifié + guide Cloud Run** | Une URL publique le jour J | Image construite et testée ici (249 Mo, non root) | Une seule instance (SQLite et SSE locaux) ; publier est une décision de Hiba | — |
+
+Écartés à nouveau : graphe de réseau (pas plus explicatif que le pont besoin ↔ preuves), multi-agents (aucune boucle à orchestrer), tableau de bord décoratif (chaque chiffre porte son dénominateur et sa définition).

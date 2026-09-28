@@ -37,12 +37,12 @@
 </head>
 <body>
   <header class="tete-scene">
-    <div class="marque"><span class="logo" aria-hidden="true"></span><span>Le Fil du Club · scène</span></div>
+    <h1 class="marque" style="font-size:21px;margin:0"><span class="logo" aria-hidden="true"></span><span>Le Fil du Club · scène</span></h1>
     <p>Deux membres <strong>fictifs</strong>, une seule base de données. Chaque action d'un côté apparaît de l'autre. Aucune donnée réelle, aucun message envoyé.</p>
     <span class="badge demo">Démo · données fictives</span>
     <button class="btn petit" type="button" id="reset">Réinitialiser</button>
   </header>
-  <div class="scene">
+  <main class="scene">
     <section class="panneau" aria-label="Membre de gauche">
       <header><strong id="nom-g"></strong><span id="role-g">a un besoin</span></header>
       <iframe id="cadre-g" title="Application vue par le membre de gauche"></iframe>
@@ -55,7 +55,7 @@
       <header><strong id="nom-d"></strong><span id="role-d">peut aider</span></header>
       <iframe id="cadre-d" title="Application vue par le membre de droite"></iframe>
     </section>
-  </div>
+  </main>
   <script type="module">
     const p = new URLSearchParams(location.search);
     const gauche = p.get("gauche") || "p00", droite = p.get("droite") || "p01";

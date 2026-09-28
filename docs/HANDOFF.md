@@ -14,9 +14,9 @@ données fictives, évaluation. Il est là pour aller vite. **Vos idées peuvent
 ```bash
 cd prototype
 python -m venv .venv && . .venv/bin/activate        # facultatif
-pip install -r requirements.txt
-uvicorn app.main:app --reload                       # http://localhost:8000  et  /scene
-python -m pytest -q tests                           # 19 tests, ≈ 3 s
+pip install -r requirements-dev.txt
+uvicorn app.main:app --reload                       # http://localhost:8000 · /scene · /club · /presentation · /rejoindre
+python -m pytest -q tests                           # 22 tests, ≈ 4 s
 python -m eval.run_eval                             # 3 jeux → eval/resultats_*.md
 python scripts/parcours_demo.py                     # parcours complet dans Chromium (serveur lancé)
 ```
@@ -34,15 +34,18 @@ prototype/
     parser_llm.py    phrase → critères (Claude en flux) + validation + repli
     baseline.py      référence mots-clés (comparaison)
     models.py        schémas Pydantic partagés
-    taxonomy.py      vocabulaire, normalisation, implantation depuis la commune
+    taxonomy.py      vocabulaire (+ pluriels générés), normalisation, implantation depuis la commune
+    club.py          vue du Club : indicateurs calculés, compétences à recruter, historique fictif
   data/
     taxonomie.json   compétences, synonymes, termes ambigus, zones, marqueurs    ← éditable sans coder
     profils_demo.json  37 profils FICTIFS (dont pièges volontaires)             ← éditable sans coder
+    historique_demo.json  14 besoins FICTIFS pour la vue du Club                ← éditable sans coder
   web/
-    index.html, scene.html, app.css
+    index.html, scene.html, club.html, presentation.html, app.css
     js/app.js        identité, onglets, compteurs, mises à jour en direct
     js/vue-*.js      une vue par onglet (nouveau, besoins, bourse, suivi, profil)
     js/composants.js éditeur de critères, cartes, abstention, frise
+    js/club.js       vue du Club
   eval/              cas.json (base), cas_adversariaux.json, cas_reserve.json, run_eval.py, archives/
   tests/             test_parcours.py
   scripts/           parcours_demo.py (captures, vidéo), verifier_claude.py

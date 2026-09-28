@@ -1,8 +1,22 @@
-# Dossier d'audit, lot 2 : version de répétition générale (28.09.2026)
+# Dossier d'audit : lots 2 et 3, version de répétition générale (28.09.2026)
 
 Destinataire : auditeur externe (ChatGPT), via Hiba. **Aucun retour d'audit sur ce lot n'a été reçu.** Le lot 2 s'appuie sur un
 *résumé* des fragilités du premier audit, transmis par Hiba ; le texte complet (sources officielles, cas adversariaux transmis) **n'a
 pas été reçu**. Les cas adversariaux utilisés ont donc été rédigés par Claude à partir de ce résumé.
+
+## 0. Nouveautés du lot 3 (après la livraison du lot 2, commit `a4cccec`)
+Demande de Hiba : « aller au maximum » pour gagner. Ajouts, tous vérifiés dans le navigateur et par des tests :
+1. **Vue du Club** (`/club`) : compétences à recruter (besoins sans aucun membre capable d'y répondre), offres jamais demandées, activité
+   avec dénominateurs. Calculée en direct, agrégats sans nom. Historique **fictif** de 14 besoins chargeable à la demande.
+2. **Profil en 30 secondes** : description libre → offres, recherches, zones, langues proposées → validation du membre → la phrase devient la preuve. Mise à jour immédiate de la Bourse de tout le Club.
+3. **Acte 2 « le Club se répare »** : `/scene?gauche=club&droite=p10` ; un membre comble un manque, la vue du Club l'annonce (« Comblé »), la demande en attente le trouve.
+4. **Couverture** : pluriels générés automatiquement (760 formes, sans collision), allemand, paraphrases ; un faux ami retiré (« données »).
+5. **Présentation intégrée** (`/presentation`, 11 diapositives, notes P1/P2), **QR local** (`/rejoindre`), **Dockerfile** construit et testé, guide Cloud Run (non déployé).
+6. Correctif : `ev.currentTarget` lu après un `await` (bouton non réactivé en cas d'erreur), trouvé par le test navigateur, corrigé dans 4 modules.
+
+Mesures du lot 3 (détails : EVALUATION.md) : base et adversarial **inchangés** (aucune régression) ; réservé n°1 **post-hoc** 12/12, 0/14, 14/14 ;
+réservé n°2 (écrit **avant** les améliorations mais **en les connaissant** : circulaire) 15/15, 0/18, 18/18. **Le chiffre honnête à citer reste
+la première exécution du réservé n°1 : 9/12, 0/14, 11/14.**
 
 ## 1. Accès
 - Dépôt : https://github.com/sahimhiba-debug/HackVS
@@ -15,11 +29,12 @@ pas été reçu**. Les cas adversariaux utilisés ont donc été rédigés par C
 ```bash
 cd prototype
 python -m venv .venv && . .venv/bin/activate
-pip install -r requirements.txt
-python -m pytest -q tests                  # attendu : 19 passed
-python -m eval.run_eval                    # régénère eval/resultats_{base,adversarial,reserve}.md
+pip install -r requirements-dev.txt
+python -m pytest -q tests                  # attendu : 22 passed
+python -m eval.run_eval                    # régénère eval/resultats_{base,adversarial,reserve,reserve2}.md
 uvicorn app.main:app                       # http://localhost:8000 et http://localhost:8000/scene
-python scripts/parcours_demo.py            # (autre terminal) attendu : « Scène OK », « Cas limites OK » ×2
+python scripts/parcours_demo.py            # (autre terminal) attendu : « Scène OK », « Cas limites OK » ×2, « Club, profil et présentation OK »
+docker build -t fil-du-club . && docker run -p 8080:8080 fil-du-club   # (racine du dépôt) facultatif
 ```
 Installation vérifiée depuis un clone neuf et un environnement virtuel vide (Python 3.11). Playwright utilise Chromium
 (`playwright install chromium` si absent).
@@ -83,7 +98,11 @@ Chronologie vérifiable dans git : jeu adversarial commité (`829e956`) **avant*
 | 11 | Un exposant incarné peut publier un besoin (politique non décidée) | Faible | Dépend du brief |
 | 12 | Dictée vocale non testée en salle ; Chrome envoie l'audio à Google | Faible (bonus) | Ne pas l'utiliser en secours |
 | 13 | Les notifications peuvent masquer le bas des panneaux étroits de la scène | Cosmétique | — |
-| 14 | Interface uniquement en français | Moyenne en Valais | Bilingue FR/DE |
+| 14 | Interface uniquement en français (l'analyse comprend désormais une partie de l'allemand) | Moyenne en Valais | Bilingue FR/DE |
+| 15 | Vue du Club : les chiffres de la démo reposent sur un historique **fictif** ; « à recruter » dépend du vocabulaire (un besoin mal compris gonflerait la liste) | Moyenne | Validation humaine avant une invitation ; données réelles |
+| 16 | Profil en 30 s : extraction par règles, mêmes limites de vocabulaire ; une offre hors catalogue exige un verbe d'offre (« nous proposons… ») | Moyenne | Claude pour l'extraction, avec la même validation |
+| 17 | Le QR code nécessite une URL joignable par les téléphones (Wi-Fi partagé ou déploiement) | Moyenne le jour J | DEPLOIEMENT.md |
+| 18 | Image Docker vérifiée avec deux adaptations propres à l'environnement (miroir de l'image de base, certificat du proxy) | Faible | Reconstruire sur une machine normale |
 
 ## 9. Fichiers principaux modifiés dans ce lot
 `prototype/app/{store.py (nouveau), main.py, matching.py, parser_rules.py, parser_llm.py, models.py, taxonomy.py}` ;
@@ -93,15 +112,21 @@ Chronologie vérifiable dans git : jeu adversarial commité (`829e956`) **avant*
 Supprimés : `prototype/app/intros.py` (remplacé par `store.py`), `prototype/web/app.js` (remplacé par les modules).
 
 ## 10. Captures et vidéo (réellement produites par Playwright sur le vrai serveur)
-`docs/captures/` : 10 à 16 (scène, 1600×900), 20 à 26 (cas limites, 1280×800, plus variantes `_mobile` 390×844), `demo_scene.webm` (49 s).
+`docs/captures/` : 10 à 16 (scène, 1600×900), 20 à 26 (cas limites, 1280×800, plus variantes `_mobile` 390×844),
+30 à 35 (vue du Club, profil en 30 s, manque comblé, acte 2 en scène), 40 (diapositives), `demo_scene.webm` (50 s), `demo_club_repare.webm` (20 s).
 
 ## 11. Trois questions précises pour l'auditeur
 1. **Preuve** : le jeu réservé montre un moteur qui ne se trompe jamais (0/14) mais se tait trop (3/14). Pour un jury, vaut-il mieux montrer cet arbitrage tel quel, ou activer Claude en démo **avant** d'avoir mesuré qu'il ne réintroduit pas de violations ? Quel seuil de mesure exigeriez-vous avant de l'activer ?
 2. **Différenciation** : après correction de la veille concurrentielle (Brella, Swapcard, Hivebrite), la thèse « le besoin va vers ceux qui peuvent aider, avec preuve et abstention » vous paraît-elle distinctive, ou un Hivebrite configuré ferait-il de même ? Quelle vérification suggéreriez-vous ?
 3. **Consentement et Bourse** : trois choix discutables : (a) publier un besoin vaut consentement à recevoir des offres pour ce besoin ; (b) le retrait du consentement annule les demandes en attente mais conserve les relations acceptées ; (c) après un « décliner », le besoin peut réapparaître dans la Bourse de la personne. Lesquels changeriez-vous ?
 
+## 11 bis. Questions supplémentaires (lot 3)
+4. **Vue du Club** : l'argument « chaque besoin sans réponse est une entreprise à inviter » est-il crédible pour le sponsor, ou risque-t-il d'être perçu comme de la prospection non consentie ? Quelle garde-fou ajouteriez-vous ?
+5. **Mise en scène** : deux actes en 90 s (le besoin trouve un membre ; le Club se répare), est-ce trop pour un pitch de 3 minutes ? Lequel garderiez-vous si un seul ?
+
 ## 12. Décisions demandées à Hiba (regroupées)
 1. **Clé API Anthropic** pour mesurer Claude (≈ 0,56 USD estimés, 40 appels). Sans elle, la démo reste en mode « règles locales », et il faut le dire.
 2. **Accès réseau** aux sites officiels (paramètres réseau de l'environnement) pour lire les sources complètes, *ou* transmission du brief dès sa publication.
 3. **Texte complet de l'audit précédent** (sources et cas adversariaux), à déposer dans `docs/audits/`.
 4. **Arbitrage produit** (facultatif, réversible) : garder la Bourse comme cœur de la démo (recommandé), ou revenir au seul parcours « je cherche → je sollicite » si le brief l'exige.
+5. **Déployer une URL publique** (Cloud Run, ton compte GCP) pour que le jury essaie via le QR : coût faible mais non nul, décision externe. Sinon, démo locale uniquement.

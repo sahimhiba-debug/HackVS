@@ -25,7 +25,8 @@ concurrence). La comparaison isole la qualité du classement, pas celle des filt
 |---|---|---|---|
 | `cas.json` (20 cas) | Cycle 1 | Développement du cycle 1 | **Régression** : doit rester à 0 violation et 100 % d'abstentions correctes (vérifié par les tests) |
 | `cas_adversariaux.json` (20 cas) | Lot 2, **avant** les corrections (commit `829e956`) | Mesure des fragilités signalées, puis **développement** | Premier résultat archivé (`eval/archives/v1_avant_lot2_*`) ; les résultats suivants sont des résultats **d'entraînement** |
-| `cas_reserve.json` (14 cas) | Lot 2, **après** les corrections, formulations nouvelles | **Estimation de généralisation** | Exécuté **une seule fois** ; **aucune correction** faite à partir de ses résultats |
+| `cas_reserve.json` (14 cas) | Lot 2, **après** les corrections, formulations nouvelles | Estimation de généralisation **au lot 2** | Première exécution archivée (`v2_premiere_execution`). Depuis le lot 3 il est **post-hoc** : ses échecs ont inspiré des ajouts de vocabulaire (« gérer l'entrée », « épiceries fines ») |
+| `cas_reserve2.json` (18 cas) | Lot 3, **avant** les améliorations de couverture (commit `59a4cee`) | Vérifier que les améliorations prévues (pluriels, allemand, paraphrases) fonctionnent | Exécuté une fois (`v3_premiere_execution`). **Fortement circulaire** : écrit en connaissant le vocabulaire qui allait être ajouté |
 
 Aucun jeu n'est une **évaluation indépendante** : il faudrait des cas écrits par l'équipe, l'auditeur ou des membres, sans voir les profils.
 
@@ -48,7 +49,19 @@ Aucun jeu n'est une **évaluation indépendante** : il faudrait des cas écrits 
 | | violations | **0/14** | 4/14 |
 | | abstention correcte | **11/14** | 13/14 |
 
-Preuves vérifiées : 41/41 (base), 47/47 (adversarial), 19/19 (réservé). Ce résultat est **vrai par construction** avec des explications
+| **Lot 3 : réservé n°1 post-hoc** | succès@3 | 12/12 | 11/12 |
+| | violations | 0/14 | 4/14 |
+| | abstention correcte | 14/14 | 13/14 |
+| **Lot 3 : réservé n°2** (une exécution, circulaire) | succès@3 | 15/15 | 7/15 |
+| | violations | 0/18 | 0/18 |
+| | abstention correcte | 18/18 | 14/18 |
+
+Base et adversarial sont inchangés après le lot 3 (16/16, 0/20, 20/20 ; 13/13, 0/20, 20/20, 18/18 critères) : pas de régression.
+
+**Le chiffre à citer au jury reste la première exécution du réservé n°1 (9/12, 0/14, 11/14)**, la seule mesure faite sans
+connaître les cas. Les chiffres du lot 3 montrent que la couverture a progressé *sur des cas connus* ; une mesure indépendante manque toujours.
+
+Preuves vérifiées : 41/41 (base), 47/47 (adversarial), 19/19 (réservé, lot 2). Ce résultat est **vrai par construction** avec des explications
 extraites du profil : le garde-fou n'aura d'enjeu que si un LLM rédige un jour les explications.
 
 Latence locale (médiane) : analyse ≈ 1 à 2 ms, recherche ≈ 8 à 15 ms pour 37 profils. Coût : nul (aucun appel externe).
@@ -82,7 +95,13 @@ téléchargeable ici, et ils risquent de réintroduire les faux amis) ; mapping 
   été soumis à l'API réelle : un rejet du schéma par l'API est possible et serait visible (repli affiché).
 - **Manque** : une clé `ANTHROPIC_API_KEY` dans l'environnement d'exécution. Aucune dépense n'a été engagée.
 
-## Tests automatisés (`python -m pytest -q tests`, 19 tests)
+## Améliorations de couverture du lot 3
+- **Pluriels et singuliers générés automatiquement** pour chaque expression (« audit énergétique » → « audits énergétiques ») : 760 formes, aucune collision entre concepts (vérifié).
+- **Allemand** : compétences (Treuhand, Übersetzer, Kühltransport…), verbes de recherche (suche, brauche), lieux (Wallis, Zürich, Bern…), langues.
+- **Paraphrases** : vigiles, contrôle d'accès, épiceries fines, loueur…
+- **Faux ami retiré** : « données » seul ne signifie plus « Données et IA » (« protéger nos données clients »).
+
+## Tests automatisés (`python -m pytest -q tests`, 22 tests)
 Ils couvrent les risques, pas le volume : invariants de consentement ; symétrie Bourse ⇔ correspondances ; cascades (retrait du consentement,
 clôture, modification) ; machine à états et rôles ; anonymat levé seulement après acceptation ; sollicitation limitée aux membres qui correspondent ;
 mode réel sans simulation ni journal exposé ; critères inventés refusés par le serveur ; flux Claude (provisoire filtré au final, repli sur panne, refus ou JSON invalide) ; non-régression base et adversarial.
