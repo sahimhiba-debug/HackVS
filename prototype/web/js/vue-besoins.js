@@ -88,7 +88,7 @@ async function rendreDetail(b, relations) {
   if (clos) return;
   try {
     const res = await api(`/api/besoins/${b.id}/correspondances`);
-    zoneResultats.replaceChildren(blocResultats(res, { action: (sug) => actionCorrespondance(b, sug) }));
+    zoneResultats.replaceChildren(blocResultats(res, { action: (sug) => actionCorrespondance(b, sug), besoin: b.besoin }));
     surChangement();
   } catch (e) { zoneResultats.replaceChildren(erreurBloc(e.message)); }
 }

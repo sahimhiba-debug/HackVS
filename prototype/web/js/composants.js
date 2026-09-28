@@ -163,7 +163,57 @@ export function listePreuves(preuves) {
           ? PROVENANCE[pr.champ] : `${pr.critere} · ${PROVENANCE[pr.champ]}` + (pr.nature === "textuel" ? " · correspondance par mots" : ""))))));
 }
 
-export function carteCorrespondance(s, { piste = false, action = null } = {}) {
+const STATUT = { verifie: ["✓", "Vérifié"], a_verifier: ["?", "À vérifier"], non_satisfait: ["✗", "Non satisfait"] };
+
+// « Pourquoi cette personne ? » / « Pourquoi pas elle ? » : critère par critère, verdict calculé par le même
+// moteur que la liste (le serveur ne divulgue jamais une raison liée au consentement ou à la disponibilité).
+export async function explication(besoin, membreId) {
+  const e = await api("/api/expliquer", { corps: { besoin, membre_id: membreId } });
+  return h("div", { class: "explication " + e.verdict },
+    h("p", { class: "resume" }, e.resume),
+    e.lignes.length ? h("ul", { class: "criteres-verdict" }, e.lignes.map((l) =>
+      h("li", { class: l.statut },
+        h("span", { class: "pastille", "aria-label": STATUT[l.statut][1] }, STATUT[l.statut][0]),
+        h("span", {}, h("strong", {}, l.critere.charAt(0).toUpperCase() + l.critere.slice(1) + (l.obligatoire ? "" : " (souhaité)")), " — ", l.detail,
+          l.preuve && !["langues", "zones_service", "commune"].includes(l.preuve.champ)
+            ? h("span", { class: "citation" }, ` « ${l.preuve.extrait} »`) : null)))) : null);
+}
+
+function pliExplication(besoin, membreId, libelle) {
+  const zone = h("div", {});
+  const d = h("details", { class: "pli pourquoi-detail" }, h("summary", {}, libelle), zone);
+  d.addEventListener("toggle", async () => {
+    if (!d.open || zone.childElementCount) return;
+    zone.replaceChildren(h("span", { class: "chargement" }, "Vérification…"));
+    try { zone.replaceChildren(await explication(besoin, membreId)); } catch (e) { zone.replaceChildren(h("p", {}, e.message)); }
+  });
+  return d;
+}
+
+export function blocPourquoiPas(besoin, res) {
+  const proposes = new Set((res.suggestions || []).map((s) => s.profil.id));
+  const choix = h("select", { "aria-label": "Membre" }, h("option", { value: "" }, "Choisir un membre…"));
+  const zone = h("div", {});
+  const d = h("details", { class: "pli" }, h("summary", {}, "Pourquoi pas quelqu'un d'autre ?"),
+    h("p", { class: "aide" }, "Vous pensiez à un membre précis ? Le moteur explique, critère par critère, pourquoi il n'est pas proposé."),
+    h("div", { class: "ligne-pourquoi-pas" }, choix,
+      h("button", { class: "btn petit", type: "button", onclick: async () => {
+        if (!choix.value) return;
+        zone.replaceChildren(h("span", { class: "chargement" }, "Vérification…"));
+        try { zone.replaceChildren(await explication(besoin, choix.value)); } catch (e) { zone.replaceChildren(h("p", {}, e.message)); }
+      } }, "Expliquer")), zone);
+  d.addEventListener("toggle", async () => {
+    if (!d.open || choix.options.length > 1) return;
+    try {
+      const membres = await api("/api/membres");
+      membres.filter((m) => !proposes.has(m.id)).sort((a, b) => a.nom.localeCompare(b.nom))
+        .forEach((m) => choix.append(h("option", { value: m.id }, `${m.nom} · ${m.entreprise}`)));
+    } catch (e) { zone.replaceChildren(h("p", {}, e.message)); }
+  });
+  return d;
+}
+
+export function carteCorrespondance(s, { piste = false, action = null, besoin = null } = {}) {
   const p = s.profil;
   const niveau = piste ? ["piste", "Piste plus large · non vérifiée"]
     : s.niveau === "forte" ? ["forte", "Correspondance forte"] : ["partielle", "Correspondance partielle · à vérifier"];
@@ -177,10 +227,11 @@ export function carteCorrespondance(s, { piste = false, action = null } = {}) {
     h("div", { class: "corps" },
       listePreuves(s.preuves),
       s.a_verifier?.length ? h("ul", { class: "averifier" }, s.a_verifier.map((a) => h("li", {}, a))) : null,
-      s.reciprocite ? h("p", { class: "reciproque" }, `Réciprocité : cherche aussi « ${s.reciprocite.extrait} »`) : null));
+      s.reciprocite ? h("p", { class: "reciproque" }, `Réciprocité : cherche aussi « ${s.reciprocite.extrait} »`) : null,
+      besoin ? pliExplication(besoin, p.id, "Pourquoi cette personne ? Critère par critère") : null));
 }
 
-export function blocResultats(res, { action, titre = true } = {}) {
+export function blocResultats(res, { action, titre = true, besoin = null } = {}) {
   const frag = h("div", {});
   if (res.abstention) {
     frag.append(h("div", { class: "abstention" },
@@ -193,8 +244,9 @@ export function blocResultats(res, { action, titre = true } = {}) {
   } else {
     if (titre) frag.append(h("p", { class: "sous" },
       `${res.suggestions.length} membre${res.suggestions.length > 1 ? "s" : ""} sur ${res.nb_profils_examines} examinés · ${Math.max(1, Math.round(res.duree_ms))} ms · chaque raison cite le profil mot pour mot.`));
-    frag.append(h("div", { class: "cartes" }, res.suggestions.slice(0, 3).map((s) => carteCorrespondance(s, { action: action?.(s) }))));
+    frag.append(h("div", { class: "cartes" }, res.suggestions.slice(0, 3).map((s) => carteCorrespondance(s, { action: action?.(s), besoin }))));
   }
+  if (besoin) frag.append(blocPourquoiPas(besoin, res));
   const total = (res.ecartes || []).reduce((a, e) => a + e.nombre, 0);
   if (total) {
     frag.append(h("details", { class: "pli" },

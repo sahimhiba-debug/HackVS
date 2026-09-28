@@ -142,7 +142,7 @@ async function apercu() {
     s.apercu = res; s.empreinteApercu = cle;
     transition(() => {
       zone.replaceChildren(blocResultats(res, { action: (sug) => h("button", { class: "btn primaire", type: "button",
-        onclick: () => demander(sug) }, `Solliciter ${prenom(sug.profil.nom)}`) }), blocComparaison(s.besoin));
+        onclick: () => demander(sug) }, `Solliciter ${prenom(sug.profil.nom)}`), besoin: s.besoin }), blocComparaison(s.besoin));
     });
     $("#bloc-visibilite").hidden = false;
     majBoutonEnregistrer();
