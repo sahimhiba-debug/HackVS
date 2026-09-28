@@ -245,6 +245,8 @@ def analyser(texte: str, tax: Taxonomie) -> Besoin:
 
 
 # ---------------------------------------------------------------------------- profil en 30 secondes
+# Verbes de production : « nous produisons des tisanes à Orsières » est une offre, même si la phrase cite un lieu.
+_PRODUCTION = re.compile(r"\b(?:nous|on|je)\s+(?:produisons|fabriquons|vendons|proposons|offrons|cultivons|elevons|distillons|brassons)\b")
 _OFFRE_PROFIL = re.compile(
     r"\b(?:nous|on|je)\s+(?:assurons|proposons|offrons|livrons|realisons|effectuons|faisons|installons|accompagnons|"
     r"transportons|fournissons|louons|organisons|vendons|produisons|fabriquons|conseillons|intervenons|travaillons|"
@@ -284,7 +286,7 @@ def extraire_profil(texte: str, tax: Taxonomie) -> dict:
         lieu_ou_langue = any(motif(e).search(n) for ex in tax.zones.values() for e in ex) or any(
             motif(normaliser(e)[0]).search(n) for spec in tax.langues.values() for e in spec["expressions"])
         if not concepts:
-            if lieu_ou_langue and cible is offres:
+            if lieu_ou_langue and cible is offres and not _PRODUCTION.search(n):
                 pass  # phrase de contexte (« nous intervenons en Valais ») : renseigne zones et langues, pas une offre
             elif cible is offres and _OFFRE_PROFIL.search(n):
                 offres.append({"concept": None, "libelle": "Hors catalogue (recherche par mots)", "texte": phrase})

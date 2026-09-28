@@ -258,14 +258,16 @@ def simuler(g: nx.Graph, ajouts: list[tuple[str, str]], maintenant: date, focus:
     COPIE du graphe (rien n'est écrit). Ce n'est pas une prédiction du comportement des membres."""
     from plateforme.memoire import indicateurs
     apres = g.copy()
-    ponts = []
+    ponts, premiers_liens = [], []
     for a, b in ajouts:
-        relie = not (a in g and b in g and nx.has_path(g, a, b))
-        if relie:
+        # Un PONT relie deux groupes EXISTANTS ; relier un membre encore isolé est un « premier lien », pas un pont.
+        if a in apres and b in apres and apres.degree(a) and apres.degree(b) and not nx.has_path(apres, a, b):
             ponts.append([a, b])
+        elif not (a in apres and apres.degree(a)) or not (b in apres and apres.degree(b)):
+            premiers_liens.append([a, b])
         apres.add_edge(a, b, derniere=maintenant, premiere=maintenant, nombre=1, types={"SIMULATION"}, statut=Statut.SIMULE)
     portee = lambda gr, n: len(nx.single_source_shortest_path_length(gr, n, cutoff=2)) - 1 if n in gr else 0  # noqa: E731
     return {"nature": "SIMULATION", "ajouts": [list(p) for p in ajouts], "avant": indicateurs(g, maintenant),
-            "apres": indicateurs(apres, maintenant), "nouveaux_ponts": ponts,
+            "apres": indicateurs(apres, maintenant), "nouveaux_ponts": ponts, "premiers_liens": premiers_liens,
             "portee_a_2_sauts": {n: {"avant": portee(g, n), "apres": portee(apres, n)} for n in (focus or [])},
             "hypothese": "chaque lien simulé est supposé accepté par les deux membres ; aucun comportement n'est prédit"}

@@ -1,0 +1,623 @@
+{
+ "_avertissement": "RÉSEAU DE SCÈNE FICTIF (SYNTHÉTIQUE) : personnes, entreprises, besoins et rencontres inventés pour la démonstration. Aucune donnée du Club des Affaires.",
+ "debut": "2026-11-03",
+ "profils": [
+  {
+   "id": "s01",
+   "nom": "Pauline Darbellay",
+   "fonction": "Vigneronne",
+   "entreprise": "Cave des Trois Coteaux (fictive)",
+   "commune": "Fully",
+   "type": "membre_club",
+   "secteurs": [
+    "vins"
+   ],
+   "offre": [
+    {
+     "concept": "vins",
+     "texte": "Vins AOC Valais en petites séries, fendant et petite arvine"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "export_suisse_alemanique",
+     "texte": "Distributeur pour nos vins en Suisse alémanique"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "creneaux": [
+    "mar-matin",
+    "jeu-apres-midi"
+   ],
+   "maj": "2026-09-10"
+  },
+  {
+   "id": "s02",
+   "nom": "Jérôme Gay",
+   "fonction": "Fromager",
+   "entreprise": "Fromagerie d'alpage du Catogne (fictive)",
+   "commune": "Orsières",
+   "type": "membre_club",
+   "secteurs": [
+    "agroalimentaire"
+   ],
+   "offre": [
+    {
+     "concept": null,
+     "texte": "Fromages d'alpage et raclette au lait cru"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "transport_frigorifique",
+     "texte": "Transport frigorifique vers Genève deux fois par semaine"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "maj": "2026-08-22"
+  },
+  {
+   "id": "s03",
+   "nom": "Élise Tornay",
+   "fonction": "Apicultrice",
+   "entreprise": "Ruchers du Val Ferret (fictive)",
+   "commune": "Orsières",
+   "type": "membre_club",
+   "secteurs": [
+    "apiculture"
+   ],
+   "offre": [
+    {
+     "concept": null,
+     "texte": "Miel de montagne et pollen, récoltés dans le val Ferret"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "marketing",
+     "texte": "Communication et vente en ligne pour notre miel"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "maj": "2026-07-01"
+  },
+  {
+   "id": "s04",
+   "nom": "Nicolas Roduit",
+   "fonction": "Distillateur",
+   "entreprise": "Distillerie du Grand-Saint-Bernard (fictive)",
+   "commune": "Liddes",
+   "type": "membre_club",
+   "secteurs": [
+    "distillerie"
+   ],
+   "offre": [
+    {
+     "concept": null,
+     "texte": "Eaux-de-vie de poire et d'abricot, distillation à façon"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "emballage",
+     "texte": "Nouvel emballage cadeau pour nos bouteilles"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "maj": "2026-06-15"
+  },
+  {
+   "id": "s05",
+   "nom": "Chantal Michaud",
+   "fonction": "Gérante",
+   "entreprise": "Épicerie du Bourg (fictive)",
+   "commune": "Martigny",
+   "type": "membre_club",
+   "secteurs": [
+    "agroalimentaire"
+   ],
+   "offre": [
+    {
+     "concept": null,
+     "texte": "Épicerie de produits régionaux, vente au détail"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "maj": "2026-03-02"
+  },
+  {
+   "id": "s06",
+   "nom": "Thomas Vannay",
+   "fonction": "Directeur",
+   "entreprise": "Chablais Froid Transports (fictive)",
+   "commune": "Monthey",
+   "type": "membre_club",
+   "secteurs": [
+    "logistique"
+   ],
+   "offre": [
+    {
+     "concept": "transport_frigorifique",
+     "texte": "Transport frigorifique Valais–Genève, tournées quotidiennes"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "ia_donnees",
+     "texte": "Optimiser nos tournées avec nos données"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "maj": "2026-09-01"
+  },
+  {
+   "id": "s07",
+   "nom": "Laure Borgeat",
+   "fonction": "Responsable commerciale",
+   "entreprise": "Emballages du Rhône (fictive)",
+   "commune": "Collombey",
+   "type": "membre_club",
+   "secteurs": [
+    "emballage"
+   ],
+   "offre": [
+    {
+     "concept": "emballage",
+     "texte": "Emballages cartonnés et coffrets sur mesure en petites séries"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "recrutement",
+     "texte": "Opérateurs de production pour la saison"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "maj": "2026-08-30"
+  },
+  {
+   "id": "s08",
+   "nom": "David Fellay",
+   "fonction": "Patron",
+   "entreprise": "Fellay Métal (fictive)",
+   "commune": "Vionnaz",
+   "type": "membre_club",
+   "secteurs": [
+    "construction_metallique"
+   ],
+   "offre": [
+    {
+     "concept": "construction_metallique",
+     "texte": "Serrurerie et charpente métallique"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "maj": "2026-05-20"
+  },
+  {
+   "id": "s09",
+   "nom": "Martine Rausis",
+   "fonction": "Associée",
+   "entreprise": "Rhône Talents (fictive)",
+   "commune": "Monthey",
+   "type": "membre_club",
+   "secteurs": [
+    "recrutement"
+   ],
+   "offre": [
+    {
+     "concept": "recrutement",
+     "texte": "Recrutement de personnel temporaire et saisonnier"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "maj": "2026-09-05"
+  },
+  {
+   "id": "s10",
+   "nom": "Anna Zufferey",
+   "fonction": "Traductrice",
+   "entreprise": "Pont des Langues (fictive)",
+   "commune": "Sion",
+   "type": "membre_club",
+   "secteurs": [
+    "traduction"
+   ],
+   "offre": [
+    {
+     "concept": "traduction",
+     "texte": "Traduction allemand–français de documents commerciaux et d'étiquettes"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "marketing",
+     "texte": "Nous faire connaître auprès des PME exportatrices"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "maj": "2026-09-18"
+  },
+  {
+   "id": "s11",
+   "nom": "Loïc Mayor",
+   "fonction": "Fondateur",
+   "entreprise": "Données Alpines (fictive)",
+   "commune": "Sion",
+   "type": "membre_club",
+   "secteurs": [
+    "ia_donnees"
+   ],
+   "offre": [
+    {
+     "concept": "ia_donnees",
+     "texte": "Tableaux de bord et automatisation des données pour PME"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "en"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "maj": "2026-09-12"
+  },
+  {
+   "id": "s12",
+   "nom": "Inès Crettenand",
+   "fonction": "Développeuse",
+   "entreprise": "Studio Pixel Sion (fictif)",
+   "commune": "Sion",
+   "type": "membre_club",
+   "secteurs": [
+    "developpement_web"
+   ],
+   "offre": [
+    {
+     "concept": "developpement_web",
+     "texte": "Sites et boutiques en ligne pour PME"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "marketing",
+     "texte": "Partenaire en référencement"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "maj": "2026-09-02"
+  },
+  {
+   "id": "s13",
+   "nom": "Yves Fournier",
+   "fonction": "Expert-comptable",
+   "entreprise": "Fiduciaire du Centre (fictive)",
+   "commune": "Sion",
+   "type": "membre_club",
+   "secteurs": [
+    "fiduciaire"
+   ],
+   "offre": [
+    {
+     "concept": "fiduciaire",
+     "texte": "Comptabilité et fiscalité des PME"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "maj": "2026-08-01"
+  },
+  {
+   "id": "s14",
+   "nom": "Markus Heinzmann",
+   "fonction": "Agent commercial",
+   "entreprise": "Alpenbrücke Vertrieb (fictive)",
+   "commune": "Sion",
+   "type": "membre_club",
+   "secteurs": [
+    "export_allemagne"
+   ],
+   "offre": [
+    {
+     "concept": "export_allemagne",
+     "texte": "Agent commercial pour l'Allemagne : nous plaçons des produits alimentaires dans les magasins bio"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "boissons",
+     "texte": "Producteurs alpins de boissons bio à représenter en Allemagne"
+    }
+   ],
+   "langues": [
+    "de",
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "creneaux": [
+    "mar-matin",
+    "ven-matin"
+   ],
+   "maj": "2026-10-20"
+  },
+  {
+   "id": "s15",
+   "nom": "Claudia Imboden",
+   "fonction": "Consultante",
+   "entreprise": "Imboden Conseil (fictive)",
+   "commune": "Sierre",
+   "type": "membre_club",
+   "secteurs": [
+    "marketing"
+   ],
+   "offre": [
+    {
+     "concept": "marketing",
+     "texte": "Conseil en marketing pour PME"
+    }
+   ],
+   "recherche": [],
+   "presentation": "Nous accompagnons des marques romandes sur le marché allemand depuis nos bureaux de Munich.",
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "maj": "2024-05-14"
+  },
+  {
+   "id": "s16",
+   "nom": "Stefan Kalbermatten",
+   "fonction": "Directeur export",
+   "entreprise": "Kalbermatten Export (fictive)",
+   "commune": "Brigue",
+   "type": "membre_club",
+   "secteurs": [
+    "export_allemagne"
+   ],
+   "offre": [
+    {
+     "concept": "export_allemagne",
+     "texte": "Développement commercial en Allemagne pour producteurs suisses"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "de"
+   ],
+   "zones_service": [
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": false,
+   "maj": "2026-09-30"
+  }
+ ],
+ "rencontres_passees": [
+  {
+   "a": "s01",
+   "b": "s02",
+   "le": "2026-09-15",
+   "evenement": "Soirée du Club de septembre (fictive)"
+  },
+  {
+   "a": "s02",
+   "b": "s03",
+   "le": "2026-09-15",
+   "evenement": "Soirée du Club de septembre (fictive)"
+  },
+  {
+   "a": "s01",
+   "b": "s04",
+   "le": "2026-09-15",
+   "evenement": "Soirée du Club de septembre (fictive)"
+  },
+  {
+   "a": "s03",
+   "b": "s04",
+   "le": "2026-09-15",
+   "evenement": "Soirée du Club de septembre (fictive)"
+  },
+  {
+   "a": "s04",
+   "b": "s05",
+   "le": "2026-05-12",
+   "evenement": "Soirée du Club de mai (fictive)"
+  },
+  {
+   "a": "s01",
+   "b": "s05",
+   "le": "2026-05-12",
+   "evenement": "Soirée du Club de mai (fictive)"
+  },
+  {
+   "a": "s02",
+   "b": "s06",
+   "le": "2026-09-15",
+   "evenement": "Soirée du Club de septembre (fictive)"
+  },
+  {
+   "a": "s06",
+   "b": "s07",
+   "le": "2026-09-15",
+   "evenement": "Soirée du Club de septembre (fictive)"
+  },
+  {
+   "a": "s07",
+   "b": "s08",
+   "le": "2026-09-15",
+   "evenement": "Soirée du Club de septembre (fictive)"
+  },
+  {
+   "a": "s06",
+   "b": "s09",
+   "le": "2026-09-15",
+   "evenement": "Soirée du Club de septembre (fictive)"
+  },
+  {
+   "a": "s08",
+   "b": "s09",
+   "le": "2026-09-15",
+   "evenement": "Soirée du Club de septembre (fictive)"
+  },
+  {
+   "a": "s10",
+   "b": "s11",
+   "le": "2026-10-06",
+   "evenement": "Petit-déjeuner du Club d'octobre (fictif)"
+  },
+  {
+   "a": "s11",
+   "b": "s12",
+   "le": "2026-10-06",
+   "evenement": "Petit-déjeuner du Club d'octobre (fictif)"
+  },
+  {
+   "a": "s12",
+   "b": "s13",
+   "le": "2026-10-06",
+   "evenement": "Petit-déjeuner du Club d'octobre (fictif)"
+  },
+  {
+   "a": "s10",
+   "b": "s14",
+   "le": "2026-10-06",
+   "evenement": "Petit-déjeuner du Club d'octobre (fictif)"
+  },
+  {
+   "a": "s11",
+   "b": "s14",
+   "le": "2026-10-06",
+   "evenement": "Petit-déjeuner du Club d'octobre (fictif)"
+  },
+  {
+   "a": "s13",
+   "b": "s15",
+   "le": "2026-10-06",
+   "evenement": "Petit-déjeuner du Club d'octobre (fictif)"
+  }
+ ],
+ "sophie": {
+  "nom": "Sophie Carron",
+  "fonction": "Fondatrice",
+  "entreprise": "Tisanes du Val d'Entremont (fictive)",
+  "commune": "Orsières",
+  "description": "Nous produisons des tisanes de plantes alpines bio à Orsières. Nous cherchons à traduire nos étiquettes en allemand.",
+  "offre": [
+   {
+    "concept": "boissons",
+    "texte": "Tisanes de plantes alpines bio, cultivées et séchées à Orsières"
+   }
+  ],
+  "recherche": [
+   {
+    "concept": "traduction",
+    "texte": "Traduire nos étiquettes en allemand"
+   }
+  ],
+  "langues": [
+   "fr",
+   "de"
+  ],
+  "zones_service": [
+   "Valais"
+  ],
+  "creneaux": [
+   "mar-matin"
+  ],
+  "besoin": "Je cherche un partenaire capable de m'aider à développer mon activité en Allemagne.",
+  "besoin_sans_preuve": "Je cherche un distributeur au Japon pour nos tisanes."
+ }
+}

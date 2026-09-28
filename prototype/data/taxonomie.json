@@ -557,6 +557,28 @@
         "épicerie fine",
         "agent commercial"
       ]
+    },
+    "export_allemagne": {
+      "libelle": "Développement commercial en Allemagne",
+      "parent": null,
+      "expressions": [
+        "activite en allemagne",
+        "activité en allemagne",
+        "marche allemand",
+        "marché allemand",
+        "vendre en allemagne",
+        "exporter en allemagne",
+        "export vers l'allemagne",
+        "exporter vers l'allemagne",
+        "clients en allemagne",
+        "distributeur en allemagne",
+        "agent commercial en allemagne",
+        "agent commercial pour l'allemagne",
+        "developpement commercial en allemagne",
+        "développement commercial en allemagne",
+        "deutschen markt",
+        "vertrieb in deutschland"
+      ]
     }
   },
   "ambigus": {

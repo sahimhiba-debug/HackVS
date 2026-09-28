@@ -816,6 +816,18 @@ def page_cycle():
     return FileResponse(WEB / "cycle.html")
 
 
+if MODE == "demo":  # scène de présentation : monde ISOLÉ et déterministe (données de scène fictives)
+    from .stage import creer_routeur as _routeur_scene
+    app.include_router(_routeur_scene(TAX))
+
+
+@app.get("/demo/stage")
+def page_scene():
+    if MODE != "demo":
+        raise HTTPException(501, "Scène réservée au mode démo.")
+    return FileResponse(WEB / "stage.html")
+
+
 @app.get("/api/modeles")
 def registre_modeles():
     """Passerelle de modèles : capacités ANNONCÉES vs état CONSTATÉ (configuré, vérifié). Aucune valeur de clé."""

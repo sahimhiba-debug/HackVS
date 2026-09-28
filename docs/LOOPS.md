@@ -62,3 +62,27 @@ mémoire (clos/dépubliés → `BESOIN_CLOS` ; brouillons et anonymes jamais).
 après la rencontre → relance, puis clos → plus de relance, brouillon → jamais). 104 → 106 ; lint, 20/20, évaluations OK.
 
 **Prochain problème.** Démonstration de scène déterministe et rejouable (monde isolé, horloge fixe), puis dossier compétition.
+
+## BOUCLE 3 — scène de démonstration déterministe (`/demo/stage`)
+
+**Hypothèse.** Une démo en direct doit être rejouable à l'identique, résister au rafraîchissement, au double clic et au
+retour arrière, et ne rien montrer que le moteur ne calcule pas.
+
+**Choix.** Option A (piloter la démo principale : état partagé, fragile) · B (second serveur : duplication) ·
+**C retenue** : un monde isolé en mémoire (`app/stage.py`) avec son jeu de données fictif lisible
+(`data/stage_reseau.json`, 16 membres, 3 grappes, 1 pont faible, 1 dormant, 1 refus, 1 profil ancien), une horloge
+fixe, et les MÊMES fonctions du moteur. État côté serveur ; « précédent » = rejouer jusqu'à n−1.
+
+**Ajouts produit.** Concept « Développement commercial en Allemagne » (vocabulaire fermé ; évaluations réservées
+relancées : aucune régression) ; verbes de production reconnus comme offres même avec un lieu ; micro-cercle
+(`adaptateurs/club/cercles.py`, glouton déterministe et explicable, proposition à accepter par chaque membre).
+
+**Défauts trouvés en attaquant la scène.** L'adhésion affichait une proposition différente de ce qui était enregistré
+(→ proposition puis validation visibles) ; la simulation appelait « pont » le premier lien d'un membre isolé (→ pont =
+relie deux groupes existants) ; le micro-cercle incluait un profil vieux de 2 ans sans le dire (→ inconnues par membre) ;
+« liens actifs » dépend d'une hypothèse de décroissance (→ retiré de la scène) ; « Pas 160 noms » dans un réseau de 16
+(→ reformulé) ; disposition du graphe écrasée et étiquettes coupées (→ Kamada-Kawai, isolés à part, étiquettes intérieures).
+
+**Tests.** `test_scene.py` (5) : rejeu identique 3 fois, récit produit par le moteur, précédent = séquentiel, fin,
+réinitialisation, isolation, aucun champ privé. Navigateur (1440 px et 390 px) : 12 étapes, aucun débordement,
+rafraîchissement conservé, double clic = une étape, clavier, aucune erreur JS. 106 → 111 tests.

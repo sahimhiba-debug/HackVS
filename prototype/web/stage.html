@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Réseau vivant · scène</title>
+  <meta name="description" content="Une nouvelle membre, un besoin, une introduction consentie, un suivi fondé, une opportunité, un réseau qui change — démonstration sur un réseau fictif.">
+  <link rel="icon" href="/favicon.ico" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+  <style>
+    body { background: var(--papier); }
+    .scene { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; padding: 20px 24px 96px; max-width: 1500px; margin: 0 auto; }
+    .graphe { background: var(--surface); border: 1.5px solid var(--ligne); border-radius: var(--rayon); padding: 8px; position: sticky; top: 12px; align-self: start; }
+    .graphe svg { width: 100%; height: auto; display: block; }
+    .legende { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--encre-2); padding: 6px 8px 2px; }
+    .legende span { display: inline-flex; align-items: center; gap: 6px; }
+    .legende svg { width: 28px; height: 10px; }
+    .lien { stroke: var(--encre-3); stroke-width: 1.6; opacity: .75; transition: opacity .4s; }
+    .lien.intro { stroke: var(--rouge); stroke-width: 3.2; opacity: 1; }
+    .lien.nouveau { stroke-dasharray: 400; stroke-dashoffset: 400; animation: trace 1.1s ease-out forwards; }
+    .lien.simule { stroke: var(--rouge); stroke-width: 2.2; stroke-dasharray: 6 5; opacity: .9; }
+    .lien.candidat { stroke: var(--encre-2); stroke-width: 2; stroke-dasharray: 2 5; }
+    @keyframes trace { to { stroke-dashoffset: 0; } }
+    .noeud circle { fill: var(--surface); stroke: var(--encre-2); stroke-width: 2; transition: r .3s; }
+    .noeud.sophie circle { fill: var(--rouge); stroke: var(--rouge-fonce); }
+    .noeud.focus circle { stroke: var(--rouge); stroke-width: 3.5; }
+    .noeud.refus circle { stroke-dasharray: 3 3; }
+    .noeud text { font-size: 13px; fill: var(--encre); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; font-weight: 600; }
+    .noeud.sophie text { font-weight: 800; }
+    .carte-etape { background: var(--surface); border: 1.5px solid var(--ligne); border-radius: var(--rayon); padding: 22px 24px; min-height: 60vh; }
+    .carte-etape .num { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--encre-2); font-weight: 700; }
+    .carte-etape h1 { font-size: clamp(26px, 3vw, 40px); margin: 6px 0 8px; line-height: 1.1; }
+    .dit { font-size: 19px; color: var(--encre-2); margin: 0 0 18px; }
+    .bloc { border-top: 1.5px solid var(--ligne); padding-top: 12px; margin-top: 14px; }
+    .bloc h2 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--encre-2); margin: 0 0 6px; }
+    .bloc p, .bloc li { font-size: 15px; margin: 4px 0; }
+    .bloc ul { margin: 0; padding-left: 18px; }
+    q { font-style: italic; }
+    .puce { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em; padding: 2px 8px; border-radius: 999px; background: var(--ambre-pale); color: var(--ambre); }
+    .puce.ok { background: var(--vert-pale); color: var(--vert); }
+    .puce.non { background: var(--rouge-pale); color: var(--rouge-fonce); }
+    .cand { border: 1.5px solid var(--ligne); border-radius: var(--rayon); padding: 12px 14px; margin-top: 12px; }
+    .cand.premier { border: 2px solid var(--rouge); }
+    .cand h3 { margin: 0; font-size: 19px; }
+    .cand .qui { font-size: 13px; color: var(--encre-2); margin: 0 0 6px; }
+    .grille-kv { display: grid; grid-template-columns: 150px 1fr; gap: 4px 12px; font-size: 14px; }
+    .grille-kv dt { color: var(--encre-2); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; padding-top: 2px; }
+    .grille-kv dd { margin: 0; }
+    .tuiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .tuile { border: 1.5px solid var(--ligne); border-radius: var(--rayon); padding: 10px 12px; }
+    .tuile .lib { font-size: 12px; color: var(--encre-2); }
+    .tuile .val { font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .tuile .sous { font-size: 12px; color: var(--encre-2); font-variant-numeric: tabular-nums; }
+    .frise { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; }
+    .frise span { border: 1.5px solid var(--ligne); border-radius: 999px; padding: 3px 10px; }
+    .frise span.der { border-color: var(--rouge); font-weight: 700; }
+    .abst { border-left: 4px solid var(--ambre); padding: 8px 12px; background: var(--ambre-pale); border-radius: 0 var(--rayon) var(--rayon) 0; }
+    .commandes { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1.5px solid var(--ligne);
+      display: flex; align-items: center; gap: 10px; padding: 10px 24px; z-index: 5; flex-wrap: wrap; }
+    .progres { display: flex; gap: 5px; flex: 1; min-width: 160px; }
+    .progres i { height: 6px; flex: 1; background: var(--ligne); border-radius: 3px; }
+    .progres i.fait { background: var(--rouge); }
+    .horloge { font-size: 13px; color: var(--encre-2); font-variant-numeric: tabular-nums; }
+    .note { font-size: 12px; color: var(--encre-3); }
+    @media (max-width: 900px) {
+      .scene { grid-template-columns: 1fr; padding: 12px 16px 120px; }
+      .graphe { position: static; }
+      .tuiles { grid-template-columns: 1fr 1fr; }
+      .grille-kv { grid-template-columns: 1fr; }
+      .commandes { padding: 8px 16px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .lien.nouveau { animation: none; stroke-dashoffset: 0; } }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#principal">Aller au contenu</a>
+  <main id="principal" class="scene">
+    <section class="graphe" aria-label="Réseau du Club (fictif)">
+      <svg id="svg" viewBox="0 0 1000 720" role="img" aria-labelledby="titre-graphe"><title id="titre-graphe">Graphe des relations du réseau de scène</title></svg>
+      <div class="legende" aria-hidden="true">
+        <span><svg viewBox="0 0 28 10"><line x1="0" y1="5" x2="28" y2="5" class="lien"/></svg>rencontre passée</span>
+        <span><svg viewBox="0 0 28 10"><line x1="0" y1="5" x2="28" y2="5" class="lien intro"/></svg>relation née d'une introduction</span>
+        <span><svg viewBox="0 0 28 10"><line x1="0" y1="5" x2="28" y2="5" class="lien simule"/></svg>simulation (rien n'est écrit)</span>
+      </div>
+      <p class="note" style="padding:0 8px 6px">Réseau de scène FICTIF. Vue de démonstration : en production, un membre ne voit que ses propres relations.</p>
+    </section>
+    <section class="carte-etape" id="carte" aria-live="polite"></section>
+  </main>
+  <nav class="commandes" aria-label="Commandes de la démonstration">
+    <button class="btn petit" type="button" id="reinit" title="Réinitialiser (R)">⟲ Réinitialiser</button>
+    <button class="btn petit" type="button" id="prec" title="Étape précédente (←)">← Précédent</button>
+    <button class="btn primaire" type="button" id="suiv" title="Étape suivante (→ ou espace)">Suivant →</button>
+    <button class="btn petit" type="button" id="rejouer" title="Rejouer toute la démonstration">Rejouer tout</button>
+    <div class="progres" id="progres" aria-hidden="true"></div>
+    <span class="horloge" id="horloge"></span>
+  </nav>
+  <script type="module">
+    import { $, api, h, toast } from "/static/js/outils.js";
+    let vue = null, occupe = false;
+    const SOPHIE = "n01";
+    const LIB_TYPES = { INTRO_DEMANDEE: "introduction demandée", INTRO_ACCEPTEE: "acceptée", RENCONTRE: "rencontre", RELANCE_ACCEPTEE: "relance acceptée",
+      SUIVI: "suivi", RESULTAT: "affaire en cours" };
+    const trace = (n) => vue.traces.find((t) => t.etape === n);
+    const court = (nom) => { const [p, n] = (nom || "").split(" "); return n ? `${p} ${n[0]}.` : p; };
+
+    function graphe() {
+      const svg = $("#svg"), W = 1000, H = 720, M = 60;
+      const xs = vue.noeuds.map((n) => n.x), ys = vue.noeuds.map((n) => n.y);
+      const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+      const P = Object.fromEntries(vue.noeuds.map((n) => [n.id, [M + (n.x - x0) / (x1 - x0 || 1) * (W - 2 * M), M + (n.y - y0) / (y1 - y0 || 1) * (H - 2 * M)]]));
+      const noms = Object.fromEntries(vue.noeuds.map((n) => [n.id, n.nom]));
+      const ns = "http://www.w3.org/2000/svg";
+      const el = (t, a) => { const e = document.createElementNS(ns, t); for (const [k, v] of Object.entries(a)) e.setAttribute(k, v); return e; };
+      const avant = new Set([...svg.querySelectorAll("line[data-k]")].map((l) => l.dataset.k));
+      [...svg.querySelectorAll("g, line")].forEach((x) => x.remove());
+      const gl = el("g", {}), gn = el("g", {});
+      const ligne = (a, b, cls) => {
+        if (!P[a] || !P[b]) return;
+        const k = [a, b].sort().join("|");
+        gl.append(el("line", { x1: P[a][0], y1: P[a][1], x2: P[b][0], y2: P[b][1], class: `lien ${cls}${avant.has(k) || !cls.includes("intro") ? "" : " nouveau"}`, "data-k": k }));
+      };
+      for (const l of vue.liens) ligne(l.a, l.b, l.types.includes("INTRO_ACCEPTEE") || l.types.includes("RENCONTRE") && (l.a === SOPHIE || l.b === SOPHIE) ? "intro" : "");
+      const e = vue.etape - 1, focus = new Set();
+      if (e === 3) (trace(3)?.faits.candidats || []).forEach((c) => { ligne(SOPHIE, c.id, "candidat"); focus.add(c.id); });
+      if (e >= 10) {
+        const c = trace(10)?.faits.micro_cercle;
+        (c?.nouveaux_liens || []).forEach(([a, b]) => ligne(a, b, "simule"));
+        (c?.membres || []).forEach((m) => focus.add(m));
+      }
+      if ([5, 6, 7, 8, 9].includes(e) && trace(3)) focus.add(trace(3).faits.candidats[0].id);
+      for (const n of vue.noeuds) {
+        if (!n.present) continue;
+        const [x, y] = P[n.id];
+        const g = el("g", { class: `noeud${n.id === SOPHIE ? " sophie" : ""}${focus.has(n.id) ? " focus" : ""}${n.consent === false ? " refus" : ""}` });
+        g.append(el("circle", { cx: x, cy: y, r: n.id === SOPHIE ? 13 : focus.has(n.id) ? 11 : 8 }));
+        const droite = x > W * 0.72;                          // étiquette côté intérieur : jamais coupée au bord
+        const t = el("text", { x: droite ? x - 14 : x + 14, y: y + 4, "text-anchor": droite ? "end" : "start" }); t.textContent = court(noms[n.id]); g.append(t);
+        gn.append(g);
+      }
+      svg.append(gl, gn);
+    }
+
+    const bloc = (titre, ...enfants) => h("div", { class: "bloc" }, h("h2", {}, titre), ...enfants);
+    const tuile = (lib, val, sous) => h("div", { class: "tuile" }, h("div", { class: "lib" }, lib), h("div", { class: "val" }, String(val)), sous ? h("div", { class: "sous" }, sous) : null);
+    const puce = (txt, cls = "") => h("span", { class: `puce ${cls}` }, txt);
+    const frise = (types) => h("div", { class: "frise" }, types.map((t, i) => h("span", { class: i === types.length - 1 ? "der" : "" }, LIB_TYPES[t] || t)));
+
+    function candidat(c, i) {
+      const d = c.dimensions;
+      return h("article", { class: `cand${i === 0 ? " premier" : ""}` },
+        h("h3", {}, c.nom, " ", puce(c.niveau === "forte" ? "correspondance forte" : "partielle · à vérifier", c.niveau === "forte" ? "ok" : "")),
+        h("p", { class: "qui" }, c.entreprise),
+        h("dl", { class: "grille-kv" },
+          h("dt", {}, "Pourquoi elle / lui"), h("dd", {}, c.preuves.map((p) => h("div", {}, h("q", {}, p.extrait), " ", puce(p.nature === "declare" ? "déclaré" : "déduit", p.nature === "declare" ? "ok" : "")))),
+          h("dt", {}, "Réciprocité"), h("dd", {}, d.reciprocite.etablie ? [puce("prouvée", "ok"), ` il cherche « ${d.reciprocite.son_besoin.split(" : ").pop()} » — vous offrez « ${d.reciprocite.votre_offre} »`] : puce("non établie")),
+          h("dt", {}, "Pourquoi maintenant"), h("dd", {}, d.pourquoi_maintenant.join(" · ")),
+          h("dt", {}, "Inconnu"), h("dd", {}, d.inconnu.join(" · ")),
+          h("dt", {}, "Simulation"), h("dd", {}, `personnes à 2 poignées de main pour Sophie : ${c.simulation.portee_sophie[0]} → ${c.simulation.portee_sophie[1]}`, c.simulation.premier_lien ? " · premier lien de Sophie" : "")));
+    }
+
+    const RENDUS = {
+      0: (f) => [h("div", { class: "tuiles" }, tuile("membres (fictifs)", f.membres), tuile("liens", f.liens), tuile("groupes séparés", f.groupes_separes)),
+        bloc("Constat", h("p", {}, `${f.rencontres_sans_suite_depuis_90_jours} rencontres datent de plus de 90 jours sans aucune suite enregistrée.`))],
+      1: (f) => [bloc("Sa description", h("p", {}, h("q", {}, f.description))),
+        bloc("Le système propose", h("ul", {}, f.propose.map((x) => h("li", {}, x)))),
+        bloc("Sophie valide et corrige", h("ul", {}, f.valide.map((x) => h("li", {}, x))), h("p", { class: "note" }, f.corrections_de_sophie)),
+        bloc("Confidentialité", h("p", {}, puce("invisible par défaut", "ok"), ` puis ${f.puis} · coordonnées enregistrées : ${f.coordonnees_enregistrees}`))],
+      2: (f) => [bloc("Compris", h("ul", {}, f.compris.map((x) => h("li", {}, x)))), h("p", { class: "note" }, f.analyse)],
+      3: (f) => [h("p", {}, `${f.examines} profils examinés → ${f.candidats.length} personnes proposées.`),
+        ...f.candidats.map(candidat),
+        bloc("Écartés", h("p", {}, `${f.ecartes_par_leur_choix} membre pertinent ne souhaite pas recevoir d'introductions : il n'est ni nommé, ni proposé.`))],
+      4: (f) => [bloc("Contact privé", h("p", {}, "Aucun numéro, aucune adresse. ", f.coordonnees, ".")),
+        bloc("Et quand il ne sait pas ?", h("p", {}, h("q", {}, f.autre_demande)),
+          h("div", { class: "abst" }, h("strong", {}, f.decision === "S_ABSTENIR" ? "Abstention. " : ""), f.message, " Plutôt aucune proposition qu'un mauvais contact."))],
+      5: (f) => [h("dl", { class: "grille-kv" }, h("dt", {}, "État"), h("dd", {}, f.etat), h("dt", {}, "Coordonnées"), h("dd", {}, puce(f.coordonnees_partagees ? "partagées" : "non partagées", f.coordonnees_partagees ? "ok" : "non")),
+        h("dt", {}, "Boîte de Markus"), h("dd", {}, `${f.boite_de_markus.introductions_a_repondre} introduction à laquelle répondre`))],
+      6: (f) => [h("dl", { class: "grille-kv" }, h("dt", {}, "Coordonnées"), h("dd", {}, puce("partagées", "ok")), h("dt", {}, "Relation"), h("dd", {}, f.libelle))],
+      7: (f) => [bloc("Ligne de temps de la relation", frise(f.ensuite)), h("p", {}, `Rencontre enregistrée le ${f.quand} (${f.ou}).`)],
+      8: (f) => [...f.relances.map((p) => bloc(`Pourquoi reprendre contact ? — ${p.paire.join(" ↔ ")}`,
+          ...p.raisons.map((r) => h("div", {}, h("p", {}, h("strong", {}, `Pour ${r.pour} : `), r.message),
+            h("ul", {}, r.preuves.map((x) => h("li", {}, puce(x.statut, x.statut === "DECLARE" ? "ok" : ""), ` ${x.quoi} : `, h("q", {}, x.extrait)))))))),
+        bloc("Et les autres ?", h("p", {}, h("strong", {}, `${f.silences.rien_de_nouveau} paires : rien de nouveau depuis leur rencontre → aucune relance.`), " « Restez en contact » n'est pas une raison."))],
+      9: (f) => [bloc("Ligne de temps", frise(f.ligne_de_temps)), h("p", {}, "État : ", h("strong", {}, f.libelle), "."),
+        h("p", { class: "note" }, "Relation ≠ opportunité ≠ résultat : chaque étape est un fait enregistré, jamais une supposition.")],
+      10: (f) => {
+        const c = f.micro_cercle;
+        return [...f.presentations_possibles.map((p) => bloc("Une présentation possible", h("p", {}, `${p.c} peut aider ${p.a}. ${p.via} les connaît tous deux.`), h("p", { class: "note" }, p.confidentialite + " : Sophie n'en saura rien s'il refuse."))),
+          c.decision === "PROPOSER_A_L_HUMAIN" ? bloc(`Micro-cercle proposé : « ${c.theme} »`, h("p", {}, c.noms.join(" · ")),
+            h("ul", {}, c.aides.map((a) => h("li", {}, `${a.aide} → ${a.aide_a} : `, h("q", {}, a.preuve), " ", puce(a.nature === "declare" ? "déclaré" : "déduit", a.nature === "declare" ? "ok" : "")))),
+            h("p", {}, h("strong", {}, "Inconnu : "), c.inconnu.join(" · ")), h("p", {}, puce(c.statut), " chaque membre doit accepter")) : bloc("Micro-cercle", h("p", {}, c.raison))];
+      },
+      11: (f) => [h("p", {}, h("strong", {}, "Si le micro-cercle a lieu"), " (simulation) :"), h("div", { class: "tuiles" },
+          tuile("groupes séparés", f.si_le_cercle_a_lieu.composantes, `départ ${f.depart.composantes} · aujourd'hui ${f.maintenant.composantes}`),
+          tuile("plus grand groupe", f.si_le_cercle_a_lieu.plus_grande_composante, `départ ${f.depart.plus_grande_composante} · aujourd'hui ${f.maintenant.plus_grande_composante}`),
+          tuile("à 2 poignées de main", f.si_le_cercle_a_lieu.portee_moyenne_2_sauts, `départ ${f.depart.portee_moyenne_2_sauts} · aujourd'hui ${f.maintenant.portee_moyenne_2_sauts}`)),
+        bloc("Nature", h("p", {}, puce("SIMULATION"), ` ${f.hypothese}. ${f.nouveaux_ponts} nouveau(x) pont(s) entre groupes.`)),
+        bloc("Décision", h("p", {}, h("strong", {}, f.decision)))],
+    };
+
+    function carte() {
+      const e = vue.etape - 1;
+      $("#horloge").textContent = `Date simulée : ${vue.le} · étape ${vue.etape}/${vue.total}`;
+      $("#progres").replaceChildren(...Array.from({ length: vue.total }, (_, i) => h("i", { class: i < vue.etape ? "fait" : "" })));
+      $("#prec").disabled = vue.etape === 0; $("#suiv").disabled = vue.etape >= vue.total;
+      if (e < 0) {
+        $("#carte").replaceChildren(h("p", { class: "num" }, "Réseau vivant · démonstration"),
+          h("h1", {}, "La Foire crée les rencontres. Qu'en reste-t-il un mois plus tard ?"),
+          h("p", { class: "dit" }, "Un réseau fictif de 16 membres. Une nouvelle membre, Sophie. Tout ce qui suit est calculé en direct par le moteur."),
+          h("p", { class: "note" }, vue.avertissement));
+        return;
+      }
+      const t = trace(e);
+      $("#carte").replaceChildren(h("p", { class: "num" }, `Étape ${e + 1} · ${t.le}`), h("h1", {}, t.titre), h("p", { class: "dit" }, t.dit), ...(RENDUS[e]?.(t.faits) || []));
+    }
+
+    function rendre() { graphe(); carte(); }
+    async function appel(chemin) {
+      if (occupe) return;                                   // double clic : une seule action en vol
+      occupe = true;
+      try { vue = await api(chemin, { methode: "POST" }); rendre(); }
+      catch (e) { toast(e.message, "erreur"); }
+      finally { occupe = false; }
+    }
+    $("#suiv").addEventListener("click", () => appel("/api/stage/suivant"));
+    $("#prec").addEventListener("click", () => appel(`/api/stage/aller/${Math.max(0, vue.etape - 1)}`));
+    $("#reinit").addEventListener("click", () => appel("/api/stage/reinitialiser"));
+    $("#rejouer").addEventListener("click", () => appel(`/api/stage/aller/${vue.total}`));
+    document.addEventListener("keydown", (ev) => {
+      if (ev.target.closest("input, textarea, select")) return;
+      if (ev.key === "ArrowRight" || ev.key === " ") { ev.preventDefault(); if (vue.etape < vue.total) appel("/api/stage/suivant"); }
+      if (ev.key === "ArrowLeft" && vue.etape > 0) appel(`/api/stage/aller/${vue.etape - 1}`);
+      if (ev.key === "r" || ev.key === "R") appel("/api/stage/reinitialiser");
+    });
+    api("/api/stage").then((v) => { vue = v; rendre(); }).catch((e) => toast(e.message, "erreur"));
+  </script>
+</body>
+</html>
