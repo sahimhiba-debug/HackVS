@@ -34,7 +34,7 @@ def charger():
     return profils, par_id, par_id[brut["utilisateur_demo"]]
 
 
-JEUX = {"base": "cas.json", "adversarial": "cas_adversariaux.json", "reserve": "cas_reserve.json", "reserve2": "cas_reserve2.json"}
+JEUX = {"base": "cas.json", "adversarial": "cas_adversariaux.json", "reserve": "cas_reserve.json", "reserve2": "cas_reserve2.json", "reserve3": "cas_reserve3.json"}
 
 
 def _critere_ok(attendu: dict, criteres) -> bool:

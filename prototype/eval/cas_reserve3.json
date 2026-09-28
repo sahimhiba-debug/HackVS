@@ -1,0 +1,25 @@
+{
+  "_avertissement": "Jeu RÉSERVÉ n°3, rédigé le 28.09.2026 AVANT toute implémentation de la couche sémantique (embeddings). Cible : paraphrases sans mots de la taxonomie, allemand et anglais libres, et faux amis sémantiques (besoins voisins sans bonne réponse). Exécuté une seule fois après implémentation. Rédigé par Claude : pas indépendant.",
+  "cas": [
+    {"id": "r3_bouteilles_au_frais", "categorie": "paraphrase", "texte": "Nous voulons que nos bouteilles arrivent au frais chez nos clients bâlois.", "attendus": ["p01", "p02", "p05"], "interdits": ["p03", "p33", "p34"], "abstention": false},
+    {"id": "r3_gala", "categorie": "paraphrase", "texte": "Qui pourrait sécuriser l'accès à notre soirée de gala ?", "attendus": ["p18"], "interdits": ["p10", "p19"], "abstention": false},
+    {"id": "r3_comptes", "categorie": "paraphrase (mot connu)", "texte": "J'ai besoin de quelqu'un qui tienne nos comptes et prépare le bouclement annuel.", "attendus": ["p12"], "interdits": [], "abstention": false},
+    {"id": "r3_cueillette", "categorie": "paraphrase", "texte": "Nous cherchons des bras pour la cueillette des abricots en juillet.", "attendus": ["p14"], "interdits": ["p35"], "abstention": false},
+    {"id": "r3_energie", "categorie": "paraphrase", "texte": "Je voudrais rendre notre bâtiment moins gourmand en énergie.", "attendus": ["p22"], "interdits": [], "abstention": false},
+    {"id": "r3_google", "categorie": "paraphrase", "texte": "On aimerait apparaître sur Google quand on tape « abricots Valais ».", "attendus": ["p15", "p26"], "interdits": [], "abstention": false},
+    {"id": "r3_mise_en_bouteille", "categorie": "paraphrase", "texte": "Il nous faudrait quelqu'un pour étiqueter et emballer nos bouteilles de cidre.", "attendus": ["p27"], "interdits": ["p06"], "abstention": false},
+    {"id": "r3_ceder_pme", "categorie": "paraphrase (mot connu)", "texte": "Je cherche un conseil pour céder ma PME à un repreneur d'ici trois ans.", "attendus": ["p29"], "interdits": [], "abstention": false},
+    {"id": "r3_litige", "categorie": "paraphrase (mot connu)", "texte": "Nous avons un litige avec un fournisseur, il nous faut un conseil juridique.", "attendus": ["p13"], "interdits": [], "abstention": false},
+    {"id": "r3_de_website", "categorie": "allemand libre", "texte": "Wir suchen jemanden, der unsere Website auf Deutsch übersetzt.", "attendus": ["p16"], "interdits": [], "abstention": false},
+    {"id": "r3_en_accountant", "categorie": "anglais", "texte": "We are looking for an accountant who speaks German.", "attendus": ["p12"], "interdits": [], "abstention": false},
+    {"id": "r3_veterinaire_equin", "categorie": "absent", "texte": "Je cherche un vétérinaire équin.", "attendus": [], "interdits": [], "abstention": true},
+    {"id": "r3_dj", "categorie": "faux ami sémantique", "texte": "Nous cherchons un DJ pour la soirée du personnel.", "attendus": [], "interdits": ["p17", "p15", "p18"], "abstention": true},
+    {"id": "r3_pelouse", "categorie": "faux ami sémantique", "texte": "Il nous faut quelqu'un pour tondre les pelouses du domaine.", "attendus": [], "interdits": ["p20", "p28"], "abstention": true},
+    {"id": "r3_former_ia", "categorie": "mot connu", "texte": "Nous cherchons un partenaire pour nous initier à l'intelligence artificielle.", "attendus": ["p30"], "interdits": [], "abstention": false},
+    {"id": "r3_preter_argent", "categorie": "paraphrase", "texte": "Qui peut nous prêter de l'argent pour agrandir la cave ?", "attendus": ["p23"], "interdits": ["p28"], "abstention": false},
+    {"id": "r3_stand_exposant", "categorie": "contrainte (exposant non inclus)", "texte": "Nous voulons un stand qui en jette pour la prochaine Foire.", "attendus": [], "interdits": ["p17"], "abstention": true},
+    {"id": "r3_assurance_camions", "categorie": "faux ami", "texte": "Je cherche une assurance qui couvre nos camions frigorifiques.", "attendus": ["p24"], "interdits": ["p01", "p02"], "abstention": false},
+    {"id": "r3_photo_culinaire", "categorie": "paraphrase", "texte": "Nous cherchons quelqu'un pour prendre en photo nos plats pour la carte.", "attendus": ["p15"], "interdits": [], "abstention": false},
+    {"id": "r3_plombier", "categorie": "absent, faux ami", "texte": "Il nous faut un plombier pour une fuite dans la cave.", "attendus": [], "interdits": ["p03", "p28"], "abstention": true}
+  ]
+}
