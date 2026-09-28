@@ -17,7 +17,7 @@ import time
 from collections import Counter
 from typing import Optional
 
-from .models import Besoin, Critere, Ecart, Preuve, Profil, ProfilPublic, Resultat, Suggestion
+from .models import Besoin, Critere, Ecart, Explication, LigneExplication, Preuve, Profil, ProfilPublic, Resultat, Suggestion
 from .taxonomy import Taxonomie, motif, norm
 
 _NEGATION = re.compile(r"\b(?:ne|n'|pas|aucun|aucune|jamais|plus de)\b")
@@ -310,3 +310,98 @@ def rechercher(
         ecartes=[Ecart(raison=r, nombre=n) for r, n in ecarts.most_common()],
         nb_profils_examines=examines, duree_ms=round((time.perf_counter() - t0) * 1000, 2),
     )
+
+
+# Raisons d'exclusion qui touchent au consentement ou à la situation personnelle : jamais divulguées nominativement.
+_RAISONS_OPAQUES = {"ne souhaite pas recevoir d'introductions", "indisponible actuellement"}
+
+
+def expliquer(besoin: Besoin, demandeur: Profil, p: Profil, tax: Taxonomie, mode: str = "demo") -> Explication:
+    """Explique, critère par critère, pourquoi `p` est (ou n'est pas) proposé pour `besoin`.
+
+    Le VERDICT vient du même appel à `rechercher` que la liste de résultats (cohérence garantie) ;
+    le tableau détaille les preuves. Si la raison relève du consentement ou de la disponibilité de la
+    personne, on ne détaille rien (on ne révèle pas qu'un membre a refusé les introductions).
+    """
+    res = rechercher(besoin, demandeur, [demandeur, p], tax, mode=mode)
+    if any(s.profil.id == p.id for s in res.suggestions):
+        verdict = "propose"
+    elif any(s.profil.id == p.id for s in res.pistes_elargies):
+        verdict = "piste"
+    else:
+        verdict = "non_propose"
+    pub = _public(p)
+    raison = filtres_durs(besoin, demandeur, p, tax)
+    if raison in _RAISONS_OPAQUES or raison in _RAISONS_SILENCIEUSES:
+        return Explication(membre=pub, verdict="non_propose", opaque=True,
+                           resume="Cette personne ne peut pas être proposée actuellement. Par respect de ses choix, "
+                                  "le détail n'est pas communiqué.")
+    lignes: list[LigneExplication] = []
+
+    def ligne(c: Critere, statut: str, detail: str, preuve: Optional[Preuve] = None) -> None:
+        if preuve is not None and not preuve_valide(p, preuve):
+            preuve, statut, detail = None, "a_verifier", "preuve non retrouvée telle quelle dans le profil"
+        lignes.append(LigneExplication(critere=c.libelle, type=c.type, obligatoire=c.obligatoire, statut=statut,
+                                       detail=detail, preuve=preuve))
+
+    for c in besoin.criteres:
+        if c.type == "expertise":
+            pr = couverture(p, c.valeur, tax, besoin)
+            if pr and pr.nature == "declare":
+                ligne(c, "verifie", "offre déclarée dans son profil", pr)
+            elif pr:
+                ligne(c, "a_verifier", "mentionné dans sa présentation, pas déclaré comme offre", pr)
+            elif (par := couverture_parent(p, c.valeur, tax)):
+                ligne(c, "a_verifier", f"couvre la catégorie plus large « {par[0].critere} », pas forcément votre besoin précis", par[0])
+            else:
+                ligne(c, "non_satisfait", "aucune offre ni présentation ne le mentionne")
+        elif c.type == "texte_libre":
+            pr = couverture_textuelle(p, c, besoin, tax)
+            ligne(c, "a_verifier", "mots de votre besoin retrouvés dans une offre (hors catalogue)", pr) if pr else \
+                ligne(c, "non_satisfait", "mots de votre besoin absents de ses offres")
+        elif c.type == "zone":
+            if c.valeur in p.zones_service:
+                ligne(c, "verifie", "zone d'intervention déclarée",
+                      Preuve(critere=f"Intervient en : {c.libelle}", champ="zones_service", extrait=c.valeur, nature="declare"))
+            else:
+                ligne(c, "non_satisfait" if c.obligatoire else "a_verifier",
+                      "zone d'intervention non renseignée" if not p.zones_service else "n'intervient pas dans cette zone")
+        elif c.type == "implantation":
+            z = tax.zone_de_commune(p.commune)
+            if z == c.valeur:
+                ligne(c, "verifie", f"implanté·e à {p.commune}",
+                      Preuve(critere=f"Implanté·e en : {c.libelle}", champ="commune", extrait=p.commune, nature="declare"))
+            else:
+                ligne(c, "non_satisfait" if c.obligatoire else "a_verifier", f"implanté·e à {p.commune}")
+        elif c.type == "langue":
+            if c.valeur in p.langues:
+                ligne(c, "verifie", "langue déclarée",
+                      Preuve(critere=f"Parle {c.libelle}", champ="langues", extrait=c.valeur, nature="declare"))
+            else:
+                ligne(c, "non_satisfait" if c.obligatoire else "a_verifier",
+                      "langues non renseignées" if not p.langues else "langue non indiquée")
+    for e in besoin.exclusions:
+        if any(o.concept and tax.couvre(o.concept, e.valeur) for o in p.offre):
+            lignes.append(LigneExplication(critere=f"Sans : {e.libelle}", type="exclusion", obligatoire=True,
+                                           statut="a_verifier", detail="propose aussi ce que vous avez écarté ; seules ses autres offres comptent"))
+    if besoin.exclure_concurrents:
+        conc = any(tax.meme_famille(a, b) for a in p.secteurs for b in demandeur.secteurs)
+        lignes.append(LigneExplication(critere="Pas un concurrent", type="concurrence", obligatoire=True,
+                                       statut="non_satisfait" if conc else "verifie",
+                                       detail="même secteur que vous" if conc else "secteur différent du vôtre"))
+    if p.type == "exposant" and not besoin.inclure_exposants:
+        lignes.append(LigneExplication(critere="Membre du Club", type="communaute", obligatoire=True, statut="non_satisfait",
+                                       detail="exposant de la Foire, non inclus dans votre recherche"))
+
+    n = Counter(l.statut for l in lignes)
+    bilan = f"{n['verifie']} vérifié(s), {n['a_verifier']} à vérifier, {n['non_satisfait']} non satisfait(s)"
+    if verdict == "propose":
+        resume = f"Proposé·e : {bilan}."
+    elif verdict == "piste":
+        resume = f"Piste plus large seulement : {bilan}."
+    else:
+        bloquant = next((l for l in lignes if l.statut == "non_satisfait" and l.obligatoire), None)
+        resume = f"Non proposé·e : {bloquant.critere.lower()} — {bloquant.detail}." if bloquant else f"Non proposé·e : {bilan}."
+        if not bloquant and res.abstention and not besoin.criteres:
+            resume = "Non proposé·e : aucune compétence reconnue dans le besoin."
+    return Explication(membre=pub, verdict=verdict, resume=resume, lignes=lignes)

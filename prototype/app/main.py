@@ -26,7 +26,7 @@ import threading
 
 from . import analyse, club, parser_llm, parser_rules, semantique, soiree
 from .baseline import rechercher_mots_cles
-from .matching import rechercher
+from .matching import expliquer, rechercher
 from .models import Besoin, Profil
 from .store import ErreurMetier, Interdit, Magasin
 from .taxonomy import DATA_DIR, charger_taxonomie
@@ -314,6 +314,21 @@ def besoin_valide(b: Besoin) -> Besoin:
 @app.post("/api/rechercher")
 def api_rechercher(e: EntreeRecherche, x_membre: Optional[str] = Header(None)):
     return rechercher(besoin_valide(e.besoin), moi(x_membre), profils_effectifs(), TAX, mode=MODE)
+
+
+class EntreeExplication(BaseModel):
+    besoin: Besoin
+    membre_id: str
+
+
+@app.post("/api/expliquer")
+def api_expliquer(e: EntreeExplication, x_membre: Optional[str] = Header(None)):
+    """« Pourquoi cette personne ? » / « Pourquoi pas elle ? » : critère par critère, verdict identique à la recherche."""
+    m = moi(x_membre)
+    cible = next((p for p in profils_effectifs() if p.id == e.membre_id), None)
+    if cible is None:
+        raise HTTPException(404, "Membre inconnu.")
+    return expliquer(besoin_valide(e.besoin), m, cible, TAX, mode=MODE)
 
 
 @app.post("/api/comparer")

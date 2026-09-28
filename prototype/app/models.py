@@ -117,3 +117,21 @@ class Resultat(BaseModel):
     duree_ms: float = 0.0
     besoin_id: Optional[str] = None
     besoin_version: Optional[int] = None
+
+
+class LigneExplication(BaseModel):
+    critere: str
+    type: str
+    obligatoire: bool
+    statut: Literal["verifie", "a_verifier", "non_satisfait"]
+    detail: str
+    preuve: Optional[Preuve] = None
+
+
+class Explication(BaseModel):
+    """« Pourquoi cette personne ? » / « Pourquoi pas ? » : critère par critère, preuves citées."""
+    membre: ProfilPublic
+    verdict: Literal["propose", "piste", "non_propose"]
+    resume: str
+    lignes: list[LigneExplication] = []
+    opaque: bool = False  # raison non divulguée (consentement / disponibilité de la personne)

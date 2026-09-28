@@ -11,3 +11,5 @@ anthropic>=1.0
 # Facultatif : IA locale (suggestions sémantiques). Modèle : python scripts/telecharger_modele.py
 onnxruntime>=1.17
 tokenizers>=0.15
+# Facultatif : serveur MCP du Club (python -m app.mcp_serveur)
+mcp>=2.2
