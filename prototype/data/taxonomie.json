@@ -1,0 +1,652 @@
+{
+  "_avertissement": "Taxonomie de démonstration rédigée pour le prototype exploratoire. Non validée avec le Club des Affaires. Éditable : ajouter un concept = ajouter une entrée ici.",
+  "concepts": {
+    "transport_frigorifique": {
+      "libelle": "Transport frigorifique",
+      "parent": "logistique",
+      "expressions": [
+        "transport frigorifique",
+        "transporteur frigorifique",
+        "camion frigorifique",
+        "camions frigorifiques",
+        "chaine du froid",
+        "livraison refrigeree",
+        "livraisons refrigerees",
+        "transport refrigere",
+        "transport sous temperature dirigee",
+        "kuhltransport",
+        "kuhllogistik"
+      ]
+    },
+    "logistique": {
+      "libelle": "Logistique et transport",
+      "parent": null,
+      "expressions": [
+        "logistique",
+        "transporteur",
+        "transport de marchandises",
+        "entreposage",
+        "stockage",
+        "livraison",
+        "livraisons",
+        "distribution"
+      ]
+    },
+    "installation_froid": {
+      "libelle": "Installation frigorifique et climatisation",
+      "parent": null,
+      "expressions": [
+        "installation frigorifique",
+        "installations frigorifiques",
+        "frigoriste",
+        "climatisation",
+        "pompe a chaleur",
+        "pompes a chaleur",
+        "chambre froide",
+        "chambres froides",
+        "froid industriel"
+      ]
+    },
+    "fiduciaire": {
+      "libelle": "Fiduciaire, comptabilité, fiscalité",
+      "parent": null,
+      "expressions": [
+        "fiduciaire",
+        "comptabilite",
+        "comptable",
+        "fiscalite",
+        "tva",
+        "bouclement",
+        "declaration d'impots"
+      ]
+    },
+    "droit_affaires": {
+      "libelle": "Conseil juridique aux entreprises",
+      "parent": null,
+      "expressions": [
+        "avocat",
+        "avocate",
+        "juriste",
+        "juridique",
+        "contrat",
+        "contrats",
+        "droit des societes",
+        "droit commercial"
+      ]
+    },
+    "droit_travail": {
+      "libelle": "Droit du travail",
+      "parent": "droit_affaires",
+      "expressions": [
+        "droit du travail",
+        "contrat de travail",
+        "licenciement"
+      ]
+    },
+    "recrutement": {
+      "libelle": "Recrutement et placement de personnel",
+      "parent": null,
+      "expressions": [
+        "recrutement",
+        "recruter",
+        "placement",
+        "interim",
+        "personnel temporaire",
+        "saisonniers",
+        "main d'oeuvre"
+      ]
+    },
+    "cybersecurite": {
+      "libelle": "Cybersécurité",
+      "parent": "informatique",
+      "expressions": [
+        "cybersecurite",
+        "securite informatique",
+        "securite des donnees",
+        "phishing",
+        "hameconnage",
+        "pentest",
+        "test d'intrusion",
+        "rancongiciel",
+        "piratage"
+      ]
+    },
+    "certification_iso27001": {
+      "libelle": "Accompagnement certification ISO 27001",
+      "parent": "cybersecurite",
+      "expressions": [
+        "iso 27001",
+        "iso27001",
+        "certification 27001"
+      ]
+    },
+    "securite_evenement": {
+      "libelle": "Sécurité et gardiennage d'événements",
+      "parent": null,
+      "expressions": [
+        "agent de securite",
+        "agents de securite",
+        "gardiennage",
+        "surveillance d'evenement",
+        "securite evenementielle",
+        "service d'ordre"
+      ]
+    },
+    "sante_securite_travail": {
+      "libelle": "Santé et sécurité au travail",
+      "parent": null,
+      "expressions": [
+        "securite au travail",
+        "msst",
+        "prevention des accidents",
+        "sante au travail",
+        "equipements de protection"
+      ]
+    },
+    "informatique": {
+      "libelle": "Informatique et infogérance",
+      "parent": null,
+      "expressions": [
+        "informatique",
+        "reseau informatique",
+        "infogerance",
+        "support it",
+        "wifi",
+        "parc informatique",
+        "sauvegarde",
+        "serveur informatique",
+        "serveurs informatiques"
+      ]
+    },
+    "developpement_web": {
+      "libelle": "Site web, e-commerce, applications",
+      "parent": null,
+      "expressions": [
+        "site web",
+        "site internet",
+        "e-commerce",
+        "boutique en ligne",
+        "plateforme en ligne",
+        "application mobile",
+        "developpement web",
+        "shopify"
+      ]
+    },
+    "marketing": {
+      "libelle": "Marketing et communication",
+      "parent": null,
+      "expressions": [
+        "marketing",
+        "communication",
+        "reseaux sociaux",
+        "publicite",
+        "referencement",
+        "seo",
+        "image de marque"
+      ]
+    },
+    "traduction": {
+      "libelle": "Traduction et localisation",
+      "parent": null,
+      "expressions": [
+        "traduction",
+        "traduire",
+        "traducteur",
+        "traductrice",
+        "localisation de contenus",
+        "relecture en allemand"
+      ]
+    },
+    "photo_video": {
+      "libelle": "Photo et vidéo",
+      "parent": null,
+      "expressions": [
+        "photographe",
+        "photographie",
+        "video",
+        "videaste",
+        "film d'entreprise",
+        "drone"
+      ]
+    },
+    "evenementiel": {
+      "libelle": "Organisation d'événements et stands",
+      "parent": null,
+      "expressions": [
+        "organisation d'evenements",
+        "evenementiel",
+        "stand",
+        "stands",
+        "scenographie",
+        "salon professionnel"
+      ]
+    },
+    "traiteur": {
+      "libelle": "Traiteur et restauration",
+      "parent": null,
+      "expressions": [
+        "traiteur",
+        "apero",
+        "aperitif",
+        "buffet",
+        "service traiteur"
+      ]
+    },
+    "menuiserie": {
+      "libelle": "Menuiserie et charpente bois",
+      "parent": null,
+      "expressions": [
+        "menuiserie",
+        "menuisier",
+        "charpente bois",
+        "charpentier",
+        "agencement"
+      ]
+    },
+    "construction_metallique": {
+      "libelle": "Construction métallique et serrurerie",
+      "parent": null,
+      "expressions": [
+        "construction metallique",
+        "charpente metallique",
+        "serrurerie",
+        "soudure"
+      ]
+    },
+    "energie_solaire": {
+      "libelle": "Énergie solaire",
+      "parent": null,
+      "expressions": [
+        "photovoltaique",
+        "panneaux solaires",
+        "energie solaire",
+        "solaire"
+      ]
+    },
+    "efficacite_energetique": {
+      "libelle": "Efficacité énergétique et rénovation",
+      "parent": null,
+      "expressions": [
+        "audit energetique",
+        "cecb",
+        "renovation energetique",
+        "efficacite energetique",
+        "isolation"
+      ]
+    },
+    "financement": {
+      "libelle": "Financement et banque",
+      "parent": null,
+      "expressions": [
+        "financement",
+        "credit",
+        "levee de fonds",
+        "leasing",
+        "banque",
+        "investisseur"
+      ]
+    },
+    "assurance": {
+      "libelle": "Assurances",
+      "parent": null,
+      "expressions": [
+        "assurance",
+        "assurances",
+        "courtier",
+        "responsabilite civile"
+      ]
+    },
+    "immobilier_commercial": {
+      "libelle": "Locaux et immobilier commercial",
+      "parent": null,
+      "expressions": [
+        "locaux",
+        "bureau a louer",
+        "bureaux a louer",
+        "surface commerciale",
+        "entrepot a louer",
+        "immobilier commercial"
+      ]
+    },
+    "location_machines": {
+      "libelle": "Location de machines et nacelles",
+      "parent": null,
+      "expressions": [
+        "nacelle",
+        "nacelles",
+        "plateforme elevatrice",
+        "plateformes elevatrices",
+        "location de machines",
+        "chariot elevateur",
+        "chariots elevateurs"
+      ]
+    },
+    "emballage": {
+      "libelle": "Emballage et étiquetage",
+      "parent": null,
+      "expressions": [
+        "emballage",
+        "emballages",
+        "etiquette",
+        "etiquettes",
+        "etiquetage",
+        "conditionnement",
+        "packaging"
+      ]
+    },
+    "boissons": {
+      "libelle": "Production de boissons (jus, cidre, vin)",
+      "parent": null,
+      "expressions": [
+        "jus de fruits",
+        "jus d'abricot",
+        "jus de pomme",
+        "cidre",
+        "cidrerie",
+        "sirop",
+        "boissons"
+      ]
+    },
+    "vins": {
+      "libelle": "Vins et viticulture",
+      "parent": "boissons",
+      "expressions": [
+        "vin",
+        "vins",
+        "vigneron",
+        "vigneronne",
+        "encavage",
+        "encaveur",
+        "oenologie",
+        "domaine viticole",
+        "cave a vin"
+      ]
+    },
+    "mentorat": {
+      "libelle": "Mentorat et accompagnement de dirigeants",
+      "parent": null,
+      "expressions": [
+        "mentor",
+        "mentore",
+        "mentorat",
+        "coach",
+        "coaching de dirigeants",
+        "accompagnement de dirigeants"
+      ]
+    },
+    "transmission_entreprise": {
+      "libelle": "Transmission et reprise d'entreprise",
+      "parent": null,
+      "expressions": [
+        "transmission d'entreprise",
+        "reprise d'entreprise",
+        "succession",
+        "repreneur",
+        "cession"
+      ]
+    },
+    "formation": {
+      "libelle": "Formation professionnelle",
+      "parent": null,
+      "expressions": [
+        "formation",
+        "formations",
+        "apprentis",
+        "apprentissage"
+      ]
+    },
+    "ia_donnees": {
+      "libelle": "Données, automatisation et IA",
+      "parent": null,
+      "expressions": [
+        "intelligence artificielle",
+        "automatisation",
+        "analyse de donnees",
+        "donnees",
+        "tableau de bord"
+      ]
+    },
+    "tourisme": {
+      "libelle": "Tourisme et hôtellerie",
+      "parent": null,
+      "expressions": [
+        "tourisme",
+        "hotel",
+        "hotellerie",
+        "hebergement",
+        "remontees mecaniques"
+      ]
+    },
+    "export_suisse_alemanique": {
+      "libelle": "Développement commercial en Suisse alémanique",
+      "parent": null,
+      "expressions": [
+        "distributeur en suisse alemanique",
+        "vendre en suisse alemanique",
+        "agent commercial en suisse alemanique",
+        "grossiste",
+        "centrale d'achat"
+      ]
+    }
+  },
+  "ambigus": {
+    "securite": {
+      "libelle": "sécurité",
+      "options": {
+        "cybersecurite": [
+          "informatique",
+          "donnees",
+          "piratage",
+          "ordinateur",
+          "ordinateurs",
+          "email",
+          "emails",
+          "phishing",
+          "site",
+          "serveur"
+        ],
+        "securite_evenement": [
+          "evenement",
+          "evenements",
+          "stand",
+          "foire",
+          "soiree",
+          "public",
+          "concert",
+          "manifestation",
+          "visiteurs"
+        ],
+        "sante_securite_travail": [
+          "chantier",
+          "employes",
+          "collaborateurs",
+          "accident",
+          "accidents",
+          "atelier",
+          "ouvriers"
+        ]
+      }
+    },
+    "reseau": {
+      "libelle": "réseau",
+      "options": {
+        "informatique": [
+          "wifi",
+          "ordinateurs",
+          "internet",
+          "cablage",
+          "serveur",
+          "imprimante"
+        ],
+        "mentorat": [
+          "conseils",
+          "experience",
+          "entrepreneurs",
+          "dirigeants",
+          "contacts"
+        ]
+      }
+    },
+    "froid": {
+      "libelle": "froid",
+      "options": {
+        "transport_frigorifique": [
+          "livrer",
+          "livraison",
+          "livraisons",
+          "camion",
+          "transport",
+          "tournee",
+          "tournees"
+        ],
+        "installation_froid": [
+          "installer",
+          "installation",
+          "panne",
+          "maintenance",
+          "chambre",
+          "climatisation"
+        ]
+      }
+    },
+    "frigorifique": {
+      "libelle": "frigorifique",
+      "options": {
+        "transport_frigorifique": [
+          "livrer",
+          "livraison",
+          "livraisons",
+          "transport",
+          "tournee",
+          "tournees"
+        ],
+        "installation_froid": [
+          "installer",
+          "installation",
+          "panne",
+          "maintenance",
+          "reparer",
+          "reparation"
+        ]
+      }
+    },
+    "plateforme": {
+      "libelle": "plateforme",
+      "options": {
+        "developpement_web": [
+          "en ligne",
+          "site",
+          "reservation",
+          "internet",
+          "application",
+          "clients"
+        ],
+        "location_machines": [
+          "louer",
+          "location",
+          "chantier",
+          "hauteur",
+          "facade",
+          "toit"
+        ]
+      }
+    }
+  },
+  "zones": {
+    "Valais": [
+      "valais",
+      "wallis",
+      "martigny",
+      "sion",
+      "sierre",
+      "monthey",
+      "fully",
+      "saxon",
+      "conthey",
+      "brigue",
+      "brig",
+      "viege",
+      "visp"
+    ],
+    "Suisse romande": [
+      "suisse romande",
+      "romandie",
+      "geneve",
+      "lausanne",
+      "vaud",
+      "fribourg",
+      "neuchatel",
+      "jura"
+    ],
+    "Suisse alémanique": [
+      "suisse alemanique",
+      "suisse allemande",
+      "deutschschweiz",
+      "zurich",
+      "bale",
+      "berne",
+      "lucerne",
+      "saint-gall",
+      "st-gall",
+      "argovie"
+    ],
+    "Tessin": [
+      "tessin",
+      "lugano",
+      "bellinzone"
+    ]
+  },
+  "langues": {
+    "fr": {
+      "libelle": "français",
+      "expressions": [
+        "francais",
+        "francophone"
+      ]
+    },
+    "de": {
+      "libelle": "allemand",
+      "expressions": [
+        "allemand",
+        "germanophone",
+        "suisse-allemand",
+        "schwyzerdutsch",
+        "deutsch",
+        "bilingue"
+      ]
+    },
+    "en": {
+      "libelle": "anglais",
+      "expressions": [
+        "anglais",
+        "anglophone",
+        "english"
+      ]
+    },
+    "it": {
+      "libelle": "italien",
+      "expressions": [
+        "italien",
+        "italophone"
+      ]
+    }
+  },
+  "marqueurs_souples": [
+    "idealement",
+    "si possible",
+    "de preference",
+    "ce serait un plus",
+    "bonus",
+    "eventuellement",
+    "un plus"
+  ],
+  "marqueurs_concurrents": [
+    "pas un concurrent",
+    "pas de concurrent",
+    "pas de concurrents",
+    "hors concurrents",
+    "sans concurrent",
+    "non concurrent",
+    "pas quelqu'un qui me fait concurrence"
+  ]
+}

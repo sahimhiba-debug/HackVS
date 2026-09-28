@@ -1,0 +1,9 @@
+fastapi>=0.110
+uvicorn>=0.29
+pydantic>=2.6
+# Optionnel : analyse du besoin par Claude (HACKVS_LLM=claude)
+anthropic>=1.0
+# Tests et captures
+pytest>=8
+httpx>=0.27
+playwright>=1.45

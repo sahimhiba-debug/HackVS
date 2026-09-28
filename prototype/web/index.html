@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Le Fil du Club</title>
+  <meta name="description" content="Prototype exploratoire : exprimer un besoin, trouver les bons membres du Club, demander une introduction consentie.">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <a class="skip" href="#principal">Aller au contenu</a>
+  <header class="barre">
+    <div class="marque">
+      <span class="logo" aria-hidden="true"></span>
+      <span class="nom">Le Fil du Club</span>
+    </div>
+    <div class="badges" id="badges" aria-live="polite"></div>
+  </header>
+
+  <div class="bandeau-demo" id="bandeau-demo" hidden>
+    Démonstration · toutes les personnes et entreprises sont <strong>fictives</strong> · aucun message n'est envoyé
+  </div>
+
+  <nav class="etapes" aria-label="Étapes">
+    <ol>
+      <li data-etape="1"><span>1</span>Besoin</li>
+      <li data-etape="2"><span>2</span>Critères</li>
+      <li data-etape="3"><span>3</span>Contacts</li>
+      <li data-etape="4"><span>4</span>Introduction</li>
+      <li data-etape="5"><span>5</span>Suivi</li>
+    </ol>
+  </nav>
+
+  <main id="principal">
+    <section class="bloc" id="bloc-besoin" aria-labelledby="t-besoin">
+      <p class="surtitre" id="vous"></p>
+      <h1 id="t-besoin">Que cherchez-vous<br>cette semaine&nbsp;?</h1>
+      <label class="sr" for="texte">Votre besoin</label>
+      <textarea id="texte" rows="3" maxlength="1500"
+        placeholder="Ex. : Je cherche un transporteur frigorifique qui livre Zurich deux fois par semaine…"></textarea>
+      <div class="exemples" id="exemples" aria-label="Exemples"></div>
+      <div class="actions">
+        <button class="primaire" id="btn-analyser">Analyser mon besoin</button>
+        <span class="aide" id="aide-analyse"></span>
+      </div>
+    </section>
+
+    <section class="bloc" id="bloc-criteres" hidden aria-labelledby="t-criteres">
+      <h2 id="t-criteres">Ce que j'ai compris</h2>
+      <p class="texte-surligne" id="texte-surligne"></p>
+      <div id="ambiguites"></div>
+      <ul class="criteres" id="criteres"></ul>
+      <div class="ajout">
+        <label for="ajout-concept">Ajouter une compétence</label>
+        <select id="ajout-concept"><option value="">Choisir…</option></select>
+      </div>
+      <div class="options">
+        <label class="bascule"><input type="checkbox" id="opt-concurrents"> Écarter mes concurrents</label>
+        <label class="bascule"><input type="checkbox" id="opt-exposants"> Inclure les exposants de la Foire</label>
+      </div>
+      <p class="contexte" id="contexte"></p>
+      <ul class="avertissements" id="avertissements"></ul>
+      <div class="actions">
+        <button class="primaire" id="btn-rechercher">Trouver des contacts</button>
+      </div>
+    </section>
+
+    <section class="bloc" id="bloc-resultats" hidden aria-labelledby="t-resultats">
+      <h2 id="t-resultats"></h2>
+      <p class="sous" id="resume-resultats"></p>
+      <div id="cartes" class="cartes"></div>
+      <details class="ecartes" id="ecartes" hidden>
+        <summary></summary>
+        <ul></ul>
+      </details>
+      <details class="comparaison" id="comparaison">
+        <summary>Comparer avec une simple recherche par mots-clés</summary>
+        <div id="comparaison-contenu" class="comparaison-contenu"></div>
+      </details>
+    </section>
+
+    <section class="bloc" id="bloc-intro" hidden aria-labelledby="t-intro">
+      <h2 id="t-intro"></h2>
+      <p class="consentement">
+        La personne reçoit votre demande et <strong>choisit</strong> d'accepter ou non.
+        Vos coordonnées respectives ne sont partagées qu'après son accord.
+        <span class="demo-seul">En démonstration, rien n'est envoyé.</span>
+      </p>
+      <label for="message">Votre message (modifiable)</label>
+      <textarea id="message" rows="12"></textarea>
+      <div class="actions">
+        <button class="primaire" id="btn-envoyer">Envoyer la demande</button>
+        <button class="secondaire" id="btn-annuler-intro">Retour</button>
+      </div>
+    </section>
+
+    <section class="bloc" id="bloc-suivi" hidden aria-labelledby="t-suivi">
+      <h2 id="t-suivi">Suivi de vos introductions</h2>
+      <div id="suivi"></div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <footer class="pied">
+    Prototype exploratoire préparé avant Hack VS 2026 · <span id="pied-mode"></span>
+    · <button class="lien" id="btn-reset">Réinitialiser la démo</button>
+  </footer>
+  <script src="/static/app.js"></script>
+</body>
+</html>

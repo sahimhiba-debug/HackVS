@@ -1,0 +1,95 @@
+"""Chargement de la taxonomie et utilitaires de normalisation du texte."""
+from __future__ import annotations
+
+import json
+import re
+import unicodedata
+from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
+
+DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+
+_SPECIAUX = {"œ": "oe", "Œ": "oe", "æ": "ae", "’": "'", "‘": "'", "–": "-", "—": "-", "ß": "ss"}
+
+
+def normaliser(texte: str) -> tuple[str, list[int]]:
+    """Minuscules sans accents + table de correspondance vers les positions d'origine.
+
+    La table permet de retrouver l'extrait exact du texte saisi par l'utilisateur,
+    pour que chaque critère affiché pointe vers ses propres mots.
+    """
+    sortie: list[str] = []
+    positions: list[int] = []
+    for i, c in enumerate(unicodedata.normalize("NFC", texte)):
+        remplacement = _SPECIAUX.get(c)
+        if remplacement is None:
+            decompose = unicodedata.normalize("NFKD", c)
+            remplacement = "".join(x for x in decompose if not unicodedata.combining(x))
+        for r in remplacement.lower():
+            sortie.append(r)
+            positions.append(i)
+    return "".join(sortie), positions
+
+
+def norm(texte: str) -> str:
+    return normaliser(texte)[0]
+
+
+def motif(expression: str) -> re.Pattern:
+    return re.compile(r"(?<![a-z0-9])" + re.escape(expression) + r"(?![a-z0-9])")
+
+
+@dataclass(frozen=True)
+class Concept:
+    id: str
+    libelle: str
+    parent: str | None
+    expressions: tuple[str, ...]
+
+
+class Taxonomie:
+    def __init__(self, brut: dict):
+        self.concepts: dict[str, Concept] = {
+            cid: Concept(cid, c["libelle"], c.get("parent"), tuple(norm(e) for e in c["expressions"]))
+            for cid, c in brut["concepts"].items()
+        }
+        self.ambigus: dict[str, dict] = brut.get("ambigus", {})
+        self.zones: dict[str, tuple[str, ...]] = {z: tuple(norm(e) for e in v) for z, v in brut["zones"].items()}
+        self.langues: dict[str, dict] = brut["langues"]
+        self.marqueurs_souples = tuple(norm(m) for m in brut.get("marqueurs_souples", []))
+        self.marqueurs_concurrents = tuple(norm(m) for m in brut.get("marqueurs_concurrents", []))
+        for c in self.concepts.values():
+            if c.parent and c.parent not in self.concepts:
+                raise ValueError(f"Parent inconnu pour {c.id}: {c.parent}")
+
+    def libelle(self, cid: str) -> str:
+        return self.concepts[cid].libelle if cid in self.concepts else cid
+
+    def ancetres(self, cid: str) -> list[str]:
+        res, cur = [], self.concepts.get(cid)
+        while cur and cur.parent:
+            res.append(cur.parent)
+            cur = self.concepts.get(cur.parent)
+        return res
+
+    def couvre(self, offert: str, demande: str) -> bool:
+        """Une offre couvre une demande si elle est identique ou plus spécifique."""
+        return offert == demande or demande in self.ancetres(offert)
+
+    def meme_famille(self, a: str, b: str) -> bool:
+        return self.couvre(a, b) or self.couvre(b, a)
+
+    def expressions_de(self, cid: str) -> list[str]:
+        """Expressions du concept et de ses descendants (pour l'inférence depuis un texte libre)."""
+        res = list(self.concepts[cid].expressions)
+        for c in self.concepts.values():
+            if cid in self.ancetres(c.id):
+                res.extend(c.expressions)
+        return res
+
+
+@lru_cache(maxsize=1)
+def charger_taxonomie() -> Taxonomie:
+    with open(DATA_DIR / "taxonomie.json", encoding="utf-8") as f:
+        return Taxonomie(json.load(f))

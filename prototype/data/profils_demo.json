@@ -1,0 +1,339 @@
+{
+  "_avertissement": "DONNÉES ENTIÈREMENT FICTIVES. Personnes et entreprises inventées pour le prototype. Toute ressemblance avec une personne ou une entreprise réelle serait fortuite. Aucune donnée n'a été collectée sur le Web.",
+  "utilisateur_demo": "p00",
+  "profils": [
+    {
+      "id": "p00", "nom": "Sophie Moret", "fonction": "Fondatrice", "entreprise": "Vergers du Rhône Sàrl", "commune": "Saxon",
+      "type": "membre_club", "secteurs": ["boissons"],
+      "offre": [{"concept": "boissons", "texte": "Jus d'abricot et de poire pressés à Saxon, 40 000 bouteilles par an"}],
+      "recherche": [{"concept": "transport_frigorifique", "texte": "Livrer nos jus frais en Suisse alémanique"}, {"concept": "export_suisse_alemanique", "texte": "Trouver des revendeurs à Zurich et Berne"}],
+      "langues": ["fr"], "zones_service": ["Valais", "Suisse romande"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Petite entreprise familiale de jus de fruits valaisans. Nous lançons une gamme en Suisse alémanique en 2027.",
+      "maj": "2026-08"
+    },
+    {
+      "id": "p01", "nom": "Julien Morand", "fonction": "Directeur", "entreprise": "Alpes Froid Logistique SA", "commune": "Martigny",
+      "type": "membre_club", "secteurs": ["logistique"],
+      "offre": [
+        {"concept": "transport_frigorifique", "texte": "Transport frigorifique 2–8 °C, tournées Valais–Zurich le lundi et le jeudi"},
+        {"concept": "logistique", "texte": "Entreposage sous température dirigée à Martigny"}
+      ],
+      "recherche": [{"concept": "ia_donnees", "texte": "Optimiser nos tournées avec nos données de livraison"}],
+      "langues": ["fr", "de"], "zones_service": ["Valais", "Suisse romande", "Suisse alémanique"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Flotte de douze véhicules réfrigérés. Clients dans l'agroalimentaire et la pharmacie.",
+      "maj": "2026-07"
+    },
+    {
+      "id": "p02", "nom": "Carla Fumeaux", "fonction": "Responsable commerciale", "entreprise": "Rhône Express Transports", "commune": "Sion",
+      "type": "membre_club", "secteurs": ["logistique"],
+      "offre": [{"concept": "transport_frigorifique", "texte": "Livraisons réfrigérées quotidiennes entre Brigue et Genève"}],
+      "recherche": [{"concept": "recrutement", "texte": "Chauffeurs permis C1"}],
+      "langues": ["fr"], "zones_service": ["Valais", "Suisse romande"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Transport régional, spécialiste des produits frais pour la restauration.",
+      "maj": "2026-06"
+    },
+    {
+      "id": "p03", "nom": "Patrick Lugon", "fonction": "Associé gérant", "entreprise": "Froidtech Services Sàrl", "commune": "Conthey",
+      "type": "membre_club", "secteurs": ["installation_froid"],
+      "offre": [{"concept": "installation_froid", "texte": "Installation et dépannage de chambres froides et de groupes frigorifiques"}],
+      "recherche": [{"concept": "marketing", "texte": "Refaire notre site et notre communication"}],
+      "langues": ["fr", "de"], "zones_service": ["Valais", "Suisse romande", "Suisse alémanique"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Frigoristes depuis 1998. Interventions 24h/24 pour boucheries, caves et restaurants, avec des clients jusqu'à Zurich. Transport frigorifique : nous réparons les groupes froid des camions, nous ne livrons pas.",
+      "maj": "2026-05"
+    },
+    {
+      "id": "p04", "nom": "Stefan Imboden", "fonction": "Geschäftsführer", "entreprise": "Oberwalliser Kühllogistik AG", "commune": "Viège",
+      "type": "membre_club", "secteurs": ["logistique"],
+      "offre": [{"concept": "transport_frigorifique", "texte": "Kühltransporte Wallis–Zürich–Basel"}],
+      "recherche": [],
+      "langues": ["de", "fr"], "zones_service": ["Valais", "Suisse alémanique"],
+      "accepte_introductions": false, "disponible": true,
+      "presentation": "Transport frigorifique pour le Haut-Valais et la Suisse alémanique.",
+      "maj": "2026-04"
+    },
+    {
+      "id": "p05", "nom": "Élodie Rithner", "fonction": "Directrice des opérations", "entreprise": "Logistique du Chablais SA", "commune": "Monthey",
+      "type": "membre_club", "secteurs": ["logistique"],
+      "offre": [{"concept": "logistique", "texte": "Entreposage et distribution en Suisse romande et alémanique"}],
+      "recherche": [{"concept": "emballage", "texte": "Partenaire pour le reconditionnement"}],
+      "langues": ["fr", "de"], "zones_service": ["Valais", "Suisse romande", "Suisse alémanique"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Plateforme logistique de 8 000 m². Nous assurons aussi des livraisons réfrigérées ponctuelles avec un partenaire.",
+      "maj": "2026-08"
+    },
+    {
+      "id": "p06", "nom": "Grégoire Bruchez", "fonction": "Fondateur", "entreprise": "Cidrerie des Follatères", "commune": "Fully",
+      "type": "membre_club", "secteurs": ["boissons"],
+      "offre": [{"concept": "boissons", "texte": "Cidre artisanal et jus de pomme"}],
+      "recherche": [{"concept": "export_suisse_alemanique", "texte": "Distribution dans les épiceries fines zurichoises"}],
+      "langues": ["fr", "de"], "zones_service": ["Valais", "Suisse alémanique"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Nous livrons nous-mêmes Zurich chaque semaine avec notre camion frigorifique et pouvons compléter la tournée.",
+      "maj": "2026-08"
+    },
+    {
+      "id": "p07", "nom": "Andrea Keller", "fonction": "Verkaufsleiterin", "entreprise": "Kühlkette Zürich GmbH", "commune": "Zurich",
+      "type": "exposant", "secteurs": ["logistique"],
+      "offre": [{"concept": "transport_frigorifique", "texte": "Transport frigorifique et distribution dans le Grand Zurich"}],
+      "recherche": [{"concept": "boissons", "texte": "Producteurs romands souhaitant entrer sur le marché zurichois"}],
+      "langues": ["de", "en"], "zones_service": ["Suisse alémanique"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Exposant à la Foire du Valais 2026 (fictif). Chaîne du froid de bout en bout.",
+      "maj": "2026-09"
+    },
+    {
+      "id": "p08", "nom": "Nicolas Crettenand", "fonction": "Directeur", "entreprise": "Transports Valaisans Réunis", "commune": "Riddes",
+      "type": "membre_club", "secteurs": ["logistique"],
+      "offre": [{"concept": "transport_frigorifique", "texte": "Transport frigorifique longue distance toute la Suisse"}],
+      "recherche": [],
+      "langues": ["fr", "de"], "zones_service": ["Valais", "Suisse romande", "Suisse alémanique", "Tessin"],
+      "accepte_introductions": true, "disponible": false, "note_disponibilite": "Capacité complète jusqu'en janvier 2027",
+      "presentation": "Transporteur généraliste avec une division froid.",
+      "maj": "2026-08"
+    },
+    {
+      "id": "p09", "nom": "Mélanie Zufferey", "fonction": "Indépendante", "entreprise": "Froid Mobile Valais", "commune": "Sierre",
+      "type": "membre_club", "secteurs": ["logistique"],
+      "offre": [{"concept": "transport_frigorifique", "texte": "Petit transport frigorifique en camionnette"}],
+      "recherche": [],
+      "langues": [], "zones_service": [],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "",
+      "maj": "2025-11"
+    },
+    {
+      "id": "p10", "nom": "Yann Délitroz", "fonction": "Fondateur", "entreprise": "Cyberalp Sàrl", "commune": "Sion",
+      "type": "membre_club", "secteurs": ["cybersecurite"],
+      "offre": [{"concept": "cybersecurite", "texte": "Tests d'intrusion et sensibilisation au phishing pour PME"}],
+      "recherche": [{"concept": "financement", "texte": "Financer notre croissance"}],
+      "langues": ["fr", "en"], "zones_service": ["Valais", "Suisse romande"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Équipe de quatre spécialistes en sécurité informatique pour les PME valaisannes.",
+      "maj": "2026-07"
+    },
+    {
+      "id": "p11", "nom": "Sandra Voide", "fonction": "Directrice", "entreprise": "Octet Services SA", "commune": "Martigny",
+      "type": "membre_club", "secteurs": ["informatique"],
+      "offre": [{"concept": "informatique", "texte": "Infogérance, réseau informatique, wifi et sauvegarde pour PME"}],
+      "recherche": [{"concept": "recrutement", "texte": "Apprentis informaticiens"}],
+      "langues": ["fr"], "zones_service": ["Valais"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Support informatique de proximité dans le Bas-Valais.",
+      "maj": "2026-06"
+    },
+    {
+      "id": "p12", "nom": "Thierry Gaillard", "fonction": "Expert fiduciaire", "entreprise": "Fiduciaire du Coude du Rhône", "commune": "Martigny",
+      "type": "membre_club", "secteurs": ["fiduciaire"],
+      "offre": [{"concept": "fiduciaire", "texte": "Comptabilité, TVA et bouclements pour PME et indépendants"}],
+      "recherche": [{"concept": "ia_donnees", "texte": "Automatiser la saisie comptable"}],
+      "langues": ["fr", "de"], "zones_service": ["Valais"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Fiduciaire familiale, 12 collaborateurs.",
+      "maj": "2026-03"
+    },
+    {
+      "id": "p13", "nom": "Laura Pitteloud", "fonction": "Avocate associée", "entreprise": "Étude Rive Droite", "commune": "Sion",
+      "type": "membre_club", "secteurs": ["droit_affaires"],
+      "offre": [{"concept": "droit_affaires", "texte": "Droit des sociétés et contrats commerciaux"}, {"concept": "droit_travail", "texte": "Droit du travail pour employeurs"}],
+      "recherche": [],
+      "langues": ["fr", "de", "en"], "zones_service": ["Valais", "Suisse romande"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Conseil juridique aux PME et aux start-up.",
+      "maj": "2026-08"
+    },
+    {
+      "id": "p14", "nom": "Kevin Salamin", "fonction": "Conseiller en placement", "entreprise": "Valjob Placement SA", "commune": "Sierre",
+      "type": "membre_club", "secteurs": ["recrutement"],
+      "offre": [{"concept": "recrutement", "texte": "Personnel temporaire, saisonniers pour vendanges et hôtellerie"}],
+      "recherche": [],
+      "langues": ["fr", "de"], "zones_service": ["Valais"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Agence de placement active dans tout le Valais.",
+      "maj": "2026-08"
+    },
+    {
+      "id": "p15", "nom": "Chloé Bonvin", "fonction": "Directrice de création", "entreprise": "Agence Sommet Communication", "commune": "Martigny",
+      "type": "membre_club", "secteurs": ["marketing"],
+      "offre": [{"concept": "marketing", "texte": "Image de marque, réseaux sociaux et campagnes bilingues"}, {"concept": "photo_video", "texte": "Film d'entreprise et photo produit"}],
+      "recherche": [],
+      "langues": ["fr", "de", "en"], "zones_service": ["Valais", "Suisse romande", "Suisse alémanique"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Agence de communication pour marques du terroir.",
+      "maj": "2026-07"
+    },
+    {
+      "id": "p16", "nom": "Martina Summermatter", "fonction": "Traductrice indépendante", "entreprise": "Traductions Rhône-Rhein", "commune": "Brigue",
+      "type": "membre_club", "secteurs": ["traduction"],
+      "offre": [{"concept": "traduction", "texte": "Traduction français–allemand de sites, étiquettes et contrats"}],
+      "recherche": [],
+      "langues": ["de", "fr"], "zones_service": ["Valais", "Suisse alémanique"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Traductrice bilingue, spécialisée agroalimentaire.",
+      "maj": "2026-02"
+    },
+    {
+      "id": "p17", "nom": "Olivier Roduit", "fonction": "Directeur", "entreprise": "Stand & Scène SA", "commune": "Conthey",
+      "type": "exposant", "secteurs": ["evenementiel"],
+      "offre": [{"concept": "evenementiel", "texte": "Conception et montage de stands pour salons professionnels"}],
+      "recherche": [],
+      "langues": ["fr"], "zones_service": ["Valais", "Suisse romande"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Scénographie et stands, exposant à la Foire (fictif).",
+      "maj": "2026-09"
+    },
+    {
+      "id": "p18", "nom": "David Perruchoud", "fonction": "Gérant", "entreprise": "Garde Valais Sécurité Sàrl", "commune": "Monthey",
+      "type": "membre_club", "secteurs": ["securite_evenement"],
+      "offre": [{"concept": "securite_evenement", "texte": "Agents de sécurité et contrôle d'accès pour événements et stands"}],
+      "recherche": [],
+      "langues": ["fr"], "zones_service": ["Valais", "Suisse romande"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Sécurité événementielle pour manifestations de 50 à 5 000 personnes.",
+      "maj": "2026-06"
+    },
+    {
+      "id": "p19", "nom": "Isabelle Fournier", "fonction": "Chargée de sécurité", "entreprise": "Prévention Plus", "commune": "Sion",
+      "type": "membre_club", "secteurs": ["sante_securite_travail"],
+      "offre": [{"concept": "sante_securite_travail", "texte": "Concepts MSST et prévention des accidents sur chantiers et ateliers"}],
+      "recherche": [],
+      "langues": ["fr"], "zones_service": ["Valais"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Conseil en sécurité au travail pour PME.",
+      "maj": "2026-05"
+    },
+    {
+      "id": "p20", "nom": "Benoît Jacquier", "fonction": "Maître menuisier", "entreprise": "Atelier Bois du Trient", "commune": "Vernayaz",
+      "type": "membre_club", "secteurs": ["menuiserie"],
+      "offre": [{"concept": "menuiserie", "texte": "Menuiserie, agencement de magasins et charpente bois"}],
+      "recherche": [{"concept": "energie_solaire", "texte": "Installer du photovoltaïque sur l'atelier"}],
+      "langues": ["fr"], "zones_service": ["Valais"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Atelier de 9 personnes, formation d'apprentis.",
+      "maj": "2026-04"
+    },
+    {
+      "id": "p21", "nom": "Fabienne Carron", "fonction": "Directrice", "entreprise": "Métal Concept Saxon", "commune": "Saxon",
+      "type": "membre_club", "secteurs": ["construction_metallique"],
+      "offre": [{"concept": "construction_metallique", "texte": "Charpente métallique, serrurerie et escaliers"}],
+      "recherche": [],
+      "langues": ["fr"], "zones_service": ["Valais", "Suisse romande"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Construction métallique pour l'industrie et l'agriculture.",
+      "maj": "2026-01"
+    },
+    {
+      "id": "p22", "nom": "Romain Maret", "fonction": "Ingénieur", "entreprise": "Soleil du Rhône Énergie", "commune": "Fully",
+      "type": "membre_club", "secteurs": ["energie_solaire"],
+      "offre": [{"concept": "energie_solaire", "texte": "Installations photovoltaïques pour toitures industrielles"}, {"concept": "efficacite_energetique", "texte": "Audit énergétique et CECB"}],
+      "recherche": [],
+      "langues": ["fr", "de"], "zones_service": ["Valais", "Suisse romande"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Bureau d'ingénieurs en énergie.",
+      "maj": "2026-08"
+    },
+    {
+      "id": "p23", "nom": "Hélène Michellod", "fonction": "Conseillère entreprises", "entreprise": "Crédit Alpin Conseil", "commune": "Sion",
+      "type": "membre_club", "secteurs": ["financement"],
+      "offre": [{"concept": "financement", "texte": "Financement d'investissements, leasing et crédit PME"}],
+      "recherche": [],
+      "langues": ["fr", "de"], "zones_service": ["Valais"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Conseil en financement pour PME valaisannes.",
+      "maj": "2026-07"
+    },
+    {
+      "id": "p24", "nom": "Alain Tornay", "fonction": "Courtier", "entreprise": "Assurances Grand-Combin", "commune": "Orsières",
+      "type": "membre_club", "secteurs": ["assurance"],
+      "offre": [{"concept": "assurance", "texte": "Courtier en assurances entreprises, responsabilité civile et flottes de véhicules"}],
+      "recherche": [],
+      "langues": ["fr"], "zones_service": ["Valais"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Courtier indépendant.",
+      "maj": "2026-03"
+    },
+    {
+      "id": "p25", "nom": "Joël Praz", "fonction": "Responsable location", "entreprise": "Nacelles Service Valais", "commune": "Sion",
+      "type": "membre_club", "secteurs": ["location_machines"],
+      "offre": [{"concept": "location_machines", "texte": "Location de nacelles, plateformes élévatrices et chariots élévateurs"}],
+      "recherche": [],
+      "langues": ["fr", "de"], "zones_service": ["Valais"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Parc de 60 machines, livraison sur chantier.",
+      "maj": "2026-06"
+    },
+    {
+      "id": "p26", "nom": "Inès Barras", "fonction": "Développeuse, fondatrice", "entreprise": "Web Abricot Studio", "commune": "Sierre",
+      "type": "membre_club", "secteurs": ["developpement_web"],
+      "offre": [{"concept": "developpement_web", "texte": "Boutiques en ligne, plateformes de réservation et sites bilingues"}],
+      "recherche": [{"concept": "marketing", "texte": "Partenaire en référencement"}],
+      "langues": ["fr", "de", "en"], "zones_service": ["Valais", "Suisse romande", "Suisse alémanique"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Studio web pour commerces et producteurs locaux.",
+      "maj": "2026-08"
+    },
+    {
+      "id": "p27", "nom": "Marc-Antoine Sierro", "fonction": "Directeur commercial", "entreprise": "Emballages du Valais SA", "commune": "Monthey",
+      "type": "membre_club", "secteurs": ["emballage"],
+      "offre": [{"concept": "emballage", "texte": "Étiquettes, cartons et emballages alimentaires"}],
+      "recherche": [{"concept": "boissons", "texte": "Nouveaux clients parmi les producteurs de boissons"}],
+      "langues": ["fr", "de"], "zones_service": ["Valais", "Suisse romande"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Emballage et étiquetage pour l'agroalimentaire.",
+      "maj": "2026-05"
+    },
+    {
+      "id": "p28", "nom": "Aurélie Favre", "fonction": "Vigneronne-encaveuse", "entreprise": "Domaine des Trois Chênes", "commune": "Chamoson",
+      "type": "membre_club", "secteurs": ["vins"],
+      "offre": [{"concept": "vins", "texte": "Vins de Chamoson, encavage à façon"}],
+      "recherche": [{"concept": "developpement_web", "texte": "Boutique en ligne"}],
+      "langues": ["fr"], "zones_service": ["Valais"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Domaine viticole familial de 6 hectares.",
+      "maj": "2026-08"
+    },
+    {
+      "id": "p29", "nom": "Pierre-Alain Rausis", "fonction": "Ancien dirigeant, mentor bénévole", "entreprise": "Indépendant", "commune": "Martigny",
+      "type": "membre_club", "secteurs": ["mentorat"],
+      "offre": [{"concept": "mentorat", "texte": "Mentorat de jeunes dirigeants, 30 ans à la tête d'une PME industrielle"}, {"concept": "transmission_entreprise", "texte": "Préparer une transmission ou une reprise d'entreprise"}],
+      "recherche": [],
+      "langues": ["fr", "de"], "zones_service": ["Valais"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "A cédé son entreprise en 2023. Partage volontiers son réseau et son expérience.",
+      "maj": "2026-06"
+    },
+    {
+      "id": "p30", "nom": "Samuel Gay", "fonction": "Data scientist", "entreprise": "Data Rhône Lab", "commune": "Martigny",
+      "type": "membre_club", "secteurs": ["ia_donnees"],
+      "offre": [{"concept": "ia_donnees", "texte": "Tableaux de bord, automatisation et analyse de données pour PME"}],
+      "recherche": [{"concept": "logistique", "texte": "Cas d'usage en optimisation de tournées"}],
+      "langues": ["fr", "en"], "zones_service": ["Valais", "Suisse romande"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Petite équipe issue de la recherche appliquée.",
+      "maj": "2026-08"
+    },
+    {
+      "id": "p31", "nom": "Visiteur Anonyme", "fonction": "Visiteur", "entreprise": "Hôtel du Glacier", "commune": "Champex",
+      "type": "visiteur", "secteurs": ["tourisme"],
+      "offre": [{"concept": "tourisme", "texte": "Hébergement de groupes"}],
+      "recherche": [],
+      "langues": ["fr"], "zones_service": ["Valais"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Visiteur de la Foire, non membre. Ne doit jamais apparaître dans les suggestions.",
+      "maj": "2026-09"
+    },
+    {
+      "id": "p32", "nom": "Reto Walpen", "fonction": "Agent commercial", "entreprise": "Distribution Alpes-Nord", "commune": "Brigue",
+      "type": "membre_club", "secteurs": ["export_suisse_alemanique"],
+      "offre": [{"concept": "export_suisse_alemanique", "texte": "Agent commercial pour produits du terroir auprès des épiceries fines et grossistes en Suisse alémanique"}],
+      "recherche": [{"concept": "boissons", "texte": "Producteurs valaisans de boissons à représenter"}],
+      "langues": ["de", "fr"], "zones_service": ["Valais", "Suisse alémanique"],
+      "accepte_introductions": true, "disponible": true,
+      "presentation": "Représente une dizaine de producteurs valaisans à Zurich et Berne.",
+      "maj": "2026-07"
+    }
+  ]
+}
