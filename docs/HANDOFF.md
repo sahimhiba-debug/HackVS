@@ -16,7 +16,7 @@ cd prototype
 python -m venv .venv && . .venv/bin/activate        # facultatif
 pip install -r requirements-dev.txt
 uvicorn app.main:app --reload                       # http://localhost:8000 · /scene · /club · /presentation · /rejoindre
-python -m pytest -q                                 # 51 tests, ≈ 30 s
+python -m pytest -q                                 # 53 tests, ≈ 30 s
 python -m eval.run_eval --verifier                  # non-régression des 6 jeux (comme la CI)
 python scripts/telecharger_modele.py                # facultatif : IA locale (2,2 Go)
 python scripts/parcours_demo.py                     # parcours complet dans Chromium (serveur lancé)
@@ -43,7 +43,7 @@ Distant (HTTP, jeton porteur obligatoire, portées `lecture` / `ecriture`) :
 python scripts/creer_jeton_mcp.py --membre p00 --portees lecture,ecriture   # affiche le jeton UNE fois
 HACKVS_API_URL=http://localhost:8000 python scripts/mcp_club.py --http --port 8790   # → http://127.0.0.1:8790/mcp
 ```
-Outils : `qui_suis_je`, `chercher_membres`, `expliquer_correspondance`, `bourse`, `mes_relations`, `planifier_soiree`
+Outils : `qui_suis_je`, `chercher_membres`, `expliquer_correspondance`, `bourse`, `mes_relations`, `planifier_soiree`, `creneaux_communs`
 (lecture) ; `publier_besoin`, `mettre_en_relation`, `repondre` (écriture, confirmation humaine obligatoire).
 Erreurs : `[code] message` (`interdit`, `regle_metier`, `introuvable`, `invalide`, `non_disponible`, `authentification`,
 `annule_par_membre`, `portee_insuffisante`, `besoin_ambigu`). Démo hors ligne : `python scripts/demo_agent_mcp.py`.

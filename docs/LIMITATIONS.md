@@ -24,7 +24,7 @@
   Le serveur MCP HTTP authentifie par jeton, mais l'API derrière lui ne sait pas encore authentifier.
 - Détection des consignes dans les profils : heuristique (0 faux positif sur nos 187 profils, précision réelle inconnue).
   La protection principale est structurelle (le LLM ne voit pas les profils ; rien sans confirmation humaine).
-- Disponibilité : un simple booléen ; pas d'agenda, pas de créneaux (« disponible la semaine prochaine » n'est pas compris).
+- Disponibilité : demi-journées habituelles déclarées (privées) et créneaux communs proposés après acceptation ; pas de vrai agenda ni de synchronisation calendrier, et « disponible la semaine prochaine » dans un besoin n'est pas un critère de recherche.
 - Plan de soirée : suppose que tous les membres éligibles sont présents (pas de liste d'inscrits) ; rencontres en tête-à-tête seulement.
 - Échelle : recherche exhaustive (≈ 10 ms pour 37 profils) ; au-delà de quelques milliers de profils, un index serait nécessaire.
 - Aucun déploiement public ; aucun avis juridique (LPD).

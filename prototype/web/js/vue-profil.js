@@ -38,7 +38,8 @@ export async function vueProfil() {
         h("dt", {}, "Langues"), h("dd", {}, m.langues.length ? m.langues.map((l) => LANGUES[l] || l).join(", ") : "non renseigné"),
         h("dt", {}, "Propose"), h("dd", {}, m.offre.length ? h("ul", { class: "liste-simple" }, m.offre.map((o) => h("li", {}, o.texte))) : "—"),
         h("dt", {}, "Recherche"), h("dd", {}, m.recherche.length ? h("ul", { class: "liste-simple" }, m.recherche.map((o) => h("li", {}, o.texte))) : "—"),
-        h("dt", {}, "Présentation"), h("dd", {}, m.presentation || "—")),
+        h("dt", {}, "Présentation"), h("dd", {}, m.presentation || "—"),
+        h("dt", {}, "Disponibilités"), h("dd", {}, grilleCreneaux(m))),
       h("label", { class: "bascule", for: "consentement" }, bascule,
         h("span", {}, h("strong", {}, "J'accepte d'être proposé·e et sollicité·e par les membres du Club"),
           h("small", {}, "Désactivé : vous disparaissez des recherches et de la Bourse ; les demandes en attente qui vous sont adressées sont annulées ; les mises en relation déjà acceptées restent (vous pouvez les annuler).")))),
@@ -93,4 +94,27 @@ function formulaireProposition(m, p) {
       } catch (e) { toast(e.message, "erreur"); libre(ev.target.closest("button")); }
     } }, "Valider et enregistrer mon profil")));
   return form;
+}
+
+const JOURS = [["lun", "Lun"], ["mar", "Mar"], ["mer", "Mer"], ["jeu", "Jeu"], ["ven", "Ven"]];
+
+// Demi-journées habituelles : PRIVÉES. Personne ne les voit ; seule l'intersection avec la personne qui a accepté
+// une mise en relation vous est proposée pour planifier la rencontre.
+function grilleCreneaux(m) {
+  const choisis = new Set(m.creneaux || []);
+  const enregistrer = async () => {
+    try {
+      await api("/api/moi/profil", { methode: "PUT", corps: {
+        offre: m.offre.map((o) => ({ texte: o.texte, concept: o.concept })), recherche: m.recherche.map((o) => ({ texte: o.texte, concept: o.concept })),
+        zones_service: m.zones_service, langues: m.langues, creneaux: [...choisis] } });
+      toast("Disponibilités enregistrées (privées).", "info");
+    } catch (e) { toast(e.message, "erreur"); }
+  };
+  return h("div", {},
+    h("table", { class: "grille-creneaux" },
+      h("thead", {}, h("tr", {}, h("th", {}, ""), JOURS.map(([, lib]) => h("th", { scope: "col" }, lib)))),
+      h("tbody", {}, [["matin", "Matin"], ["apres-midi", "Après-midi"]].map(([moment, lib]) => h("tr", {}, h("th", { scope: "row" }, lib),
+        JOURS.map(([j, jl]) => { const c = `${j}-${moment}`; return h("td", {}, h("input", { type: "checkbox", "aria-label": `${jl} ${lib}`,
+          checked: choisis.has(c), onchange: (e) => { e.target.checked ? choisis.add(c) : choisis.delete(c); enregistrer(); } })); }))))),
+    h("small", { class: "aide" }, "Privé : seules les disponibilités communes avec une personne qui a accepté votre mise en relation vous sont proposées."));
 }

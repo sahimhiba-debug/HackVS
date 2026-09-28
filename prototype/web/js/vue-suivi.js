@@ -41,8 +41,13 @@ function carte(r) {
   }
   if (r.etat === "acceptee") {
     const d = h("input", { type: "date", "aria-label": "Date de la rencontre" });
-    boutons.push(d, h("button", { class: "btn primaire petit", type: "button",
-      onclick: (ev) => d.value ? act("planifier", { date_rencontre: d.value })(ev) : toast("Choisissez une date.") }, "Planifier la rencontre"));
+    const communs = h("div", { class: "creneaux", "aria-live": "polite" });
+    api(`/api/relations/${r.id}/creneaux`).then((c) => communs.replaceChildren(
+      c.creneaux.length ? h("span", { class: "aide" }, "Vos disponibilités communes :") : h("span", { class: "aide" }, c.message),
+      ...c.creneaux.map((x) => h("button", { class: "pilule", type: "button", onclick: act("planifier", { date_rencontre: x.date }) }, x.libelle))))
+      .catch(() => communs.replaceChildren());
+    boutons.push(communs, d, h("button", { class: "btn primaire petit", type: "button",
+      onclick: (ev) => d.value ? act("planifier", { date_rencontre: d.value })(ev) : toast("Choisissez une date.") }, "Planifier une autre date"));
   }
   if (r.etat === "rencontre_planifiee") boutons.push(h("button", { class: "btn primaire petit", type: "button", onclick: act("confirmer_rencontre") }, "La rencontre a eu lieu"));
   if (r.etat === "rencontre_faite") {

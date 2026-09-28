@@ -56,8 +56,9 @@ def test_outils_exposes_et_annotations():
             return {x.name: x.annotations for x in (await c.list_tools()).tools}
     outils = asyncio.run(run())
     assert set(outils) == {"qui_suis_je", "chercher_membres", "expliquer_correspondance", "bourse", "mes_relations",
-                           "publier_besoin", "mettre_en_relation", "repondre", "planifier_soiree"}
-    for nom in ("chercher_membres", "bourse", "mes_relations", "qui_suis_je", "expliquer_correspondance", "planifier_soiree"):
+                           "publier_besoin", "mettre_en_relation", "repondre", "planifier_soiree", "creneaux_communs"}
+    for nom in ("chercher_membres", "bourse", "mes_relations", "qui_suis_je", "expliquer_correspondance", "planifier_soiree",
+                "creneaux_communs"):
         assert outils[nom].read_only_hint is True
     for nom in ("publier_besoin", "mettre_en_relation", "repondre"):
         assert outils[nom].read_only_hint is False
@@ -306,6 +307,9 @@ def test_parcours_agent_complet_et_refus_de_la_machine_d_etats():
                        membre=aidant, elicitation=ok())
     assert err and "[regle_metier]" in msg  # impossible de planifier avant d'accepter
     assert appeler("repondre", {"relation_id": rid, "action": "accepter"}, membre=aidant, elicitation=ok())[1]["coordonnees_partagees"]
+    err, cr = appeler("creneaux_communs", {"relation_id": rid}, membre="p00")
+    assert not err and cr["creneaux"] and all("apres-midi" in c["moment"] or "matin" in c["moment"] for c in cr["creneaux"])
+    assert "[interdit]" in appeler("creneaux_communs", {"relation_id": rid}, membre="p05")[1]  # tiers : refusé
     r = appeler("repondre", {"relation_id": rid, "action": "planifier", "date_rencontre": "2026-10-10"}, membre="p00", elicitation=ok())[1]
     assert r["date_rencontre"] == "2026-10-10"
     appeler("repondre", {"relation_id": rid, "action": "confirmer_rencontre"}, membre=aidant, elicitation=ok())

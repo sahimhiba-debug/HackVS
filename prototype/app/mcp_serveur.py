@@ -205,6 +205,12 @@ def creer_serveur(http: Optional[httpx.Client] = None, membre: Optional[str] = N
                 "donnees_fictives": r["donnees_fictives"]}
 
     @srv.tool(annotations=LECTURE)
+    def creneaux_communs(relation_id: str) -> dict:
+        """Prochaines demi-journées où les DEUX personnes d'une mise en relation acceptée sont disponibles.
+        Les créneaux de chacun restent privés : seule l'intersection est renvoyée, et seulement à ces deux personnes."""
+        return api("GET", f"/api/relations/{relation_id}/creneaux")
+
+    @srv.tool(annotations=LECTURE)
     def bourse() -> list[dict]:
         """Besoins publiés par d'autres membres auxquels le membre courant peut répondre (avec la raison)."""
         return [{"besoin_id": x["besoin"]["id"], "texte": x["besoin"]["besoin"]["texte"],

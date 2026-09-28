@@ -29,9 +29,9 @@ sauf décider à la place du membre.
 | IA locale | propose 1 à 3 compétences quand les règles échouent (e5 multilingue, ONNX, CPU, ≈ 77 ms) | jeu réservé : hit@3 0,875 → **0,917**, options hors sujet 69 % → 54 % |
 | Boucle « IA propose, membre confirme » | jeux réservés les plus durs : succès@3 3/15 → **15/15**, 0 mauvais contact ajouté (borne haute : membre simulé) | [EVALUATION.md §3](docs/EVALUATION.md) |
 | Plan de soirée | programme linéaire, **optimum prouvé** (< 0,1 s) ; 150 membres : 92 participants avec une rencontre utile contre 74 (glouton) ; langue commune ; export agenda | `/soiree`, `36_soiree` |
-| Agent IA (MCP) | 9 outils, confirmation humaine obligatoire, jetons + portées en HTTP, erreurs à code stable | [transcription](docs/captures/agent_mcp.md) |
+| Agent IA (MCP) | 10 outils, confirmation humaine obligatoire, jetons + portées en HTTP, erreurs à code stable | [transcription](docs/captures/agent_mcp.md) |
 | Sécurité | profils = données non fiables ; LLM sans accès aux profils ; injection testée ; télémétrie tierce coupée | [EVALUATION.md §7](docs/EVALUATION.md) |
-| Ingénierie | 51 tests, lint, intégration continue verte, non-régression des évaluations, jeux réservés écrits avant le code | `.github/workflows/ci.yml` |
+| Ingénierie | 53 tests, lint, intégration continue verte, non-régression des évaluations, jeux réservés écrits avant le code | `.github/workflows/ci.yml` |
 
 **Simulé / fictif** : 37 profils de démo, 150 profils synthétiques, historique du Club, confirmations du « membre
 simulé », agent scripté de la transcription. **Non vérifié** : Claude et Apertus contre leurs API réelles (pas de clé
@@ -58,7 +58,7 @@ Brancher un assistant IA : `claude mcp add fil-du-club -e HACKVS_API_URL=http://
 
 ## Vérifier
 ```bash
-python -m pytest -q                        # 51 tests (dont MCP stdio et HTTP de bout en bout)
+python -m pytest -q                        # 53 tests (dont MCP stdio et HTTP de bout en bout)
 python -m eval.run_eval --verifier         # non-régression des 6 jeux
 python scripts/parcours_demo.py --url http://localhost:8000   # navigateur réel → docs/captures/
 python scripts/demo_agent_mcp.py           # transcription de l'agent MCP

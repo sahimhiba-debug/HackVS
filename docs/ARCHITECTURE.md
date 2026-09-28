@@ -7,7 +7,7 @@ Chaque bloc ci-dessous existe dans le dépôt (chemins sous `prototype/`). Rien 
             Membre (web /)          Assistant IA externe (Claude Desktop, Claude Code… via MCP)
                  │                                     │
                  │                     app/mcp_serveur.py : client MINCE de l'API
-                 │                     (9 outils, jetons + portées en HTTP, confirmation humaine par elicitation)
+                 │                     (10 outils, jetons + portées en HTTP, confirmation humaine par elicitation)
                  ▼                                     ▼
         ┌───────────────────────── API FastAPI : app/main.py (autorité unique) ─────────────────────────┐
         │                                                                                               │
@@ -29,7 +29,8 @@ Chaque bloc ci-dessous existe dans le dépôt (chemins sous `prototype/`). Rien 
         │  3. METTRE EN RELATION  store.py (SQLite)                                                     │
         │     machine d'états + rôles : proposée → acceptée → rencontre planifiée → faite → clôturée    │
         │     revérification serveur (on ne sollicite que qui correspond), anonymat levé à l'acceptation,│
-        │     versions de besoin, retrait du consentement en cascade                                    │
+        │     versions de besoin, retrait du consentement en cascade ;
+        │     agenda.py : créneaux communs (privés, seulement après acceptation) pour planifier                                    │
         │                                                                                               │
         │  4. OPTIMISER la soirée  soiree.py                                                            │
         │     valeur d'une rencontre = aides prouvées (même moteur) ; langue commune obligatoire ;      │

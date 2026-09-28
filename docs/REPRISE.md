@@ -3,7 +3,7 @@
 Pour reprendre le travail sans relire toute la conversation.
 
 ## Où en est-on
-- Branche `claude/modest-bohr-xvk53n`, poussée ; CI GitHub Actions verte (lint, 51 tests, non-régression).
+- Branche `claude/modest-bohr-xvk53n`, poussée ; CI GitHub Actions verte (lint, 53 tests, non-régression).
 - Lots 1 à 3 : Bourse des besoins, scène, vue du Club, profil en 30 s, présentation, Docker.
 - Lot 4 (sprint « niveau supérieur ») : IA locale multilingue (suggérer / confirmer, hybride mesuré), « pourquoi / pourquoi pas »,
   plan de soirée optimisé (langue commune, .ics), serveur MCP (stdio + HTTP avec jetons, confirmation humaine, codes d'erreur),

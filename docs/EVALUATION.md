@@ -11,7 +11,7 @@ python -m eval.run_eval [--jeu X] [--semantique] [--membre-simule]   # moteur vs
 python -m eval.eval_suggestions --jeu dev|reserve --methode dense|hybride   # suggestions de l'IA locale
 python -m eval.eval_faux_amis                                       # faux amis composés
 python -m eval.run_eval --verifier                                  # non-régression (CI)
-python -m pytest -q                                                 # 51 tests
+python -m pytest -q                                                 # 53 tests
 ```
 
 ## 1. Protocole : trois familles de jeux, jamais mélangées

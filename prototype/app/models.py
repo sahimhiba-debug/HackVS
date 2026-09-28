@@ -26,6 +26,7 @@ class Profil(BaseModel):
     accepte_introductions: bool = False
     disponible: bool = True
     note_disponibilite: str = ""
+    creneaux: list[str] = []  # « mar-matin », « jeu-apres-midi »… : jamais exposés, seule l'intersection l'est
     presentation: str = ""
     maj: str = ""
 

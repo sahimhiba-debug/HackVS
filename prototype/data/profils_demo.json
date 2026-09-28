@@ -1,5 +1,5 @@
 {
-  "_avertissement": "DONNÉES ENTIÈREMENT FICTIVES. Personnes et entreprises inventées pour le prototype. Toute ressemblance avec une personne ou une entreprise réelle serait fortuite. Aucune donnée n'a été collectée sur le Web.",
+  "_avertissement": "DONNÉES ENTIÈREMENT FICTIVES. Personnes et entreprises inventées pour le prototype. Toute ressemblance avec une personne ou une entreprise réelle serait fortuite. Aucune donnée n'a été collectée sur le Web. Créneaux de disponibilité (champ « creneaux ») générés aléatoirement (graine 2026), fictifs.",
   "utilisateur_demo": "p00",
   "profils": [
     {
@@ -38,7 +38,12 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Petite entreprise familiale de jus de fruits valaisans. Nous lançons une gamme en Suisse alémanique en 2027.",
-      "maj": "2026-08"
+      "maj": "2026-08",
+      "creneaux": [
+        "mer-apres-midi",
+        "jeu-apres-midi",
+        "ven-matin"
+      ]
     },
     {
       "id": "p01",
@@ -78,7 +83,13 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Flotte de douze véhicules réfrigérés. Clients dans l'agroalimentaire et la pharmacie.",
-      "maj": "2026-07"
+      "maj": "2026-07",
+      "creneaux": [
+        "lun-apres-midi",
+        "mar-apres-midi",
+        "jeu-matin",
+        "jeu-apres-midi"
+      ]
     },
     {
       "id": "p02",
@@ -112,7 +123,13 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Transport régional, spécialiste des produits frais pour la restauration.",
-      "maj": "2026-06"
+      "maj": "2026-06",
+      "creneaux": [
+        "lun-apres-midi",
+        "jeu-apres-midi",
+        "ven-matin",
+        "ven-apres-midi"
+      ]
     },
     {
       "id": "p03",
@@ -148,7 +165,11 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Frigoristes depuis 1998. Interventions 24h/24 pour boucheries, caves et restaurants, avec des clients jusqu'à Zurich. Transport frigorifique : nous réparons les groupes froid des camions, nous ne livrons pas.",
-      "maj": "2026-05"
+      "maj": "2026-05",
+      "creneaux": [
+        "lun-apres-midi",
+        "ven-apres-midi"
+      ]
     },
     {
       "id": "p04",
@@ -178,7 +199,11 @@
       "accepte_introductions": false,
       "disponible": true,
       "presentation": "Transport frigorifique pour le Haut-Valais et la Suisse alémanique.",
-      "maj": "2026-04"
+      "maj": "2026-04",
+      "creneaux": [
+        "lun-apres-midi",
+        "mer-matin"
+      ]
     },
     {
       "id": "p05",
@@ -214,7 +239,12 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Plateforme logistique de 8 000 m². Nous assurons aussi des livraisons réfrigérées ponctuelles avec un partenaire.",
-      "maj": "2026-08"
+      "maj": "2026-08",
+      "creneaux": [
+        "lun-matin",
+        "mer-apres-midi",
+        "jeu-apres-midi"
+      ]
     },
     {
       "id": "p06",
@@ -249,7 +279,11 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Nous livrons nous-mêmes Zurich chaque semaine avec notre camion frigorifique et pouvons compléter la tournée.",
-      "maj": "2026-08"
+      "maj": "2026-08",
+      "creneaux": [
+        "mer-matin",
+        "jeu-matin"
+      ]
     },
     {
       "id": "p07",
@@ -316,7 +350,12 @@
       "disponible": false,
       "note_disponibilite": "Capacité complète jusqu'en janvier 2027",
       "presentation": "Transporteur généraliste avec une division froid.",
-      "maj": "2026-08"
+      "maj": "2026-08",
+      "creneaux": [
+        "lun-apres-midi",
+        "mer-apres-midi",
+        "jeu-matin"
+      ]
     },
     {
       "id": "p09",
@@ -340,7 +379,13 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "",
-      "maj": "2025-11"
+      "maj": "2025-11",
+      "creneaux": [
+        "lun-apres-midi",
+        "mar-matin",
+        "mer-matin",
+        "mer-apres-midi"
+      ]
     },
     {
       "id": "p10",
@@ -375,7 +420,12 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Équipe de quatre spécialistes en sécurité informatique pour les PME valaisannes.",
-      "maj": "2026-07"
+      "maj": "2026-07",
+      "creneaux": [
+        "lun-matin",
+        "mar-matin",
+        "mer-matin"
+      ]
     },
     {
       "id": "p11",
@@ -408,7 +458,13 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Support informatique de proximité dans le Bas-Valais.",
-      "maj": "2026-06"
+      "maj": "2026-06",
+      "creneaux": [
+        "mar-apres-midi",
+        "mer-apres-midi",
+        "jeu-apres-midi",
+        "ven-apres-midi"
+      ]
     },
     {
       "id": "p12",
@@ -442,7 +498,11 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Fiduciaire familiale, 12 collaborateurs.",
-      "maj": "2026-03"
+      "maj": "2026-03",
+      "creneaux": [
+        "jeu-matin",
+        "ven-matin"
+      ]
     },
     {
       "id": "p13",
@@ -477,7 +537,12 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Conseil juridique aux PME et aux start-up.",
-      "maj": "2026-08"
+      "maj": "2026-08",
+      "creneaux": [
+        "lun-apres-midi",
+        "jeu-matin",
+        "jeu-apres-midi"
+      ]
     },
     {
       "id": "p14",
@@ -506,7 +571,12 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Agence de placement active dans tout le Valais.",
-      "maj": "2026-08"
+      "maj": "2026-08",
+      "creneaux": [
+        "mer-matin",
+        "jeu-matin",
+        "ven-matin"
+      ]
     },
     {
       "id": "p15",
@@ -542,7 +612,13 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Agence de communication pour marques du terroir.",
-      "maj": "2026-07"
+      "maj": "2026-07",
+      "creneaux": [
+        "lun-matin",
+        "mer-matin",
+        "jeu-apres-midi",
+        "ven-matin"
+      ]
     },
     {
       "id": "p16",
@@ -572,7 +648,11 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Traductrice bilingue, spécialisée agroalimentaire.",
-      "maj": "2026-02"
+      "maj": "2026-02",
+      "creneaux": [
+        "lun-matin",
+        "mar-matin"
+      ]
     },
     {
       "id": "p17",
@@ -630,7 +710,13 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Sécurité événementielle pour manifestations de 50 à 5 000 personnes.",
-      "maj": "2026-06"
+      "maj": "2026-06",
+      "creneaux": [
+        "lun-apres-midi",
+        "mar-apres-midi",
+        "jeu-matin",
+        "ven-matin"
+      ]
     },
     {
       "id": "p19",
@@ -658,7 +744,11 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Conseil en sécurité au travail pour PME.",
-      "maj": "2026-05"
+      "maj": "2026-05",
+      "creneaux": [
+        "mar-apres-midi",
+        "jeu-apres-midi"
+      ]
     },
     {
       "id": "p20",
@@ -691,7 +781,11 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Atelier de 9 personnes, formation d'apprentis.",
-      "maj": "2026-04"
+      "maj": "2026-04",
+      "creneaux": [
+        "jeu-apres-midi",
+        "ven-apres-midi"
+      ]
     },
     {
       "id": "p21",
@@ -720,7 +814,13 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Construction métallique pour l'industrie et l'agriculture.",
-      "maj": "2026-01"
+      "maj": "2026-01",
+      "creneaux": [
+        "mer-matin",
+        "mer-apres-midi",
+        "jeu-matin",
+        "ven-matin"
+      ]
     },
     {
       "id": "p22",
@@ -754,7 +854,12 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Bureau d'ingénieurs en énergie.",
-      "maj": "2026-08"
+      "maj": "2026-08",
+      "creneaux": [
+        "jeu-apres-midi",
+        "ven-matin",
+        "ven-apres-midi"
+      ]
     },
     {
       "id": "p23",
@@ -783,7 +888,12 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Conseil en financement pour PME valaisannes.",
-      "maj": "2026-07"
+      "maj": "2026-07",
+      "creneaux": [
+        "mar-apres-midi",
+        "mer-matin",
+        "jeu-matin"
+      ]
     },
     {
       "id": "p24",
@@ -811,7 +921,12 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Courtier indépendant.",
-      "maj": "2026-03"
+      "maj": "2026-03",
+      "creneaux": [
+        "lun-matin",
+        "mar-matin",
+        "ven-apres-midi"
+      ]
     },
     {
       "id": "p25",
@@ -840,7 +955,13 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Parc de 60 machines, livraison sur chantier.",
-      "maj": "2026-06"
+      "maj": "2026-06",
+      "creneaux": [
+        "mar-matin",
+        "jeu-apres-midi",
+        "ven-matin",
+        "ven-apres-midi"
+      ]
     },
     {
       "id": "p26",
@@ -877,7 +998,11 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Studio web pour commerces et producteurs locaux.",
-      "maj": "2026-08"
+      "maj": "2026-08",
+      "creneaux": [
+        "mer-matin",
+        "jeu-apres-midi"
+      ]
     },
     {
       "id": "p27",
@@ -912,7 +1037,12 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Emballage et étiquetage pour l'agroalimentaire.",
-      "maj": "2026-05"
+      "maj": "2026-05",
+      "creneaux": [
+        "jeu-matin",
+        "jeu-apres-midi",
+        "ven-matin"
+      ]
     },
     {
       "id": "p28",
@@ -945,7 +1075,13 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Domaine viticole familial de 6 hectares.",
-      "maj": "2026-08"
+      "maj": "2026-08",
+      "creneaux": [
+        "lun-matin",
+        "mar-apres-midi",
+        "mer-matin",
+        "mer-apres-midi"
+      ]
     },
     {
       "id": "p29",
@@ -978,7 +1114,11 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "A cédé son entreprise en 2023. Partage volontiers son réseau et son expérience.",
-      "maj": "2026-06"
+      "maj": "2026-06",
+      "creneaux": [
+        "jeu-apres-midi",
+        "ven-matin"
+      ]
     },
     {
       "id": "p30",
@@ -1013,7 +1153,12 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Petite équipe issue de la recherche appliquée.",
-      "maj": "2026-08"
+      "maj": "2026-08",
+      "creneaux": [
+        "mar-matin",
+        "jeu-matin",
+        "jeu-apres-midi"
+      ]
     },
     {
       "id": "p31",
@@ -1076,7 +1221,13 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Représente une dizaine de producteurs valaisans à Zurich et Berne.",
-      "maj": "2026-07"
+      "maj": "2026-07",
+      "creneaux": [
+        "lun-apres-midi",
+        "mar-apres-midi",
+        "mer-matin",
+        "jeu-apres-midi"
+      ]
     },
     {
       "id": "p33",
@@ -1110,7 +1261,12 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Nous cherchons un transporteur frigorifique fiable pour nos livraisons vers Zurich.",
-      "maj": "2026-09"
+      "maj": "2026-09",
+      "creneaux": [
+        "lun-apres-midi",
+        "mar-apres-midi",
+        "jeu-matin"
+      ]
     },
     {
       "id": "p34",
@@ -1139,7 +1295,11 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Nos clients : transporteurs frigorifiques et entreprises de logistique de tout le Valais.",
-      "maj": "2026-08"
+      "maj": "2026-08",
+      "creneaux": [
+        "lun-matin",
+        "jeu-apres-midi"
+      ]
     },
     {
       "id": "p35",
@@ -1172,7 +1332,11 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Rucher familial de 120 colonies.",
-      "maj": "2026-07"
+      "maj": "2026-07",
+      "creneaux": [
+        "lun-matin",
+        "jeu-apres-midi"
+      ]
     },
     {
       "id": "p36",
@@ -1200,7 +1364,13 @@
       "accepte_introductions": true,
       "disponible": true,
       "presentation": "Nous transformons les fruits des producteurs valaisans.",
-      "maj": "2026-06"
+      "maj": "2026-06",
+      "creneaux": [
+        "lun-apres-midi",
+        "mar-apres-midi",
+        "ven-matin",
+        "ven-apres-midi"
+      ]
     }
   ]
 }

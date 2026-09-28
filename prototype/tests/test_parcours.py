@@ -494,3 +494,26 @@ def test_pas_de_double_introduction_ni_de_table_pour_deux_membres_deja_en_relati
     client.post(f"/api/relations/{r.json()['id']}/accepter", json={}, headers=JULIEN)
     apres = client.get("/api/soiree/plan?tours=3").json()
     assert not any({m["a"]["id"], m["b"]["id"]} == paire for m in apres["rencontres"]) and apres["paires_deja_en_relation"] == 1
+
+
+def test_creneaux_communs_prives_et_apres_acceptation():
+    from datetime import date
+
+    from app import agenda
+    assert agenda.communs(["mar-matin", "jeu-apres-midi"], ["jeu-apres-midi"], date(2026, 9, 28))[0] == {
+        "date": "2026-10-01", "moment": "apres-midi", "libelle": "jeudi 1 octobre, après-midi"}
+    assert agenda.communs(["lun-matin"], ["ven-matin"], date(2026, 9, 28)) == []
+    b = publier()
+    r = client.post("/api/relations", json={"besoin_id": b["id"], "cible_id": "p01", "message": "Bonjour"}, headers=SOPHIE).json()
+    assert client.get(f"/api/relations/{r['id']}/creneaux", headers=SOPHIE).status_code == 409  # pas avant l'acceptation
+    client.post(f"/api/relations/{r['id']}/accepter", json={}, headers=JULIEN)
+    c = client.get(f"/api/relations/{r['id']}/creneaux", headers=SOPHIE).json()
+    assert c["creneaux"] and client.get(f"/api/relations/{r['id']}/creneaux", headers=ELODIE).status_code == 403
+    # les créneaux ne sortent jamais dans les résultats de recherche ni dans la liste des membres
+    res = client.post("/api/rechercher", json={"besoin": b["besoin"]}, headers=SOPHIE).text
+    assert "creneaux" not in res and "creneaux" not in client.get("/api/membres").text
+    assert client.put("/api/moi/profil", headers=JULIEN, json={"offre": [{"texte": "Transport", "concept": None}],
+                                                               "creneaux": ["dim-matin"]}).status_code == 422
+    ok = client.put("/api/moi/profil", headers=JULIEN, json={"offre": [{"texte": "Transport frigorifique", "concept": "transport_frigorifique"}],
+                                                             "creneaux": ["ven-matin", "ven-matin", "lun-matin"]})
+    assert ok.status_code == 200 and ok.json()["creneaux"] == ["ven-matin", "lun-matin"]

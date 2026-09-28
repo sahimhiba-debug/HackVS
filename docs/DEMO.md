@@ -88,7 +88,7 @@ Version 3 minutes, plus :
 - (40 s) **Différence avec l'existant** : Brella et Swapcard font déjà du matching avec double consentement, **pendant un événement**. Hivebrite est un annuaire permanent. Nous faisons parvenir **un besoin** aux membres qui peuvent y répondre, entre les événements, et nous refusons de proposer sans preuve.
 - (40 s) **Architecture** : analyse du besoin (règles ou Claude, en flux) → filtres durs dans le code → classement → preuves vérifiées → abstention. Même moteur dans les deux sens : c'est pour ça que les deux écrans sont cohérents.
 - (40 s) **Soirée optimisée** (acte 3) et **assistant IA via MCP** (acte 4) : mêmes garde-fous, mêmes preuves.
-- (20 s) **Ingénierie visible** : 51 tests, intégration continue, jeux réservés écrits avant le code, reconnaissance de 20 projets open source (ce qu'on a repris, ce qu'on a mesuré et rejeté).
+- (20 s) **Ingénierie visible** : 53 tests, intégration continue, jeux réservés écrits avant le code, reconnaissance de 20 projets open source (ce qu'on a repris, ce qu'on a mesuré et rejeté).
 
 ## Support de présentation
 `/presentation` : 11 diapositives, hors ligne, captures réelles, notes d'orateur (N) avec la répartition P1/P2, espaces « à compléter » en ambre

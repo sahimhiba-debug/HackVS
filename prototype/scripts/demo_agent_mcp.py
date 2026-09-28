@@ -106,7 +106,10 @@ async def scenario() -> None:
     await appel("p00", "repondre", {"relation_id": rel["relation_id"], "action": "accepter"}, membre_humain(True))
     dire("Agent de Julien", "Sophie vous sollicite pour un transport frigorifique vers Zurich. Acceptez-vous ?")
     await appel(choisi["membre_id"], "repondre", {"relation_id": rel["relation_id"], "action": "accepter"}, membre_humain(True))
-    await appel("p00", "repondre", {"relation_id": rel["relation_id"], "action": "planifier", "date_rencontre": "2026-10-08"},
+    dire("Agent de Sophie", "Je cherche vos disponibilités communes (celles de Julien restent privées) :")
+    cr = await appel("p00", "creneaux_communs", {"relation_id": rel["relation_id"]})
+    date_choisie = cr["creneaux"][0]["date"] if cr and cr["creneaux"] else "2026-10-08"
+    await appel("p00", "repondre", {"relation_id": rel["relation_id"], "action": "planifier", "date_rencontre": date_choisie},
                 membre_humain(True))
 
     lignes.append("## 5. Préparer la prochaine soirée du Club\n")

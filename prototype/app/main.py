@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+from datetime import date
 import time
 from pathlib import Path
 from typing import Literal, Optional
@@ -24,7 +25,7 @@ from pydantic import BaseModel
 
 import threading
 
-from . import analyse, club, parser_llm, parser_rules, securite, semantique, soiree
+from . import agenda, analyse, club, parser_llm, parser_rules, securite, semantique, soiree
 from .baseline import rechercher_mots_cles
 from .matching import expliquer, rechercher
 from .models import Besoin, Profil
@@ -198,6 +199,7 @@ class EntreeProfil(BaseModel):
     zones_service: list[str] = []
     langues: list[str] = []
     presentation: Optional[str] = None
+    creneaux: Optional[list[str]] = None
 
 
 @app.post("/api/profil/analyser")
@@ -228,6 +230,10 @@ def modifier_profil(e: EntreeProfil, x_membre: Optional[str] = Header(None)):
               "zones_service": list(dict.fromkeys(e.zones_service)), "langues": list(dict.fromkeys(e.langues))}
     if e.presentation is not None:
         champs["presentation"] = e.presentation.strip()[:600]
+    if e.creneaux is not None:
+        if any(c not in agenda.CRENEAUX for c in e.creneaux):
+            raise HTTPException(422, "Créneau inconnu (attendu : lun-matin … ven-apres-midi).")
+        champs["creneaux"] = agenda.valides(e.creneaux)
     MAGASIN.modifier_profil(m.id, champs)
     nouveau = profil(m.id)
     return nouveau.model_dump() | {"alertes_contenu": securite.signaux_profil(nouveau)}
@@ -523,6 +529,21 @@ def _vue_relation(r, pour: Profil) -> dict:
 def mes_relations(x_membre: Optional[str] = Header(None)):
     m = moi(x_membre)
     return [_vue_relation(r, m) for r in MAGASIN.relations(m.id)]
+
+
+@app.get("/api/relations/{relation_id}/creneaux")
+def creneaux_communs(relation_id: str, x_membre: Optional[str] = Header(None)):
+    """Prochaines demi-journées communes aux DEUX personnes, visibles d'elles seules et après acceptation."""
+    m = moi(x_membre)
+    r = _erreurs(lambda: MAGASIN.relation(relation_id))
+    if m.id not in (r.auteur_id, r.aidant_id):
+        raise HTTPException(403, "Seules les deux personnes de la mise en relation voient leurs créneaux communs.")
+    if r.etat not in ("acceptee", "rencontre_planifiee"):
+        raise HTTPException(409, "Les créneaux communs ne sont calculés qu'après acceptation.")
+    a, b = profil(r.auteur_id), profil(r.aidant_id)
+    props = agenda.communs(a.creneaux, b.creneaux, date.today())
+    return {"creneaux": props, "message": "" if props else
+            "Aucun créneau commun déclaré dans les deux prochaines semaines : proposez une date dans votre message."}
 
 
 @app.post("/api/relations/{relation_id}/{action}")
