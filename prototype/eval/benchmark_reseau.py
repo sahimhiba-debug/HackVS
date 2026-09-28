@@ -176,7 +176,8 @@ def main(graines=(1, 2, 3, 4, 5)) -> dict:
               "sans relation, 20 % d'offres périmées, 10 % sans consentement). **Aucune donnée du Club.** Budget : au plus "
               f"{BUDGET_PAR_MEMBRE} introductions par membre, pour toutes les méthodes. Moyennes sur {len(graines)} réseaux.", "",
               "Utilité et réciprocité sont mesurées contre la vérité LATENTE (offres réellement valides), que personne ne voit.", "",
-              "| Méthode | Intros | Utiles % | Réciproques % | Membres dont un besoin est servi | Ponts % | Nouveauté % | Isolés restants | Nouveaux servis | Vers populaires % | Composantes | ms |",
+              "| Méthode | Intros | Utiles % | Réciproques % | Membres dont un besoin est servi | Ponts % | Nouveauté % "
+              "| Isolés restants | Nouveaux servis | Vers populaires % | Composantes | ms |",
               "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for nom, m in moy.items():
         lignes.append(f"| {nom} | {m['introductions']} | {m['utiles_%']} | {m['reciproques_%']} | {m['membres_avec_besoin_servi']} | "
