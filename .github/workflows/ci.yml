@@ -31,3 +31,5 @@ jobs:
         run: python -m eval.run_eval --verifier
       - name: Plateforme de décision (20 scénarios, attendus fixés avant exécution)
         run: python -m eval.eval_decisions
+      - name: Cohérence pitch ↔ code (registre des preuves, chiffres du pitch, routes de la démo)
+        run: python scripts/validate_competition_claims.py --sans-benchmark

@@ -86,3 +86,23 @@ relie deux groupes existants) ; le micro-cercle incluait un profil vieux de 2 an
 **Tests.** `test_scene.py` (5) : rejeu identique 3 fois, récit produit par le moteur, précédent = séquentiel, fin,
 réinitialisation, isolation, aucun champ privé. Navigateur (1440 px et 390 px) : 12 étapes, aucun débordement,
 rafraîchissement conservé, double clic = une étape, clavier, aucune erreur JS. 106 → 111 tests.
+
+## BOUCLE 4 — flux B : preuves, vidéo réelle, pitch, dossier de compétition
+
+**Hypothèse.** Un jury doit pouvoir vérifier chaque phrase ; et une phrase du pitch ne doit jamais devenir fausse
+après un refactor.
+
+**Changements.** `competition/` (20 documents numérotés + FAILURES, ARCHITECTURE_DECISIONS, RESEARCH_LOG, pitchs 90 s /
+3 min / 5 min, jury simulé, répétition, vidéo). Registre des preuves EXÉCUTABLE (`claims.json` →
+`validate_competition_claims.py`, en CI) : contrôles réels, chiffres du pitch confrontés aux chiffres prouvés, routes
+de la démo, durée de la vidéo. Vidéo réelle (144 s, WebM, Playwright) enregistrée depuis la scène, sous-titres depuis
+une source unique ; documents vidéo et minutage générés.
+
+**Défauts trouvés.** Le validateur produisait des faux positifs (minutages, références de fichiers, numérotation) :
+exclus précisément ; **test de mutation du validateur** : une fausse métrique (« 73 % ») ajoutée au pitch est rejetée.
+Mesure « temps avant la démo » fausse (133 s) → repère de régie. Code brut `PROPOSER_A_L_HUMAIN` affiché à l'écran →
+texte humain, vidéo réenregistrée. Pitch : phrase invérifiable et injuste envers le Club remplacée.
+Concurrence vérifiée par recherche web : mise en relation IA et communauté 365 jours existent déjà → retirées de notre
+différenciation.
+
+**Mesures.** 111 tests ; 20/20 ; claims vérifiées ; pitch 3 min ≈ 171 s estimé, démo dès ≈ 22 s, jargon 1,3 %.

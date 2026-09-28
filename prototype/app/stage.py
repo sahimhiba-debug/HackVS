@@ -237,7 +237,7 @@ def _e11_avant_apres(w: Monde) -> dict:
             "faits": {"depart": _visibles(w.depart["indicateurs"]), "maintenant": _visibles(me.indicateurs(g, t)),
                       "si_le_cercle_a_lieu": _visibles(sim["apres"]),
                       "nouveaux_ponts": len(sim["nouveaux_ponts"]), "nature": "SIMULATION", "hypothese": sim["hypothese"],
-                      "decision": "PROPOSER_A_L_HUMAIN : l'organisatrice et chaque membre décident"}}
+                      "decision": "Proposé à la décision humaine : l'organisatrice et chaque membre décident. Rien n'est envoyé."}}
 
 
 def _visibles(ind: dict) -> dict:

@@ -1,0 +1,20 @@
+{
+  "_source_unique": "Ce fichier pilote l'enregistrement (prototype/scripts/enregistrer_video.py) ET la voix off : un changement ici change les deux.",
+  "format": {"largeur": 1440, "hauteur": 810},
+  "plans": [
+    {"etape": 0, "duree": 7, "texte": "La Foire crée les rencontres. Un mois plus tard, que reste-t-il ?"},
+    {"etape": 1, "duree": 9, "texte": "Un réseau fictif de seize membres. Des rencontres ont eu lieu — mais le réseau reste fait d'îlots."},
+    {"etape": 2, "duree": 12, "texte": "Sophie rejoint le Club. Elle ne connaît personne. Le système propose un profil, elle le corrige. Par défaut, elle est invisible."},
+    {"etape": 3, "duree": 9, "texte": "Elle cherche un partenaire pour développer son activité en Allemagne. Le besoin est compris localement, sans modèle externe."},
+    {"etape": 4, "duree": 16, "texte": "Pas une liste de noms : deux personnes, avec leurs preuves. Markus peut l'aider — et Sophie peut l'aider en retour. Ce qui reste inconnu est affiché.", "defiler": true},
+    {"etape": 5, "duree": 11, "texte": "Il ne donne pas le numéro de Markus. Et pour le Japon, il s'abstient : plutôt aucune proposition qu'un mauvais contact."},
+    {"etape": 6, "duree": 8, "texte": "Sophie demande une introduction. Markus reçoit une demande. Il peut refuser."},
+    {"etape": 7, "duree": 9, "texte": "Markus accepte. Les coordonnées sont partagées maintenant — pas avant. Une relation naît dans le graphe."},
+    {"etape": 8, "duree": 8, "texte": "Ils se rencontrent. La relation garde son contexte : où, quand, pourquoi."},
+    {"etape": 9, "duree": 14, "texte": "Dix jours plus tard : une seule relance, fondée sur une preuve — Markus cherche ce que Sophie produit. Pour les dix-sept autres paires : rien de nouveau, donc silence.", "defiler": true},
+    {"etape": 10, "duree": 9, "texte": "Markus donne suite. Sophie note une affaire en cours : une opportunité, pas encore un résultat."},
+    {"etape": 11, "duree": 15, "texte": "Le réseau voit ce qu'aucun membre ne voit seul : une présentation, proposée d'abord à Markus. Et un micro-cercle de cinq personnes, avec ses inconnues.", "defiler": true},
+    {"etape": 12, "duree": 10, "texte": "Avant d'agir, on simule : deux groupes n'en forment plus qu'un. L'humain décide."},
+    {"etape": 12, "duree": 7, "texte": "Chaque événement crée des rencontres. Nous faisons en sorte qu'elles deviennent quelque chose.", "fin": true}
+  ]
+}
