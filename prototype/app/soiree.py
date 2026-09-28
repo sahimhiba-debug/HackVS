@@ -46,12 +46,29 @@ def _aide(i: Profil, j: Profil, besoins_i, tax: Taxonomie) -> Optional[dict]:
         if s:
             valeur = 1.0 if s.niveau == "forte" else 0.5
             if meilleure is None or valeur > meilleure["valeur"]:
-                meilleure = {"valeur": valeur, "besoin": source, "preuve": s.preuves[0].extrait, "niveau": s.niveau}
+                meilleure = {"valeur": valeur, "besoin": source, "preuve": s.preuves[0].extrait, "niveau": s.niveau,
+                             "champ_preuve": s.preuves[0].champ, "nature_preuve": s.preuves[0].nature}
     return meilleure
 
 
 def langues_communes(a: Profil, b: Profil) -> list[str]:
     return sorted(set(a.langues) & set(b.langues))
+
+
+def calculer_aides(participants: list[Profil], besoins_publies: list, tax: Taxonomie) -> dict[tuple[str, str], dict]:
+    """(i, j) → meilleure aide PROUVÉE que j peut apporter à i (moteur habituel : filtres, consentement, preuves).
+    Aucune contrainte de soirée n'est appliquée ici (langue, paires déjà en relation) : c'est le rôle de l'appelant."""
+    aides: dict[tuple[str, str], dict] = {}
+    for i in participants:
+        for source, besoin in _recherches(i, besoins_publies, tax):
+            res = rechercher(besoin, i, participants, tax, limite=len(participants))
+            for s_ in res.suggestions:
+                valeur = 1.0 if s_.niveau == "forte" else 0.5
+                cle = (i.id, s_.profil.id)
+                if cle not in aides or valeur > aides[cle]["valeur"]:
+                    aides[cle] = {"valeur": valeur, "besoin": source, "preuve": s_.preuves[0].extrait, "niveau": s_.niveau,
+                                  "champ_preuve": s_.preuves[0].champ, "nature_preuve": s_.preuves[0].nature}
+    return aides
 
 
 def valeurs(participants: list[Profil], besoins_publies: list, tax: Taxonomie,
@@ -63,15 +80,7 @@ def valeurs(participants: list[Profil], besoins_publies: list, tax: Taxonomie,
     de O(n²). Même résultat : qu'un membre soit proposé ne dépend pas des autres profils (seul le classement en dépend),
     et la preuve retenue est la même (vérifié par test d'équivalence)."""
     par_id = {p.id: p for p in participants}
-    aides: dict[tuple[str, str], dict] = {}  # (i, j) → meilleure aide que j apporte à i
-    for i in participants:
-        for source, besoin in _recherches(i, besoins_publies, tax):
-            res = rechercher(besoin, i, participants, tax, limite=len(participants))
-            for s_ in res.suggestions:
-                valeur = 1.0 if s_.niveau == "forte" else 0.5
-                cle = (i.id, s_.profil.id)
-                if cle not in aides or valeur > aides[cle]["valeur"]:
-                    aides[cle] = {"valeur": valeur, "besoin": source, "preuve": s_.preuves[0].extrait, "niveau": s_.niveau}
+    aides = calculer_aides(participants, besoins_publies, tax)
     aretes = {}
     ordre = {p.id: k for k, p in enumerate(participants)}
     for a_id, b_id in {tuple(sorted(k, key=ordre.get)) for k in aides}:

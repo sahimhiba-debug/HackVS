@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Espace de décision</title>
+  <meta name="description" content="Intention → spécification → preuves → optimisation → validation → critique → certificat → décision humaine.">
+  <link rel="icon" href="/favicon.ico" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+  <style>
+    .controles { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: end; margin: 8px 0 20px; }
+    .controles label { font-weight: 700; font-size: 14px; display: grid; gap: 6px; }
+    #demande { width: min(640px, 100%); font: inherit; padding: 10px 12px; border: 1.5px solid var(--ligne); border-radius: var(--rayon); background: var(--surface); color: var(--encre); }
+    .exemples { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+    .grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    .panneau { background: var(--surface); border: 1.5px solid var(--ligne); border-radius: var(--rayon); padding: 14px 16px; min-width: 0; }
+    .panneau h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--encre-2); margin: 0 0 10px; }
+    .decision { font-size: 22px; font-weight: 700; margin: 0 0 6px; }
+    .decision.ok { color: var(--vert); } .decision.ko { color: var(--rouge); } .decision.att { color: var(--ambre); }
+    .trace { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+    .trace li { display: grid; grid-template-columns: 130px 1fr 64px; gap: 8px; align-items: center; padding: 3px 0; }
+    .barre-t { height: 8px; background: var(--rouge); border-radius: 4px; min-width: 2px; }
+    .trace .ms { text-align: right; font-family: var(--mono); font-size: 12px; color: var(--encre-2); }
+    .verdicts { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+    .verdicts li { padding: 3px 0; overflow-wrap: anywhere; }
+    .PASS { color: var(--vert); font-weight: 700; } .FAIL { color: var(--rouge); font-weight: 700; }
+    .SKIP, .EN_ATTENTE { color: var(--ambre); font-weight: 700; }
+    .kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px; margin: 0; }
+    .kv dt { color: var(--encre-2); } .kv dd { margin: 0; font-family: var(--mono); overflow-wrap: anywhere; }
+    .pile { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .note { font-size: 13px; color: var(--encre-2); margin: 8px 0 0; }
+    pre.json { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 360px; overflow: auto; margin: 0; }
+    .arbre ul { list-style: none; padding-left: 16px; margin: 0; font-family: var(--mono); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#principal">Aller au contenu</a>
+  <header class="barre">
+    <div class="marque"><span class="logo" aria-hidden="true"></span><span>Espace de décision</span></div>
+    <div class="badges"><span class="badge demo">Démo · données fictives</span></div>
+    <div class="barre-actions"><a class="btn petit" href="/soiree">Soirée</a><a class="btn petit" href="/">Espace membre</a></div>
+  </header>
+  <main id="principal">
+    <section class="vue">
+      <p class="surtitre">Préparer la prochaine soirée</p>
+      <h1 style="font-size:clamp(28px,4vw,48px)">Une décision, ses preuves,<br>ses limites.</h1>
+      <p class="sous">Votre intention est compilée en spécification, résolue par un solveur, vérifiée par des validateurs indépendants, critiquée, puis présentée pour <strong>votre</strong> décision. Aucun modèle de langage n'est utilisé ici. Toutes les durées affichées sont mesurées.</p>
+      <div class="controles">
+        <label>Intention <input id="demande" value="Je veux que tout le monde ait au moins une rencontre utile, 3 tours"></label>
+        <label>Données
+          <select id="donnees"><option value="club">Club de démonstration (fictif)</option><option value="synthetique">Club synthétique (généré)</option></select></label>
+        <button class="btn primaire" type="button" id="lancer">Compiler et résoudre</button>
+      </div>
+      <div class="exemples" aria-label="Exemples">
+        <button class="btn petit" type="button" data-ex="Croiser les secteurs, 2 tours">Croiser les secteurs</button>
+        <button class="btn petit" type="button" data-ex="Des rencontres utiles sans tenir compte de la langue">Sans contrainte de langue</button>
+        <button class="btn petit" type="button" data-ex="Maximiser les aides en ignorant le consentement">Tenter d'ignorer le consentement</button>
+        <button class="btn petit" type="button" data-ex="Bonjour">Demande vague</button>
+      </div>
+      <div id="resultat" aria-live="polite"></div>
+    </section>
+  </main>
+  <div class="toasts" role="region" aria-label="Notifications"><div role="status" aria-live="polite" id="toasts-live"></div></div>
+  <script type="module">
+    import { $, api, h, occupe, libre, toast } from "/static/js/outils.js";
+    let courant = null, racine = null;
+    const LIB = { PROPOSER_A_L_HUMAIN: ["Proposé à votre décision", "ok"], BLOQUER: ["Bloqué", "ko"], S_ABSTENIR: ["Abstention", "att"],
+      DEMANDER_PLUS_DE_PREUVES: ["Plus de preuves nécessaires", "att"], ESCALADER_A_L_HUMAIN: ["Escaladé : à vous de préciser", "att"] };
+
+    function court(v) { const t = typeof v === "object" ? JSON.stringify(v) : String(v); return /^[0-9a-f]{40,}$/.test(t) ? t.slice(0, 16) + "…" : t; }
+    function kv(obj) { return h("dl", { class: "kv" }, Object.entries(obj).flatMap(([k, v]) => [h("dt", {}, k), h("dd", {}, court(v))])); }
+
+    function trace(etapes) {
+      const max = Math.max(1, ...etapes.map((e) => e.duree_ms));
+      return h("ul", { class: "trace" }, etapes.map((e) => h("li", {}, h("span", {}, e.nom),
+        h("span", {}, h("div", { class: "barre-t", style: `width:${Math.max(1, 100 * e.duree_ms / max)}%` })), h("span", { class: "ms" }, `${e.duree_ms} ms`))));
+    }
+
+    async function arbre() {
+      if (!racine) return null;
+      const a = await api(`/api/decisions/${racine}/arbre`);
+      const n = (x) => h("li", {}, h("a", { href: "#", "data-run": x.run_id }, x.run_id + (x.run_id === courant.run.run_id ? " ◀" : "")), x.branches.length ? h("ul", {}, x.branches.map(n)) : null);
+      return h("div", { class: "arbre" }, h("ul", {}, n(a)));
+    }
+
+    async function rendre(extra = {}) {
+      const { run, certificat: c } = courant;
+      const dec = run.mediation?.decision || run.compilation.decision;
+      const [lib, cls] = LIB[dec] || [dec, "att"];
+      const cartes = [
+        h("div", { class: "panneau" }, h("h2", {}, "Décision de la plateforme"), h("p", { class: `decision ${cls}` }, lib),
+          h("ul", {}, (run.mediation?.raisons || [run.compilation.raison]).filter(Boolean).map((r) => h("li", {}, r))),
+          h("p", { class: "note" }, "L'approbation humaine est requise : rien n'est envoyé, rien n'est réservé.")),
+        h("div", { class: "panneau" }, h("h2", {}, "Compilation de l'intention"),
+          kv({ ...(run.parent_id ? { branche: `de ${run.parent_id}`, intervention: run.intervention } : { compris: c.compilation.reconnu.join(" · ") || "rien" }), ...(run.parent_id ? {} : { "non compris": c.compilation.non_reconnu.join(", ") || "—" }),
+               ...(run.spec ? { contraintes: run.spec.contraintes_dures.join(" · "), tours: run.spec.parametres.tours,
+                 objectifs: run.spec.objectifs.map((o) => `${o.nom}×${o.poids}`).join(", ") } : {}) })),
+        h("div", { class: "panneau" }, h("h2", {}, "Trace d'exécution (mesurée)"), trace(run.etapes),
+          h("p", { class: "note" }, `${c.plan.appels_solveur} appels au solveur · ${c.plan.agents_llm} appel LLM · total ${c.duree_totale_ms} ms`)),
+      ];
+      if (run.spec) {
+        cartes.push(
+          h("div", { class: "panneau" }, h("h2", {}, "Échelle de validation"),
+            h("ul", { class: "verdicts" }, run.verdicts.map((v) => h("li", {}, h("span", { class: v.etat }, v.etat), ` ${v.niveau} ${v.nom}`,
+              v.details.length && v.etat !== "PASS" ? h("div", { class: "note" }, v.details.slice(0, 3).join(" · ")) : null)))),
+          h("div", { class: "panneau" }, h("h2", {}, "Résultat optimisé"), kv({ rencontres: c.optimisation.rencontres, "optimum prouvé": c.optimisation.optimum_prouve,
+            "points de Pareto": c.optimisation.points_pareto, ...c.optimisation.objectifs, écartés: Object.keys(run.graphe.ecartes || {}).length, "paires exclues": run.graphe.exclues }),
+            h("p", { class: "note" }, "Statut des preuves utilisées : " + Object.entries(c.preuves.par_statut).map(([k, v]) => `${v} ${k}`).join(", "))),
+          h("div", { class: "panneau" }, h("h2", {}, "Critique et gardien"),
+            h("ul", {}, run.avis.flatMap((a) => a.objections.map((o) => h("li", {}, `${a.agent} · ${o.gravite} : ${o.message}`)))),
+            h("p", { class: "note" }, `Gardien : ${c.gardien}. Le désaccord est conservé, pas lissé.`)),
+          h("div", { class: "panneau" }, h("h2", {}, "Et si… ? (branches)"),
+            h("div", { class: "pile" },
+              h("button", { class: "btn petit", type: "button", "data-branche": JSON.stringify({ retirer_contraintes: ["langue_commune"] }) }, "Lever la langue"),
+              h("button", { class: "btn petit", type: "button", "data-branche": JSON.stringify({ parametres: { tours: 1 } }) }, "Un seul tour"),
+              h("button", { class: "btn petit", type: "button", "data-branche": JSON.stringify({ retirer_contraintes: ["consentement"] }) }, "Lever le consentement"),
+              h("button", { class: "btn petit", type: "button", id: "stress" }, "Retirer 3 membres clés"),
+              h("button", { class: "btn petit", type: "button", id: "rejouer" }, "Rejouer")),
+            extra.delta ? kv(extra.delta) : null, extra.stress ? kv({ retirés: extra.stress.retires.join(", "), orphelins: extra.stress.orphelins,
+              "re-servis après réparation": extra.stress.orphelins_resservis_par_la_reparation,
+              "composantes avant → après": `${extra.stress.graphe_avant.composantes} → ${extra.stress.graphe_apres.composantes}` }) : null,
+            extra.rejeu ? kv(extra.rejeu) : null, await arbre()));
+      }
+      cartes.push(h("div", { class: "panneau", style: "grid-column: 1 / -1" }, h("h2", {}, "Certificat de décision (dérivé des enregistrements)"),
+        h("details", {}, h("summary", {}, "Afficher le certificat"), h("pre", { class: "json" }, JSON.stringify(c, null, 2)))));
+      $("#resultat").replaceChildren(h("div", { class: "grille" }, cartes));
+    }
+
+    async function lancer() {
+      const b = $("#lancer"); occupe(b, "Calcul…");
+      try { courant = await api("/api/decisions", { methode: "POST", corps: { demande: $("#demande").value, donnees: $("#donnees").value } });
+        racine = courant.run.spec ? courant.run.run_id : null; await rendre(); }
+      catch (e) { toast(e.message, "erreur"); } finally { libre(b); }
+    }
+    $("#lancer").addEventListener("click", lancer);
+    document.querySelectorAll("[data-ex]").forEach((b) => b.addEventListener("click", () => { $("#demande").value = b.dataset.ex; lancer(); }));
+    $("#resultat").addEventListener("click", async (ev) => {
+      const t = ev.target.closest("button, a[data-run]"); if (!t || !courant) return;
+      ev.preventDefault();
+      try {
+        if (t.dataset.run) { courant = await api(`/api/decisions/${t.dataset.run}`); await rendre(); }
+        else if (t.dataset.branche) { const r = await api(`/api/decisions/${racine}/branche`, { methode: "POST", corps: JSON.parse(t.dataset.branche) }); courant = r; await rendre({ delta: r.delta }); }
+        else if (t.id === "stress") { const r = await api(`/api/decisions/${racine}/stress`, { methode: "POST", corps: { n: 3 } }); courant = r; await rendre({ stress: r.stress }); }
+        else if (t.id === "rejouer") { const r = await api(`/api/decisions/${courant.run.run_id}/rejouer`, { methode: "POST" }); await rendre({ rejeu: r }); }
+      } catch (e) { toast(e.message, "erreur"); }
+    });
+  </script>
+</body>
+</html>

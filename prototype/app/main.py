@@ -700,6 +700,19 @@ if MODE == "demo":  # expérience isolée « intentions scellées » (docs/STRAT
     app.include_router(_routeur_scelle(profils_effectifs, TAX))
 
 
+if MODE == "demo":  # espace de décision (plateforme + adaptateur Club) : instantanés de profils, jamais exposés en mode réel
+    from .decisions_api import creer_routeur as _routeur_decisions
+    app.include_router(_routeur_decisions(profils_effectifs, MAGASIN, TAX,
+                                          os.environ.get("HACKVS_DECISIONS_DB", str(RACINE / "var" / "decisions_demo.db"))))
+
+
+@app.get("/decision")
+def page_decision():
+    if MODE != "demo":
+        raise HTTPException(501, "Espace de décision réservé au mode démo.")
+    return FileResponse(WEB / "decision.html")
+
+
 @app.get("/scelle")
 def page_scelle():
     if MODE != "demo":
