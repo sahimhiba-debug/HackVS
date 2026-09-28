@@ -36,6 +36,7 @@ def norm(texte: str) -> str:
     return normaliser(texte)[0]
 
 
+@lru_cache(maxsize=None)
 def motif(expression: str) -> re.Pattern:
     return re.compile(r"(?<![a-z0-9])" + re.escape(expression) + r"(?![a-z0-9])")
 
@@ -48,10 +49,35 @@ class Concept:
     expressions: tuple[str, ...]
 
 
+_MOTS_OUTILS = {"de", "du", "des", "la", "le", "les", "a", "au", "aux", "en", "et", "pour", "sur", "d", "l"}
+
+
+def _pluriel(mot: str) -> str:
+    if mot in _MOTS_OUTILS or len(mot) <= 2 or mot.endswith(("s", "x", "z")) or "'" in mot[-2:]:
+        return mot
+    return mot + "s"
+
+
+def _singulier(mot: str) -> str:
+    return mot[:-1] if len(mot) > 3 and mot.endswith("s") and mot not in _MOTS_OUTILS else mot
+
+
+def variantes(expr: str) -> set[str]:
+    """Formes singulier/pluriel d'une expression (« panneau solaire » ↔ « panneaux solaires » partiellement,
+    « audit énergétique » → « audits énergétiques »). Générées au chargement : la taxonomie reste lisible."""
+    mots = expr.split()
+    formes = {expr, " ".join(_pluriel(m) for m in mots), " ".join(_singulier(m) for m in mots),
+              " ".join([_pluriel(mots[0])] + mots[1:])}
+    if len(mots) > 1:
+        formes.add(" ".join(mots[:-1] + [_pluriel(mots[-1])]))
+    return {f for f in formes if len(f) >= 3}
+
+
 class Taxonomie:
     def __init__(self, brut: dict):
         self.concepts: dict[str, Concept] = {
-            cid: Concept(cid, c["libelle"], c.get("parent"), tuple(norm(e) for e in c["expressions"]))
+            cid: Concept(cid, c["libelle"], c.get("parent"),
+                         tuple(sorted({v for e in c["expressions"] for v in variantes(norm(e))})))
             for cid, c in brut["concepts"].items()
         }
         self.ambigus: dict[str, dict] = brut.get("ambigus", {})

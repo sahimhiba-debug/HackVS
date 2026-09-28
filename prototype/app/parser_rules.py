@@ -30,7 +30,8 @@ _CONTEXTE = [
 ]
 _RECHERCHE = re.compile(
     r"\b(?:cherche|cherchons|recherche|recherchons|besoin|il me faut|il nous faut|trouver|"
-    r"aimerais|aimerions|voudrais|voudrions|souhaite|souhaitons|qui peut|quelqu'un|recrute|recrutons|dois|devons)\b"
+    r"aimerais|aimerions|voudrais|voudrions|souhaite|souhaitons|qui peut|qui pourrait|qui fait|quelqu'un|recrute|recrutons|"
+    r"dois|devons|faudrait|suche|suchen|brauche|brauchen|benotige|benotigen)\b"
 )
 _PHRASE = re.compile(r"[^.!?\n]+[.!?\n]?")
 _NEGATION_AVANT = re.compile(
