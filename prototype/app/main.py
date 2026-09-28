@@ -695,6 +695,18 @@ def presentation():
     return FileResponse(WEB / "presentation.html")
 
 
+if MODE == "demo":  # expérience isolée « intentions scellées » (docs/STRATEGIC_RESEARCH.md) : jamais en mode réel
+    from experiences.scelle_api import creer_routeur as _routeur_scelle
+    app.include_router(_routeur_scelle(profils_effectifs, TAX))
+
+
+@app.get("/scelle")
+def page_scelle():
+    if MODE != "demo":
+        raise HTTPException(501, "Expérience réservée au mode démo.")
+    return FileResponse(WEB / "scelle.html")
+
+
 @app.get("/soiree")
 def page_soiree():
     return FileResponse(WEB / "soiree.html")

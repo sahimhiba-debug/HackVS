@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Intentions scellées · démonstration</title>
+  <meta name="description" content="Rapprocher ce que personne n'écrit publiquement, sans que le Club puisse le lire.">
+  <link rel="icon" href="/favicon.ico" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+  <style>
+    .trois { display: grid; grid-template-columns: 1fr 1.1fr 1fr; gap: 18px; margin-top: 18px; align-items: start; }
+    @media (max-width: 900px) { .trois { grid-template-columns: 1fr; } }
+    .col { background: var(--surface); border: 1.5px solid var(--ligne); border-radius: var(--rayon); padding: 16px; }
+    .col h2 { font-size: 18px; margin: 0 0 4px; }
+    .col .role { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--encre-2); }
+    .secret { border-left: 4px solid var(--encre); padding: 8px 12px; margin: 12px 0; background: var(--fond, transparent); }
+    .secret small { display: block; color: var(--encre-2); margin-top: 4px; }
+    .club { border-style: dashed; }
+    .compteur { font-size: 44px; font-weight: 800; line-height: 1; }
+    .flux { font-family: ui-monospace, monospace; font-size: 11px; color: var(--encre-2); max-height: 190px; overflow: hidden;
+            word-break: break-all; margin-top: 10px; }
+    .flux div { margin: 2px 0; animation: entre .3s ease-out both; }
+    .alerte-match { border: 2px solid var(--rouge); border-radius: var(--rayon); padding: 12px; margin-top: 12px; animation: entre .4s ease-out both; }
+    .devoile { background: var(--vert-pale); border-radius: var(--rayon); padding: 10px 12px; margin-top: 10px; }
+    .note { font-size: 13px; color: var(--encre-2); }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#principal">Aller au contenu</a>
+  <header class="barre">
+    <div class="marque"><span class="logo" aria-hidden="true"></span><span>Le Fil du Club · intentions scellées</span></div>
+    <div class="badges"><span class="badge demo">Démo · données fictives</span></div>
+    <div class="barre-actions"><a class="btn petit" href="/">Espace membre</a></div>
+  </header>
+  <main id="principal">
+    <section class="vue">
+      <p class="surtitre">Expérience · ce que personne n'écrit publiquement</p>
+      <h1 style="font-size:clamp(30px,4.2vw,54px)">Dites-le à votre agent.<br>Le Club, lui, ne le saura jamais.</h1>
+      <p class="sous">Céder son entreprise, en reprendre une, lever des fonds : dans un club de cent dirigeants, une annonce « anonyme »
+        désigne son auteur. Ici, chaque intention reste chez le membre ; les agents se comparent par cryptographie ; le Club ne relaie que des nombres aléatoires.
+        On ne se dévoile que si l'autre se dévoile aussi.</p>
+      <div class="actions"><button class="btn primaire" type="button" id="tour">Lancer le tour de rapprochement</button>
+        <button class="btn petit" type="button" id="reinit">Recommencer</button></div>
+      <div class="trois">
+        <article class="col" id="gauche" aria-live="polite"></article>
+        <article class="col club" aria-live="polite">
+          <span class="role">Serveur du Club (relais)</span>
+          <h2>Ce que voit le Club</h2>
+          <p class="note">Intentions lisibles</p>
+          <div class="compteur" id="lisibles">0</div>
+          <p class="note" id="stats">Aucun tour encore.</p>
+          <button class="btn petit" type="button" id="attaque">Le Club essaie de tricher</button>
+          <p class="note" id="res-attaque"></p>
+          <div class="flux" id="flux" aria-label="Points relayés"></div>
+        </article>
+        <article class="col" id="droite" aria-live="polite"></article>
+      </div>
+      <p class="note" style="margin-top:18px">Démonstration : les 15 agents tournent ici dans le même processus ; en réel, chaque agent tourne chez son membre.
+        Intersection privée d'ensembles (Diffie-Hellman sur ristretto255), jetons k-anonymes (une catégorie trop rare n'est pas nommée),
+        révélation simultanée par engagement. Détails et mesures : docs/STRATEGIC_RESEARCH.md.</p>
+    </section>
+  </main>
+  <div class="toasts" role="region" aria-label="Notifications"><div role="status" aria-live="polite" id="toasts-live"></div></div>
+  <script type="module">
+    import { $, api, h, occupe, libre, toast } from "/static/js/outils.js";
+    const B = "/api/experiences/scelle";
+    const COLS = { gauche: "p20", droite: "p21" };
+
+    async function rendreAgent(ou, pid) {
+      const a = await api(`${B}/agent/${pid}`);
+      const c = a.compatibilites[0];
+      $(`#${ou}`).replaceChildren(
+        h("span", { class: "role" }, "Agent personnel de"), h("h2", {}, `${a.membre.nom}`), h("p", { class: "note" }, a.membre.entreprise),
+        ...a.intentions.map((i) => h("div", { class: "secret" }, h("strong", {}, `« ${i.libelle} »`), ` · ${i.secteurs.join(", ")}`,
+          h("small", {}, `Reste sur cet agent. Catégorie utilisée pour la comparaison : ${i.jetons_envoyes.map((j) => j === "*" ? "« tout secteur » (secteur trop rare dans le Club pour être nommé)" : j).join(", ")}.`))),
+        c ? h("div", { class: "alerte-match" },
+          h("strong", {}, "Un membre du Club a l'intention inverse de la vôtre."),
+          h("p", { class: "note" }, `Pseudonyme de session : ${c.pseudonyme_autre} · catégorie : ${c.categorie}. Personne d'autre ne le sait.`),
+          c.devoile ? h("div", { class: "devoile" },
+            h("div", {}, `Son intention : ${c.devoile.intention_de_l_autre} · secteurs : ${c.devoile.secteurs_de_l_autre.join(", ")}`),
+            c.devoile.identite ? h("div", {}, h("strong", {}, `C'est ${c.devoile.identite}.`), " Identités échangées en même temps, engagement vérifié.") : null) : null,
+          c.etape !== "introduit" ? h("button", { class: "btn primaire petit", type: "button", disabled: c.j_ai_consenti,
+            onclick: (ev) => devoiler(ev, c.match, pid) },
+            c.j_ai_consenti ? "En attente de l'autre (rien n'est dévoilé)" : c.etape === "secteur" ? "Dévoiler mon secteur si l'autre le fait" : "Dévoiler mon identité si l'autre le fait")
+            : h("p", { class: "note" }, "Introduction possible. (Prototype : le passage au parcours de mise en relation existant n'est pas encore branché.)")) :
+          h("p", { class: "note" }, "Rien à signaler. (Et le Club n'en sait pas plus.)"));
+    }
+
+    async function rendreClub() {
+      const c = await api(`${B}/club`);
+      $("#lisibles").textContent = String(c.intentions_lisibles);
+      $("#stats").textContent = c.tour_effectue ? `${c.agents} agents · ${c.points_relayes.toLocaleString("fr-CH")} points relayés · ${Math.round(c.octets / 1024)} Ko · ${c.duree_ms} ms · ${c.moteur}` : "Aucun tour encore.";
+      $("#flux").replaceChildren(...c.flux.flatMap((f) => f.points.map((p) => h("div", {}, `${f.de} → ${f.vers} : ${p}`))));
+    }
+
+    async function tout() { await Promise.all([rendreAgent("gauche", COLS.gauche), rendreAgent("droite", COLS.droite), rendreClub()]); }
+
+    async function devoiler(ev, match, pid) {
+      occupe(ev.target, "…");
+      try { const r = await api(`${B}/devoiler/${match}`, { corps: { membre: pid } }); toast(r.statut, "info"); await tout(); }
+      catch (e) { toast(e.message, "erreur"); libre(ev.target); }
+    }
+
+    $("#tour").addEventListener("click", async (ev) => {
+      occupe(ev.target, "Les agents se comparent…");
+      try { await api(`${B}/tour`, { corps: {} }); await tout(); } catch (e) { toast(e.message, "erreur"); } finally { libre(ev.target); }
+    });
+    $("#reinit").addEventListener("click", async () => { await api(`${B}/reinitialiser`, { corps: {} }); $("#res-attaque").textContent = ""; await tout(); });
+    $("#attaque").addEventListener("click", async () => {
+      const r = await api(`${B}/attaque`, { corps: {} });
+      $("#res-attaque").textContent = `Il essaie les ${r.jetons_essayes} intentions possibles contre ${r.points_examines.toLocaleString("fr-CH")} points : ${r.reussites} réussite.`;
+    });
+    await api(`${B}/reinitialiser`, { corps: {} });
+    await tout();
+  </script>
+</body>
+</html>

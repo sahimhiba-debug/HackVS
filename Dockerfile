@@ -7,8 +7,10 @@ ENV ORT_DISABLE_TELEMETRY=1
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=8080 HACKVS_MODE=demo HACKVS_DB=/tmp/fil.db
 WORKDIR /srv
 COPY prototype/requirements.txt prototype/requirements.txt
+RUN apt-get update && apt-get install -y --no-install-recommends libsodium23 && rm -rf /var/lib/apt/lists/*  # intentions scellées : ristretto255 (sinon repli plus lent)
 RUN pip install --no-cache-dir -r prototype/requirements.txt
 COPY prototype/app prototype/app
+COPY prototype/experiences prototype/experiences
 COPY prototype/data prototype/data
 COPY prototype/web prototype/web
 COPY docs/captures docs/captures
