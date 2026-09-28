@@ -22,7 +22,9 @@ from fastapi.responses import FileResponse, HTMLResponse, Response, StreamingRes
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import club, parser_llm, parser_rules
+import threading
+
+from . import analyse, club, parser_llm, parser_rules, semantique
 from .baseline import rechercher_mots_cles
 from .matching import rechercher
 from .models import Besoin, Profil
@@ -148,6 +150,8 @@ def etat():
         "mode": MODE,
         "donnees_fictives": MODE == "demo",
         "analyseur_claude_disponible": parser_llm.llm_configure(),
+        "fournisseur_llm": parser_llm.fournisseur(),
+        "semantique_locale": semantique.disponible(),
         "nb_profils": len(PROFILS),
         "utilisateur_defaut": UTILISATEUR_DEFAUT,
         "concepts": [{"valeur": c.id, "libelle": c.libelle} for c in sorted(TAX.concepts.values(), key=lambda c: c.libelle)],
@@ -230,9 +234,22 @@ def modifier_profil(e: EntreeProfil, x_membre: Optional[str] = Header(None)):
 
 # ---------------------------------------------------------------- analyse du besoin
 def _analyse_regles(texte: str) -> tuple[Besoin, dict]:
+    """Règles + IA sémantique locale (si le modèle est présent) : aucune donnée ne quitte la machine."""
     t0 = time.perf_counter()
-    b = parser_rules.analyser(texte, TAX)
-    return b, {"analyseur": "regles", "latence_ms": round((time.perf_counter() - t0) * 1000, 2)}
+    b, info = analyse.analyser_hybride(texte, TAX)
+    return b, {"analyseur": b.analyseur, "semantique": info, "latence_ms": round((time.perf_counter() - t0) * 1000, 2)}
+
+
+def _prechauffer() -> None:
+    try:
+        semantique.prototypes()
+        semantique.inferer_concept("préchauffage", TAX)
+    except Exception:  # le produit fonctionne sans la couche sémantique
+        pass
+
+
+if semantique.disponible():
+    threading.Thread(target=_prechauffer, daemon=True).start()
 
 
 def _verifier_texte(texte: str) -> str:

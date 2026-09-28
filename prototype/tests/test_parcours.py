@@ -1,6 +1,7 @@
 """Tests du parcours critique et des garde-fous. Ciblés sur les risques réels, pas sur le volume."""
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
@@ -8,6 +9,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 os.environ.setdefault("HACKVS_DB", ":memory:")
+os.environ.setdefault("HACKVS_SEMANTIQUE", "0")  # tests déterministes et rapides ; la couche sémantique a son test dédié
 
 import pytest
 from fastapi.testclient import TestClient
@@ -277,6 +279,76 @@ def test_panne_refus_ou_json_invalide_repli_visible(client_faux):
     b, tele = parser_llm.analyser(BESOIN_ZURICH, TAX, client=client_faux)
     assert tele["analyseur"] == "regles (repli)" and b.avertissements[0].startswith("Claude indisponible")
     assert [c.valeur for c in crit(b, "expertise")] == ["transport_frigorifique"]
+
+
+# ---------------------------------------------------------------- couche sémantique locale (si le modèle est présent)
+def test_ia_locale_suggere_sans_jamais_decider_seule(monkeypatch):
+    from app import analyse, semantique
+    monkeypatch.setenv("HACKVS_SEMANTIQUE", "1")
+    if not semantique.disponible():
+        pytest.skip("modèle sémantique absent (python scripts/telecharger_modele.py)")
+    b, info = analyse.analyser_hybride("Nos produits laitiers doivent arriver au frais chez nos clients de Berne.", TAX)
+    assert info["semantique"] == "consultée"
+    assert not [c for c in b.criteres if c.type == "expertise"]  # pas de décision automatique par défaut
+    options = {o.valeur for a in b.ambiguites for o in a.options}
+    assert "transport_frigorifique" in options  # la bonne compétence est proposée, à confirmer
+    b, _ = analyse.analyser_hybride("Je cherche un transporteur frigorifique.", TAX)
+    assert [c.valeur for c in b.criteres if c.type == "expertise"] == ["transport_frigorifique"] and not b.ambiguites
+
+
+# ---------------------------------------------------------------- Apertus (LLM suisse, API compatible OpenAI) simulé
+def _serveur_apertus(json_sortie: str, refuse_schema=False, statut=200, balises=False):
+    import httpx
+    appels = []
+
+    def repondre(requete: httpx.Request) -> httpx.Response:
+        corps = json.loads(requete.content)
+        appels.append({"corps": corps, "auth": requete.headers.get("authorization")})
+        if statut != 200:
+            return httpx.Response(statut, json={"error": "panne"})
+        if refuse_schema and "response_format" in corps:
+            return httpx.Response(400, json={"error": "response_format non pris en charge"})
+        texte = f"```json\n{json_sortie}\n```" if balises else json_sortie
+        morceaux = [texte[i:i + 23] for i in range(0, len(texte), 23)]
+        lignes = [f"data: {json.dumps({'choices': [{'delta': {'content': m}}]})}" for m in morceaux]
+        lignes += [f"data: {json.dumps({'choices': [], 'usage': {'prompt_tokens': 1200, 'completion_tokens': 140}})}", "data: [DONE]"]
+        return httpx.Response(200, text="\n\n".join(lignes) + "\n\n", headers={"content-type": "text/event-stream"})
+    return httpx.Client(transport=httpx.MockTransport(repondre)), appels
+
+
+@pytest.fixture
+def env_apertus(monkeypatch):
+    monkeypatch.setenv("HACKVS_LLM", "apertus")
+    monkeypatch.setenv("APERTUS_API_KEY", "cle-de-test")
+    monkeypatch.setenv("APERTUS_BASE_URL", "https://apertus.example/v1")
+    monkeypatch.setenv("APERTUS_MODEL", "swiss-ai/apertus-test")
+
+
+def test_apertus_flux_valide_par_le_code(env_apertus):
+    assert parser_llm.llm_configure()
+    http, appels = _serveur_apertus(SORTIE)
+    evs = list(parser_llm.analyser_flux(BESOIN_ZURICH, TAX, http=http))
+    assert any(e["type"] == "provisoire" for e in evs)
+    fin = evs[-1]
+    b = Besoin(**fin["besoin"])
+    assert fin["telemetrie"]["analyseur"] == "apertus" and b.analyseur == "apertus"
+    assert [c.valeur for c in crit(b, "expertise")] == ["transport_frigorifique"]  # « teleportation » filtré
+    assert fin["telemetrie"]["tokens_entree"] == 1200 and fin["telemetrie"]["sortie_contrainte"] is True
+    assert appels[0]["auth"] == "Bearer cle-de-test" and appels[0]["corps"]["response_format"]["type"] == "json_schema"
+
+
+def test_apertus_sans_sortie_contrainte_et_balises(env_apertus):
+    http, appels = _serveur_apertus(SORTIE, refuse_schema=True, balises=True)
+    b, tele = parser_llm.analyser(BESOIN_ZURICH, TAX, http=http)
+    assert tele["analyseur"] == "apertus" and tele["sortie_contrainte"] is False and len(appels) == 2
+    assert "response_format" not in appels[1]["corps"]
+    assert [c.valeur for c in crit(b, "expertise")] == ["transport_frigorifique"]
+
+
+def test_apertus_en_panne_repli_visible(env_apertus):
+    http, _ = _serveur_apertus(SORTIE, statut=503)
+    b, tele = parser_llm.analyser(BESOIN_ZURICH, TAX, http=http)
+    assert tele["analyseur"] == "regles (repli)" and b.avertissements[0].startswith("Apertus indisponible")
 
 
 # ---------------------------------------------------------------- non-régression de l'évaluation

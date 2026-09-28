@@ -94,9 +94,18 @@ def systeme(tax: Taxonomie) -> str:
     )
 
 
+def fournisseur() -> str | None:
+    """« claude » (API Anthropic) ou « apertus » (LLM suisse, API compatible OpenAI : Swisscom, Public AI…)."""
+    return os.environ.get("HACKVS_LLM", "").lower() or None
+
+
 def llm_configure() -> bool:
-    return os.environ.get("HACKVS_LLM", "").lower() == "claude" and bool(
-        os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN"))
+    f = fournisseur()
+    if f == "claude":
+        return bool(os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN"))
+    if f == "apertus":
+        return all(os.environ.get(k) for k in ("APERTUS_API_KEY", "APERTUS_BASE_URL", "APERTUS_MODEL"))
+    return False
 
 
 def valider(texte: str, sortie: SortieLLM, tax: Taxonomie) -> Besoin:
@@ -182,50 +191,111 @@ def _objets_complets(texte: str, cle: str) -> list[dict]:
     return objets
 
 
-def analyser_flux(texte: str, tax: Taxonomie, client=None) -> Iterator[dict]:
+def _morceaux_claude(texte: str, tax: Taxonomie, client, tele: dict) -> Iterator[str]:
+    if client is None:
+        import anthropic
+        client = anthropic.Anthropic()
+    tele["modele"] = os.environ.get("HACKVS_CLAUDE_MODEL", MODELE_PAR_DEFAUT)
+    with client.messages.stream(
+        model=tele["modele"], max_tokens=4000, system=systeme(tax),
+        messages=[{"role": "user", "content": texte}],
+        output_config={"format": {"type": "json_schema", "schema": SCHEMA}},
+    ) as flux:
+        yield from flux.text_stream
+        final = flux.get_final_message()
+    if getattr(final, "stop_reason", None) == "refusal":
+        raise ValueError("refus du modèle")
+    usage = getattr(final, "usage", None)
+    tele["tokens_entree"], tele["tokens_sortie"] = getattr(usage, "input_tokens", None), getattr(usage, "output_tokens", None)
+    tele["texte_final"] = "".join(b.text for b in final.content if getattr(b, "type", "") == "text")
+
+
+def _morceaux_apertus(texte: str, tax: Taxonomie, http, tele: dict) -> Iterator[str]:
+    """API compatible OpenAI (/chat/completions, stream). Sortie JSON contrainte si le serveur la prend en charge,
+    sinon consigne seule ; dans les deux cas, le code valide ensuite chaque élément."""
+    import httpx
+    base = os.environ["APERTUS_BASE_URL"].rstrip("/")
+    tele["modele"] = os.environ["APERTUS_MODEL"]
+    entetes = {"Authorization": f"Bearer {os.environ['APERTUS_API_KEY']}", "Content-Type": "application/json"}
+    consigne = systeme(tax) + "\nRéponds UNIQUEMENT par un objet JSON valide conforme à ce schéma, sans texte autour :\n" + json.dumps(SCHEMA, ensure_ascii=False)
+    corps = {"model": tele["modele"], "stream": True, "temperature": 0, "max_tokens": 1500,
+             "stream_options": {"include_usage": True},
+             "messages": [{"role": "system", "content": consigne}, {"role": "user", "content": texte}],
+             "response_format": {"type": "json_schema", "json_schema": {"name": "criteres", "schema": SCHEMA, "strict": True}}}
+    client = http or httpx.Client(timeout=httpx.Timeout(60.0, connect=10.0))
+    for tentative in (1, 2):
+        with client.stream("POST", f"{base}/chat/completions", headers=entetes, json=corps) as rep:
+            if rep.status_code in (400, 422) and tentative == 1:
+                rep.read()
+                corps.pop("response_format")  # serveur sans sortie contrainte : on garde la consigne
+                tele["sortie_contrainte"] = False
+                continue
+            rep.raise_for_status()
+            tele.setdefault("sortie_contrainte", True)
+            accu = ""
+            for ligne in rep.iter_lines():
+                if not ligne.startswith("data:"):
+                    continue
+                donnee = ligne[5:].strip()
+                if donnee == "[DONE]":
+                    break
+                evt = json.loads(donnee)
+                if evt.get("usage"):
+                    tele["tokens_entree"] = evt["usage"].get("prompt_tokens")
+                    tele["tokens_sortie"] = evt["usage"].get("completion_tokens")
+                for ch in evt.get("choices") or []:
+                    morceau = (ch.get("delta") or {}).get("content") or ""
+                    if morceau:
+                        accu += morceau
+                        yield morceau
+            tele["texte_final"] = accu
+            return
+
+
+def _json_de(texte: str) -> str:
+    """Retire d'éventuelles balises ```json autour de la réponse."""
+    t = texte.strip()
+    if t.startswith("```"):
+        t = t.split("\n", 1)[1] if "\n" in t else t[3:]
+        t = t.rsplit("```", 1)[0]
+    debut, fin = t.find("{"), t.rfind("}")
+    return t[debut:fin + 1] if debut >= 0 and fin > debut else t
+
+
+def analyser_flux(texte: str, tax: Taxonomie, client=None, http=None) -> Iterator[dict]:
     """Événements : {"type": "provisoire", "critere": …} puis {"type": "final", "besoin": …, "telemetrie": …}."""
     t0 = time.perf_counter()
-    modele = os.environ.get("HACKVS_CLAUDE_MODEL", MODELE_PAR_DEFAUT)
+    f = fournisseur() or "claude"
+    tele: dict = {"analyseur": f}
     try:
-        if client is None:
-            import anthropic
-            client = anthropic.Anthropic()
-        tampon, emis = "", set()
-        premier_ms = None
-        with client.messages.stream(
-            model=modele, max_tokens=4000, system=systeme(tax),
-            messages=[{"role": "user", "content": texte}],
-            output_config={"format": {"type": "json_schema", "schema": SCHEMA}},
-        ) as flux:
-            for morceau in flux.text_stream:
-                tampon += morceau
-                for cle, type_ in (("competences", "expertise"), ("zones", "zone"), ("implantations", "implantation"), ("langues", "langue")):
-                    for o in _objets_complets(tampon, cle):
-                        k = (type_, o.get("valeur"))
-                        if k not in emis:
-                            emis.add(k)
-                            premier_ms = premier_ms or round((time.perf_counter() - t0) * 1000)
-                            yield {"type": "provisoire", "critere": {"type": type_, **o}}
-            final = flux.get_final_message()
-        if getattr(final, "stop_reason", None) == "refusal":
-            raise ValueError("refus du modèle")
-        sortie = SortieLLM.model_validate_json("".join(b.text for b in final.content if getattr(b, "type", "") == "text"))
+        morceaux = _morceaux_apertus(texte, tax, http, tele) if f == "apertus" else _morceaux_claude(texte, tax, client, tele)
+        tampon, emis, premier_ms = "", set(), None
+        for morceau in morceaux:
+            tampon += morceau
+            for cle, type_ in (("competences", "expertise"), ("zones", "zone"), ("implantations", "implantation"), ("langues", "langue")):
+                for o in _objets_complets(tampon, cle):
+                    k = (type_, o.get("valeur"))
+                    if k not in emis:
+                        emis.add(k)
+                        premier_ms = premier_ms or round((time.perf_counter() - t0) * 1000)
+                        yield {"type": "provisoire", "critere": {"type": type_, **o}}
+        sortie = SortieLLM.model_validate_json(_json_de(tele.pop("texte_final", tampon)))
         besoin = valider(texte, sortie, tax)
-        usage = getattr(final, "usage", None)
+        besoin.analyseur = f
         yield {"type": "final", "besoin": besoin.model_dump(), "telemetrie": {
-            "analyseur": "claude", "modele": modele, "latence_ms": round((time.perf_counter() - t0) * 1000),
-            "premier_critere_ms": premier_ms, "tokens_entree": getattr(usage, "input_tokens", None),
-            "tokens_sortie": getattr(usage, "output_tokens", None)}}
+            **tele, "latence_ms": round((time.perf_counter() - t0) * 1000), "premier_critere_ms": premier_ms}}
     except Exception as e:  # repli visible, jamais silencieux
         besoin = analyser_regles(texte, tax)
-        besoin.avertissements.insert(0, f"Claude indisponible ({type(e).__name__}) : analyse par règles locales.")
+        nom = {"claude": "Claude", "apertus": "Apertus"}.get(f, f)
+        besoin.avertissements.insert(0, f"{nom} indisponible ({type(e).__name__}) : analyse par règles locales.")
+        tele.pop("texte_final", None)
         yield {"type": "final", "besoin": besoin.model_dump(), "telemetrie": {
-            "analyseur": "regles (repli)", "erreur": type(e).__name__, "latence_ms": round((time.perf_counter() - t0) * 1000)}}
+            **tele, "analyseur": "regles (repli)", "erreur": type(e).__name__, "latence_ms": round((time.perf_counter() - t0) * 1000)}}
 
 
-def analyser(texte: str, tax: Taxonomie, client=None) -> tuple[Besoin, dict]:
+def analyser(texte: str, tax: Taxonomie, client=None, http=None) -> tuple[Besoin, dict]:
     """Version non progressive (API, évaluation) : consomme le flux et renvoie le résultat final."""
-    for ev in analyser_flux(texte, tax, client):
+    for ev in analyser_flux(texte, tax, client, http):
         if ev["type"] == "final":
             return Besoin(**ev["besoin"]), ev["telemetrie"]
     raise RuntimeError("flux sans résultat final")

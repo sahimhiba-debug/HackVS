@@ -1,5 +1,5 @@
 {
-  "_avertissement": "Besoins HORS catalogue servant à calibrer la couche sémantique (négatifs). Rédigés le 28.09.2026 ; volontairement distincts des jeux d'évaluation (aucun recoupement avec cas_reserve3.json). Certains sont des pièges proches d'une catégorie existante. Ajout (même jour) : négatifs « spécialité absente dont la catégorie parente existe », ajoutés après avoir observé ce mode d'échec sur les jeux de DÉVELOPPEMENT (le cas « droit maritime » lui-même n'est pas inclus).",
+  "_avertissement": "Besoins HORS catalogue servant à calibrer la couche sémantique (négatifs). Rédigés le 28.09.2026 ; volontairement distincts des jeux d'évaluation (aucun recoupement avec cas_reserve3.json). Certains sont des pièges proches d'une catégorie existante. Ajout (même jour) : négatifs « spécialité absente dont la catégorie parente existe », ajoutés après avoir observé ce mode d'échec sur les jeux de DÉVELOPPEMENT (le cas « droit maritime » lui-même n'est pas inclus). Ajout 2 : spécialités voisines formulées SANS le vocabulaire des règles (sinon elles ne servaient pas à la calibration), après une violation observée sur les jeux de DÉVELOPPEMENT.",
   "negatifs": [
     "Je cherche un dentiste pour mes enfants.",
     "Il nous faut un coiffeur pour le mariage.",
@@ -52,6 +52,16 @@
     "Je cherche un expert en droit de l'immigration pour un permis de travail.",
     "Il nous faut un notaire pour une succession familiale.",
     "Nous cherchons un expert-comptable spécialisé en droit fiscal international.",
-    "Je cherche un médecin du travail."
+    "Je cherche un médecin du travail.",
+    "Je cherche un expert en droit des marques.",
+    "Nous cherchons un spécialiste du droit de la construction pour un défaut sur chantier.",
+    "Il nous faut un expert en droit des successions internationales.",
+    "Je cherche un spécialiste du droit bancaire.",
+    "Nous cherchons un expert en fiscalité des cryptoactifs.",
+    "Il nous faut un spécialiste en droit de l'environnement.",
+    "Je cherche un expert en médecine du sport.",
+    "Nous cherchons un spécialiste des appels d'offres publics.",
+    "Il nous faut un expert en évaluation immobilière.",
+    "Je cherche un spécialiste de la propriété intellectuelle pour un logiciel."
   ]
 }

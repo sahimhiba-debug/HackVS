@@ -5,13 +5,13 @@ Jeu : **reserve3** · analyseur : **regles+semantique** · 20 cas · généré p
 
 | Mesure | Le Fil du Club | Mots-clés + mêmes filtres |
 |---|---|---|
-| succes@3 | 6/15 | 7/15 |
+| succes@3 | 5/15 | 7/15 |
 | violations | 1/20 | 4/20 |
-| abstention_correcte | 12/20 | 14/20 |
+| abstention_correcte | 11/20 | 14/20 |
 
-Preuves citées retrouvées mot pour mot dans le profil : 9/9 (vrai par construction pour l'extraction par règles ; le garde-fou compte surtout si un LLM rédige un jour les explications).
+Preuves citées retrouvées mot pour mot dans le profil : 7/7 (vrai par construction pour l'extraction par règles ; le garde-fou compte surtout si un LLM rédige un jour les explications).
 
-Latence médiane : analyse 84.49 ms, recherche 12.32 ms (machine locale, 37 profils).
+Latence médiane : analyse 82.27 ms, recherche 7.66 ms (machine locale, 37 profils).
 
 | Cas | Catégorie | Critères extraits | Moteur top 3 | ok | Référence top 3 | ok |
 |---|---|---|---|---|---|---|
@@ -24,7 +24,7 @@ Latence médiane : analyse 84.49 ms, recherche 12.32 ms (machine locale, 37 prof
 | r3_mise_en_bouteille | paraphrase | expertise:boissons | p06, p28 | ✗ (viol.) | p06 | ✗ (viol.) |
 | r3_ceder_pme | paraphrase (mot connu) | expertise:transmission_entreprise | p29 | ✓ | p23, p19, p13 | ✗ |
 | r3_litige | paraphrase (mot connu) | expertise:droit_affaires | p13 | ✓ | p13, p23, p19 | ✓ |
-| r3_de_website | allemand libre | expertise:traduction, langue:de | p16 | ✓ | abstention | ✗ |
+| r3_de_website | allemand libre | texte_libre:jemanden Website auf übersetzt, langue:de | abstention | ✗ | abstention | ✗ |
 | r3_en_accountant | anglais | texte_libre:are looking for accountant who speaks German | abstention | ✗ | abstention | ✗ |
 | r3_veterinaire_equin | absent | texte_libre:vétérinaire équin | abstention | ✓ | abstention | ✓ |
 | r3_dj | faux ami sémantique | texte_libre:soirée personnel | abstention | ✓ | p14 | ✗ |

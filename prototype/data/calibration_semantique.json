@@ -1,16 +1,38 @@
 {
-  "_description": "Seuils de la couche sémantique, choisis par scripts/calibrer_semantique.py (contrôle du taux de fausses acceptations).",
+  "_description": "Seuils de la couche sémantique (scripts/calibrer_semantique.py). Calibration sur paraphrases que les règles ne comprennent pas.",
   "date": "2026-09-28",
-  "modele": "multilingual-e5-large (ONNX, fastembed)",
-  "n_positifs": 376,
-  "n_negatifs": 52,
-  "top1_correct_sans_seuil": 0.79,
+  "modele": "multilingual-e5-large (ONNX, via fastembed)",
   "budget_fausses_acceptations": 0.02,
+  "precision_minimale": 0.95,
+  "positifs": {
+    "total": 84,
+    "utilises_regles_echouent": 77
+  },
+  "negatifs": {
+    "total": 62,
+    "utilises_regles_echouent": 54
+  },
+  "top1_correct_sans_seuil": {
+    "prototypes": 0.74,
+    "offres": 0.649
+  },
+  "methode": "prototypes",
   "seuils": {
-    "tau": 0.865,
-    "delta": 0.005,
-    "couverture_positifs": 0.577,
-    "precision_positifs_acceptes": 0.964,
-    "fausses_acceptations_negatifs": 0.019
+    "tau": 0.8425,
+    "delta": 0.0125,
+    "couverture_positifs": 0.247,
+    "precision_positifs_acceptes": 0.95,
+    "fausses_acceptations_negatifs": 0.0,
+    "acceptes_positifs": 20,
+    "acceptes_negatifs": 0
+  },
+  "seuils_offres": {
+    "z": 3.35,
+    "marge_z": 0.0,
+    "couverture_positifs": 0.169,
+    "precision_positifs_acceptes": 1.0,
+    "fausses_acceptations_negatifs": 0.019,
+    "acceptes_positifs": 13,
+    "acceptes_negatifs": 1
   }
 }

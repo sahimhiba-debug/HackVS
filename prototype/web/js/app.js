@@ -25,9 +25,12 @@ async function init() {
   // Badges : toujours dire ce qui est réel et ce qui ne l'est pas.
   const badges = $("#badges");
   badges.append(c.donnees_fictives ? h("span", { class: "badge demo" }, "Démo · données fictives") : h("span", { class: "badge live" }, "Mode réel"));
+  const nomLLM = { claude: "Claude", apertus: "Apertus (IA suisse)" }[c.fournisseur_llm] || c.fournisseur_llm;
   badges.append(c.analyseur_claude_disponible
-    ? h("span", { class: "badge live", title: "Analyse du besoin par Claude, vérifiée par le code." }, "Analyse : Claude")
-    : h("span", { class: "badge local", title: "Analyse par règles locales, sans IA générative ni réseau." }, "Analyse : règles locales"));
+    ? h("span", { class: "badge live", title: "Analyse du besoin par un modèle de langage, vérifiée par le code." }, `Analyse : ${nomLLM}`)
+    : c.semantique_locale
+      ? h("span", { class: "badge local", title: "Règles + modèle sémantique multilingue exécuté sur cette machine (aucune donnée ne sort)." }, "Analyse : règles + IA locale")
+      : h("span", { class: "badge local", title: "Analyse par règles locales, sans IA générative ni réseau." }, "Analyse : règles locales"));
   $("#bandeau-demo").hidden = !c.donnees_fictives || etat.scene;
   $("#pied").textContent = "Prototype exploratoire préparé avant Hack VS 2026 · "
     + (c.donnees_fictives ? "données fictives, aucun message réel envoyé" : "mode réel");

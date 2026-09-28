@@ -42,8 +42,9 @@ export function editeurCriteres(besoin, { onChange, lectureSeule = false, provis
 
     // Questions de clarification (termes ambigus)
     for (const a of besoin.ambiguites || []) {
+      const suggestionIA = a.terme === "votre besoin";
       racine.append(h("div", { class: "question", role: "group", "aria-label": `Précision sur ${a.terme}` },
-        h("p", {}, `« ${a.extrait} » : que voulez-vous dire ?`),
+        h("p", {}, suggestionIA ? "Je n'ai pas reconnu la compétence. L'IA locale propose (à confirmer) :" : `« ${a.extrait} » : que voulez-vous dire ?`),
         h("div", { class: "choix" }, a.options.map((o) => h("button", {
           class: "pilule", type: "button", disabled: lectureSeule,
           onclick: () => {
@@ -54,7 +55,10 @@ export function editeurCriteres(besoin, { onChange, lectureSeule = false, provis
             besoin.avertissements = [];
             rendre(); onChange?.();
           },
-        }, o.libelle)))));
+        }, o.libelle)),
+          h("button", { class: "pilule", type: "button", disabled: lectureSeule, onclick: () => {
+            besoin.ambiguites = besoin.ambiguites.filter((x) => x !== a); rendre(); onChange?.();
+          } }, suggestionIA ? "Aucune : garder ma formulation" : "Aucune"))));
     }
 
     const ul = h("ul", { class: "criteres", "aria-label": "Critères de recherche" });

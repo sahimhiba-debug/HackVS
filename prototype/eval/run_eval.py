@@ -51,6 +51,7 @@ def evaluer(claude: bool = False, jeu: str = "base", semantique: bool = False) -
     lignes, agg = [], {"moteur": [], "reference": []}
     latences_analyse, preuves_total, preuves_ok = [], 0, 0
     telemetries: list[dict] = []
+    suggestions: list[bool] = []
 
     for c in cas:
         t0 = time.perf_counter()
@@ -75,6 +76,11 @@ def evaluer(claude: bool = False, jeu: str = "base", semantique: bool = False) -
         for a in c.get("criteres_interdits", []):
             crit_total += 1
             crit_ok += not _critere_ok(a, besoin.criteres)
+        if semantique and not c["abstention"] and besoin.ambiguites and not any(x.type == "expertise" for x in besoin.criteres):
+            # mesure de l'aide à la clarification : une compétence des profils attendus figure-t-elle parmi les suggestions ?
+            concepts_attendus = {o.concept for pid in c["attendus"] for o in par_id[pid].offre if o.concept}
+            options = {o.valeur for a in besoin.ambiguites for o in a.options}
+            suggestions.append(bool(options & {x for x in tax.concepts if any(tax.meme_famille(x, y) for y in concepts_attendus)}))
         ligne = {"id": c["id"], "categorie": c["categorie"],
                  "criteres": [f"{x.type}:{x.valeur}{'' if x.obligatoire else '?'}" for x in besoin.criteres]}
         for nom, r in resultats.items():
@@ -113,6 +119,7 @@ def evaluer(claude: bool = False, jeu: str = "base", semantique: bool = False) -
         "latence_recherche_ms_mediane": round(statistics.median(r["duree_ms"] for r in agg["moteur"]), 2),
         "detail": lignes,
         "telemetrie_claude": telemetries,
+        "questions_avec_bonne_suggestion": f"{sum(suggestions)}/{len(suggestions)}",
     }
 
 
@@ -143,7 +150,7 @@ def en_markdown(res: dict) -> str:
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--claude", action="store_true")
+    ap.add_argument("--claude", action="store_true", help="analyse par le LLM configuré (HACKVS_LLM=claude|apertus)")
     ap.add_argument("--jeu", choices=list(JEUX) + ["tous"], default="tous")
     ap.add_argument("--semantique", action="store_true", help="analyse hybride : règles + IA sémantique locale calibrée")
     ap.add_argument("--archive", help="étiquette : copie aussi le résultat dans eval/archives/<étiquette>_<jeu>.md")

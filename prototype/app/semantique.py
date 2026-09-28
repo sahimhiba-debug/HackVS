@@ -134,4 +134,74 @@ def inferer_concept(texte: str, tax: Taxonomie) -> Optional[dict]:
     s = seuils()
     accepte = s1 >= s["tau"] and (s1 - s2) >= s["delta"]
     return {"concept": c1, "score": round(s1, 4), "second": c2, "marge": round(s1 - s2, 4), "accepte": accepte,
+            "top": [(c, round(x, 4)) for c, x in classement[:5]],
             "latence_ms": round((time.perf_counter() - t0) * 1000, 1), "tau": s["tau"], "delta": s["delta"]}
+
+
+# ---------------------------------------------------------------------------- recherche dans les offres
+class IndexOffres:
+    """Offres déclarées des membres, encodées (« passage: »), cache par texte sur disque."""
+
+    def __init__(self, profils):
+        self.entrees = [(p.id, o.concept, o.texte) for p in profils if p.type == "membre_club" for o in p.offre]
+        textes = sorted({t for *_, t in self.entrees})
+        cache = CACHE / "offres.npz"
+        connus: dict[str, np.ndarray] = {}
+        if cache.exists():
+            d = np.load(cache, allow_pickle=False)
+            connus = {k: d[k] for k in d.files}
+        cle = lambda t: hashlib.sha1(t.encode()).hexdigest()
+        manquants = [t for t in textes if cle(t) not in connus]
+        if manquants:
+            v = encodeur().encoder([f"passage: {t}" for t in manquants])
+            for t, x in zip(manquants, v):
+                connus[cle(t)] = x
+            CACHE.mkdir(parents=True, exist_ok=True)
+            np.savez(cache, **connus)
+        self.matrice = np.vstack([connus[cle(t)] for *_, t in self.entrees]) if self.entrees else np.zeros((0, 1024), np.float32)
+
+    def classer(self, vecteur: np.ndarray) -> list[tuple[float, float, str, Optional[str], str]]:
+        """(z, score, membre, concept, texte) triés par z décroissant. z = écart au bruit de fond de CETTE requête."""
+        s = self.matrice @ vecteur
+        mu, sigma = float(s.mean()), float(s.std() or 1e-6)
+        ordre = np.argsort(-s)
+        return [(float((s[i] - mu) / sigma), float(s[i]), *self.entrees[i]) for i in ordre]
+
+
+_index_cache: dict[str, IndexOffres] = {}
+
+
+def index_offres(profils) -> IndexOffres:
+    cle = hashlib.sha1(json.dumps([(p.id, [o.texte for o in p.offre]) for p in profils]).encode()).hexdigest()
+    if cle not in _index_cache:
+        _index_cache.clear()
+        _index_cache[cle] = IndexOffres(profils)
+    return _index_cache[cle]
+
+
+def seuils_offres() -> dict:
+    if CALIBRATION.exists():
+        d = json.loads(CALIBRATION.read_text(encoding="utf-8"))
+        if "seuils_offres" in d:
+            return d["seuils_offres"]
+    return {"z": 99.0, "marge_z": 99.0}
+
+
+def inferer_par_offres(texte: str, profils, tax: Taxonomie) -> Optional[dict]:
+    """Concept déduit de l'offre de membre la plus proche, si elle se détache assez du bruit de fond."""
+    if not disponible():
+        return None
+    t0 = time.perf_counter()
+    idx = index_offres(profils)
+    if not idx.entrees:
+        return None
+    classement = idx.classer(encodeur().encoder([f"query: {texte}"])[0])
+    z1, s1, membre, concept, offre = classement[0]
+    # marge : écart avec la meilleure offre d'une AUTRE famille de concepts
+    autre = next((c for c in classement[1:] if not (c[3] and concept and tax.meme_famille(c[3], concept))), None)
+    marge = z1 - (autre[0] if autre else 0.0)
+    s = seuils_offres()
+    accepte = concept is not None and z1 >= s["z"] and marge >= s["marge_z"]
+    return {"concept": concept, "offre": offre, "membre": membre, "score": round(s1, 4), "z": round(z1, 3),
+            "marge_z": round(marge, 3), "accepte": accepte, "seuil_z": s["z"], "seuil_marge": s["marge_z"],
+            "latence_ms": round((time.perf_counter() - t0) * 1000, 1)}

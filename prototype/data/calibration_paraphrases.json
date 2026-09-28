@@ -1,0 +1,33 @@
+{
+  "_avertissement": "Paraphrases de CALIBRATION (positifs) pour la couche sémantique, rédigées le 28.09.2026 sans le vocabulaire de la taxonomie, formulées différemment des jeux d'évaluation (en particulier du réservé n°4, non encore exécuté). Seules celles que les règles ne comprennent pas servent à la calibration.",
+  "paraphrases": {
+    "transport_frigorifique": ["Nos produits laitiers doivent voyager sans rompre le froid jusqu'à Lausanne.", "Qui peut acheminer des denrées fraîches jusqu'à Berne en camion réfrigéré ?", "Nous devons expédier des produits périssables au frais vers la Suisse alémanique."],
+    "logistique": ["Nous manquons de place pour stocker nos palettes.", "Il nous faut quelqu'un pour acheminer notre marchandise chez nos revendeurs.", "Nous cherchons un entrepôt et quelqu'un pour préparer nos commandes."],
+    "installation_froid": ["Notre local réfrigéré ne descend plus en température.", "Il faut remplacer le groupe qui refroidit notre chambre de stockage.", "Nous voulons climatiser l'atelier pour l'été."],
+    "fiduciaire": ["Qui peut s'occuper de nos déclarations et de notre bilan de fin d'année ?", "Nous avons besoin d'aide pour la tenue de nos livres.", "Il nous faut quelqu'un pour les salaires et les décomptes AVS."],
+    "droit_affaires": ["Nous voulons faire relire un accord avec un distributeur avant de signer.", "Il nous faut un conseil pour créer une société anonyme.", "Un client refuse de payer, nous voulons connaître nos recours."],
+    "droit_travail": ["Comment rédiger correctement le règlement du personnel ?", "Une collaboratrice conteste ses heures supplémentaires.", "Nous voulons vérifier nos clauses de non-concurrence avec nos employés."],
+    "recrutement": ["Il nous manque deux chauffeurs pour cet hiver.", "Nous devons engager rapidement du personnel pour la saison.", "Qui peut nous trouver un responsable de production ?"],
+    "cybersecurite": ["Un de nos collaborateurs a cliqué sur un lien piégé.", "Nous voulons vérifier que nos serveurs ne peuvent pas être attaqués.", "Nos fichiers ont été chiffrés par un pirate."],
+    "securite_evenement": ["Il faut du personnel pour contrôler les billets à notre concert.", "Nous organisons une grande fête et voulons encadrer le public.", "Qui peut surveiller notre salle pendant l'inauguration ?"],
+    "sante_securite_travail": ["Nous voulons réduire les blessures dans notre atelier.", "Il nous faut une démarche pour protéger nos ouvriers sur les chantiers.", "Comment mettre nos postes de travail aux normes de prévention ?"],
+    "informatique": ["Notre imprimante et nos postes ne se connectent plus au serveur.", "Il nous faut quelqu'un pour gérer nos ordinateurs et nos sauvegardes.", "Nous voulons installer une connexion fiable dans nos bureaux."],
+    "developpement_web": ["Nous voulons vendre nos produits directement sur internet.", "Notre page internet est vieillotte, il faut la refaire.", "Il nous faudrait un système de réservation en ligne pour notre hôtel."],
+    "marketing": ["Nous voulons nous faire connaître auprès d'une clientèle plus jeune.", "Il faut animer nos pages Instagram et Facebook.", "Qui peut nous aider à lancer notre nouvelle gamme auprès du public ?"],
+    "photo_video": ["Nous voulons de belles images de nos produits pour le catalogue.", "Il nous faut un tournage pour présenter l'entreprise.", "Qui peut filmer notre événement et faire un montage ?"],
+    "traduction": ["Notre catalogue doit exister en allemand et en anglais.", "Il faut adapter nos contrats en langue allemande.", "Qui peut transposer notre site en italien ?"],
+    "menuiserie": ["Il nous faut des étagères en bois sur mesure pour le magasin.", "Nous voulons refaire le comptoir de notre boutique en chêne.", "Qui peut fabriquer du mobilier en bois pour notre caveau ?"],
+    "construction_metallique": ["Il nous faut une passerelle en acier pour l'entrepôt.", "Nous voulons un escalier métallique extérieur.", "Qui peut souder une structure en acier pour notre auvent ?"],
+    "energie_solaire": ["Nous voulons couvrir le toit de l'usine de capteurs pour produire du courant.", "Comment produire notre électricité grâce au soleil ?", "Il nous faut une installation qui transforme le soleil en électricité."],
+    "efficacite_energetique": ["Notre facture de chauffage est énorme, que peut-on améliorer ?", "Nous voulons isoler notre bâtiment ancien.", "Qui peut évaluer les pertes de chaleur de nos locaux ?"],
+    "financement": ["Nous devons trouver des fonds pour une nouvelle machine.", "Il nous faut un prêt pour agrandir l'atelier.", "Qui peut nous aider à financer notre croissance ?"],
+    "assurance": ["Nous voulons couvrir notre flotte de véhicules contre les accidents.", "Il nous faut une protection contre les dégâts dans l'entrepôt.", "Qui peut comparer nos contrats de couverture ?"],
+    "location_machines": ["Il nous faut un engin pour travailler en hauteur quelques jours.", "Nous devons louer un élévateur pour déplacer des palettes.", "Qui peut nous prêter une machine pour nettoyer la façade en hauteur ?"],
+    "emballage": ["Il nous faut de nouvelles boîtes pour expédier nos produits.", "Nous voulons changer le design de nos bouteilles et de leurs habillages.", "Qui peut fournir des caisses et du matériel d'expédition ?"],
+    "vins": ["Nous cherchons un producteur de fendant pour notre restaurant.", "Il nous faut des bouteilles de petite arvine pour nos cadeaux clients.", "Qui peut vinifier notre récolte de raisin ?"],
+    "mentorat": ["J'aimerais échanger régulièrement avec un dirigeant expérimenté.", "Je viens de reprendre la direction et je voudrais un accompagnement.", "Qui pourrait me conseiller dans mon rôle de patron ?"],
+    "transmission_entreprise": ["Mes enfants ne veulent pas reprendre l'affaire, que faire ?", "Nous cherchons quelqu'un pour racheter notre société.", "Comment préparer la vente de notre entreprise familiale ?"],
+    "ia_donnees": ["Nous voulons exploiter nos chiffres de vente pour prévoir la demande.", "Il nous faut des tableaux automatiques pour suivre la production.", "Qui peut automatiser nos tâches répétitives avec des outils intelligents ?"],
+    "export_suisse_alemanique": ["Nous voulons placer nos produits dans des commerces de Zurich et Bâle.", "Il nous faut un représentant qui démarche des magasins outre-Sarine.", "Qui peut vendre nos spécialités dans les épiceries de Berne ?"]
+  }
+}

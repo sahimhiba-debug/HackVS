@@ -11,7 +11,7 @@ Jeu : **reserve** · analyseur : **regles+semantique** · 14 cas · généré pa
 
 Preuves citées retrouvées mot pour mot dans le profil : 24/24 (vrai par construction pour l'extraction par règles ; le garde-fou compte surtout si un LLM rédige un jour les explications).
 
-Latence médiane : analyse 1.74 ms, recherche 10.8 ms (machine locale, 37 profils).
+Latence médiane : analyse 1.85 ms, recherche 11.43 ms (machine locale, 37 profils).
 
 | Cas | Catégorie | Critères extraits | Moteur top 3 | ok | Référence top 3 | ok |
 |---|---|---|---|---|---|---|

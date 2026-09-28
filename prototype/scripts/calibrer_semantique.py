@@ -1,13 +1,17 @@
-"""Calibre la couche sémantique : choisit (τ, δ) sur un jeu de calibration indépendant des évaluations.
+"""Calibre la couche sémantique sur des données qui RESSEMBLENT à son usage réel.
 
-Positifs : chaque expression « de base » de la taxonomie, formulée comme un besoin (« Je cherche … »), comparée aux
-prototypes de concepts dont on RETIRE cette expression (leave-one-out, sinon la tâche serait triviale).
-Négatifs : data/calibration_negatifs.json (besoins hors catalogue, dont des pièges proches).
-Règle : accepter le concept n°1 si score ≥ τ et marge (n°1 − n°2) ≥ δ.
-Critère : maximiser les positifs acceptés ET corrects, sous contrainte :
-  - fausses acceptations sur les négatifs ≤ 2 % (coût asymétrique : un mauvais contact coûte plus qu'une abstention) ;
-  - précision sur les positifs acceptés ≥ 95 % (concept correct ou de la même famille).
-Écrit data/calibration_semantique.json (seuils + statistiques). Usage : python scripts/calibrer_semantique.py
+La couche ne s'active que quand les règles ne reconnaissent aucune compétence : on la calibre donc sur
+- positifs : paraphrases sans vocabulaire du Club (data/calibration_paraphrases.json) que les règles NE comprennent PAS ;
+- négatifs : besoins hors catalogue (data/calibration_negatifs.json) que les règles ne comprennent pas non plus.
+
+Deux méthodes comparées :
+- « prototypes » : besoin ↔ vecteur moyen de chaque compétence (libellé + expressions) ; score et marge bruts ;
+- « offres »     : besoin ↔ offres déclarées des membres ; score normalisé par requête (z) et marge en z.
+Pour chacune, grille de seuils ; contrainte : fausses acceptations des négatifs ≤ FA_MAX et précision ≥ 95 %
+sur les positifs acceptés ; objectif : couverture maximale. La méthode retenue est celle de meilleure couverture.
+Coût asymétrique assumé : un mauvais contact coûte plus qu'une abstention.
+
+Usage : python scripts/calibrer_semantique.py   → data/calibration_semantique.json
 """
 from __future__ import annotations
 
@@ -20,67 +24,82 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app import semantique  # noqa: E402
+from app.models import Profil  # noqa: E402
+from app.parser_rules import analyser  # noqa: E402
 from app.taxonomy import DATA_DIR, charger_taxonomie  # noqa: E402
 
-GABARITS = ["Je cherche {e}.", "Il nous faut {e}.", "Nous avons besoin de {e}."]
-FA_MAX = 0.02  # budget de fausses acceptations sur les négatifs
+FA_MAX = 0.02
+PRECISION_MIN = 0.95
+
+
+def regles_echouent(texte: str, tax) -> bool:
+    b = analyser(texte, tax)
+    return not any(c.type == "expertise" for c in b.criteres) and not b.ambiguites
+
+
+def grille(pos: np.ndarray, correct: np.ndarray, neg: np.ndarray, seuils_a, seuils_b, noms) -> dict | None:
+    meilleur = None
+    for a in seuils_a:
+        for b in seuils_b:
+            acc_p = (pos[:, 0] >= a) & (pos[:, 1] >= b)
+            acc_n = (neg[:, 0] >= a) & (neg[:, 1] >= b)
+            if not acc_p.any():
+                continue
+            fa, precision, couverture = acc_n.mean(), correct[acc_p].mean(), (acc_p & correct).mean()
+            if fa <= FA_MAX and precision >= PRECISION_MIN and (meilleur is None or couverture > meilleur["couverture_positifs"]):
+                meilleur = {noms[0]: float(a), noms[1]: float(b), "couverture_positifs": round(float(couverture), 3),
+                            "precision_positifs_acceptes": round(float(precision), 3),
+                            "fausses_acceptations_negatifs": round(float(fa), 3),
+                            "acceptes_positifs": int(acc_p.sum()), "acceptes_negatifs": int(acc_n.sum())}
+    return meilleur
 
 
 def main() -> None:
     tax = charger_taxonomie()
-    protos = semantique.prototypes()
-    enc = semantique.encodeur()
-    ids = protos.ids
-    # --- positifs (leave-one-out)
-    requetes, attendus, retirer = [], [], []
-    for cid in ids:
-        passages = protos.passages[cid]
-        for j, p in enumerate(passages[1:], start=1):  # 0 = libellé, gardé
-            e = p.removeprefix("passage: ")
-            g = GABARITS[(j + len(cid)) % len(GABARITS)]
-            requetes.append("query: " + g.format(e=e))
-            attendus.append(cid)
-            retirer.append(j)
-    vq = enc.encoder(requetes)
-    pos = []
-    for v, cid, j in zip(vq, attendus, retirer):
-        m = protos.matrice.copy()
-        m[ids.index(cid)] = protos._proto(cid, sauf_indice=j)
-        s = m @ v
-        o = np.argsort(-s)
-        c1 = ids[o[0]]
-        pos.append((float(s[o[0]]), float(s[o[0]] - s[o[1]]), tax.meme_famille(c1, cid)))
-    # --- négatifs
-    negs_txt = json.loads((DATA_DIR / "calibration_negatifs.json").read_text(encoding="utf-8"))["negatifs"]
-    vn = enc.encoder(["query: " + t for t in negs_txt])
-    neg = []
-    for v in vn:
-        s = protos.matrice @ v
-        o = np.argsort(-s)
-        neg.append((float(s[o[0]]), float(s[o[0]] - s[o[1]])))
-    pos_a, neg_a = np.array([(a, b) for a, b, _ in pos]), np.array(neg)
-    correct = np.array([c for *_, c in pos])
-    # --- grille
-    meilleur = None
-    for tau in np.round(np.arange(0.78, 0.90, 0.0025), 4):
-        for delta in np.round(np.arange(0.0, 0.041, 0.0025), 4):
-            acc_p = (pos_a[:, 0] >= tau) & (pos_a[:, 1] >= delta)
-            acc_n = (neg_a[:, 0] >= tau) & (neg_a[:, 1] >= delta)
-            if not acc_p.any():
-                continue
-            fa = acc_n.mean()
-            precision = correct[acc_p].mean()
-            couverture = (acc_p & correct).mean()
-            if fa <= FA_MAX and precision >= 0.95 and (meilleur is None or couverture > meilleur["couverture_positifs"]):
-                meilleur = {"tau": float(tau), "delta": float(delta), "couverture_positifs": round(float(couverture), 3),
-                            "precision_positifs_acceptes": round(float(precision), 3), "fausses_acceptations_negatifs": round(float(fa), 3)}
+    enc, protos = semantique.encodeur(), semantique.prototypes()
+    para = json.loads((DATA_DIR / "calibration_paraphrases.json").read_text(encoding="utf-8"))["paraphrases"]
+    negs = json.loads((DATA_DIR / "calibration_negatifs.json").read_text(encoding="utf-8"))["negatifs"]
+    pos_txt = [(t, c) for c, ts in para.items() for t in ts]
+    pos_utiles = [(t, c) for t, c in pos_txt if regles_echouent(t, tax)]
+    neg_utiles = [t for t in negs if regles_echouent(t, tax)]
+    vp = enc.encoder([f"query: {t}" for t, _ in pos_utiles])
+    vn = enc.encoder([f"query: {t}" for t in neg_utiles])
+
+    # méthode 1 : prototypes
+    def proto_feat(v):
+        cl = protos.scores(v)
+        return cl[0][1], cl[0][1] - cl[1][1], cl[0][0]
+    p1 = [proto_feat(v) for v in vp]
+    n1 = np.array([proto_feat(v)[:2] for v in vn])
+    ok1 = np.array([tax.meme_famille(c1, c) for (_, _, c1), (_, c) in zip(p1, pos_utiles)])
+    m1 = grille(np.array([x[:2] for x in p1]), ok1, n1, np.round(np.arange(0.80, 0.90, 0.0025), 4), np.round(np.arange(0, 0.041, 0.0025), 4), ("tau", "delta"))
+
+    # méthode 2 : offres des membres
+    profils = [Profil(**p) for p in json.loads((DATA_DIR / "profils_demo.json").read_text(encoding="utf-8"))["profils"]]
+    idx = semantique.index_offres(profils)
+
+    def offre_feat(v):
+        cl = idx.classer(v)
+        z1, _, _, c1, _ = cl[0]
+        autre = next((c for c in cl[1:] if not (c[3] and c1 and tax.meme_famille(c[3], c1))), None)
+        return z1, z1 - (autre[0] if autre else 0.0), c1
+    p2 = [offre_feat(v) for v in vp]
+    n2 = np.array([offre_feat(v)[:2] for v in vn])
+    ok2 = np.array([bool(c1) and tax.meme_famille(c1, c) for (_, _, c1), (_, c) in zip(p2, pos_utiles)])
+    m2 = grille(np.array([x[:2] for x in p2]), ok2, n2, np.round(np.arange(1.5, 6.01, 0.05), 3), np.round(np.arange(0, 2.01, 0.05), 3), ("z", "marge_z"))
+
+    cov = lambda m: m["couverture_positifs"] if m else -1
+    methode = "prototypes" if cov(m1) >= cov(m2) else "offres"
     sortie = {
-        "_description": "Seuils de la couche sémantique, choisis par scripts/calibrer_semantique.py (contrôle du taux de fausses acceptations).",
-        "date": date.today().isoformat(), "modele": "multilingual-e5-large (ONNX, fastembed)",
-        "n_positifs": len(pos), "n_negatifs": len(neg),
-        "top1_correct_sans_seuil": round(float(correct.mean()), 3),
-        "budget_fausses_acceptations": FA_MAX,
-        "seuils": meilleur or {"tau": 1.0, "delta": 1.0},
+        "_description": "Seuils de la couche sémantique (scripts/calibrer_semantique.py). Calibration sur paraphrases que les règles ne comprennent pas.",
+        "date": date.today().isoformat(), "modele": "multilingual-e5-large (ONNX, via fastembed)",
+        "budget_fausses_acceptations": FA_MAX, "precision_minimale": PRECISION_MIN,
+        "positifs": {"total": len(pos_txt), "utilises_regles_echouent": len(pos_utiles)},
+        "negatifs": {"total": len(negs), "utilises_regles_echouent": len(neg_utiles)},
+        "top1_correct_sans_seuil": {"prototypes": round(float(ok1.mean()), 3), "offres": round(float(ok2.mean()), 3)},
+        "methode": methode,
+        "seuils": m1 or {"tau": 1.0, "delta": 1.0},
+        "seuils_offres": m2 or {"z": 99.0, "marge_z": 99.0},
     }
     (DATA_DIR / "calibration_semantique.json").write_text(json.dumps(sortie, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(sortie, ensure_ascii=False, indent=2))
