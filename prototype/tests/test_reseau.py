@@ -111,3 +111,26 @@ def test_chemin_chaud_ne_nomme_jamais_l_intermediaire():
     s = {"profil": {"id": "p06"}, "preuves": [{"critere": "x", "extrait": "y", "nature": "declare", "champ": "offre"}], "niveau": "forte"}
     dims = reseau.dimensions(m, par_id["p00"], s, par_id, j)
     assert "p32" not in json.dumps(dims) and "Reto" not in json.dumps(dims, ensure_ascii=False)
+
+
+def test_besoin_publie_apres_la_rencontre_relance_puis_clos_ne_relance_plus():
+    """Source unique : un besoin publié dans la Bourse (magasin) APRÈS une rencontre devient une raison de relance ;
+    une fois clos, il cesse de l'être. Un brouillon ne l'est jamais."""
+    _reinit()
+    b = _publier()
+    r = client.post("/api/relations", json={"besoin_id": b["id"], "cible_id": "p01", "message": "Bonjour"}, headers=SOPHIE).json()
+    for action, corps in (("accepter", {}), ("planifier", {"date_rencontre": "2026-10-15"}), ("confirmer_rencontre", {})):
+        client.post(f"/api/relations/{r['id']}/{action}", json=corps, headers=JULIEN)
+    client.post("/api/cycle/avancer", json={"jours": 1})
+    # Julien publie après la rencontre un besoin que Sophie couvre (jus de fruits pour ses clients)
+    brouillon = client.post("/api/analyser", json={"texte": "Nous cherchons un producteur de jus de fruits pour nos clients"}).json()["besoin"]
+    client.post("/api/besoins", json={"besoin": brouillon, "publier": False, "anonyme": False}, headers=JULIEN)
+    client.post("/api/cycle/avancer", json={"jours": 10})
+    assert not [x for x in client.get("/api/reseau/boite", headers=JULIEN).json()["suivis_proposes"] if x["type"] == "NOUVEAU_BESOIN"]
+    pub = client.post("/api/besoins", json={"besoin": brouillon, "publier": True, "anonyme": False}, headers=JULIEN).json()
+    # publié aujourd'hui (horloge réelle) : il faut que l'horloge du réseau le voie APRÈS la rencontre
+    types = [x["type"] for x in client.get("/api/reseau/boite", headers=JULIEN).json()["suivis_proposes"]]
+    assert "NOUVEAU_BESOIN" in types, types
+    client.post(f"/api/besoins/{pub['id']}/cloturer", json={"note": "trouvé"}, headers=JULIEN)
+    types = [x["type"] for x in client.get("/api/reseau/boite", headers=JULIEN).json()["suivis_proposes"]]
+    assert "NOUVEAU_BESOIN" not in types

@@ -41,3 +41,24 @@ toutes deux détectées.
 
 **Prochain problème prioritaire.** G (simulation avant/après d'une introduction sur le graphe) et la démonstration
 guidée du parcours central, rejouable depuis zéro (A, B, N).
+
+## BOUCLE 2 — suivi fondé sur la réciprocité, simulation avant/après, horloge unique
+
+**Hypothèse.** Le parcours s'arrête à la rencontre ; un suivi n'a de valeur que s'il a une raison réelle, et « le
+réseau évolue » doit se montrer par une simulation, pas s'affirmer.
+
+**Changements.** Relance `RECIPROCITE_OUVERTE` (la rencontre a servi un sens ; l'autre sens est prouvé et n'était pas
+la raison documentée → proposée à celui qui en bénéficie) ; `reseau.simuler` (copie du graphe, indicateurs avant/après,
+nouveaux ponts, portée à 2 poignées de main ; rien n'est écrit) ; les besoins publics du magasin sont projetés dans la
+mémoire (clos/dépubliés → `BESOIN_CLOS` ; brouillons et anonymes jamais).
+
+**Défauts trouvés.**
+- Source de vérité (encore) : les relances ne lisaient que les besoins de la mémoire, pas ceux de la Bourse.
+- DEUX HORLOGES : le magasin horodatait en temps réel, la mémoire en temps simulé → un besoin publié après une rencontre
+  paraissait antérieur ; la relance « nouveau besoin » ne se déclenchait jamais. Reproduit par un test rouge. Correction
+  de fond : horloge injectable dans le magasin, l'application y branche l'horloge du réseau (une seule source de temps).
+
+**Tests.** +2 (réciprocité ouverte proposée au bon membre et pas à l'autre ; simulation sans écriture ; besoin publié
+après la rencontre → relance, puis clos → plus de relance, brouillon → jamais). 104 → 106 ; lint, 20/20, évaluations OK.
+
+**Prochain problème.** Démonstration de scène déterministe et rejouable (monde isolé, horloge fixe), puis dossier compétition.

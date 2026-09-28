@@ -74,9 +74,10 @@ def publier_besoin(m: Memoire, auteur: str, texte: str, le: date, tax: Taxonomie
 def besoins_publies(m: Memoire, jusqu_au: Optional[date] = None) -> list:
     """Besoins de la mémoire, au format attendu par le moteur (auteur_id, anonyme, besoin, statut_affirmation)."""
     from app.models import Besoin
+    clos = {e.donnees["besoin_id"] for e in m.evenements("BESOIN_CLOS", jusqu_au=jusqu_au)}
     return [SimpleNamespace(auteur_id=e.acteurs[0], anonyme=False, besoin=Besoin(**e.donnees["besoin"]), le=e.le,
                             statut_affirmation=e.statut, evt=e.id)
-            for e in m.evenements("BESOIN_PUBLIE", jusqu_au=jusqu_au)]
+            for e in m.evenements("BESOIN_PUBLIE", jusqu_au=jusqu_au) if e.donnees.get("besoin_id") not in clos]
 
 
 # ------------------------------------------------------------------ 10 jours plus tard : pourquoi reprendre contact ?
@@ -111,6 +112,23 @@ def relances(m: Memoire, profils: list[Profil], tax: Taxonomie, maintenant: date
                                                 *[{"statut": "DECLARE" if p.nature == "declare" else "INFERE", "quoi": f"profil de {par_id[y].nom} ({p.champ})",
                                                    "extrait": p.extrait} for p in s.preuves[:2]]],
                                     "id": _id(a, b, "NOUVEAU_BESOIN", bp.evt)})
+        # L'AUTRE SENS d'une rencontre : elle a servi un besoin de l'un ; l'autre cherche ce que le premier offre, et ce
+        # n'était pas la raison documentée de la rencontre. Raison réelle (preuve citée), pas une relance de politesse.
+        servis = _sens_servis(m, a, b, maintenant)
+        for x, y in ((a, b), (b, a)):  # y peut aider x
+            if (x, y) in servis or any(r["type"] == "NOUVEAU_BESOIN" and r["pour"] == x for r in raisons):
+                continue
+            from .reseau import reciprocite_prouvee
+            rp = reciprocite_prouvee(par_id[y], par_id[x], tax, besoins)
+            if rp and servis:
+                raisons.append({"type": "RECIPROCITE_OUVERTE", "pour": x, "avec": y, "force": rp["niveau"],
+                                "message": f"Votre rencontre portait sur un besoin de {par_id[y].nom}. Dans l'autre sens, "
+                                           f"{par_id[y].nom} propose ce que vous cherchez.",
+                                "preuves": [{"statut": "DECLARE", "quoi": f"votre {rp['son_besoin'].split(' : ', 1)[0]}",
+                                             "extrait": rp["son_besoin"].split(" : ", 1)[-1]},
+                                            {"statut": "DECLARE" if rp["nature"] == "declare" else "INFERE",
+                                             "quoi": f"profil de {par_id[y].nom}", "extrait": rp["votre_offre"]}],
+                                "id": _id(x, y, "RECIPROCITE_OUVERTE")})
         for x, via in ((a, b), (b, a)):  # ami d'un ami : via a eu un suivi avec x, et connaît z qui peut aider x
             if cle(x, via) not in suivis:
                 continue
@@ -141,6 +159,21 @@ def relances(m: Memoire, profils: list[Profil], tax: Taxonomie, maintenant: date
             "abstentions": {"rien_de_nouveau": len(sans_raison), "trop_tot": len(trop_tot)},
             "trop_tot": trop_tot[:5],
             "principe": "aucune relance sans raison NOUVELLE et documentée ; « restez en contact » n'en est pas une"}
+
+
+def _sens_servis(m: Memoire, a: str, b: str, maintenant: date) -> set[tuple[str, str]]:
+    """Directions (aidé, aidant) qui ÉTAIENT la raison documentée d'une rencontre a–b (soirée ou introduction)."""
+    k, res = cle(a, b), set()
+    besoin_auteur = {}
+    for e in m.evenements("INTRO_DEMANDEE", "INTRO_ACCEPTEE", jusqu_au=maintenant):
+        if cle(*e.acteurs[:2]) == k:
+            besoin_auteur[e.donnees.get("relation_id")] = e.acteurs[0]  # acteurs = [auteur du besoin, aidant]
+    for aut in besoin_auteur.values():
+        res.add((aut, b if aut == a else a))
+    for e in m.evenements("RENCONTRE", jusqu_au=maintenant):
+        if cle(*e.acteurs[:2]) == k:
+            res |= {(r["qui_est_aide"], r["qui_aide"]) for r in e.donnees.get("raisons", [])}
+    return res
 
 
 def trouver_raison(m: Memoire, profils, tax, maintenant: date, relance_id: str) -> tuple[dict, dict]:

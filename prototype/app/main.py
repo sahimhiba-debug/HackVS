@@ -13,7 +13,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-from datetime import date
+from datetime import date, datetime, timezone
 import time
 from pathlib import Path
 from typing import Literal, Optional
@@ -58,14 +58,23 @@ PROFILS, UTILISATEUR_DEFAUT = _charger_profils()
 def par_id() -> dict[str, Profil]:
     """Profils EFFECTIFS par identifiant (référence + nouveaux membres + modifications) : jamais une copie figée."""
     return {p.id: p for p in profils_effectifs()}
-MAGASIN = Magasin(os.environ.get("HACKVS_DB", str(RACINE / "var" / f"fil_{MODE}.db")))
+
+
+def horloge_reseau() -> str:
+    """Horloge UNIQUE : la date de la mémoire du réseau (simulée en démo), avec l'heure réelle pour ordonner la journée."""
+    maintenant = datetime.now(timezone.utc)
+    jour = MEMOIRE.maintenant(maintenant.date()) if "MEMOIRE" in globals() else maintenant.date()
+    return datetime.combine(max(jour, maintenant.date()), maintenant.timetz()).isoformat(timespec="seconds")
+
+
+MAGASIN = Magasin(os.environ.get("HACKVS_DB", str(RACINE / "var" / f"fil_{MODE}.db")), horloge=horloge_reseau)
 # Mémoire du réseau : journal d'événements temporel. Le magasin y est PROJETÉ (source unique par fait, cf. adaptateurs/club/reseau.py).
 CHEMIN_MEMOIRE = os.environ.get("HACKVS_CYCLE_DB", str(RACINE / "var" / f"reseau_{MODE}.db"))
 MEMOIRE = Memoire(CHEMIN_MEMOIRE)
 
 
 def projeter_reseau() -> None:
-    reseau.projeter(MEMOIRE, MAGASIN.relations())
+    reseau.projeter(MEMOIRE, MAGASIN.relations(), MAGASIN.besoins())
 
 
 def aujourdhui_reseau() -> date:

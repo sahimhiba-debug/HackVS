@@ -23,7 +23,7 @@ import threading
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Callable, Literal, Optional
 
 from pydantic import BaseModel
 
@@ -126,7 +126,10 @@ def _maintenant() -> str:
 
 
 class Magasin:
-    def __init__(self, chemin: Path | str = ":memory:"):
+    def __init__(self, chemin: Path | str = ":memory:", horloge: Optional[Callable[[], str]] = None):
+        """`horloge` : source unique du temps (ISO 8601). Par défaut le temps réel ; l'application y branche l'horloge
+        du réseau pour que besoins, relations et mémoire partagent le même temps (démo : temps simulé)."""
+        self._horloge = horloge or _maintenant
         if chemin != ":memory:":
             Path(chemin).parent.mkdir(parents=True, exist_ok=True)
         self._verrou = threading.RLock()
@@ -148,7 +151,7 @@ class Magasin:
 
     def _journal(self, type_: str, acteur: str, objet_id: str, message: str, concerne: list[str]) -> None:
         self._db.execute("INSERT INTO journal (horodatage, type, acteur, objet_id, message, concerne) VALUES (?,?,?,?,?,?)",
-                         (_maintenant(), type_, acteur, objet_id, message, json.dumps(concerne)))
+                         (self._horloge(), type_, acteur, objet_id, message, json.dumps(concerne)))
 
     def journal(self, depuis: int = 0) -> list[dict]:
         with self._verrou:
@@ -176,7 +179,7 @@ class Magasin:
         Les relations déjà acceptées restent (consentement déjà donné) ; il peut les annuler lui-même."""
         annulees: list[str] = []
         with self._verrou:
-            self._db.execute("INSERT OR REPLACE INTO consentements VALUES (?, ?, ?)", (membre_id, int(accepte), _maintenant()))
+            self._db.execute("INSERT OR REPLACE INTO consentements VALUES (?, ?, ?)", (membre_id, int(accepte), self._horloge()))
             if not accepte:
                 for r in self._relations():
                     if r.etat == "proposee" and r.destinataire_id() == membre_id:
@@ -192,7 +195,7 @@ class Magasin:
         with self._verrou:
             if self._db.execute("SELECT 1 FROM membres WHERE id = ?", (profil["id"],)).fetchone():
                 raise ErreurMetier("Ce membre existe déjà.")
-            self._db.execute("INSERT INTO membres VALUES (?, ?, ?)", (profil["id"], json.dumps(profil, ensure_ascii=False), _maintenant()))
+            self._db.execute("INSERT INTO membres VALUES (?, ?, ?)", (profil["id"], json.dumps(profil, ensure_ascii=False), self._horloge()))
             self._journal("adhesion", profil["id"], profil["id"], f"{profil['nom']} rejoint le Club", [profil["id"]])
             self._db.commit()
 
@@ -207,7 +210,7 @@ class Magasin:
 
     def modifier_profil(self, membre_id: str, champs: dict) -> None:
         with self._verrou:
-            self._db.execute("INSERT OR REPLACE INTO profils VALUES (?, ?, ?)", (membre_id, json.dumps(champs, ensure_ascii=False), _maintenant()))
+            self._db.execute("INSERT OR REPLACE INTO profils VALUES (?, ?, ?)", (membre_id, json.dumps(champs, ensure_ascii=False), self._horloge()))
             self._journal("profil_modifie", membre_id, membre_id, "Profil mis à jour", [membre_id])
             self._db.commit()
 
@@ -234,7 +237,7 @@ class Magasin:
         if not any(c.type in ("expertise", "texte_libre") for c in besoin.criteres):
             raise ErreurMetier("Indiquez au moins la compétence recherchée avant d'enregistrer.")
         statut = "publie" if publier else "brouillon"
-        t = _maintenant()
+        t = self._horloge()
         b = BesoinEnregistre(id=uuid.uuid4().hex[:8], auteur_id=auteur_id, besoin=besoin, anonyme=anonyme,
                              statut=statut, libelle_statut=LIBELLES_BESOIN[statut], historique=[
                                  Evenement(horodatage=t, action="creer" + ("_et_publier" if publier else ""), acteur=auteur_id)],
@@ -254,7 +257,7 @@ class Magasin:
                 raise ErreurMetier("Ce besoin est clos : créez-en un nouveau.")
             if not any(c.type in ("expertise", "texte_libre") for c in besoin.criteres):
                 raise ErreurMetier("Indiquez au moins la compétence recherchée.")
-            b.besoin, b.version, b.maj_le = besoin, b.version + 1, _maintenant()
+            b.besoin, b.version, b.maj_le = besoin, b.version + 1, self._horloge()
             if anonyme is not None:
                 b.anonyme = anonyme
             b.historique.append(Evenement(horodatage=b.maj_le, action="modifier", acteur=membre_id, detail=f"version {b.version}"))
@@ -296,7 +299,7 @@ class Magasin:
                 msg = "Besoin résolu" if resolu_par else "Besoin clos sans suite"
             else:
                 raise ErreurMetier(f"Action inconnue : {action}")
-            b.libelle_statut, b.maj_le = LIBELLES_BESOIN[b.statut], _maintenant()
+            b.libelle_statut, b.maj_le = LIBELLES_BESOIN[b.statut], self._horloge()
             b.historique.append(Evenement(horodatage=b.maj_le, action=action, acteur=membre_id, detail=note))
             self._ecrire("besoins", b)
             concernes = [membre_id] + [r.aidant_id for r in self._relations() if r.besoin_id == b.id]
@@ -347,7 +350,7 @@ class Magasin:
                 raise ErreurMetier("Le message ne peut pas être vide.")
             if any(r.besoin_id == b.id and r.aidant_id == aidant_id and r.etat in ETATS_ACTIFS for r in self._relations()):
                 raise ErreurMetier("Une mise en relation est déjà en cours avec cette personne pour ce besoin.")
-            t = _maintenant()
+            t = self._horloge()
             r = Relation(id=uuid.uuid4().hex[:8], besoin_id=b.id, besoin_version=b.version, auteur_id=b.auteur_id,
                          aidant_id=aidant_id, initiateur=initiateur, message=message.strip(), etat="proposee",
                          libelle_etat=LIBELLES_RELATION["proposee"], cree_le=t,
@@ -383,12 +386,12 @@ class Magasin:
                 r.resultat = detail = resultat
             r.etat, r.libelle_etat = nouvel_etat, LIBELLES_RELATION[nouvel_etat]
             r.coordonnees_partagees = nouvel_etat in ETATS_PARTAGE
-            r.historique.append(Evenement(horodatage=_maintenant(), action=action, acteur=membre_id, detail=detail))
+            r.historique.append(Evenement(horodatage=self._horloge(), action=action, acteur=membre_id, detail=detail))
             self._ecrire("relations", r)
             if nouvel_etat == "acceptee":
                 b = self.besoin(r.besoin_id)
                 if b.statut == "publie" or b.statut == "brouillon":
-                    b.statut, b.libelle_statut, b.maj_le = "en_cours", LIBELLES_BESOIN["en_cours"], _maintenant()
+                    b.statut, b.libelle_statut, b.maj_le = "en_cours", LIBELLES_BESOIN["en_cours"], self._horloge()
                     self._ecrire("besoins", b)
             self._journal("relation_" + action, membre_id, r.id, LIBELLES_RELATION[nouvel_etat], [r.auteur_id, r.aidant_id])
             self._db.commit()
@@ -397,7 +400,7 @@ class Magasin:
     def _fin_systeme(self, r: Relation, etat: str, motif: str) -> None:
         r.etat, r.libelle_etat, r.motif_fin = etat, LIBELLES_RELATION[etat], motif
         r.coordonnees_partagees = False
-        r.historique.append(Evenement(horodatage=_maintenant(), action="annulation_automatique", acteur="systeme", detail=motif))
+        r.historique.append(Evenement(horodatage=self._horloge(), action="annulation_automatique", acteur="systeme", detail=motif))
         self._ecrire("relations", r)
         self._journal("relation_annulee", "systeme", r.id, motif, [r.auteur_id, r.aidant_id])
 

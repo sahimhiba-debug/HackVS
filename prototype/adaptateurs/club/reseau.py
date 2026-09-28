@@ -43,9 +43,25 @@ def _jour(iso: str) -> date:
     return datetime.fromisoformat(iso).date()
 
 
-def projeter(m: Memoire, relations_magasin: list) -> int:
-    """Magasin → mémoire. Idempotent (même contenu = même événement). Retourne le nombre d'événements projetés."""
+def projeter(m: Memoire, relations_magasin: list, besoins_magasin: Optional[list] = None) -> int:
+    """Magasin → mémoire. Idempotent (même contenu = même événement). Retourne le nombre d'événements projetés.
+    Besoins : seulement ceux qui ont été PUBLICS et NON anonymes (une relance nommerait l'auteur) ; jamais un brouillon.
+    Un besoin qui n'est plus public (clos, dépublié) reçoit un BESOIN_CLOS et cesse de servir de raison."""
+    from app.store import STATUTS_PUBLICS
     n = 0
+    for b in besoins_magasin or []:
+        if b.anonyme:
+            continue
+        pub = next((e for e in b.historique if e.action in ("creer_et_publier", "publier")), None)
+        if pub is None:
+            continue
+        m.ajouter(Evt(type="BESOIN_PUBLIE", le=_jour(pub.horodatage), acteurs=[b.auteur_id], statut=Statut.OBSERVE,
+                      donnees={"besoin_id": b.id, "texte": b.besoin.texte, "besoin": b.besoin.model_dump(), "source": "bourse"}))
+        n += 1
+        if b.statut not in STATUTS_PUBLICS:
+            m.ajouter(Evt(type="BESOIN_CLOS", le=_jour(b.maj_le), acteurs=[b.auteur_id], statut=Statut.OBSERVE,
+                          donnees={"besoin_id": b.id, "statut": b.statut}))
+            n += 1
     for r in relations_magasin:
         paire = [r.auteur_id, r.aidant_id]
         for ev in r.historique:
@@ -234,3 +250,22 @@ def boite(m: Memoire, moi: Profil, profils: list[Profil], relations_magasin: lis
                 "presentations_recommandees": presentations, "relations_a_raviver": a_raviver}
     return {"membre": moi.id, "le": maintenant.isoformat(), "total": sum(len(v) for v in sections.values()), **sections,
             "principe": "seulement des actions possibles maintenant, chacune avec sa raison ; aucun fil d'actualité"}
+
+
+# ------------------------------------------------------------------ simulation avant / après (aucune écriture)
+def simuler(g: nx.Graph, ajouts: list[tuple[str, str]], maintenant: date, focus: Optional[list[str]] = None) -> dict:
+    """SIMULATION : que devient le réseau si ces liens se créent ? Indicateurs factuels avant/après, calculés sur une
+    COPIE du graphe (rien n'est écrit). Ce n'est pas une prédiction du comportement des membres."""
+    from plateforme.memoire import indicateurs
+    apres = g.copy()
+    ponts = []
+    for a, b in ajouts:
+        relie = not (a in g and b in g and nx.has_path(g, a, b))
+        if relie:
+            ponts.append([a, b])
+        apres.add_edge(a, b, derniere=maintenant, premiere=maintenant, nombre=1, types={"SIMULATION"}, statut=Statut.SIMULE)
+    portee = lambda gr, n: len(nx.single_source_shortest_path_length(gr, n, cutoff=2)) - 1 if n in gr else 0  # noqa: E731
+    return {"nature": "SIMULATION", "ajouts": [list(p) for p in ajouts], "avant": indicateurs(g, maintenant),
+            "apres": indicateurs(apres, maintenant), "nouveaux_ponts": ponts,
+            "portee_a_2_sauts": {n: {"avant": portee(g, n), "apres": portee(apres, n)} for n in (focus or [])},
+            "hypothese": "chaque lien simulé est supposé accepté par les deux membres ; aucun comportement n'est prédit"}

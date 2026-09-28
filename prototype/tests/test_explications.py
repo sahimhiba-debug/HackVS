@@ -90,3 +90,32 @@ def test_adhesion_valide_ses_entrees():
     assert "@" not in json.dumps(rep) and rep["secteurs_deduits_des_offres"] is True
     client.post("/api/demo/reinitialiser")
     assert not any(p.id.startswith("n") for p in profils_effectifs())   # la réinitialisation retire les adhésions
+
+
+def test_suivi_par_l_autre_sens_de_la_reciprocite_puis_simulation():
+    """Nadia rencontre Inès pour SON besoin (web) ; 10 jours plus tard, l'autre sens (Inès cherche du référencement,
+    Nadia en propose) devient une raison documentée de reprendre contact — proposée à Inès, pas à Nadia."""
+    from datetime import date
+
+    from adaptateurs.club import reseau
+    from app.main import MEMOIRE, aujourdhui_reseau
+    client.post("/api/demo/reinitialiser")
+    nid = client.post("/api/demo/rejoindre", json=PROFIL_NADIA).json()["membre"]["id"]
+    N, INES = {"X-Membre": nid}, {"X-Membre": "p26"}
+    b = client.post("/api/analyser", json={"texte": "Nous cherchons un développeur pour créer une boutique en ligne"}).json()["besoin"]
+    bb = client.post("/api/besoins", json={"besoin": b, "publier": True, "anonyme": False}, headers=N).json()
+    t0 = aujourdhui_reseau()
+    g0 = reseau.graphe_de_confiance(MEMOIRE, t0)
+    sim = reseau.simuler(g0, [(nid, "p26")], t0, focus=[nid])
+    assert sim["nature"] == "SIMULATION" and sim["apres"]["liens"] == sim["avant"]["liens"] + 1
+    assert sim["portee_a_2_sauts"][nid] == {"avant": 0, "apres": 1}
+    assert reseau.graphe_de_confiance(MEMOIRE, t0).number_of_edges() == g0.number_of_edges()   # rien n'est écrit
+    r = client.post("/api/relations", json={"besoin_id": bb["id"], "cible_id": "p26", "message": "Bonjour"}, headers=N).json()
+    for action, qui, corps in (("accepter", INES, {}), ("planifier", INES, {"date_rencontre": "2026-10-15"}), ("confirmer_rencontre", N, {})):
+        assert client.post(f"/api/relations/{r['id']}/{action}", json=corps, headers=qui).status_code == 200
+    assert client.get("/api/reseau/boite", headers=INES).json()["suivis_proposes"] == []      # trop tôt
+    client.post("/api/cycle/avancer", json={"jours": 10})
+    boite_ines = client.get("/api/reseau/boite", headers=INES).json()["suivis_proposes"]
+    assert [x["type"] for x in boite_ines] == ["RECIPROCITE_OUVERTE"]
+    assert client.get("/api/reseau/boite", headers=N).json()["suivis_proposes"] == []        # le sens déjà servi : rien
+    assert date.fromisoformat(MEMOIRE.maintenant(t0).isoformat()) > t0
