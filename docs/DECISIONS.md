@@ -127,3 +127,18 @@ Au lot 2, B a été construit sur le moteur de A ; C reste une extension.
 | **Dockerfile vérifié + guide Cloud Run** | Une URL publique le jour J | Image construite et testée ici (249 Mo, non root) | Une seule instance (SQLite et SSE locaux) ; publier est une décision de Hiba | — |
 
 Écartés à nouveau : graphe de réseau (pas plus explicatif que le pont besoin ↔ preuves), multi-agents (aucune boucle à orchestrer), tableau de bord décoratif (chaque chiffre porte son dénominateur et sa définition).
+
+## 9. Lot 4 : niveau supérieur, sans framework de façade
+
+| Problème | Décision | Compromis | Comment le défendre |
+|---|---|---|---|
+| Les règles se taisent sur des formulations libres (réservé 4 : 3/15) | IA locale **multilingue** (e5, ONNX, CPU) qui **propose** 1 à 3 compétences, le membre **confirme** | Un clic de plus pour le membre | Mesuré : aucun seuil sémantique ne distingue « hors catalogue » d'un vrai besoin ; donc pas de décision automatique. Boucle complète : 15/15 (borne haute) |
+| Options proposées souvent hors sujet (67 %) | **Somme pondérée** dense z-normalisée + 0,3 × lexical (idée BGE-M3) ; nombre d'options adaptatif calibré | Encore 54 % d'options hors sujet sur le réservé | RRF (Haystack) testée et moins bonne : on garde ce qui mesure le mieux, pas ce qui est à la mode |
+| « Pourquoi lui ? » n'était visible qu'en liste de preuves | `expliquer()` critère par critère, même moteur que la recherche ; « pourquoi pas » avec raison tue si elle touche au consentement | Moins d'information sur les refus | Le respect du choix d'un membre prime sur la curiosité du demandeur |
+| Planifier une soirée à la main ne passe pas à l'échelle | Programme linéaire en nombres entiers (HiGHS via SciPy), langue commune obligatoire, équité (bonus par participant servi), absences expliquées | Rencontres 1:1 seulement (pas de tables de 4) | Optimum prouvé en < 0,1 s ; +18 participants servis contre le glouton à 150 membres ; OR-Tools CP-SAT gardé pour les tables |
+| Un assistant IA externe doit pouvoir agir | **Serveur MCP = client mince de l'API** (aucune règle dupliquée) ; confirmation humaine par elicitation (protocoles 2025 et 2026-07-28) ; approuver / modifier / refuser ; jetons + portées en HTTP | Un client sans elicitation est refusé par défaut | Les mêmes tests de garde-fous passent par le web et par MCP ; refus lisibles avec codes stables |
+| Les profils sont écrits par des membres (injection indirecte) | Le LLM ne voit **jamais** les profils ; extraits marqués « données » pour l'agent ; signaux d'instructions affichés ; rien sans confirmation | Heuristique imparfaite | La défense est structurelle ; l'heuristique n'est qu'un signal (0 faux positif sur 187 profils) |
+| onnxruntime envoyait de la télémétrie dès l'import | `ORT_DISABLE_TELEMETRY=1` avant tout import, dans le code et l'image Docker, test dédié | — | Découvert en surveillant les connexions sortantes : « aucun appel externe non documenté » est vérifié, pas supposé |
+| Faux amis composés (« comptabilité carbone » → fiduciaire) | Listes éditables `composes_trompeurs` et `contextes_trompeurs` | Ne généralise pas (0/4 hors liste) | Mesuré et dit ; la liste appartient au Club |
+| Frameworks d'agents (LangGraph, Agent Framework, CrewAI…) | **Non adoptés** ; leurs patrons oui (interrompre avant l'effet de bord, réessai de validation, approbation) | Moins de « buzzwords » | Nos parcours sont des machines d'états déterministes ; un LLM ne doit pas piloter le flux de contrôle ici (OPEN_SOURCE_RECON.md) |
+| Qualité visible | ruff, CI GitHub Actions (tests + non-régression des évaluations), jeux réservés commités avant le code | — | La CI échoue si une violation apparaît ou si un succès est perdu |

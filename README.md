@@ -1,57 +1,71 @@
 # Le Fil du Club : préparation Hack VS 2026
 
-> **Prototype exploratoire préparé AVANT Hack VS** (Martigny, 3–4 octobre 2026), pour le challenge supposé
-> « prolonger numériquement la communauté du Club des Affaires de la Foire du Valais ». Le brief officiel n'est pas encore connu.
-> **Toutes les personnes et entreprises sont fictives.** Aucun message n'est envoyé.
+> **Prototype préparé AVANT Hack VS** (Martigny, 3–4 octobre 2026), pour le challenge supposé « prolonger numériquement la
+> communauté du Club des Affaires de la Foire du Valais ». Le brief officiel n'est pas encore connu.
+> **Toutes les personnes et entreprises sont fictives.** Aucun message réel n'est envoyé.
 
-**L'idée.** Un membre dit ce dont il a besoin. Le Club le fait parvenir **aux seuls membres capables d'y répondre**, avec la preuve de pourquoi
-eux. Ceux-ci proposent leur aide ; la mise en relation se fait avec consentement. Et quand personne ne convient, le produit le dit, et
-**le Club voit quelles compétences lui manquent : autant d'entreprises à inviter.**
+**Le problème.** Entre deux soirées du Club, le besoin d'un dirigeant (« un transporteur frigorifique pour Zurich ») ne
+rencontre pas le membre qui pourrait y répondre.
 
-Pages : `/` espace membre · `/scene` deux membres en direct · `/club` vue du Club · `/presentation` pitch hors ligne · `/rejoindre` QR.
+**Ce que fait le produit.** Le membre écrit son besoin comme il le dirait. Le Club le fait parvenir **aux seuls membres
+capables d'y répondre**, avec **la preuve** de pourquoi eux ; la mise en relation se fait avec consentement ; avant chaque
+soirée, un plan de rencontres optimisé dit qui doit voir qui. Quand personne ne convient, le produit **le dit**, et le
+Club voit quelles compétences lui manquent.
 
-![La Bourse de Julien : le besoin de Sophie devient une occasion d'aider](docs/captures/13_scene_bourse_julien.png)
+**Pourquoi l'IA, et pourquoi ce n'est pas un chatbot.** L'IA **comprend et propose** (règles multilingues, modèle
+sémantique local, LLM optionnel Claude ou Apertus) ; le **code décide** (consentement, zone, langue, concurrence,
+preuves citées mot pour mot) ; **l'humain confirme**. Nous avons mesuré que la similarité sémantique ne sait pas dire
+« je ne sais pas » : elle n'a donc jamais le dernier mot. Un assistant IA externe peut piloter tout le Club via **MCP**,
+sauf décider à la place du membre.
+
+![Pourquoi cette personne ? Critère par critère, preuves citées](docs/captures/27_pourquoi.png)
+
+## Ce qui fonctionne (vérifié)
+
+| | Détail | Preuve |
+|---|---|---|
+| Parcours complet | besoin → critères → clarification → membres + preuves → publication → proposition d'aide → acceptation → rencontre → clôture | parcours navigateur bureau et mobile, captures dans `docs/captures` |
+| « Pourquoi / pourquoi pas » | critère par critère ; raison tue si elle touche au consentement | `27_pourquoi`, `28_pourquoi_pas` |
+| IA locale | propose 1 à 3 compétences quand les règles échouent (e5 multilingue, ONNX, CPU, ≈ 77 ms) | jeu réservé : hit@3 0,875 → **0,917**, options hors sujet 69 % → 54 % |
+| Boucle « IA propose, membre confirme » | jeux réservés les plus durs : succès@3 3/15 → **15/15**, 0 mauvais contact ajouté (borne haute : membre simulé) | [EVALUATION.md §3](docs/EVALUATION.md) |
+| Plan de soirée | programme linéaire, **optimum prouvé** (< 0,1 s) ; 150 membres : 92 participants avec une rencontre utile contre 74 (glouton) ; langue commune ; export agenda | `/soiree`, `36_soiree` |
+| Agent IA (MCP) | 9 outils, confirmation humaine obligatoire, jetons + portées en HTTP, erreurs à code stable | [transcription](docs/captures/agent_mcp.md) |
+| Sécurité | profils = données non fiables ; LLM sans accès aux profils ; injection testée ; télémétrie tierce coupée | [EVALUATION.md §7](docs/EVALUATION.md) |
+| Ingénierie | 51 tests, lint, intégration continue verte, non-régression des évaluations, jeux réservés écrits avant le code | `.github/workflows/ci.yml` |
+
+**Simulé / fictif** : 37 profils de démo, 150 profils synthétiques, historique du Club, confirmations du « membre
+simulé », agent scripté de la transcription. **Non vérifié** : Claude et Apertus contre leurs API réelles (pas de clé
+ni d'accès réseau ici ; testés contre des serveurs simulés), utilité auprès de vrais membres. Voir [LIMITATIONS.md](docs/LIMITATIONS.md).
 
 ## Lancer
 ```bash
 cd prototype
-pip install -r requirements-dev.txt   # (requirements.txt suffit pour lancer)
-uvicorn app.main:app                  # http://localhost:8000
+pip install -r requirements.txt            # + requirements-dev.txt pour tests et captures
+python scripts/telecharger_modele.py       # facultatif : IA locale (2,2 Go, sans clé)
+uvicorn app.main:app                       # http://localhost:8000
 ```
-Ou avec Docker, depuis la racine : `docker build -t fil-du-club . && docker run -p 8080:8080 fil-du-club` (voir docs/DEPLOIEMENT.md).
+Pages : `/` espace membre · `/soiree` plan de soirée · `/club` vue du Club · `/scene` deux membres en direct ·
+`/presentation` pitch hors ligne. Docker : `docker build -t fil-du-club . && docker run -p 8080:8080 fil-du-club`.
+
+Brancher un assistant IA : `claude mcp add fil-du-club -e HACKVS_API_URL=http://localhost:8000 -e HACKVS_MCP_MEMBRE=p00 -- python <chemin>/prototype/scripts/mcp_club.py` (détails : [HANDOFF.md](docs/HANDOFF.md)).
 
 | Variable | Effet |
 |---|---|
-| `HACKVS_MODE=demo` (défaut) / `reel` | `reel` : uniquement `HACKVS_PROFILS=<fichier autorisé>`, sans identité simulée ni journal exposé (503/501 sinon) |
-| `HACKVS_LLM=claude` + `ANTHROPIC_API_KEY` | Analyse du besoin par Claude en flux, validée par le code ; repli affiché sur les règles |
-| `HACKVS_CLAUDE_MODEL` | Modèle (défaut `claude-opus-5`) |
-| `HACKVS_DB` | Fichier SQLite (défaut `prototype/var/`) |
+| `HACKVS_MODE=demo` (défaut) / `reel` | `reel` : uniquement `HACKVS_PROFILS=<fichier autorisé>` ; sinon 503/501, jamais de simulation |
+| `HACKVS_LLM=claude` + `ANTHROPIC_API_KEY` | Analyse par Claude en flux, validée par le code ; repli affiché sur les règles |
+| `HACKVS_LLM=apertus` + `APERTUS_API_KEY`, `APERTUS_BASE_URL`, `APERTUS_MODEL` | Même chose avec Apertus (API compatible OpenAI) |
+| `HACKVS_SEMANTIQUE=0` | Désactive l'IA locale |
 
 ## Vérifier
 ```bash
-python -m pytest -q tests                  # 22 tests
-python -m eval.run_eval                    # 4 jeux → eval/resultats_*.md
-python scripts/parcours_demo.py [--video]  # parcours réel dans Chromium (serveur lancé) → docs/captures/ + 2 vidéos
-python scripts/verifier_claude.py          # estimation, puis --confirmer pour exécuter contre l'API réelle
+python -m pytest -q                        # 51 tests (dont MCP stdio et HTTP de bout en bout)
+python -m eval.run_eval --verifier         # non-régression des 6 jeux
+python scripts/parcours_demo.py --url http://localhost:8000   # navigateur réel → docs/captures/
+python scripts/demo_agent_mcp.py           # transcription de l'agent MCP
 ```
 
-## État réel (28.09.2026, fin du lot 3)
-
-| Fonctionne (vérifié) | Simulé / fictif | Non vérifié / manquant |
-|---|---|---|
-| Boucle complète : besoin → critères → clarification → publication (ou privé, anonyme possible) → Bourse du membre qui peut aider → proposition → acceptation → rencontre → clôture | 37 profils fictifs | **Claude jamais exécuté contre l'API réelle** (pas de clé ; testé avec un client simulé) |
-| Vue scène : deux membres, une base, mises à jour en direct ; acte 2 « le Club se répare » | Les « autres humains » : on incarne tour à tour chaque membre (démo seulement) | Brief, règlement, critères du jury : inconnus |
-| Vue du Club : compétences à recruter, offres à faire connaître, activité (calculées) ; profil en 30 secondes | Historique du Club (14 besoins inventés, chargé à la demande) | Aucune URL publique déployée (image Docker prête) |
-| Retrait du consentement, refus, modification versionnée, clôture, résultats obsolètes signalés | Aucun envoi de message ni de coordonnées réelles | Aucun membre réel interrogé ; utilité non démontrée |
-| Négations, préférences, implantation ou zone d'intervention, hors catalogue, abstention | | Dictée vocale non testée en salle |
-| Tests (22), évaluation (4 jeux), parcours navigateur bureau et mobile, axe (0 violation sur toutes les pages), image Docker construite et testée | | Authentification, mode réel avec données |
-
 ## Documentation
-- [docs/AUDIT_PACKET.md](docs/AUDIT_PACKET.md) : **livraison pour l'auditeur** (commandes, résultats, problèmes connus)
-- [docs/EVALUATION.md](docs/EVALUATION.md) : définitions, jeux, résultats, limites
-- [docs/DEMO.md](docs/DEMO.md) : scénario de 60 à 90 s, pitchs, objections, plan de secours
-- [docs/DECISIONS.md](docs/DECISIONS.md) : problème, proposition de valeur, choix et compromis
-- [docs/RESEARCH.md](docs/RESEARCH.md) : sources et statuts · [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md) : hypothèses
-- [docs/HANDOFF.md](docs/HANDOFF.md) : prise en main et répartition · [docs/LEARNING.md](docs/LEARNING.md) : notions à défendre
-- [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md) : Docker, Cloud Run, Wi-Fi local
-- [docs/REPRISE.md](docs/REPRISE.md) : état de reprise du travail
+[ARCHITECTURE](docs/ARCHITECTURE.md) · [DEMO](docs/DEMO.md) (scénarios 60 s / 3 min / 5 min, objections) ·
+[EVALUATION](docs/EVALUATION.md) · [LIMITATIONS](docs/LIMITATIONS.md) · [DECISIONS](docs/DECISIONS.md) ·
+[OPEN_SOURCE_RECON](docs/OPEN_SOURCE_RECON.md) · [RESEARCH](docs/RESEARCH.md) · [ASSUMPTIONS](docs/ASSUMPTIONS.md) ·
+[HANDOFF](docs/HANDOFF.md) · [DEPLOIEMENT](docs/DEPLOIEMENT.md) · [AUDIT_PACKET](docs/AUDIT_PACKET.md) · [REPRISE](docs/REPRISE.md) · [LEARNING](docs/LEARNING.md)

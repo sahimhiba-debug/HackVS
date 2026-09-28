@@ -281,6 +281,55 @@ def acte2_video(pw, url: str, sortie: Path) -> None:
     print("Acte 2 (vidéo) OK")
 
 
+def explications_soiree(pw, url: str, sortie: Path, largeur: int, hauteur: int, suffixe: str) -> None:
+    """« Pourquoi cette personne / pourquoi pas », suggestion de l'IA locale (si le modèle est présent), plan de soirée."""
+    b = lancer_navigateur(pw)
+    page = b.new_page(viewport={"width": largeur, "height": hauteur})
+    erreurs: list[str] = []
+    page.on("pageerror", lambda e: erreurs.append(str(e)))
+    page.request.post(url + "/api/demo/reinitialiser")
+    page.goto(url + "/?membre=p00&vue=nouveau")
+    page.locator("#texte").fill("On lance nos jus d'abricot en Suisse alémanique. Je cherche un transporteur frigorifique qui livre "
+                                "Zurich, idéalement germanophone, et pas un concurrent.")
+    page.locator("#btn-analyser").click()
+    carte = page.locator("#zone-apercu .carte").first
+    expect(carte).to_be_visible(timeout=20000)
+    carte.locator("details.pourquoi-detail summary").click()
+    expect(carte.locator(".criteres-verdict li").first).to_be_visible()
+    page.wait_for_timeout(400)
+    carte.screenshot(path=sortie / f"27_pourquoi{suffixe}.png")
+    pp = page.locator("details", has_text="Pourquoi pas quelqu'un d'autre")
+    pp.locator("summary").click()
+    expect(pp.locator("select option")).not_to_have_count(1)
+    pp.locator("select").select_option("p04")
+    pp.get_by_role("button", name="Expliquer").click()
+    expect(pp.locator(".explication .resume")).to_contain_text("pas communiqué")
+    page.wait_for_timeout(300)
+    pp.screenshot(path=sortie / f"28_pourquoi_pas{suffixe}.png")
+    if page.request.get(url + "/api/etat").json().get("semantique_locale"):
+        page.locator("#texte").fill("Nos bouteilles ont besoin d'un nouvel habillage.")
+        page.locator("#btn-analyser").click()
+        expect(page.locator(".question")).to_contain_text("L'IA locale propose")
+        page.wait_for_timeout(400)
+        page.locator("#bloc-criteres").screenshot(path=sortie / f"29_suggestion_ia{suffixe}.png")
+    page.goto(url + "/soiree")
+    expect(page.locator("table.cmp")).to_be_visible(timeout=30000)
+    page.select_option("#donnees", "synthetique")
+    page.click("#calculer")
+    expect(page.locator("table.cmp")).to_contain_text("sur 150 membres", timeout=30000)
+    expect(page.locator("#moi option")).not_to_have_count(1)
+    page.wait_for_timeout(500)
+    page.screenshot(path=sortie / f"36_soiree{suffixe}.png")
+    valeurs = page.eval_on_selector_all("#moi option", "os => os.map(o => o.value)")
+    page.select_option("#moi", value=valeurs[5])
+    expect(page.locator("a.agenda")).to_be_visible()
+    page.wait_for_timeout(400)
+    page.screenshot(path=sortie / f"37_soiree_programme{suffixe}.png")
+    assert not erreurs, erreurs
+    b.close()
+    print(f"Explications et soirée OK ({largeur}x{hauteur})")
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--url", default="http://localhost:8000")
@@ -294,5 +343,7 @@ if __name__ == "__main__":
         cas_limites(pw, a.url.rstrip("/"), sortie, 1280, 800, "")
         cas_limites(pw, a.url.rstrip("/"), sortie, 390, 844, "_mobile")
         club_profil_pitch(pw, a.url.rstrip("/"), sortie)
+        explications_soiree(pw, a.url.rstrip("/"), sortie, 1280, 800, "")
+        explications_soiree(pw, a.url.rstrip("/"), sortie, 390, 844, "_mobile")
         if a.video:
             acte2_video(pw, a.url.rstrip("/"), sortie)

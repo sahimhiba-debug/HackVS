@@ -116,7 +116,7 @@ function rendreCriteres() {
     editeurCriteres(s.besoin, { onChange: () => { marquerObsolete(); } }),
     h("div", { class: "actions" },
       h("button", { class: "btn primaire", id: "btn-apercu", type: "button", onclick: apercu }, "Trouver qui peut m'aider"),
-      s.besoin.analyseur !== "regles" ? h("span", { class: "aide" }, `Analyse : ${s.besoin.analyseur}`) : null));
+      s.besoin.analyseur !== "regles" ? h("span", { class: "aide" }, `Analyse : ${LIBELLES_ANALYSEUR[s.besoin.analyseur] || s.besoin.analyseur}`) : null));
 }
 
 // ------------------------------------------------------------------ aperçu des correspondances
@@ -129,6 +129,11 @@ function marquerObsolete() {
     "Critères modifiés : ces résultats ne correspondent plus à votre besoin.",
     h("button", { class: "btn petit", type: "button", onclick: apercu }, "Actualiser")));
 }
+
+const LIBELLES_ANALYSEUR = {
+  "regles+semantique": "règles + IA locale", "regles+semantique (question)": "règles + IA locale (à confirmer par vous)",
+  claude: "Claude, vérifié par le code", apertus: "Apertus, vérifié par le code", "regles (repli)": "règles (modèle indisponible)",
+};
 
 async function apercu() {
   if (!aUneCompetence(s.besoin)) { toast("Choisissez d'abord la compétence recherchée."); return; }

@@ -1,4 +1,4 @@
-# Démonstration et pitch (répétition générale, lot 2)
+# Démonstration et pitch (répétition générale, lot 4)
 
 Règle d'or : **on ne montre que ce qui fonctionne, et on dit ce qui est simulé.** Personnes et entreprises fictives ; le bandeau et les badges le disent en permanence.
 
@@ -32,6 +32,25 @@ Règle d'or : **on ne montre que ce qui fonctionne, et on dit ce qui est simulé
 | 8–22 s | Droite : taper « Nous accompagnons les PME valaisannes vers la certification ISO 27001. » → « Proposer mon profil » → « Valider » | P1 : « Yann complète son profil en trente secondes, et c'est lui qui valide. » | Proposition d'offre avec la phrase en preuve |
 | 22–30 s | Les deux panneaux | P1 : « Le manque est comblé, et la demande qui attendait trouve Yann. » | À gauche : **« Comblé : ISO 27001 »** ; à droite : notification « Alain a besoin de ce que vous faites » |
 
+### Acte 3 : la prochaine soirée du Club (30 s, onglet `/soiree`)
+| t | Écran | Phrase | Ce que le public voit |
+|---|---|---|---|
+| 0–10 s | « Club synthétique (150 membres) » → « Calculer le plan » | P1 : « Avant chaque soirée, qui doit rencontrer qui ? 150 membres, 3 tours. » | Tableau : optimisé **92** participants avec une rencontre utile, glouton 74, hasard 79 |
+| 10–20 s | Tours et cartes | P1 : « Chaque rencontre cite l'aide prouvée ; jamais deux personnes sans langue commune. Optimum prouvé en quelques dizaines de millisecondes. » | Cartes « Anna peut aider David : « … » », langue FR/DE |
+| 20–30 s | « Mon programme » → un membre → « Ajouter à mon agenda » | P1 : « Et chacun repart avec son programme dans son agenda. » | Fichier .ics téléchargé |
+
+### Acte 4 : le même Club, piloté par un assistant IA (30 s)
+Deux options, selon ce qui est disponible le jour J :
+- **En direct** (si un membre de l'équipe a Claude Desktop ou Claude Code avec une clé) : brancher le serveur MCP
+  (`claude mcp add fil-du-club -e HACKVS_API_URL=http://localhost:8000 -e HACKVS_MCP_MEMBRE=p00 -- python <chemin>/prototype/scripts/mcp_club.py`, voir HANDOFF.md) et demander : « Trouve-moi un
+  transporteur frigorifique pour Zurich dans le Club et explique-moi pourquoi. » Montrer la **fenêtre de confirmation**
+  avant toute publication.
+- **Rejouée** (hors ligne, sans clé) : `docs/captures/agent_mcp.md`, transcription d'un agent **scripté** sur le vrai
+  serveur MCP : abstention pour « comptabilité carbone », explication critère par critère, raison opaque pour Stefan,
+  refus 403/409 du serveur, confirmation humaine à chaque action. Le dire : « agent scripté, serveur réel ».
+
+Phrase : « Un assistant IA peut tout faire à la place du membre, sauf décider à sa place. »
+
 **Phrase de conclusion** : « Un membre aide un membre ; et quand personne ne peut aider, le Club sait qui inviter. »
 
 ### Moments de preuve (15 s chacun, pour les questions)
@@ -40,6 +59,11 @@ Règle d'or : **on ne montre que ce qui fonctionne, et on dit ce qui est simulé
 - **Il ne triche pas** : retirer un critère grise les résultats (« Actualiser »).
 - **Face à une recherche par mots-clés** : « Comparer avec une simple recherche par mots-clés ».
 - **Il parle allemand** : « Wir brauchen einen Treuhänder für unsere Buchhaltung. » (règles locales).
+- **Pourquoi cette personne ?** : déplier « Pourquoi cette personne ? Critère par critère » sur une carte (✓ vérifié, ? à vérifier, ✗ non satisfait).
+- **Pourquoi pas lui ?** : « Pourquoi pas quelqu'un d'autre ? » → Stefan : « le détail n'est pas communiqué » (son choix est protégé).
+- **L'IA locale propose, le membre confirme** : « Je voudrais rencontrer quelqu'un qui travaille dans les renouvelables » ou
+  « Nos bouteilles ont besoin d'un nouvel habillage » → 1 à 3 compétences proposées, bouton « Aucune ».
+- **Il ne se laisse pas piéger** : « Je cherche quelqu'un pour la comptabilité carbone » → personne (pas un fiduciaire).
 - **Essayez vous-mêmes** : `/rejoindre` ou la dernière diapositive (QR ; nécessite une URL joignable, voir DEPLOIEMENT.md).
 
 ## Pitchs
@@ -55,7 +79,7 @@ Répartition : **P1 = récit**, **P2 = démo**. Chaque bloc tient seul si l'un d
 - 0:00 (P1, 30 s) **Utilisateur et problème** : Sophie, fondatrice de PME, membre du Club. Constat public : le Club vit surtout lors d'événements. Hypothèse : les besoins entre deux événements ne trouvent pas leur réponse dans le Club. *(Citer uniquement les réponses réellement recueillies sur place : « X membres sur Y nous ont dit… »)*
 - 0:30 (P2, 75 s) **Démo** : le scénario ci-dessus jusqu'à l'acceptation.
 - 1:45 (P1, 30 s) **Pourquoi lui faire confiance** : citations exactes, abstention, exclusions anonymes, consentement, résultats rendus obsolètes quand le besoin change.
-- 2:15 (P2, 30 s) **Preuve, avec ses limites** : « Sur 14 cas écrits après nos corrections et testés une seule fois, le moteur n'a jamais proposé un mauvais contact, contre 4 fois pour une recherche par mots-clés avec les mêmes filtres. En revanche, il s'est abstenu à tort 3 fois : c'est là que l'IA générative doit aider. Données fictives : ça prouve le mécanisme, pas encore l'utilité. »
+- 2:15 (P2, 30 s) **Preuve, avec ses limites** : « Sur des jeux écrits avant le code et testés une seule fois, le moteur propose très rarement un mauvais contact (0 à 2 par jeu de 14 à 20 cas), bien moins qu'une recherche par mots-clés ; mais seul, il se tait trop sur des formulations libres. Quand l'IA locale propose une compétence et que le membre confirme, il trouve 14 à 15 besoins sur 15, sans aucun mauvais contact de plus. Données fictives : ça prouve le mécanisme, pas encore l'utilité. »
 - 2:15 (P2, 25 s) **Acte 2** : le Club se répare (voir plus haut). *(Si on manque de temps, remplacer la « Preuve » par l'acte 2.)*
 - 2:45 (P1, 15 s) **Suite** : pilote de 30 jours avec 20 membres volontaires ; trois mesures (besoins publiés, part avec une proposition d'aide, rencontres jugées utiles).
 
@@ -63,7 +87,8 @@ Répartition : **P1 = récit**, **P2 = démo**. Chaque bloc tient seul si l'un d
 Version 3 minutes, plus :
 - (40 s) **Différence avec l'existant** : Brella et Swapcard font déjà du matching avec double consentement, **pendant un événement**. Hivebrite est un annuaire permanent. Nous faisons parvenir **un besoin** aux membres qui peuvent y répondre, entre les événements, et nous refusons de proposer sans preuve.
 - (40 s) **Architecture** : analyse du besoin (règles ou Claude, en flux) → filtres durs dans le code → classement → preuves vérifiées → abstention. Même moteur dans les deux sens : c'est pour ça que les deux écrans sont cohérents.
-- (40 s) **Vision** : compagnon de soirée (3 personnes à rencontrer), accès depuis l'assistant IA de chaque membre (serveur MCP), mêmes garde-fous.
+- (40 s) **Soirée optimisée** (acte 3) et **assistant IA via MCP** (acte 4) : mêmes garde-fous, mêmes preuves.
+- (20 s) **Ingénierie visible** : 51 tests, intégration continue, jeux réservés écrits avant le code, reconnaissance de 20 projets open source (ce qu'on a repris, ce qu'on a mesuré et rejeté).
 
 ## Support de présentation
 `/presentation` : 11 diapositives, hors ligne, captures réelles, notes d'orateur (N) avec la répartition P1/P2, espaces « à compléter » en ambre
@@ -81,10 +106,13 @@ Vidéos : `demo_scene.webm` (50 s) et `demo_club_repare.webm` (20 s), parcours r
 |---|---|
 | « Vos données sont fausses. » | « Oui, et c'est affiché partout : nous n'avons aspiré aucun profil réel. Le mode réel existe et refuse de démarrer sans source autorisée (503), et n'accepte aucune identité simulée (501). » |
 | « Brella fait déjà ça. » | « Brella fait du matching avec double consentement pendant un événement. Nous faisons parvenir un besoin aux bons membres entre les événements, avec preuve et abstention. Le double consentement n'est pas notre argument. » |
-| « Où est l'IA ? » | Selon le badge : « Analyse : Claude », qui transforme la phrase en critères, validés par le code ; ou « Analyse : règles locales » : « Ici, hors ligne, ce sont des règles. L'intégration Claude est prête et testée avec un client simulé, pas encore contre l'API réelle. » **Ne jamais dire que Claude tourne si le badge dit « règles ».** |
+| « Où est l'IA ? » | Trois places, chacune bornée : (1) **IA locale** (modèle multilingue e5, sur la machine, sans réseau) qui propose des compétences quand les règles ne comprennent pas — badge « règles + IA locale » ; (2) **LLM** (Claude ou Apertus, l'IA suisse) pour analyser des phrases riches, **seulement si une clé est configurée** — badge « Analyse : Claude / Apertus » ; (3) **optimisation** du plan de soirée. **Ne jamais dire qu'un LLM tourne si le badge dit « règles ».** |
+| « Pourquoi pas un agent LLM qui fait tout ? » | « Parce qu'on a mesuré que la similarité sémantique ne sait pas dire "je ne sais pas". L'IA suggère, le code vérifie consentement, zone, langue, preuves ; le membre décide. Un agent externe peut tout piloter via MCP, sauf décider à sa place. » |
+| « Ça passe à l'échelle ? » | Plan de soirée : 150 membres, optimum prouvé en < 0,1 s (calcul des aides ≈ 1,2 s). Recherche : parcours exact en ≈ 10 ms pour 37 profils ; au-delà de quelques milliers, un index s'imposerait (voir OPEN_SOURCE_RECON.md). |
+| « Et si un membre écrit des consignes pour manipuler l'IA dans son profil ? » | « Le LLM ne voit jamais les profils ; un profil qui contient des consignes est signalé, ne change pas le classement, et rien ne part sans le membre. C'est testé. » |
 | « Et si l'IA se trompe ? » | Vocabulaire fermé, extraits vérifiés, critères provisoires sans effet, repli affiché. Elle ne voit pas les profils et ne décide pas qui est proposé. |
-| « Pourquoi pas un annuaire avec filtres ? » | Montrer la comparaison ; chiffres du jeu réservé (0 violation sur 14 contre 4 sur 14). |
-| « Votre moteur rate des choses. » | « Oui : 3 fausses abstentions sur 14 cas nouveaux. Nous préférons qu'il se taise plutôt qu'il se trompe. La couverture est le chantier du LLM. » |
+| « Pourquoi pas un annuaire avec filtres ? » | Montrer la comparaison ; chiffres des jeux réservés (EVALUATION.md §2). |
+| « Votre moteur rate des choses. » | « Oui : seul, il se tait trop sur des formulations libres (3/15 sur notre jeu le plus dur). C'est pourquoi l'IA locale propose des compétences à confirmer : 15/15 dans ce cas, si le membre reconnaît la bonne. Et il reste des faux amis qu'on connaît et qu'on liste. » |
 | « Les membres rempliront-ils leur profil ? » | « C'est notre premier risque. D'où le profil en 30 secondes : on décrit son entreprise, on valide. Et la Bourse motive : on voit qui on peut aider. » (Montrer l'acte 2.) |
 | « Qu'est-ce que le Club y gagne ? » | « Une information qu'il n'a pas aujourd'hui : les compétences que ses membres cherchent sans les trouver, donc les entreprises à inviter. Et des chiffres sur ce que produit la communauté. » |
 | « Vos chiffres du Club sont inventés. » | « L'historique est fictif et étiqueté comme tel ; les indicateurs, eux, sont calculés en direct par le code, comme vous venez de le voir changer. » |

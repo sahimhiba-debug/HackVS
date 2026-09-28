@@ -1,8 +1,25 @@
-# Dossier d'audit : lots 2 et 3, version de répétition générale (28.09.2026)
+# Dossier d'audit : lots 2 à 4 (28.09.2026)
 
 Destinataire : auditeur externe (ChatGPT), via Hiba. **Aucun retour d'audit sur ce lot n'a été reçu.** Le lot 2 s'appuie sur un
 *résumé* des fragilités du premier audit, transmis par Hiba ; le texte complet (sources officielles, cas adversariaux transmis) **n'a
 pas été reçu**. Les cas adversariaux utilisés ont donc été rédigés par Claude à partir de ce résumé.
+
+## 0 bis. Lot 4 : à auditer en priorité
+Aucun audit externe n'a encore eu lieu sur ce lot. Point d'entrée : `git log --oneline` depuis le commit `3fcf21e`.
+
+| Thèse | Où la vérifier | Commande |
+|---|---|---|
+| L'IA suggère, ne décide pas | `app/analyse.py`, EVALUATION §3-4 | `python -m eval.run_eval --jeu reserve4 --semantique --membre-simule` |
+| Suggestions hybrides meilleures que le dense seul, sur un jeu réservé | `eval/suggestions/` (réservé commité avant le code) | `python -m eval.eval_suggestions --jeu reserve --methode dense` puis `hybride` |
+| Un assistant IA ne peut rien contourner | `app/mcp_serveur.py`, `tests/test_mcp.py` (16 tests, dont stdio et HTTP réels) | `python -m pytest -q tests/test_mcp.py` |
+| Injection indirecte via les profils sans effet | `app/securite.py`, `test_injection_indirecte_via_un_profil` | idem |
+| Plan de soirée optimal et réaliste | `app/soiree.py`, `/soiree` | `python -m pytest -q -k soiree` |
+| Aucun appel externe non documenté | `test_aucune_telemetrie_onnxruntime` | surveiller les connexions sortantes pendant `uvicorn` |
+
+Questions pour l'auditeur :
+1. La borne haute « membre simulé » est-elle un argument acceptable devant un jury, avec la mention qui l'accompagne ?
+2. Les codes d'erreur MCP et la confirmation obligatoire suffisent-ils pour un agent externe, ou faut-il aussi un plafond d'actions par session ?
+3. Voyez-vous un faux ami ou une fuite de confidentialité que nos jeux ne couvrent pas ? (Écrivez les cas sans regarder les profils.)
 
 ## 0. Nouveautés du lot 3 (après la livraison du lot 2, commit `a4cccec`)
 Demande de Hiba : « aller au maximum » pour gagner. Ajouts, tous vérifiés dans le navigateur et par des tests :

@@ -1,108 +1,130 @@
-# Évaluation : définitions, jeux, résultats, limites
+# Évaluation : protocole, résultats, limites
 
-**Tout est exploratoire.** 37 profils fictifs (dont l'utilisatrice de démonstration et 1 visiteur). Les cas, la taxonomie et les profils
-ont été écrits par le même auteur (Claude). Ces chiffres montrent que **le mécanisme fonctionne comme conçu** ; ils ne prouvent pas son
-**utilité pour les membres du Club**, qui n'a jamais été testée.
+**Tout est mesuré sur des données fictives** (37 profils de démonstration, 150 profils synthétiques), avec des cas écrits par
+l'équipe de développement. Ces chiffres montrent que **les mécanismes fonctionnent comme conçus** ; ils ne prouvent pas
+l'**utilité pour de vrais membres**, jamais testée. Statuts utilisés : **mesuré** (chiffre reproductible ci-dessous),
+**post-hoc** (jeu déjà vu avant la mesure), **hypothèse** (non mesuré).
 
-Reproduire : `cd prototype && python -m eval.run_eval` (écrit `eval/resultats_{base,adversarial,reserve}.md`).
+Reproduire (depuis `prototype/`) :
+```bash
+python -m eval.run_eval [--jeu X] [--semantique] [--membre-simule]   # moteur vs mots-clés
+python -m eval.eval_suggestions --jeu dev|reserve --methode dense|hybride   # suggestions de l'IA locale
+python -m eval.eval_faux_amis                                       # faux amis composés
+python -m eval.run_eval --verifier                                  # non-régression (CI)
+python -m pytest -q                                                 # 51 tests
+```
 
-## Définitions (toutes mesurées sur le top 3, c'est-à-dire ce que l'utilisateur voit)
+## 1. Protocole : trois familles de jeux, jamais mélangées
 
-| Mesure | Définition | Dénominateur |
+| Famille | Jeux | Usage autorisé |
 |---|---|---|
-| **succès@3** | Au moins un profil « attendu » figure parmi les 3 premières suggestions | cas où une réponse existe (`abstention: false`) |
-| **violations** | Au moins un profil « interdit » dans le top 3 : contrainte violée (zone, langue, consentement…), faux ami, visiteur ou membre refusant les introductions | tous les cas du jeu |
-| **abstention correcte** | Le système s'abstient quand aucune bonne réponse n'existe, et seulement dans ce cas | tous les cas du jeu |
-| **critères conformes** | Chaque critère attendu (type, valeur, obligatoire ou souhaité) est présent ; chaque critère interdit est absent | nombre total de critères vérifiés |
-| **preuves vérifiées** | Chaque raison affichée se retrouve mot pour mot dans le champ cité du profil | nombre de preuves affichées |
+| **Développement** | `cas.json`, `cas_adversariaux.json`, `suggestions/dev.json`, `cas_faux_amis_composes.json` | Régler, corriger |
+| **Calibration** | `data/calibration_paraphrases.json` (84), `data/calibration_negatifs.json` (62) | Choisir seuils et poids de l'IA locale, rien d'autre |
+| **Réservés** | `cas_reserve*.json` (1 à 4), `suggestions/reserve.json` | Exécutés **une fois** ; ensuite ils deviennent des tests de régression (post-hoc) |
 
-**Référence** : recherche par mots-clés communs **avec exactement les mêmes filtres durs** (consentement, communauté, zone, langue,
-concurrence). La comparaison isole la qualité du classement, pas celle des filtres.
+Chaque jeu réservé est commité **avant** l'implémentation qu'il mesure (l'historique Git en fait foi) ; la première
+exécution est archivée dans `eval/archives/`.
 
-## Trois jeux, trois statuts
+## 2. Moteur de mise en relation (analyse par règles)
 
-| Jeu | Rédigé | Rôle | Statut |
+Mesures sur le top 3 (ce que le membre voit). **Référence** = mots-clés **avec les mêmes filtres durs** : la comparaison
+isole le classement.
+
+| Jeu | Statut | succès@3 moteur | réf. | violations moteur | réf. | abstention correcte moteur | réf. |
+|---|---|---|---|---|---|---|---|
+| Base (20) | dév. | 16/16 | 14/16 | **0/20** | 8/20 | 20/20 | 17/20 |
+| Adversarial (20) | dév. | 13/13 | 12/13 | **0/20** | 5/20 | 20/20 | 16/20 |
+| Réservé 1 (14) — 1re exécution | réservé | 9/12 | 11/12 | **0/14** | 4/14 | 11/14 | 13/14 |
+| Réservé 2 (18) — 1re exécution | réservé, circulaire | 15/15 | 7/15 | 0/18 | 0/18 | 18/18 | 14/18 |
+| Réservé 3 (20) — 1re exécution | réservé | 5/15 | 7/15 | 1/20 | 4/20 | 11/20 | 14/20 |
+| Réservé 4 (20) — 1re exécution | réservé | 3/15 | 7/15 | 2/20 | 2/20 | 7/20 | 12/20 |
+
+**Lecture honnête.** Le moteur à règles **propose rarement un mauvais contact**, mais sur des formulations libres
+(réservés 3 et 4) il **se tait trop** : la référence trouve plus souvent. Les 3 violations restantes sont des faux amis
+de règles documentés (« acheter un camion frigorifique neuf » → transport ; « bouteilles de cidre » → boissons ;
+PC lents → cybersécurité via la catégorie parente).
+
+## 3. La vraie boucle produit : l'IA propose, le membre confirme
+
+Quand les règles ne reconnaissent aucune compétence, l'IA locale propose 1 à 3 compétences ; le membre clique ou
+choisit « Aucune ». `--membre-simule` rejoue ce clic (même logique que l'interface). **Hypothèse de borne haute** :
+le membre reconnaît la bonne compétence si elle lui est proposée ; hors catalogue, il ne choisit rien.
+
+| Jeu (post-hoc) | Règles seules : succès@3 · violations · abstention | Règles + IA locale + membre | Mots-clés |
 |---|---|---|---|
-| `cas.json` (20 cas) | Cycle 1 | Développement du cycle 1 | **Régression** : doit rester à 0 violation et 100 % d'abstentions correctes (vérifié par les tests) |
-| `cas_adversariaux.json` (20 cas) | Lot 2, **avant** les corrections (commit `829e956`) | Mesure des fragilités signalées, puis **développement** | Premier résultat archivé (`eval/archives/v1_avant_lot2_*`) ; les résultats suivants sont des résultats **d'entraînement** |
-| `cas_reserve.json` (14 cas) | Lot 2, **après** les corrections, formulations nouvelles | Estimation de généralisation **au lot 2** | Première exécution archivée (`v2_premiere_execution`). Depuis le lot 3 il est **post-hoc** : ses échecs ont inspiré des ajouts de vocabulaire (« gérer l'entrée », « épiceries fines ») |
-| `cas_reserve2.json` (18 cas) | Lot 3, **avant** les améliorations de couverture (commit `59a4cee`) | Vérifier que les améliorations prévues (pluriels, allemand, paraphrases) fonctionnent | Exécuté une fois (`v3_premiere_execution`). **Fortement circulaire** : écrit en connaissant le vocabulaire qui allait être ajouté |
+| Réservé 3 | 7/15 · 1/20 · 13/20 | **14/15 · 1/20 · 20/20** | 7/15 · 4/20 · 14/20 |
+| Réservé 4 | 3/15 · 2/20 · 7/20 | **15/15 · 2/20 · 19/20** | 7/15 · 2/20 · 12/20 |
+| Base, adversarial, réservés 1-2 | inchangés | inchangés (aucune régression) | — |
 
-Aucun jeu n'est une **évaluation indépendante** : il faudrait des cas écrits par l'équipe, l'auditeur ou des membres, sans voir les profils.
+Indépendant de l'hypothèse : **la bonne compétence figure dans les options proposées dans 8/8 et 12/12 questions**.
+Aucune violation ajoutée : l'IA ne rend personne éligible.
 
-## Résultats (analyse par règles, 28.09.2026)
+## 4. Suggestions de l'IA locale (multilingual-e5-large, ONNX, CPU)
 
-| Jeu | Mesure | Le Fil du Club | Mots-clés + mêmes filtres |
-|---|---|---|---|
-| Base (régression) | succès@3 | 16/16 | 14/16 |
-| | violations | **0/20** | 8/20 |
-| | abstention correcte | 20/20 | 17/20 |
-| Adversarial, **avant** corrections | critères conformes | 12/18 | — |
-| | succès@3 | 10/13 | 12/13 |
-| | violations | 2/20 | 6/20 |
-| | abstention correcte | 17/20 | 15/20 |
-| Adversarial, **après** corrections (entraînement) | critères conformes | 18/18 | — |
-| | succès@3 | 13/13 | 12/13 |
-| | violations | 0/20 | 5/20 |
-| | abstention correcte | 20/20 | 16/20 |
-| **Réservé** (une exécution) | succès@3 | **9/12** | 11/12 |
-| | violations | **0/14** | 4/14 |
-| | abstention correcte | **11/14** | 13/14 |
+Jeu dev (24 besoins FR/DE/EN + 6 hors catalogue) et jeu **réservé** rédigé en même temps, exécuté une fois.
 
-| **Lot 3 : réservé n°1 post-hoc** | succès@3 | 12/12 | 11/12 |
-| | violations | 0/14 | 4/14 |
-| | abstention correcte | 14/14 | 13/14 |
-| **Lot 3 : réservé n°2** (une exécution, circulaire) | succès@3 | 15/15 | 7/15 |
-| | violations | 0/18 | 0/18 |
-| | abstention correcte | 18/18 | 14/18 |
+| Méthode | Jeu | hit@1 | hit@3 | MRR | options affichées hors sujet | hors catalogue avec options |
+|---|---|---|---|---|---|---|
+| Dense seul (avant) | dev | 0,750 | 0,875 | 0,828 | 48/72 | 6/6 |
+| **Hybride** | dev | 0,833 | 0,958 | 0,894 | 21/47 | 6/6 |
+| Dense seul (avant) | **réservé** | 0,667 | 0,875 | 0,784 | 50/72 | 6/6 |
+| **Hybride** | **réservé** | **0,792** | **0,917** | **0,865** | **26/48** | 6/6 |
 
-Base et adversarial sont inchangés après le lot 3 (16/16, 0/20, 20/20 ; 13/13, 0/20, 20/20, 18/18 critères) : pas de régression.
+Hybride = z-score dense (max par expression + prototype) + 0,3 × lexical IDF (idée du score hybride de BGE-M3) ;
+poids choisi sur la calibration. La fusion RRF (Haystack) a été **mesurée et écartée** (hit@3 0,870 contre 0,948 sur la
+calibration). n = 24 : l'écart en hit@1 sur le réservé correspond à 3 cas.
 
-**Le chiffre à citer au jury reste la première exécution du réservé n°1 (9/12, 0/14, 11/14)**, la seule mesure faite sans
-connaître les cas. Les chiffres du lot 3 montrent que la couverture a progressé *sur des cas connus* ; une mesure indépendante manque toujours.
+**Échec assumé** : sur la calibration, les quantiles du meilleur score dense des besoins hors catalogue et des vrais
+besoins se recouvrent (même après normalisation) : **aucun seuil ne permet à l'IA de s'abstenir seule**. D'où la règle :
+elle suggère, le membre confirme, le moteur s'abstient. La décision automatique existe (`HACKVS_SEMANTIQUE_AUTO=1`) mais
+reste désactivée : avec ~50 négatifs, la règle de trois borne le taux de fausses acceptations à ≈ 5 % seulement.
 
-Preuves vérifiées : 41/41 (base), 47/47 (adversarial), 19/19 (réservé, lot 2). Ce résultat est **vrai par construction** avec des explications
-extraites du profil : le garde-fou n'aura d'enjeu que si un LLM rédige un jour les explications.
+Latence mesurée : ≈ 77 ms en médiane (max 103 ms) par suggestion, 4 cœurs CPU.
 
-Latence locale (médiane) : analyse ≈ 1 à 2 ms, recherche ≈ 8 à 15 ms pour 37 profils. Coût : nul (aucun appel externe).
+## 5. Faux amis composés
 
-### Lecture honnête
-- Sur des formulations nouvelles, le moteur **ne propose jamais de mauvais contact** (0/14), mais il **se tait trop** : 3 fausses abstentions
-  sur 14 (« des agents pour gérer l'entrée », « panneaux photovoltaïques » au pluriel, « épiceries fines zurichoises »).
-- La référence trouve plus souvent (11/12), mais au prix de **4 violations sur 14** (un loueur de sites web pour des chariots élévateurs,
-  un frigoriste pour du transport, etc.).
-- Autrement dit, le moteur à règles est **précis mais fragile face au vocabulaire**. C'est précisément là qu'un LLM devrait apporter de la valeur
-  (paraphrases, pluriels, allemand). Hypothèse **non mesurée** : aucune clé API disponible (voir plus bas).
+`eval/cas_faux_amis_composes.json`, rédigé avant le mécanisme : 8 cas visés par la liste éditable, 4 volontairement
+**hors liste**.
 
-## Décision « hors catalogue » (comparaison observée)
+| | Avant | Après |
+|---|---|---|
+| Cas de la liste (« comptabilité carbone », « avocat pour un divorce »…) | 3/8 évités | **8/8** |
+| Cas hors liste (« formation de yoga », « loueur de voitures »…) | 0/4 | **0/4** |
 
-Sur le jeu adversarial, **sans** puis **avec** la recherche textuelle dans les offres déclarées (seuil : au moins 2 racines communes et au moins la moitié des racines du besoin) :
+Le mécanisme ne généralise pas : c'est une liste de données, à enrichir par le Club. Angle mort connu.
 
-| Variante | succès@3 | violations | abstention correcte |
-|---|---|---|---|
-| Sans texte libre | 11/13 | 0/20 | 18/20 |
-| Avec texte libre | 13/13 | 0/20 | 20/20 |
+## 6. Plan de soirée (programme linéaire en nombres entiers, HiGHS)
 
-Aucune régression sur le jeu de base. **Retenu**, avec deux réserves : l'échantillon est de 4 cas pertinents, et le jeu réservé montre qu'un
-seuil strict rate des paraphrases (« épiceries fines zurichoises »). Alternatives écartées pour l'instant : embeddings (aucun modèle
-téléchargeable ici, et ils risquent de réintroduire les faux amis) ; mapping par LLM (non testable sans clé).
+Contraintes : ≤ 1 rencontre par personne et par tour, jamais deux fois la même paire, langue commune obligatoire,
+membres disponibles et consentants. Objectif : aides prouvées + 0,5 par participant ayant ≥ 1 rencontre utile.
 
-## Claude : ce qui est prêt, ce qui manque
-- **Prêt** : `scripts/verifier_claude.py` exécute les 40 cas (base + adversarial) contre l'API réelle. Il mesure : critères conformes, succès, violations,
-  abstention, latence (médiane et maximum), délai du premier critère affiché, jetons, coût estimé, taux de repli, accord avec les règles.
-  Coût estimé : ≈ 0,56 USD (`claude-opus-5`, estimation grossière). Rien n'est exécuté sans `--confirmer`.
-- **Testé** : uniquement avec un client simulé (flux découpé, refus, JSON invalide, panne). Le schéma de sortie structurée n'a **jamais**
-  été soumis à l'API réelle : un rejet du schéma par l'API est possible et serait visible (repli affiché).
-- **Manque** : une clé `ANTHROPIC_API_KEY` dans l'environnement d'exécution. Aucune dépense n'a été engagée.
+| Données | Tours | Participants | Paires utiles (écartées faute de langue) | Participants avec ≥ 1 rencontre utile : optimum · glouton · aléatoire (30) | Optimum prouvé en |
+|---|---|---|---|---|---|
+| Club démo | 3 | 32 | 28 (3) | 21 · 20 · 20,7 | 12 ms |
+| Synthétique | 2 | 122 | 276 (13) | **85 · 66 · 71,0** | 24 ms |
+| Synthétique | 3 | 122 | 276 (13) | **92 · 74 · 79,2** | 84 ms |
+| Synthétique | 4 | 122 | 276 (13) | **94 · 77 · 85,1** | 76 ms |
 
-## Améliorations de couverture du lot 3
-- **Pluriels et singuliers générés automatiquement** pour chaque expression (« audit énergétique » → « audits énergétiques ») : 760 formes, aucune collision entre concepts (vérifié).
-- **Allemand** : compétences (Treuhand, Übersetzer, Kühltransport…), verbes de recherche (suche, brauche), lieux (Wallis, Zürich, Bern…), langues.
-- **Paraphrases** : vigiles, contrôle d'accès, épiceries fines, loueur…
-- **Faux ami retiré** : « données » seul ne signifie plus « Données et IA » (« protéger nos données clients »).
+Sur un petit Club, l'optimisation n'apporte presque rien ; elle compte à l'échelle d'une vraie soirée. Le temps est
+dominé par le calcul des valeurs de paires (≈ 1,2 s pour 122 participants), pas par le solveur.
 
-## Tests automatisés (`python -m pytest -q tests`, 22 tests)
-Ils couvrent les risques, pas le volume : invariants de consentement ; symétrie Bourse ⇔ correspondances ; cascades (retrait du consentement,
-clôture, modification) ; machine à états et rôles ; anonymat levé seulement après acceptation ; sollicitation limitée aux membres qui correspondent ;
-mode réel sans simulation ni journal exposé ; critères inventés refusés par le serveur ; flux Claude (provisoire filtré au final, repli sur panne, refus ou JSON invalide) ; non-régression base et adversarial.
-Le parcours navigateur (`scripts/parcours_demo.py`) sert de test de bout en bout.
+## 7. Sécurité, confidentialité, agent (tests automatisés)
+
+| Propriété | Comment c'est vérifié |
+|---|---|
+| Aucune violation de consentement / visiteur | invariants de l'évaluation + tests |
+| Preuves citées mot pour mot | `preuve_valide` : 100 % sur tous les jeux (vrai par construction, garde-fou si un LLM rédigeait) |
+| Raison opaque si elle touche au consentement | `test_expliquer_ne_revele_pas_un_refus_d_introductions` |
+| Injection indirecte via un profil | profil malveillant : alerte transmise, classement inchangé, rien sans confirmation |
+| Le LLM ne voit pas les profils | test structurel sur la requête envoyée |
+| MCP : authentification et portées | 401 sans jeton, portée « lecture » refusée avant toute question au membre |
+| MCP : machine d'états | 403 (mauvais rôle), 409 (mauvais état), parcours complet jusqu'à la clôture |
+| Aucun appel externe non documenté | télémétrie onnxruntime découverte (import → Microsoft) et coupée ; test |
+| Signaux d'instruction : faux positifs | 0 sur 187 profils existants (nos données : contrôle, pas une preuve de précision) |
+
+## 8. Ce qui n'est PAS mesuré
+- Utilité pour de vrais membres ; acceptabilité des questions ; qualité des messages d'introduction.
+- Claude et Apertus contre leurs API réelles (aucune clé ni accès réseau autorisé dans cet environnement ; testés avec
+  des serveurs simulés : flux, sortie contrainte, refus, JSON invalide, réessai, panne).
+- Reranker neuronal (poids hébergés sur Hugging Face, inaccessible ici).
+- Robustesse à des centaines de profils réels hétérogènes (les synthétiques sont réguliers).

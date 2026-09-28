@@ -297,6 +297,8 @@ def creer_serveur(http: Optional[httpx.Client] = None, membre: Optional[str] = N
 
 
 def main() -> None:
+    import logging
+    logging.getLogger("httpx").setLevel(logging.WARNING)  # pas de journal de chaque requête sur stderr
     ap = argparse.ArgumentParser(description="Serveur MCP du Club")
     ap.add_argument("--http", action="store_true", help="transport HTTP distant (jeton porteur obligatoire)")
     ap.add_argument("--hote", default="127.0.0.1")

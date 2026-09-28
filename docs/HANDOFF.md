@@ -16,12 +16,37 @@ cd prototype
 python -m venv .venv && . .venv/bin/activate        # facultatif
 pip install -r requirements-dev.txt
 uvicorn app.main:app --reload                       # http://localhost:8000 · /scene · /club · /presentation · /rejoindre
-python -m pytest -q tests                           # 22 tests, ≈ 4 s
-python -m eval.run_eval                             # 3 jeux → eval/resultats_*.md
+python -m pytest -q                                 # 51 tests, ≈ 30 s
+python -m eval.run_eval --verifier                  # non-régression des 6 jeux (comme la CI)
+python scripts/telecharger_modele.py                # facultatif : IA locale (2,2 Go)
 python scripts/parcours_demo.py                     # parcours complet dans Chromium (serveur lancé)
 ```
-Claude (facultatif) : `export HACKVS_LLM=claude ANTHROPIC_API_KEY=…`, relancer ; le badge devient « Analyse : Claude ».
+Claude (facultatif) : `HACKVS_LLM=claude` + `ANTHROPIC_API_KEY` en variables d'environnement, relancer ; le badge devient « Analyse : Claude ».
+Apertus (facultatif) : `HACKVS_LLM=apertus` + `APERTUS_API_KEY`, `APERTUS_BASE_URL`, `APERTUS_MODEL`, puis
+`python scripts/verifier_llm.py` (estimation) et `--confirmer` (appels réels). **Ne jamais coller une clé dans un chat ni un fichier suivi.**
+
 Changer d'identité en démo : le sélecteur « Vous incarnez (démo) », ou `/?membre=p01`.
+
+## Brancher un assistant IA (MCP)
+L'API doit tourner (`uvicorn app.main:app`). Local (stdio), identité de démo choisie par variable :
+```bash
+claude mcp add fil-du-club -e HACKVS_API_URL=http://localhost:8000 -e HACKVS_MCP_MEMBRE=p00 \
+  -- python /chemin/vers/prototype/scripts/mcp_club.py
+```
+Claude Desktop (`claude_desktop_config.json`) :
+```json
+{"mcpServers": {"fil-du-club": {"command": "python", "args": ["/chemin/vers/prototype/scripts/mcp_club.py"],
+  "env": {"HACKVS_API_URL": "http://localhost:8000", "HACKVS_MCP_MEMBRE": "p00"}}}}
+```
+Distant (HTTP, jeton porteur obligatoire, portées `lecture` / `ecriture`) :
+```bash
+python scripts/creer_jeton_mcp.py --membre p00 --portees lecture,ecriture   # affiche le jeton UNE fois
+HACKVS_API_URL=http://localhost:8000 python scripts/mcp_club.py --http --port 8790   # → http://127.0.0.1:8790/mcp
+```
+Outils : `qui_suis_je`, `chercher_membres`, `expliquer_correspondance`, `bourse`, `mes_relations`, `planifier_soiree`
+(lecture) ; `publier_besoin`, `mettre_en_relation`, `repondre` (écriture, confirmation humaine obligatoire).
+Erreurs : `[code] message` (`interdit`, `regle_metier`, `introuvable`, `invalide`, `non_disponible`, `authentification`,
+`annule_par_membre`, `portee_insuffisante`, `besoin_ambigu`). Démo hors ligne : `python scripts/demo_agent_mcp.py`.
 
 ## Carte du code
 ```
@@ -31,7 +56,12 @@ prototype/
     store.py         magasin unique SQLite : besoins versionnés, relations, consentements, journal  ← règles métier
     matching.py      filtres durs → preuves → classement → abstention                                ← le cœur
     parser_rules.py  phrase → critères (règles : négations, préférences, lieux, hors catalogue)
-    parser_llm.py    phrase → critères (Claude en flux) + validation + repli
+    parser_llm.py    phrase → critères (Claude ou Apertus en flux) + validation + 1 réessai + repli
+    analyse.py       règles d'abord ; si rien : l'IA locale propose des compétences à confirmer
+    semantique.py    IA locale (multilingual-e5-large, ONNX) : suggestions hybrides calibrées
+    soiree.py        plan de soirée (MILP HiGHS), absences expliquées, export .ics
+    mcp_serveur.py   serveur MCP (client mince de l'API), jetons et portées, confirmation humaine
+    securite.py      texte des membres = donnée non fiable (signaux d'instructions)
     baseline.py      référence mots-clés (comparaison)
     models.py        schémas Pydantic partagés
     taxonomy.py      vocabulaire (+ pluriels générés), normalisation, implantation depuis la commune
@@ -46,7 +76,9 @@ prototype/
     js/vue-*.js      une vue par onglet (nouveau, besoins, bourse, suivi, profil)
     js/composants.js éditeur de critères, cartes, abstention, frise
     js/club.js       vue du Club
-  eval/              cas.json (base), cas_adversariaux.json, cas_reserve.json, run_eval.py, archives/
+  eval/              jeux (base, adversarial, réservés 1-4, suggestions/, faux amis), run_eval.py, archives/
+  scripts/           parcours_demo.py (navigateur), demo_agent_mcp.py, mcp_club.py, creer_jeton_mcp.py,
+                     calibrer_semantique.py, telecharger_modele.py, generer_club.py, verifier_llm.py
   tests/             test_parcours.py
   scripts/           parcours_demo.py (captures, vidéo), verifier_claude.py
 ```
