@@ -3,6 +3,7 @@
 # Lancer :                                 docker run -p 8080:8080 fil-du-club   →  http://localhost:8080
 ARG BASE=python:3.11-slim
 FROM ${BASE}
+ENV ORT_DISABLE_TELEMETRY=1
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=8080 HACKVS_MODE=demo HACKVS_DB=/tmp/fil.db
 WORKDIR /srv
 COPY prototype/requirements.txt prototype/requirements.txt

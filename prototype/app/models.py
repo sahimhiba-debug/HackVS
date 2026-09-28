@@ -41,6 +41,7 @@ class ProfilPublic(BaseModel):
     maj: str
     langues: list[str] = []
     zones_service: list[str] = []
+    alertes_contenu: list[str] = []  # texte du profil d'apparence instructive (app/securite.py) : donnée non fiable
 
 
 TypeCritere = Literal["expertise", "langue", "zone", "implantation", "texte_libre"]

@@ -24,6 +24,11 @@ import numpy as np
 
 from .taxonomy import DATA_DIR, Taxonomie
 
+# onnxruntime ≥ 1.2x envoie par défaut de la télémétrie à Microsoft dès l'import (observé : connexions vers
+# mobile.events.data.microsoft.com, et un identifiant d'appareil écrit dans ~/.cache/Microsoft). Aucun appel externe
+# non documenté : on la désactive AVANT tout import d'onnxruntime (vérifié : plus aucune tentative).
+os.environ.setdefault("ORT_DISABLE_TELEMETRY", "1")
+
 RACINE = Path(__file__).resolve().parent.parent
 DOSSIER_MODELE = Path(os.environ.get("HACKVS_MODELE_SEMANTIQUE", RACINE / "var" / "modeles" / "fast-multilingual-e5-large"))
 CACHE = RACINE / "var" / "cache_semantique"

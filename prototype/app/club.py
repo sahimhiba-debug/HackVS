@@ -17,6 +17,7 @@ from .matching import rechercher
 from .models import Profil
 from .parser_rules import analyser
 from .store import Magasin
+from .securite import signaux_profil
 from .taxonomy import DATA_DIR, Taxonomie
 
 
@@ -114,6 +115,7 @@ def tableau(mag: Magasin, profils: list[Profil], tax: Taxonomie) -> dict:
         "delai_premiere_relation_h": {"mediane": round(statistics.median(delais), 1) if delais else None, "n": len(delais)},
         "a_recruter": a_recruter,
         "offres_dormantes": [{"competence": c, "membres": n} for c, n in dormantes[:6]],
+        "profils_a_relire": sum(1 for p in profils if signaux_profil(p)),
         "membres": {"total": sum(1 for p in profils if p.type == "membre_club"),
                     "acceptent_introductions": sum(1 for p in profils if p.type == "membre_club" and p.accepte_introductions)},
     }

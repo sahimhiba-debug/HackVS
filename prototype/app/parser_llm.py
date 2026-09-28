@@ -191,14 +191,14 @@ def _objets_complets(texte: str, cle: str) -> list[dict]:
     return objets
 
 
-def _morceaux_claude(texte: str, tax: Taxonomie, client, tele: dict) -> Iterator[str]:
+def _morceaux_claude(texte: str, tax: Taxonomie, client, tele: dict, suite: tuple = ()) -> Iterator[str]:
     if client is None:
         import anthropic
         client = anthropic.Anthropic()
     tele["modele"] = os.environ.get("HACKVS_CLAUDE_MODEL", MODELE_PAR_DEFAUT)
     with client.messages.stream(
         model=tele["modele"], max_tokens=4000, system=systeme(tax),
-        messages=[{"role": "user", "content": texte}],
+        messages=[{"role": "user", "content": texte}, *suite],
         output_config={"format": {"type": "json_schema", "schema": SCHEMA}},
     ) as flux:
         yield from flux.text_stream
@@ -210,7 +210,7 @@ def _morceaux_claude(texte: str, tax: Taxonomie, client, tele: dict) -> Iterator
     tele["texte_final"] = "".join(b.text for b in final.content if getattr(b, "type", "") == "text")
 
 
-def _morceaux_apertus(texte: str, tax: Taxonomie, http, tele: dict) -> Iterator[str]:
+def _morceaux_apertus(texte: str, tax: Taxonomie, http, tele: dict, suite: tuple = ()) -> Iterator[str]:
     """API compatible OpenAI (/chat/completions, stream). Sortie JSON contrainte si le serveur la prend en charge,
     sinon consigne seule ; dans les deux cas, le code valide ensuite chaque élément."""
     import httpx
@@ -221,7 +221,7 @@ def _morceaux_apertus(texte: str, tax: Taxonomie, http, tele: dict) -> Iterator[
                 + json.dumps(SCHEMA, ensure_ascii=False))
     corps = {"model": tele["modele"], "stream": True, "temperature": 0, "max_tokens": 1500,
              "stream_options": {"include_usage": True},
-             "messages": [{"role": "system", "content": consigne}, {"role": "user", "content": texte}],
+             "messages": [{"role": "system", "content": consigne}, {"role": "user", "content": texte}, *suite],
              "response_format": {"type": "json_schema", "json_schema": {"name": "criteres", "schema": SCHEMA, "strict": True}}}
     client = http or httpx.Client(timeout=httpx.Timeout(60.0, connect=10.0))
     for tentative in (1, 2):
@@ -232,7 +232,7 @@ def _morceaux_apertus(texte: str, tax: Taxonomie, http, tele: dict) -> Iterator[
                 tele["sortie_contrainte"] = False
                 continue
             rep.raise_for_status()
-            tele.setdefault("sortie_contrainte", True)
+            tele.setdefault("sortie_contrainte", "response_format" in corps)
             accu = ""
             for ligne in rep.iter_lines():
                 if not ligne.startswith("data:"):
@@ -269,18 +269,34 @@ def analyser_flux(texte: str, tax: Taxonomie, client=None, http=None) -> Iterato
     f = fournisseur() or "claude"
     tele: dict = {"analyseur": f}
     try:
-        morceaux = _morceaux_apertus(texte, tax, http, tele) if f == "apertus" else _morceaux_claude(texte, tax, client, tele)
-        tampon, emis, premier_ms = "", set(), None
-        for morceau in morceaux:
-            tampon += morceau
-            for cle, type_ in (("competences", "expertise"), ("zones", "zone"), ("implantations", "implantation"), ("langues", "langue")):
-                for o in _objets_complets(tampon, cle):
-                    k = (type_, o.get("valeur"))
-                    if k not in emis:
-                        emis.add(k)
-                        premier_ms = premier_ms or round((time.perf_counter() - t0) * 1000)
-                        yield {"type": "provisoire", "critere": {"type": type_, **o}}
-        sortie = SortieLLM.model_validate_json(_json_de(tele.pop("texte_final", tampon)))
+        tampon, emis, premier_ms, suite, sortie = "", set(), None, (), None
+        tele["reessais"] = 0
+        for tentative in (1, 2):
+            morceaux = (_morceaux_apertus(texte, tax, http, tele, suite) if f == "apertus"
+                        else _morceaux_claude(texte, tax, client, tele, suite))
+            tampon = ""
+            for morceau in morceaux:
+                tampon += morceau
+                for cle, type_ in (("competences", "expertise"), ("zones", "zone"), ("implantations", "implantation"), ("langues", "langue")):
+                    for o in _objets_complets(tampon, cle):
+                        k = (type_, o.get("valeur"))
+                        if k not in emis:
+                            emis.add(k)
+                            premier_ms = premier_ms or round((time.perf_counter() - t0) * 1000)
+                            yield {"type": "provisoire", "critere": {"type": type_, **o}}
+            brut = tele.pop("texte_final", tampon)
+            try:
+                sortie = SortieLLM.model_validate_json(_json_de(brut))
+                break
+            except ValueError as err:  # JSON invalide ou non conforme au schéma
+                if tentative == 2:
+                    raise
+                # Patron « ModelRetry » (Pydantic AI) : on renvoie UNE fois l'erreur de validation au modèle.
+                tele["reessais"] = 1
+                resume = str(err).splitlines()[0][:300]
+                suite = ({"role": "assistant", "content": brut[:4000] or "(vide)"},
+                         {"role": "user", "content": f"Ta réponse n'est pas un JSON valide conforme au schéma ({resume}). "
+                                                     "Renvoie uniquement l'objet JSON corrigé, sans texte autour."})
         besoin = valider(texte, sortie, tax)
         besoin.analyseur = f
         yield {"type": "final", "besoin": besoin.model_dump(), "telemetrie": {

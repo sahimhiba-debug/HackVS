@@ -41,7 +41,9 @@ _MOTS_VIDES = set(norm(
 
 
 def _public(p: Profil) -> ProfilPublic:
-    return ProfilPublic(**p.model_dump(include=set(ProfilPublic.model_fields)))
+    from .securite import signaux_profil
+    return ProfilPublic(**p.model_dump(include=set(ProfilPublic.model_fields) - {"alertes_contenu"}),
+                        alertes_contenu=signaux_profil(p))
 
 
 def _racine(mot: str) -> str:

@@ -54,7 +54,8 @@ async function charger() {
           : h("p", { class: "aide" }, "Toutes les compétences proposées ont déjà été demandées."),
         h("h2", { style: "margin-top:32px" }, "Communauté"),
         h("p", {}, `${t.membres.acceptent_introductions} membres sur ${t.membres.total} acceptent d'être proposés et sollicités.`),
-        h("p", {}, `${t.relations.acceptees} mises en relation acceptées sur ${t.relations.total} proposées.`))),
+        h("p", {}, `${t.relations.acceptees} mises en relation acceptées sur ${t.relations.total} proposées.`),
+        t.profils_a_relire ? h("p", { class: "alerte-contenu" }, `${t.profils_a_relire} profil${t.profils_a_relire > 1 ? "s contiennent" : " contient"} des formulations qui ressemblent à des consignes pour une IA : à relire. Elles ne changent ni le classement ni les règles.`) : null)),
     h("section", { class: "bloc" }, h("h2", {}, "Activité"), kpis),
     h("p", { class: "aide" }, "Définitions : « résolu » = besoin clos par son auteur avec « résolu grâce à… » ; « à recruter » = aucun membre actuel ne correspond (recalculé maintenant) et aucune mise en relation n'a abouti. Agrégats seulement, aucun nom.")].filter(Boolean));
 }

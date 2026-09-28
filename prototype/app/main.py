@@ -24,7 +24,7 @@ from pydantic import BaseModel
 
 import threading
 
-from . import analyse, club, parser_llm, parser_rules, semantique, soiree
+from . import analyse, club, parser_llm, parser_rules, securite, semantique, soiree
 from .baseline import rechercher_mots_cles
 from .matching import expliquer, rechercher
 from .models import Besoin, Profil
@@ -229,7 +229,8 @@ def modifier_profil(e: EntreeProfil, x_membre: Optional[str] = Header(None)):
     if e.presentation is not None:
         champs["presentation"] = e.presentation.strip()[:600]
     MAGASIN.modifier_profil(m.id, champs)
-    return profil(m.id).model_dump()
+    nouveau = profil(m.id)
+    return nouveau.model_dump() | {"alertes_contenu": securite.signaux_profil(nouveau)}
 
 
 # ---------------------------------------------------------------- analyse du besoin
