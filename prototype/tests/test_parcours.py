@@ -469,3 +469,13 @@ def test_aucune_telemetrie_onnxruntime():
     sortie = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True,
                             cwd=Path(__file__).resolve().parent.parent).stdout.strip()
     assert sortie == "1"
+
+
+def test_faux_amis_composes_de_la_liste():
+    """« comptabilité carbone » n'est pas de la fiduciaire, « avocat pour un divorce » pas du droit des affaires.
+    Liste éditable (data/taxonomie.json) : les cas HORS liste restent un angle mort mesuré (eval/eval_faux_amis.py)."""
+    from eval.eval_faux_amis import evaluer
+    r = evaluer()
+    assert r["evites_liste"] == "8/8"
+    b = analyser("Je cherche un avocat pour relire un contrat commercial.", TAX)
+    assert crit(b, "expertise")[0].valeur == "droit_affaires"  # le contexte trompeur ne s'applique qu'à sa phrase

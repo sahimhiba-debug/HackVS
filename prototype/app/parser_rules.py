@@ -95,6 +95,14 @@ def analyser(texte: str, tax: Taxonomie) -> Besoin:
     hors_recherche: list[str] = []
     contexte: list[str] = []
 
+    # 0. Composés trompeurs (« comptabilité carbone », « assurance maladie ») : consommés, jamais une compétence.
+    trompeurs: list[str] = []
+    for expr in tax.composes_trompeurs:
+        for m in motif(expr).finditer(n):
+            if not _chevauche(m.start(), m.end(), pris):
+                pris.append((m.start(), m.end()))
+                trompeurs.append(extrait(m.start(), m.end()))
+
     # 1. Compétences, expressions les plus longues d'abord.
     candidats = sorted(((e, c.id) for c in tax.concepts.values() for e in c.expressions), key=lambda x: -len(x[0]))
     for expr, cid in candidats:
@@ -103,6 +111,11 @@ def analyser(texte: str, tax: Taxonomie) -> Besoin:
                 continue
             pris.append((m.start(), m.end()))
             ex = extrait(m.start(), m.end())
+            d_cl, f_cl = _clause(n, m.start())
+            piege = next((t for t in tax.contextes_trompeurs.get(cid, ()) if motif(t).search(n[d_cl:f_cl])), None)
+            if piege:  # « avocat … divorce » : même mot, autre domaine → pas cette compétence
+                trompeurs += [ex, piege]
+                continue
             if not dans_recherche(m.start()):
                 hors_recherche.append(ex)
             elif nie(m.start()):
@@ -199,7 +212,7 @@ def analyser(texte: str, tax: Taxonomie) -> Besoin:
 
     # Hors catalogue : sans compétence reconnue, on garde les mots significatifs restants.
     if principale is None and not ambiguites:
-        libres = []
+        libres = list(trompeurs)  # le composé trompeur EST le besoin (hors catalogue)
         for d, f in zones_utiles:
             for m in _TOKEN.finditer(n, d, f):
                 mot = m.group(0).strip("-")

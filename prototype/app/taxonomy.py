@@ -87,6 +87,10 @@ class Taxonomie:
         self.marqueurs_concurrents = tuple(norm(m) for m in brut.get("marqueurs_concurrents", []))
         self.marqueurs_forts = tuple(norm(m) for m in brut.get("marqueurs_forts", []))
         self.mots_generiques = frozenset(norm(m) for m in brut.get("mots_generiques", []))
+        self.composes_trompeurs = tuple(sorted({norm(e) for e in brut.get("composes_trompeurs", {}).get("expressions", [])},
+                                               key=len, reverse=True))
+        self.contextes_trompeurs: dict[str, tuple[str, ...]] = {
+            cid: tuple(norm(e) for e in v) for cid, v in brut.get("contextes_trompeurs", {}).items() if not cid.startswith("_")}
         for c in self.concepts.values():
             if c.parent and c.parent not in self.concepts:
                 raise ValueError(f"Parent inconnu pour {c.id}: {c.parent}")
@@ -123,14 +127,14 @@ class Taxonomie:
         """
         if not hasattr(self, "_triees"):
             self._triees = sorted(((e, c.id) for c in self.concepts.values() for e in c.expressions), key=lambda x: -len(x[0]))
-        pris: list[tuple[int, int]] = []
+        pris: list[tuple[int, int]] = [(m.start(), m.end()) for e in self.composes_trompeurs for m in motif(e).finditer(texte_norm)]
         trouves: set[str] = set()
         for expr, cid in self._triees:
             for m in motif(expr).finditer(texte_norm):
                 if not any(m.start() < f and d < m.end() for d, f in pris):
                     pris.append((m.start(), m.end()))
                     trouves.add(cid)
-        return trouves
+        return {c for c in trouves if not any(motif(t).search(texte_norm) for t in self.contextes_trompeurs.get(c, ()))}
 
     def descendants(self, cid: str) -> list[str]:
         """Le concept lui-même et toutes ses sous-catégories."""

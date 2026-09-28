@@ -81,7 +81,7 @@ def test_abstention_transmise_telle_quelle():
 def test_publication_refusee_par_le_membre_rien_n_est_publie():
     vus = []
     err, r = appeler("publier_besoin", {"besoin": BESOIN}, elicitation=_repondeur(False, vus))
-    assert err and "annulée" in r and vus and "Transport frigorifique" in vus[0]
+    assert err and "[annule_par_membre]" in r and vus and "Transport frigorifique" in vus[0]
     assert http.get("/api/besoins", headers={"X-Membre": "p00"}).json() == []
 
 
@@ -104,7 +104,7 @@ def test_l_assistant_ne_peut_pas_solliciter_un_membre_non_pertinent():
     intrus = next(p.id for p in PROFILS if p.id not in proposes | {"p00"} and p.type == "membre_club" and p.accepte_introductions)
     err, msg = appeler("mettre_en_relation", {"besoin_id": r["besoin_id"], "membre_id": intrus, "message": "Bonjour"},
                        elicitation=_repondeur(True, []))
-    assert err and "409" in msg and "ne correspond pas" in msg
+    assert err and "[regle_metier]" in msg and "409" in msg and "ne correspond pas" in msg
 
 
 def test_besoin_anonyme_reste_anonyme_via_mcp():
@@ -117,7 +117,7 @@ def test_besoin_anonyme_reste_anonyme_via_mcp():
 def test_besoin_ambigu_non_publie():
     err, msg = appeler("publier_besoin", {"besoin": "Je cherche de l'aide pour la sécurité."},
                        elicitation=_repondeur(True, []))
-    assert err and "précisez" in msg
+    assert err and "[besoin_ambigu]" in msg and "précisez" in msg
 
 
 def test_expliquer_pourquoi_et_pourquoi_pas():
@@ -260,7 +260,7 @@ def test_mcp_http_distant_jetons_et_portees(tmp_path):
         assert not err and r["suggestions"]
         vus = []
         err, msg = asyncio.run(session(j_lecture, "publier_besoin", {"besoin": BESOIN}, _repondeur(True, vus)))
-        assert err and "lecture" in msg and vus == []  # refusé AVANT de solliciter le membre
+        assert err and "[portee_insuffisante]" in msg and vus == []  # refusé AVANT de solliciter le membre
         err, r = asyncio.run(session(j_ecriture, "publier_besoin", {"besoin": BESOIN}, _repondeur(True, vus)))
         assert not err and r["statut"] == "publie" and vus
         besoins = httpx.get(f"http://127.0.0.1:{p_api}/api/besoins", headers={"X-Membre": "p00"}).json()
@@ -291,3 +291,23 @@ def test_injection_indirecte_via_un_profil(tmp_path):
     vus = []
     err, _ = appeler("publier_besoin", {"besoin": BESOIN}, elicitation=_repondeur(False, vus))
     assert err and vus  # une consigne cachée ne remplace pas la confirmation du membre
+
+
+def test_parcours_agent_complet_et_refus_de_la_machine_d_etats():
+    """Demande → acceptation → rencontre planifiée → faite → clôturée, entièrement via MCP ; transitions illégales refusées."""
+    ok = lambda: _repondeur(True, [])
+    b = appeler("publier_besoin", {"besoin": BESOIN}, elicitation=ok())[1]
+    aidant = appeler("chercher_membres", {"besoin": BESOIN})[1]["suggestions"][0]["membre_id"]
+    rel = appeler("mettre_en_relation", {"besoin_id": b["besoin_id"], "membre_id": aidant}, elicitation=ok())[1]
+    rid = rel["relation_id"]
+    err, msg = appeler("repondre", {"relation_id": rid, "action": "accepter"}, membre="p00", elicitation=ok())
+    assert err and "[interdit]" in msg  # seule la personne sollicitée peut accepter
+    err, msg = appeler("repondre", {"relation_id": rid, "action": "planifier", "date_rencontre": "2026-10-10"},
+                       membre=aidant, elicitation=ok())
+    assert err and "[regle_metier]" in msg  # impossible de planifier avant d'accepter
+    assert appeler("repondre", {"relation_id": rid, "action": "accepter"}, membre=aidant, elicitation=ok())[1]["coordonnees_partagees"]
+    r = appeler("repondre", {"relation_id": rid, "action": "planifier", "date_rencontre": "2026-10-10"}, membre="p00", elicitation=ok())[1]
+    assert r["date_rencontre"] == "2026-10-10"
+    appeler("repondre", {"relation_id": rid, "action": "confirmer_rencontre"}, membre=aidant, elicitation=ok())
+    r = appeler("repondre", {"relation_id": rid, "action": "cloturer", "resultat": "affaire_en_cours"}, membre="p00", elicitation=ok())[1]
+    assert r["etat"] and not appeler("mes_relations", {}, membre="p00")[1][0]["je_dois_repondre"]

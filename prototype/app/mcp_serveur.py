@@ -65,8 +65,18 @@ def _formulaire_message(brouillon: str) -> type[BaseModel]:
                         message=(str, Field(default=brouillon, max_length=2000, description="Message (modifiable)")))
 
 
+CODES_HTTP = {401: "authentification", 403: "interdit", 404: "introuvable", 409: "regle_metier", 422: "invalide",
+              501: "non_disponible", 503: "non_disponible"}
+
+
 class ErreurClub(ToolError):
-    """Refus lisible par l'assistant (règle du Club, refus du membre) — jamais masqué."""
+    """Refus lisible par l'assistant ET par une machine : « [code] message ». Codes stables :
+    interdit, regle_metier, introuvable, invalide, non_disponible, authentification (erreurs de l'API, avec statut HTTP),
+    annule_par_membre, portee_insuffisante, besoin_ambigu (décidés ici). Jamais masqué."""
+
+    def __init__(self, code: str, message: str):
+        self.code = code
+        super().__init__(f"[{code}] {message}")
 
 
 PORTEES = ("lecture", "ecriture")
@@ -109,13 +119,13 @@ def creer_serveur(http: Optional[httpx.Client] = None, membre: Optional[str] = N
     def qui() -> str:
         jeton = get_access_token()
         if jetons is not None and jeton is None:
-            raise ErreurClub("Jeton requis.")  # la couche HTTP a déjà refusé ; défense en profondeur
+            raise ErreurClub("authentification", "Jeton requis.")  # la couche HTTP a déjà refusé ; défense en profondeur
         return jeton.subject if jeton else defaut
 
     def peut_ecrire() -> None:
         jeton = get_access_token()
         if jetons is not None and (jeton is None or "ecriture" not in jeton.scopes):
-            raise ErreurClub("Ce jeton n'a que la portée « lecture » : action refusée, rien n'a été envoyé.")
+            raise ErreurClub("portee_insuffisante", "Ce jeton n'a que la portée « lecture » : action refusée, rien n'a été envoyé.")
 
     def api(methode: str, chemin: str, **kw):
         r = client.request(methode, chemin, headers={"X-Membre": qui()}, **kw)
@@ -124,7 +134,7 @@ def creer_serveur(http: Optional[httpx.Client] = None, membre: Optional[str] = N
                 detail = r.json().get("detail", r.text)
             except ValueError:
                 detail = r.text
-            raise ErreurClub(f"Refusé par le serveur du Club ({r.status_code}) : {detail}")
+            raise ErreurClub(CODES_HTTP.get(r.status_code, "erreur"), f"Refusé par le serveur du Club ({r.status_code}) : {detail}")
         return r.json()
 
     def resume(b: dict, res: dict) -> dict:
@@ -147,7 +157,7 @@ def creer_serveur(http: Optional[httpx.Client] = None, membre: Optional[str] = N
     def analyser(texte: str) -> dict:
         b = api("POST", "/api/analyser", json={"texte": texte})["besoin"]
         if b["ambiguites"]:
-            raise ErreurClub("Besoin ambigu, précisez : " + " ; ".join(
+            raise ErreurClub("besoin_ambigu", "Besoin ambigu, précisez : " + " ; ".join(
                 f"« {a['terme']} » = " + " ou ".join(o["libelle"] for o in a["options"]) for a in b["ambiguites"]))
         return b
 
@@ -221,7 +231,7 @@ def creer_serveur(http: Optional[httpx.Client] = None, membre: Optional[str] = N
     def verifier(ok: ElicitationResult) -> str:
         peut_ecrire()
         if not isinstance(ok, AcceptedElicitation) or not ok.data.confirmer:
-            raise ErreurClub("Action annulée par le membre : rien n'a été envoyé.")
+            raise ErreurClub("annule_par_membre", "Action annulée par le membre : rien n'a été envoyé.")
         return "confirmée par le membre (elicitation MCP)" if exiger else "approbation d'outil du client (HACKVS_MCP_CONFIRMATION=client)"
 
     def criteres(b: dict) -> str:
@@ -240,9 +250,10 @@ def creer_serveur(http: Optional[httpx.Client] = None, membre: Optional[str] = N
         return demander(f"Envoyer ce message ? Vous pouvez le modifier.\n\n{brouillon}", _formulaire_message(brouillon),
                         message=brouillon)
 
-    def conf_reponse(relation_id: str, action: str):
-        return demander(f"{action.capitalize()} la mise en relation {relation_id} ?"
-                        + (" Vos coordonnées seront partagées." if action == "accepter" else ""))
+    def conf_reponse(relation_id: str, action: str, date_rencontre: Optional[str] = None, resultat: Optional[str] = None):
+        detail = {"accepter": " Vos coordonnées seront partagées.", "planifier": f" Date : {date_rencontre}.",
+                  "cloturer": f" Résultat : {resultat}."}.get(action, "")
+        return demander(f"{action.capitalize().replace('_', ' ')} (mise en relation {relation_id}) ?{detail}")
 
     @srv.tool(annotations=ECRITURE)
     def publier_besoin(besoin: str, ok: Annotated[ElicitationResult[Confirmation], Resolve(conf_publication)],
@@ -269,12 +280,18 @@ def creer_serveur(http: Optional[httpx.Client] = None, membre: Optional[str] = N
                 "confirmation": mode}
 
     @srv.tool(annotations=ECRITURE)
-    def repondre(relation_id: str, action: Literal["accepter", "decliner", "retirer", "annuler"],
-                 ok: Annotated[ElicitationResult[Confirmation], Resolve(conf_reponse)]) -> dict:
-        """Répond à une mise en relation. Accepter partage les coordonnées des deux côtés. Confirmation humaine requise."""
+    def repondre(relation_id: str,
+                 action: Literal["accepter", "decliner", "retirer", "annuler", "planifier", "confirmer_rencontre", "cloturer"],
+                 ok: Annotated[ElicitationResult[Confirmation], Resolve(conf_reponse)],
+                 date_rencontre: Optional[str] = None,
+                 resultat: Optional[Literal["utile", "affaire_en_cours", "pas_pertinent"]] = None) -> dict:
+        """Fait avancer une mise en relation : accepter (partage les coordonnées), décliner, retirer, annuler,
+        planifier (date_rencontre AAAA-MM-JJ), confirmer_rencontre, cloturer (resultat). Le serveur vérifie
+        que l'action est permise dans l'état courant ET pour ce membre. Confirmation humaine requise."""
         mode = verifier(ok)
-        r = api("POST", f"/api/relations/{relation_id}/{action}", json={})
-        return {"relation_id": r["id"], "etat": r["libelle_etat"], "confirmation": mode}
+        r = api("POST", f"/api/relations/{relation_id}/{action}", json={"date_rencontre": date_rencontre, "resultat": resultat})
+        return {"relation_id": r["id"], "etat": r["libelle_etat"], "date_rencontre": r.get("date_rencontre"),
+                "coordonnees_partagees": r.get("coordonnees_partagees"), "confirmation": mode}
 
     return srv
 

@@ -970,5 +970,32 @@
     "brauche",
     "brauchen",
     "benötigen"
-  ]
+  ],
+  "composes_trompeurs": {
+    "_note": "Expressions contenant un mot du catalogue mais désignant AUTRE CHOSE : elles sont consommées avant la détection des compétences (le besoin devient hors catalogue, donc recherche prudente ou abstention).",
+    "expressions": [
+      "comptabilite carbone",
+      "comptabilité carbone",
+      "transport de personnes",
+      "transporteur de personnes",
+      "transporteurs de personnes",
+      "transports de personnes",
+      "personenbeförderung",
+      "assurance maladie",
+      "assurances maladie",
+      "krankenversicherung",
+      "krankenkasse"
+    ]
+  },
+  "contextes_trompeurs": {
+    "_note": "Si l'un de ces termes figure dans la même phrase, la compétence n'est pas retenue (besoin privé ou autre domaine).",
+    "droit_affaires": [
+      "divorce",
+      "scheidung",
+      "droit de la famille",
+      "familienrecht",
+      "pension alimentaire",
+      "garde des enfants"
+    ]
+  }
 }
