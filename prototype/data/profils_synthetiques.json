@@ -1,0 +1,4889 @@
+{
+ "_avertissement": "CLUB SYNTHÉTIQUE de 150 membres généré par scripts/generer_club.py (graine 2026). Noms volontairement non réalistes ; aucune personne ni entreprise réelle.",
+ "utilisateur_demo": "s001",
+ "profils": [
+  {
+   "id": "s001",
+   "nom": "Nina Y.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Fiduciaire · synthétique n°001",
+   "commune": "Monthey",
+   "type": "membre_club",
+   "secteurs": [
+    "fiduciaire"
+   ],
+   "offre": [
+    {
+     "concept": "fiduciaire",
+     "texte": "Comptabilité et bouclements pour PME"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s002",
+   "nom": "Anna I.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Efficacite energetique · synthétique n°002",
+   "commune": "Monthey",
+   "type": "membre_club",
+   "secteurs": [
+    "efficacite_energetique"
+   ],
+   "offre": [
+    {
+     "concept": "efficacite_energetique",
+     "texte": "Rénovation énergétique de bâtiments"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": false,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s003",
+   "nom": "Zoé W.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Developpement web · synthétique n°003",
+   "commune": "Chamoson",
+   "type": "membre_club",
+   "secteurs": [
+    "developpement_web"
+   ],
+   "offre": [
+    {
+     "concept": "developpement_web",
+     "texte": "Création de sites web et boutiques en ligne"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s004",
+   "nom": "Reto Y.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Emballage · synthétique n°004",
+   "commune": "Orsières",
+   "type": "membre_club",
+   "secteurs": [
+    "emballage"
+   ],
+   "offre": [
+    {
+     "concept": "emballage",
+     "texte": "Conditionnement et packaging"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s005",
+   "nom": "Sonja B.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Marketing · synthétique n°005",
+   "commune": "Brigue",
+   "type": "membre_club",
+   "secteurs": [
+    "marketing"
+   ],
+   "offre": [
+    {
+     "concept": "marketing",
+     "texte": "Image de marque et campagnes publicitaires"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "de"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s006",
+   "nom": "Hugo I.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Assurance · synthétique n°006",
+   "commune": "Riddes",
+   "type": "membre_club",
+   "secteurs": [
+    "assurance"
+   ],
+   "offre": [
+    {
+     "concept": "assurance",
+     "texte": "Assurance responsabilité civile"
+    },
+    {
+     "concept": "tourisme",
+     "texte": "Hôtellerie et hébergement de groupes"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s007",
+   "nom": "Reto Q.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Informatique · synthétique n°007",
+   "commune": "Vex",
+   "type": "membre_club",
+   "secteurs": [
+    "informatique"
+   ],
+   "offre": [
+    {
+     "concept": "informatique",
+     "texte": "Réseau informatique et sauvegardes"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "marketing",
+     "texte": "Nous cherchons : marketing"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de",
+    "en"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s008",
+   "nom": "Léa O.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Recrutement · synthétique n°008",
+   "commune": "Vex",
+   "type": "membre_club",
+   "secteurs": [
+    "recrutement"
+   ],
+   "offre": [
+    {
+     "concept": "recrutement",
+     "texte": "Recrutement de saisonniers"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s009",
+   "nom": "Emma P.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Location machines · synthétique n°009",
+   "commune": "Brigue",
+   "type": "membre_club",
+   "secteurs": [
+    "location_machines"
+   ],
+   "offre": [
+    {
+     "concept": "location_machines",
+     "texte": "Location de chariots élévateurs"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s010",
+   "nom": "Reto G.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Transmission entreprise · synthétique n°010",
+   "commune": "Fully",
+   "type": "membre_club",
+   "secteurs": [
+    "transmission_entreprise"
+   ],
+   "offre": [
+    {
+     "concept": "transmission_entreprise",
+     "texte": "Accompagnement à la transmission d'entreprise"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s011",
+   "nom": "Eva J.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Vins · synthétique n°011",
+   "commune": "Brigue",
+   "type": "membre_club",
+   "secteurs": [
+    "vins"
+   ],
+   "offre": [
+    {
+     "concept": "vins",
+     "texte": "Domaine viticole"
+    },
+    {
+     "concept": "informatique",
+     "texte": "Réseau informatique et sauvegardes"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "export_suisse_alemanique",
+     "texte": "Nous cherchons : export_suisse_alemanique"
+    }
+   ],
+   "langues": [
+    "de",
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s012",
+   "nom": "Sarah B.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Tourisme · synthétique n°012",
+   "commune": "Viège",
+   "type": "membre_club",
+   "secteurs": [
+    "tourisme"
+   ],
+   "offre": [
+    {
+     "concept": "tourisme",
+     "texte": "Hôtellerie et hébergement de groupes"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "photo_video",
+     "texte": "Nous cherchons : photo video"
+    }
+   ],
+   "langues": [
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s013",
+   "nom": "Paul Z.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Tourisme · synthétique n°013",
+   "commune": "Martigny",
+   "type": "membre_club",
+   "secteurs": [
+    "tourisme"
+   ],
+   "offre": [
+    {
+     "concept": "tourisme",
+     "texte": "Hôtellerie et hébergement de groupes"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "recrutement",
+     "texte": "Nous cherchons : recrutement"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s014",
+   "nom": "Mia R.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Recrutement · synthétique n°014",
+   "commune": "Naters",
+   "type": "membre_club",
+   "secteurs": [
+    "recrutement"
+   ],
+   "offre": [
+    {
+     "concept": "recrutement",
+     "texte": "Recrutement de saisonniers"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "de",
+    "en"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s015",
+   "nom": "Julie F.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Ia donnees · synthétique n°015",
+   "commune": "Conthey",
+   "type": "membre_club",
+   "secteurs": [
+    "ia_donnees"
+   ],
+   "offre": [
+    {
+     "concept": "ia_donnees",
+     "texte": "Automatisation et intelligence artificielle pour PME"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s016",
+   "nom": "Yves J.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Sante securite travail · synthétique n°016",
+   "commune": "Riddes",
+   "type": "membre_club",
+   "secteurs": [
+    "sante_securite_travail"
+   ],
+   "offre": [
+    {
+     "concept": "sante_securite_travail",
+     "texte": "Concepts MSST et prévention des accidents"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s017",
+   "nom": "Yves R.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Traduction · synthétique n°017",
+   "commune": "Monthey",
+   "type": "membre_club",
+   "secteurs": [
+    "traduction"
+   ],
+   "offre": [
+    {
+     "concept": "traduction",
+     "texte": "Traduction et relecture de documents"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s018",
+   "nom": "Zoé I.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Assurance · synthétique n°018",
+   "commune": "Martigny",
+   "type": "membre_club",
+   "secteurs": [
+    "assurance"
+   ],
+   "offre": [
+    {
+     "concept": "assurance",
+     "texte": "Assurance responsabilité civile"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s019",
+   "nom": "Loïc B.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Cybersecurite · synthétique n°019",
+   "commune": "Viège",
+   "type": "membre_club",
+   "secteurs": [
+    "cybersecurite"
+   ],
+   "offre": [
+    {
+     "concept": "cybersecurite",
+     "texte": "Sensibilisation au phishing pour PME"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "de",
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s020",
+   "nom": "Urs Y.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Droit travail · synthétique n°020",
+   "commune": "Monthey",
+   "type": "membre_club",
+   "secteurs": [
+    "droit_travail"
+   ],
+   "offre": [
+    {
+     "concept": "droit_travail",
+     "texte": "Droit du travail pour employeurs"
+    },
+    {
+     "concept": "transmission_entreprise",
+     "texte": "Accompagnement à la transmission d'entreprise"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "en"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": false,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s021",
+   "nom": "Nina O.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Installation froid · synthétique n°021",
+   "commune": "Nendaz",
+   "type": "membre_club",
+   "secteurs": [
+    "installation_froid"
+   ],
+   "offre": [
+    {
+     "concept": "installation_froid",
+     "texte": "Installation et dépannage de chambres froides"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s022",
+   "nom": "Eva V.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Efficacite energetique · synthétique n°022",
+   "commune": "Chamoson",
+   "type": "membre_club",
+   "secteurs": [
+    "efficacite_energetique"
+   ],
+   "offre": [
+    {
+     "concept": "efficacite_energetique",
+     "texte": "Rénovation énergétique de bâtiments"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s023",
+   "nom": "Marc J.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Informatique · synthétique n°023",
+   "commune": "Orsières",
+   "type": "membre_club",
+   "secteurs": [
+    "informatique"
+   ],
+   "offre": [
+    {
+     "concept": "informatique",
+     "texte": "Infogérance et support informatique"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "recrutement",
+     "texte": "Nous cherchons : recrutement"
+    },
+    {
+     "concept": "marketing",
+     "texte": "Nous cherchons : marketing"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s024",
+   "nom": "Paul U.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Tourisme · synthétique n°024",
+   "commune": "Naters",
+   "type": "membre_club",
+   "secteurs": [
+    "tourisme"
+   ],
+   "offre": [
+    {
+     "concept": "tourisme",
+     "texte": "Hôtellerie et hébergement de groupes"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "de",
+    "fr",
+    "en"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s025",
+   "nom": "Hugo A.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Marketing · synthétique n°025",
+   "commune": "Fully",
+   "type": "membre_club",
+   "secteurs": [
+    "marketing"
+   ],
+   "offre": [
+    {
+     "concept": "marketing",
+     "texte": "Image de marque et campagnes publicitaires"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s026",
+   "nom": "Léa E.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Location machines · synthétique n°026",
+   "commune": "Chamoson",
+   "type": "membre_club",
+   "secteurs": [
+    "location_machines"
+   ],
+   "offre": [
+    {
+     "concept": "location_machines",
+     "texte": "Location de chariots élévateurs"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s027",
+   "nom": "Luc H.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Transmission entreprise · synthétique n°027",
+   "commune": "Sion",
+   "type": "membre_club",
+   "secteurs": [
+    "transmission_entreprise"
+   ],
+   "offre": [
+    {
+     "concept": "transmission_entreprise",
+     "texte": "Accompagnement à la transmission d'entreprise"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s028",
+   "nom": "Mia O.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Tourisme · synthétique n°028",
+   "commune": "Chamoson",
+   "type": "membre_club",
+   "secteurs": [
+    "tourisme"
+   ],
+   "offre": [
+    {
+     "concept": "tourisme",
+     "texte": "Hôtellerie et hébergement de groupes"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "photo_video",
+     "texte": "Nous cherchons : photo video"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s029",
+   "nom": "Mia F.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Vins · synthétique n°029",
+   "commune": "Viège",
+   "type": "membre_club",
+   "secteurs": [
+    "vins"
+   ],
+   "offre": [
+    {
+     "concept": "vins",
+     "texte": "Vins du Valais et encavage"
+    },
+    {
+     "concept": "photo_video",
+     "texte": "Photographie de produits"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "transport_frigorifique",
+     "texte": "Nous cherchons : transport frigorifique"
+    },
+    {
+     "concept": "emballage",
+     "texte": "Nous cherchons : emballage"
+    }
+   ],
+   "langues": [
+    "de"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s030",
+   "nom": "Luc M.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Vins · synthétique n°030",
+   "commune": "Fully",
+   "type": "membre_club",
+   "secteurs": [
+    "vins"
+   ],
+   "offre": [
+    {
+     "concept": "vins",
+     "texte": "Vins du Valais et encavage"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": false,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s031",
+   "nom": "Nicolas J.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Menuiserie · synthétique n°031",
+   "commune": "Saxon",
+   "type": "membre_club",
+   "secteurs": [
+    "menuiserie"
+   ],
+   "offre": [
+    {
+     "concept": "menuiserie",
+     "texte": "Menuiserie et agencement sur mesure"
+    },
+    {
+     "concept": "vins",
+     "texte": "Domaine viticole"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "fiduciaire",
+     "texte": "Nous cherchons : fiduciaire"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s032",
+   "nom": "Thomas X.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Evenementiel · synthétique n°032",
+   "commune": "Conthey",
+   "type": "membre_club",
+   "secteurs": [
+    "evenementiel"
+   ],
+   "offre": [
+    {
+     "concept": "evenementiel",
+     "texte": "Organisation d'événements d'entreprise"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "traiteur",
+     "texte": "Nous cherchons : traiteur"
+    },
+    {
+     "concept": "photo_video",
+     "texte": "Nous cherchons : photo video"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s033",
+   "nom": "Paul T.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Menuiserie · synthétique n°033",
+   "commune": "Saxon",
+   "type": "membre_club",
+   "secteurs": [
+    "menuiserie"
+   ],
+   "offre": [
+    {
+     "concept": "menuiserie",
+     "texte": "Menuiserie et agencement sur mesure"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "en"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s034",
+   "nom": "David L.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Informatique · synthétique n°034",
+   "commune": "Monthey",
+   "type": "membre_club",
+   "secteurs": [
+    "informatique"
+   ],
+   "offre": [
+    {
+     "concept": "informatique",
+     "texte": "Infogérance et support informatique"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "cybersecurite",
+     "texte": "Nous cherchons : cybersecurite"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s035",
+   "nom": "Thomas K.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Energie solaire · synthétique n°035",
+   "commune": "Sierre",
+   "type": "membre_club",
+   "secteurs": [
+    "energie_solaire"
+   ],
+   "offre": [
+    {
+     "concept": "energie_solaire",
+     "texte": "Installations photovoltaïques"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s036",
+   "nom": "Yves Z.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Informatique · synthétique n°036",
+   "commune": "Vex",
+   "type": "membre_club",
+   "secteurs": [
+    "informatique"
+   ],
+   "offre": [
+    {
+     "concept": "informatique",
+     "texte": "Réseau informatique et sauvegardes"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "marketing",
+     "texte": "Nous cherchons : marketing"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s037",
+   "nom": "Emma H.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Marketing · synthétique n°037",
+   "commune": "Fully",
+   "type": "membre_club",
+   "secteurs": [
+    "marketing"
+   ],
+   "offre": [
+    {
+     "concept": "marketing",
+     "texte": "Image de marque et campagnes publicitaires"
+    },
+    {
+     "concept": "transmission_entreprise",
+     "texte": "Accompagnement à la transmission d'entreprise"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s038",
+   "nom": "Nina P.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Vins · synthétique n°038",
+   "commune": "Brigue",
+   "type": "membre_club",
+   "secteurs": [
+    "vins"
+   ],
+   "offre": [
+    {
+     "concept": "vins",
+     "texte": "Domaine viticole"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "developpement_web",
+     "texte": "Nous cherchons : developpement web"
+    },
+    {
+     "concept": "transport_frigorifique",
+     "texte": "Nous cherchons : transport frigorifique"
+    }
+   ],
+   "langues": [
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s039",
+   "nom": "Emma E.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Tourisme · synthétique n°039",
+   "commune": "Conthey",
+   "type": "membre_club",
+   "secteurs": [
+    "tourisme"
+   ],
+   "offre": [
+    {
+     "concept": "tourisme",
+     "texte": "Hôtellerie et hébergement de groupes"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "marketing",
+     "texte": "Nous cherchons : marketing"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s040",
+   "nom": "Léa A.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Marketing · synthétique n°040",
+   "commune": "Vex",
+   "type": "membre_club",
+   "secteurs": [
+    "marketing"
+   ],
+   "offre": [
+    {
+     "concept": "marketing",
+     "texte": "Image de marque et campagnes publicitaires"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s041",
+   "nom": "Laura T.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Menuiserie · synthétique n°041",
+   "commune": "Orsières",
+   "type": "membre_club",
+   "secteurs": [
+    "menuiserie"
+   ],
+   "offre": [
+    {
+     "concept": "menuiserie",
+     "texte": "Menuiserie et agencement sur mesure"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "energie_solaire",
+     "texte": "Nous cherchons : energie solaire"
+    }
+   ],
+   "langues": [
+    "fr",
+    "en"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s042",
+   "nom": "Jan Q.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Fiduciaire · synthétique n°042",
+   "commune": "Riddes",
+   "type": "membre_club",
+   "secteurs": [
+    "fiduciaire"
+   ],
+   "offre": [
+    {
+     "concept": "fiduciaire",
+     "texte": "Gestion des salaires et fiduciaire"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": false,
+   "disponible": false,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s043",
+   "nom": "Nadia P.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Tourisme · synthétique n°043",
+   "commune": "Naters",
+   "type": "membre_club",
+   "secteurs": [
+    "tourisme"
+   ],
+   "offre": [
+    {
+     "concept": "tourisme",
+     "texte": "Hôtellerie et hébergement de groupes"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "recrutement",
+     "texte": "Nous cherchons : recrutement"
+    },
+    {
+     "concept": "traiteur",
+     "texte": "Nous cherchons : traiteur"
+    }
+   ],
+   "langues": [
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s044",
+   "nom": "Mia V.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Vins · synthétique n°044",
+   "commune": "Conthey",
+   "type": "membre_club",
+   "secteurs": [
+    "vins"
+   ],
+   "offre": [
+    {
+     "concept": "vins",
+     "texte": "Domaine viticole"
+    },
+    {
+     "concept": "transmission_entreprise",
+     "texte": "Accompagnement à la transmission d'entreprise"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "marketing",
+     "texte": "Nous cherchons : marketing"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s045",
+   "nom": "Hugo Z.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Transmission entreprise · synthétique n°045",
+   "commune": "Vex",
+   "type": "membre_club",
+   "secteurs": [
+    "transmission_entreprise"
+   ],
+   "offre": [
+    {
+     "concept": "transmission_entreprise",
+     "texte": "Accompagnement à la transmission d'entreprise"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s046",
+   "nom": "Eva G.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Tourisme · synthétique n°046",
+   "commune": "Chamoson",
+   "type": "membre_club",
+   "secteurs": [
+    "tourisme"
+   ],
+   "offre": [
+    {
+     "concept": "tourisme",
+     "texte": "Hôtellerie et hébergement de groupes"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "marketing",
+     "texte": "Nous cherchons : marketing"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s047",
+   "nom": "Laura E.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Ia donnees · synthétique n°047",
+   "commune": "Vex",
+   "type": "membre_club",
+   "secteurs": [
+    "ia_donnees"
+   ],
+   "offre": [
+    {
+     "concept": "ia_donnees",
+     "texte": "Analyse de données et tableaux de bord"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s048",
+   "nom": "Sonja F.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Droit affaires · synthétique n°048",
+   "commune": "Fully",
+   "type": "membre_club",
+   "secteurs": [
+    "droit_affaires"
+   ],
+   "offre": [
+    {
+     "concept": "droit_affaires",
+     "texte": "Conseil juridique en droit des sociétés"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": false,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s049",
+   "nom": "Nadia J.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Location machines · synthétique n°049",
+   "commune": "Fully",
+   "type": "membre_club",
+   "secteurs": [
+    "location_machines"
+   ],
+   "offre": [
+    {
+     "concept": "location_machines",
+     "texte": "Location de chariots élévateurs"
+    },
+    {
+     "concept": "emballage",
+     "texte": "Emballages et étiquettes alimentaires"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s050",
+   "nom": "Zoé I.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Menuiserie · synthétique n°050",
+   "commune": "Bagnes",
+   "type": "membre_club",
+   "secteurs": [
+    "menuiserie"
+   ],
+   "offre": [
+    {
+     "concept": "menuiserie",
+     "texte": "Charpente bois"
+    },
+    {
+     "concept": "informatique",
+     "texte": "Infogérance et support informatique"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "en"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s051",
+   "nom": "Hugo N.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Menuiserie · synthétique n°051",
+   "commune": "Sierre",
+   "type": "membre_club",
+   "secteurs": [
+    "menuiserie"
+   ],
+   "offre": [
+    {
+     "concept": "menuiserie",
+     "texte": "Charpente bois"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "recrutement",
+     "texte": "Nous cherchons : recrutement"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s052",
+   "nom": "Sarah L.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Developpement web · synthétique n°052",
+   "commune": "Conthey",
+   "type": "membre_club",
+   "secteurs": [
+    "developpement_web"
+   ],
+   "offre": [
+    {
+     "concept": "developpement_web",
+     "texte": "Développement d'applications web"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "photo_video",
+     "texte": "Nous cherchons : photo video"
+    },
+    {
+     "concept": "traduction",
+     "texte": "Nous cherchons : traduction"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s053",
+   "nom": "Julie U.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Droit affaires · synthétique n°053",
+   "commune": "Saxon",
+   "type": "membre_club",
+   "secteurs": [
+    "droit_affaires"
+   ],
+   "offre": [
+    {
+     "concept": "droit_affaires",
+     "texte": "Conseil juridique en droit des sociétés"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s054",
+   "nom": "Hugo H.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Sante securite travail · synthétique n°054",
+   "commune": "Orsières",
+   "type": "membre_club",
+   "secteurs": [
+    "sante_securite_travail"
+   ],
+   "offre": [
+    {
+     "concept": "sante_securite_travail",
+     "texte": "Concepts MSST et prévention des accidents"
+    },
+    {
+     "concept": "construction_metallique",
+     "texte": "Construction métallique et serrurerie"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s055",
+   "nom": "Eva D.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Efficacite energetique · synthétique n°055",
+   "commune": "Sion",
+   "type": "membre_club",
+   "secteurs": [
+    "efficacite_energetique"
+   ],
+   "offre": [
+    {
+     "concept": "efficacite_energetique",
+     "texte": "Rénovation énergétique de bâtiments"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s056",
+   "nom": "Chloé T.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Fiduciaire · synthétique n°056",
+   "commune": "Sion",
+   "type": "membre_club",
+   "secteurs": [
+    "fiduciaire"
+   ],
+   "offre": [
+    {
+     "concept": "fiduciaire",
+     "texte": "Comptabilité et bouclements pour PME"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s057",
+   "nom": "Marc X.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Tourisme · synthétique n°057",
+   "commune": "Fully",
+   "type": "membre_club",
+   "secteurs": [
+    "tourisme"
+   ],
+   "offre": [
+    {
+     "concept": "tourisme",
+     "texte": "Hôtellerie et hébergement de groupes"
+    },
+    {
+     "concept": "installation_froid",
+     "texte": "Installation et dépannage de chambres froides"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "marketing",
+     "texte": "Nous cherchons : marketing"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s058",
+   "nom": "Yves B.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Emballage · synthétique n°058",
+   "commune": "Viège",
+   "type": "membre_club",
+   "secteurs": [
+    "emballage"
+   ],
+   "offre": [
+    {
+     "concept": "emballage",
+     "texte": "Conditionnement et packaging"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "de"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s059",
+   "nom": "Eva O.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Marketing · synthétique n°059",
+   "commune": "Monthey",
+   "type": "membre_club",
+   "secteurs": [
+    "marketing"
+   ],
+   "offre": [
+    {
+     "concept": "marketing",
+     "texte": "Image de marque et campagnes publicitaires"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s060",
+   "nom": "Inès L.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Ia donnees · synthétique n°060",
+   "commune": "Naters",
+   "type": "membre_club",
+   "secteurs": [
+    "ia_donnees"
+   ],
+   "offre": [
+    {
+     "concept": "ia_donnees",
+     "texte": "Automatisation et intelligence artificielle pour PME"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "de",
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s061",
+   "nom": "Luc I.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Menuiserie · synthétique n°061",
+   "commune": "Bagnes",
+   "type": "membre_club",
+   "secteurs": [
+    "menuiserie"
+   ],
+   "offre": [
+    {
+     "concept": "menuiserie",
+     "texte": "Charpente bois"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s062",
+   "nom": "Chloé R.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Sante securite travail · synthétique n°062",
+   "commune": "Orsières",
+   "type": "membre_club",
+   "secteurs": [
+    "sante_securite_travail"
+   ],
+   "offre": [
+    {
+     "concept": "sante_securite_travail",
+     "texte": "Concepts MSST et prévention des accidents"
+    },
+    {
+     "concept": "evenementiel",
+     "texte": "Organisation d'événements d'entreprise"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s063",
+   "nom": "Mia C.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Ia donnees · synthétique n°063",
+   "commune": "Bagnes",
+   "type": "membre_club",
+   "secteurs": [
+    "ia_donnees"
+   ],
+   "offre": [
+    {
+     "concept": "ia_donnees",
+     "texte": "Analyse de données et tableaux de bord"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s064",
+   "nom": "Inès R.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Efficacite energetique · synthétique n°064",
+   "commune": "Sion",
+   "type": "membre_club",
+   "secteurs": [
+    "efficacite_energetique"
+   ],
+   "offre": [
+    {
+     "concept": "efficacite_energetique",
+     "texte": "Rénovation énergétique de bâtiments"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s065",
+   "nom": "Thomas F.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Menuiserie · synthétique n°065",
+   "commune": "Nendaz",
+   "type": "membre_club",
+   "secteurs": [
+    "menuiserie"
+   ],
+   "offre": [
+    {
+     "concept": "menuiserie",
+     "texte": "Charpente bois"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "energie_solaire",
+     "texte": "Nous cherchons : energie solaire"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s066",
+   "nom": "Urs Q.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Menuiserie · synthétique n°066",
+   "commune": "Naters",
+   "type": "membre_club",
+   "secteurs": [
+    "menuiserie"
+   ],
+   "offre": [
+    {
+     "concept": "menuiserie",
+     "texte": "Charpente bois"
+    },
+    {
+     "concept": "assurance",
+     "texte": "Courtage en assurances entreprises"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "energie_solaire",
+     "texte": "Nous cherchons : energie solaire"
+    },
+    {
+     "concept": "location_machines",
+     "texte": "Nous cherchons : location machines"
+    }
+   ],
+   "langues": [
+    "de",
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s067",
+   "nom": "Yves V.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Traduction · synthétique n°067",
+   "commune": "Fully",
+   "type": "membre_club",
+   "secteurs": [
+    "traduction"
+   ],
+   "offre": [
+    {
+     "concept": "traduction",
+     "texte": "Traduction et relecture de documents"
+    },
+    {
+     "concept": "energie_solaire",
+     "texte": "Installations photovoltaïques"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s068",
+   "nom": "Hugo A.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Developpement web · synthétique n°068",
+   "commune": "Martigny",
+   "type": "membre_club",
+   "secteurs": [
+    "developpement_web"
+   ],
+   "offre": [
+    {
+     "concept": "developpement_web",
+     "texte": "Développement d'applications web"
+    },
+    {
+     "concept": "marketing",
+     "texte": "Communication et réseaux sociaux"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "photo_video",
+     "texte": "Nous cherchons : photo video"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s069",
+   "nom": "Emma A.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Vins · synthétique n°069",
+   "commune": "Bagnes",
+   "type": "membre_club",
+   "secteurs": [
+    "vins"
+   ],
+   "offre": [
+    {
+     "concept": "vins",
+     "texte": "Vins du Valais et encavage"
+    },
+    {
+     "concept": "menuiserie",
+     "texte": "Menuiserie et agencement sur mesure"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "transport_frigorifique",
+     "texte": "Nous cherchons : transport frigorifique"
+    },
+    {
+     "concept": "export_suisse_alemanique",
+     "texte": "Nous cherchons : export_suisse_alemanique"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s070",
+   "nom": "Emma O.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Droit affaires · synthétique n°070",
+   "commune": "Martigny",
+   "type": "membre_club",
+   "secteurs": [
+    "droit_affaires"
+   ],
+   "offre": [
+    {
+     "concept": "droit_affaires",
+     "texte": "Rédaction et relecture de contrats commerciaux"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s071",
+   "nom": "Hugo A.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Mentorat · synthétique n°071",
+   "commune": "Brigue",
+   "type": "membre_club",
+   "secteurs": [
+    "mentorat"
+   ],
+   "offre": [
+    {
+     "concept": "mentorat",
+     "texte": "Mentorat de jeunes dirigeants"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "de",
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": false,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s072",
+   "nom": "Hugo M.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Informatique · synthétique n°072",
+   "commune": "Chamoson",
+   "type": "membre_club",
+   "secteurs": [
+    "informatique"
+   ],
+   "offre": [
+    {
+     "concept": "informatique",
+     "texte": "Infogérance et support informatique"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "recrutement",
+     "texte": "Nous cherchons : recrutement"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s073",
+   "nom": "Thomas N.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Tourisme · synthétique n°073",
+   "commune": "Chamoson",
+   "type": "membre_club",
+   "secteurs": [
+    "tourisme"
+   ],
+   "offre": [
+    {
+     "concept": "tourisme",
+     "texte": "Hôtellerie et hébergement de groupes"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "developpement_web",
+     "texte": "Nous cherchons : developpement web"
+    },
+    {
+     "concept": "photo_video",
+     "texte": "Nous cherchons : photo video"
+    }
+   ],
+   "langues": [
+    "fr",
+    "en"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s074",
+   "nom": "David W.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Traiteur · synthétique n°074",
+   "commune": "Vex",
+   "type": "membre_club",
+   "secteurs": [
+    "traiteur"
+   ],
+   "offre": [
+    {
+     "concept": "traiteur",
+     "texte": "Service traiteur pour entreprises"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s075",
+   "nom": "Anna T.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Mentorat · synthétique n°075",
+   "commune": "Viège",
+   "type": "membre_club",
+   "secteurs": [
+    "mentorat"
+   ],
+   "offre": [
+    {
+     "concept": "mentorat",
+     "texte": "Mentorat de jeunes dirigeants"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s076",
+   "nom": "Sonja F.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Tourisme · synthétique n°076",
+   "commune": "Nendaz",
+   "type": "membre_club",
+   "secteurs": [
+    "tourisme"
+   ],
+   "offre": [
+    {
+     "concept": "tourisme",
+     "texte": "Hôtellerie et hébergement de groupes"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s077",
+   "nom": "Léa J.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Logistique · synthétique n°077",
+   "commune": "Sierre",
+   "type": "membre_club",
+   "secteurs": [
+    "logistique"
+   ],
+   "offre": [
+    {
+     "concept": "logistique",
+     "texte": "Entreposage et préparation de commandes"
+    },
+    {
+     "concept": "marketing",
+     "texte": "Communication et réseaux sociaux"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "assurance",
+     "texte": "Nous cherchons : assurance"
+    },
+    {
+     "concept": "ia_donnees",
+     "texte": "Nous cherchons : ia donnees"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s078",
+   "nom": "Hugo P.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Installation froid · synthétique n°078",
+   "commune": "Naters",
+   "type": "membre_club",
+   "secteurs": [
+    "installation_froid"
+   ],
+   "offre": [
+    {
+     "concept": "installation_froid",
+     "texte": "Installation et dépannage de chambres froides"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "de",
+    "fr",
+    "en"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s079",
+   "nom": "Julie C.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Fiduciaire · synthétique n°079",
+   "commune": "Nendaz",
+   "type": "membre_club",
+   "secteurs": [
+    "fiduciaire"
+   ],
+   "offre": [
+    {
+     "concept": "fiduciaire",
+     "texte": "Comptabilité et bouclements pour PME"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s080",
+   "nom": "Yves U.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Ia donnees · synthétique n°080",
+   "commune": "Sierre",
+   "type": "membre_club",
+   "secteurs": [
+    "ia_donnees"
+   ],
+   "offre": [
+    {
+     "concept": "ia_donnees",
+     "texte": "Automatisation et intelligence artificielle pour PME"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s081",
+   "nom": "Reto N.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Menuiserie · synthétique n°081",
+   "commune": "Riddes",
+   "type": "membre_club",
+   "secteurs": [
+    "menuiserie"
+   ],
+   "offre": [
+    {
+     "concept": "menuiserie",
+     "texte": "Menuiserie et agencement sur mesure"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "energie_solaire",
+     "texte": "Nous cherchons : energie solaire"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s082",
+   "nom": "Urs S.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Developpement web · synthétique n°082",
+   "commune": "Sierre",
+   "type": "membre_club",
+   "secteurs": [
+    "developpement_web"
+   ],
+   "offre": [
+    {
+     "concept": "developpement_web",
+     "texte": "Développement d'applications web"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s083",
+   "nom": "Nina X.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Efficacite energetique · synthétique n°083",
+   "commune": "Saxon",
+   "type": "membre_club",
+   "secteurs": [
+    "efficacite_energetique"
+   ],
+   "offre": [
+    {
+     "concept": "efficacite_energetique",
+     "texte": "Rénovation énergétique de bâtiments"
+    },
+    {
+     "concept": "energie_solaire",
+     "texte": "Panneaux solaires pour entreprises"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s084",
+   "nom": "Jan U.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Mentorat · synthétique n°084",
+   "commune": "Viège",
+   "type": "membre_club",
+   "secteurs": [
+    "mentorat"
+   ],
+   "offre": [
+    {
+     "concept": "mentorat",
+     "texte": "Mentorat de jeunes dirigeants"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "de",
+    "fr",
+    "en"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s085",
+   "nom": "Léa S.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Financement · synthétique n°085",
+   "commune": "Bagnes",
+   "type": "membre_club",
+   "secteurs": [
+    "financement"
+   ],
+   "offre": [
+    {
+     "concept": "financement",
+     "texte": "Leasing d'équipements"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s086",
+   "nom": "Nicolas R.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Developpement web · synthétique n°086",
+   "commune": "Orsières",
+   "type": "membre_club",
+   "secteurs": [
+    "developpement_web"
+   ],
+   "offre": [
+    {
+     "concept": "developpement_web",
+     "texte": "Développement d'applications web"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s087",
+   "nom": "Pierre T.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Fiduciaire · synthétique n°087",
+   "commune": "Naters",
+   "type": "membre_club",
+   "secteurs": [
+    "fiduciaire"
+   ],
+   "offre": [
+    {
+     "concept": "fiduciaire",
+     "texte": "Fiscalité et TVA des indépendants"
+    },
+    {
+     "concept": "sante_securite_travail",
+     "texte": "Concepts MSST et prévention des accidents"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "de",
+    "fr",
+    "en"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s088",
+   "nom": "Sarah S.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Efficacite energetique · synthétique n°088",
+   "commune": "Sion",
+   "type": "membre_club",
+   "secteurs": [
+    "efficacite_energetique"
+   ],
+   "offre": [
+    {
+     "concept": "efficacite_energetique",
+     "texte": "Rénovation énergétique de bâtiments"
+    },
+    {
+     "concept": "ia_donnees",
+     "texte": "Automatisation et intelligence artificielle pour PME"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s089",
+   "nom": "Luc N.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Logistique · synthétique n°089",
+   "commune": "Bagnes",
+   "type": "membre_club",
+   "secteurs": [
+    "logistique"
+   ],
+   "offre": [
+    {
+     "concept": "logistique",
+     "texte": "Entreposage et préparation de commandes"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "ia_donnees",
+     "texte": "Nous cherchons : ia donnees"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s090",
+   "nom": "Mia E.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Tourisme · synthétique n°090",
+   "commune": "Saxon",
+   "type": "membre_club",
+   "secteurs": [
+    "tourisme"
+   ],
+   "offre": [
+    {
+     "concept": "tourisme",
+     "texte": "Hôtellerie et hébergement de groupes"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s091",
+   "nom": "Marc G.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Vins · synthétique n°091",
+   "commune": "Fully",
+   "type": "membre_club",
+   "secteurs": [
+    "vins"
+   ],
+   "offre": [
+    {
+     "concept": "vins",
+     "texte": "Domaine viticole"
+    },
+    {
+     "concept": "traiteur",
+     "texte": "Service traiteur pour entreprises"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "marketing",
+     "texte": "Nous cherchons : marketing"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s092",
+   "nom": "Hugo R.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Marketing · synthétique n°092",
+   "commune": "Sierre",
+   "type": "membre_club",
+   "secteurs": [
+    "marketing"
+   ],
+   "offre": [
+    {
+     "concept": "marketing",
+     "texte": "Communication et réseaux sociaux"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s093",
+   "nom": "Emma S.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Location machines · synthétique n°093",
+   "commune": "Bagnes",
+   "type": "membre_club",
+   "secteurs": [
+    "location_machines"
+   ],
+   "offre": [
+    {
+     "concept": "location_machines",
+     "texte": "Location de chariots élévateurs"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de",
+    "en"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s094",
+   "nom": "Hugo L.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Recrutement · synthétique n°094",
+   "commune": "Saxon",
+   "type": "membre_club",
+   "secteurs": [
+    "recrutement"
+   ],
+   "offre": [
+    {
+     "concept": "recrutement",
+     "texte": "Recrutement de saisonniers"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s095",
+   "nom": "Sarah P.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Sante securite travail · synthétique n°095",
+   "commune": "Sion",
+   "type": "membre_club",
+   "secteurs": [
+    "sante_securite_travail"
+   ],
+   "offre": [
+    {
+     "concept": "sante_securite_travail",
+     "texte": "Concepts MSST et prévention des accidents"
+    },
+    {
+     "concept": "traduction",
+     "texte": "Traduction et relecture de documents"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de",
+    "en"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s096",
+   "nom": "Nadia U.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Evenementiel · synthétique n°096",
+   "commune": "Sion",
+   "type": "membre_club",
+   "secteurs": [
+    "evenementiel"
+   ],
+   "offre": [
+    {
+     "concept": "evenementiel",
+     "texte": "Organisation d'événements d'entreprise"
+    },
+    {
+     "concept": "photo_video",
+     "texte": "Photographie de produits"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "photo_video",
+     "texte": "Nous cherchons : photo video"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s097",
+   "nom": "Simon W.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Menuiserie · synthétique n°097",
+   "commune": "Riddes",
+   "type": "membre_club",
+   "secteurs": [
+    "menuiserie"
+   ],
+   "offre": [
+    {
+     "concept": "menuiserie",
+     "texte": "Charpente bois"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "energie_solaire",
+     "texte": "Nous cherchons : energie solaire"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s098",
+   "nom": "Sarah U.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Informatique · synthétique n°098",
+   "commune": "Orsières",
+   "type": "membre_club",
+   "secteurs": [
+    "informatique"
+   ],
+   "offre": [
+    {
+     "concept": "informatique",
+     "texte": "Infogérance et support informatique"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "cybersecurite",
+     "texte": "Nous cherchons : cybersecurite"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s099",
+   "nom": "Marc I.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Transport frigorifique · synthétique n°099",
+   "commune": "Bagnes",
+   "type": "membre_club",
+   "secteurs": [
+    "transport_frigorifique"
+   ],
+   "offre": [
+    {
+     "concept": "transport_frigorifique",
+     "texte": "Transport sous température dirigée"
+    },
+    {
+     "concept": "financement",
+     "texte": "Financement et crédit pour PME"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "ia_donnees",
+     "texte": "Nous cherchons : ia donnees"
+    },
+    {
+     "concept": "assurance",
+     "texte": "Nous cherchons : assurance"
+    }
+   ],
+   "langues": [
+    "fr",
+    "en"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s100",
+   "nom": "Anna Z.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Financement · synthétique n°100",
+   "commune": "Brigue",
+   "type": "membre_club",
+   "secteurs": [
+    "financement"
+   ],
+   "offre": [
+    {
+     "concept": "financement",
+     "texte": "Financement et crédit pour PME"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "de",
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s101",
+   "nom": "Anna M.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Recrutement · synthétique n°101",
+   "commune": "Viège",
+   "type": "membre_club",
+   "secteurs": [
+    "recrutement"
+   ],
+   "offre": [
+    {
+     "concept": "recrutement",
+     "texte": "Placement de personnel temporaire"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "de",
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s102",
+   "nom": "Sarah G.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Efficacite energetique · synthétique n°102",
+   "commune": "Vex",
+   "type": "membre_club",
+   "secteurs": [
+    "efficacite_energetique"
+   ],
+   "offre": [
+    {
+     "concept": "efficacite_energetique",
+     "texte": "Rénovation énergétique de bâtiments"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s103",
+   "nom": "Jan J.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Photo video · synthétique n°103",
+   "commune": "Nendaz",
+   "type": "membre_club",
+   "secteurs": [
+    "photo_video"
+   ],
+   "offre": [
+    {
+     "concept": "photo_video",
+     "texte": "Photographie de produits"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s104",
+   "nom": "Yves C.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Sante securite travail · synthétique n°104",
+   "commune": "Bagnes",
+   "type": "membre_club",
+   "secteurs": [
+    "sante_securite_travail"
+   ],
+   "offre": [
+    {
+     "concept": "sante_securite_travail",
+     "texte": "Concepts MSST et prévention des accidents"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s105",
+   "nom": "Emma T.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Fiduciaire · synthétique n°105",
+   "commune": "Sion",
+   "type": "membre_club",
+   "secteurs": [
+    "fiduciaire"
+   ],
+   "offre": [
+    {
+     "concept": "fiduciaire",
+     "texte": "Gestion des salaires et fiduciaire"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s106",
+   "nom": "Hugo E.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Informatique · synthétique n°106",
+   "commune": "Saxon",
+   "type": "membre_club",
+   "secteurs": [
+    "informatique"
+   ],
+   "offre": [
+    {
+     "concept": "informatique",
+     "texte": "Réseau informatique et sauvegardes"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "marketing",
+     "texte": "Nous cherchons : marketing"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s107",
+   "nom": "Luc U.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Transport frigorifique · synthétique n°107",
+   "commune": "Chamoson",
+   "type": "membre_club",
+   "secteurs": [
+    "transport_frigorifique"
+   ],
+   "offre": [
+    {
+     "concept": "transport_frigorifique",
+     "texte": "Transport frigorifique de produits frais"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "recrutement",
+     "texte": "Nous cherchons : recrutement"
+    },
+    {
+     "concept": "assurance",
+     "texte": "Nous cherchons : assurance"
+    }
+   ],
+   "langues": [
+    "fr",
+    "en"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s108",
+   "nom": "Simon G.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Transport frigorifique · synthétique n°108",
+   "commune": "Sion",
+   "type": "membre_club",
+   "secteurs": [
+    "transport_frigorifique"
+   ],
+   "offre": [
+    {
+     "concept": "transport_frigorifique",
+     "texte": "Transport frigorifique de produits frais"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "en"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s109",
+   "nom": "Zoé M.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Photo video · synthétique n°109",
+   "commune": "Conthey",
+   "type": "membre_club",
+   "secteurs": [
+    "photo_video"
+   ],
+   "offre": [
+    {
+     "concept": "photo_video",
+     "texte": "Photographie de produits"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s110",
+   "nom": "Nadia U.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Informatique · synthétique n°110",
+   "commune": "Nendaz",
+   "type": "membre_club",
+   "secteurs": [
+    "informatique"
+   ],
+   "offre": [
+    {
+     "concept": "informatique",
+     "texte": "Réseau informatique et sauvegardes"
+    },
+    {
+     "concept": "transport_frigorifique",
+     "texte": "Transport frigorifique de produits frais"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s111",
+   "nom": "Sonja S.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Informatique · synthétique n°111",
+   "commune": "Chamoson",
+   "type": "membre_club",
+   "secteurs": [
+    "informatique"
+   ],
+   "offre": [
+    {
+     "concept": "informatique",
+     "texte": "Infogérance et support informatique"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s112",
+   "nom": "Nadia K.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Tourisme · synthétique n°112",
+   "commune": "Fully",
+   "type": "membre_club",
+   "secteurs": [
+    "tourisme"
+   ],
+   "offre": [
+    {
+     "concept": "tourisme",
+     "texte": "Hôtellerie et hébergement de groupes"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s113",
+   "nom": "Julie P.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Droit travail · synthétique n°113",
+   "commune": "Saxon",
+   "type": "membre_club",
+   "secteurs": [
+    "droit_travail"
+   ],
+   "offre": [
+    {
+     "concept": "droit_travail",
+     "texte": "Droit du travail pour employeurs"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s114",
+   "nom": "Léa K.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Marketing · synthétique n°114",
+   "commune": "Orsières",
+   "type": "membre_club",
+   "secteurs": [
+    "marketing"
+   ],
+   "offre": [
+    {
+     "concept": "marketing",
+     "texte": "Communication et réseaux sociaux"
+    },
+    {
+     "concept": "efficacite_energetique",
+     "texte": "Audit énergétique et CECB"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s115",
+   "nom": "Sonja K.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Installation froid · synthétique n°115",
+   "commune": "Chamoson",
+   "type": "membre_club",
+   "secteurs": [
+    "installation_froid"
+   ],
+   "offre": [
+    {
+     "concept": "installation_froid",
+     "texte": "Installation et dépannage de chambres froides"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s116",
+   "nom": "Eva Z.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Menuiserie · synthétique n°116",
+   "commune": "Sierre",
+   "type": "membre_club",
+   "secteurs": [
+    "menuiserie"
+   ],
+   "offre": [
+    {
+     "concept": "menuiserie",
+     "texte": "Menuiserie et agencement sur mesure"
+    },
+    {
+     "concept": "traduction",
+     "texte": "Traduction français–allemand"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "fiduciaire",
+     "texte": "Nous cherchons : fiduciaire"
+    },
+    {
+     "concept": "energie_solaire",
+     "texte": "Nous cherchons : energie solaire"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s117",
+   "nom": "Nicolas E.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Assurance · synthétique n°117",
+   "commune": "Saxon",
+   "type": "membre_club",
+   "secteurs": [
+    "assurance"
+   ],
+   "offre": [
+    {
+     "concept": "assurance",
+     "texte": "Courtage en assurances entreprises"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s118",
+   "nom": "Marc H.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Tourisme · synthétique n°118",
+   "commune": "Martigny",
+   "type": "membre_club",
+   "secteurs": [
+    "tourisme"
+   ],
+   "offre": [
+    {
+     "concept": "tourisme",
+     "texte": "Hôtellerie et hébergement de groupes"
+    },
+    {
+     "concept": "logistique",
+     "texte": "Entreposage et préparation de commandes"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "marketing",
+     "texte": "Nous cherchons : marketing"
+    },
+    {
+     "concept": "recrutement",
+     "texte": "Nous cherchons : recrutement"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de",
+    "en"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s119",
+   "nom": "Chloé M.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Informatique · synthétique n°119",
+   "commune": "Saxon",
+   "type": "membre_club",
+   "secteurs": [
+    "informatique"
+   ],
+   "offre": [
+    {
+     "concept": "informatique",
+     "texte": "Réseau informatique et sauvegardes"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "cybersecurite",
+     "texte": "Nous cherchons : cybersecurite"
+    },
+    {
+     "concept": "recrutement",
+     "texte": "Nous cherchons : recrutement"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s120",
+   "nom": "Thomas E.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Fiduciaire · synthétique n°120",
+   "commune": "Chamoson",
+   "type": "membre_club",
+   "secteurs": [
+    "fiduciaire"
+   ],
+   "offre": [
+    {
+     "concept": "fiduciaire",
+     "texte": "Gestion des salaires et fiduciaire"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s121",
+   "nom": "Jan L.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Vins · synthétique n°121",
+   "commune": "Chamoson",
+   "type": "membre_club",
+   "secteurs": [
+    "vins"
+   ],
+   "offre": [
+    {
+     "concept": "vins",
+     "texte": "Domaine viticole"
+    },
+    {
+     "concept": "cybersecurite",
+     "texte": "Tests d'intrusion et sécurité informatique"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "emballage",
+     "texte": "Nous cherchons : emballage"
+    },
+    {
+     "concept": "developpement_web",
+     "texte": "Nous cherchons : developpement web"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s122",
+   "nom": "Mia D.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Traiteur · synthétique n°122",
+   "commune": "Sion",
+   "type": "membre_club",
+   "secteurs": [
+    "traiteur"
+   ],
+   "offre": [
+    {
+     "concept": "traiteur",
+     "texte": "Service traiteur pour entreprises"
+    },
+    {
+     "concept": "tourisme",
+     "texte": "Hôtellerie et hébergement de groupes"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s123",
+   "nom": "Nina D.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Sante securite travail · synthétique n°123",
+   "commune": "Nendaz",
+   "type": "membre_club",
+   "secteurs": [
+    "sante_securite_travail"
+   ],
+   "offre": [
+    {
+     "concept": "sante_securite_travail",
+     "texte": "Concepts MSST et prévention des accidents"
+    },
+    {
+     "concept": "informatique",
+     "texte": "Réseau informatique et sauvegardes"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s124",
+   "nom": "Thomas A.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Marketing · synthétique n°124",
+   "commune": "Sion",
+   "type": "membre_club",
+   "secteurs": [
+    "marketing"
+   ],
+   "offre": [
+    {
+     "concept": "marketing",
+     "texte": "Communication et réseaux sociaux"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s125",
+   "nom": "Urs Q.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Fiduciaire · synthétique n°125",
+   "commune": "Fully",
+   "type": "membre_club",
+   "secteurs": [
+    "fiduciaire"
+   ],
+   "offre": [
+    {
+     "concept": "fiduciaire",
+     "texte": "Gestion des salaires et fiduciaire"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s126",
+   "nom": "Reto Z.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Menuiserie · synthétique n°126",
+   "commune": "Sierre",
+   "type": "membre_club",
+   "secteurs": [
+    "menuiserie"
+   ],
+   "offre": [
+    {
+     "concept": "menuiserie",
+     "texte": "Menuiserie et agencement sur mesure"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "energie_solaire",
+     "texte": "Nous cherchons : energie solaire"
+    }
+   ],
+   "langues": [
+    "fr",
+    "en"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s127",
+   "nom": "Sonja M.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Marketing · synthétique n°127",
+   "commune": "Vex",
+   "type": "membre_club",
+   "secteurs": [
+    "marketing"
+   ],
+   "offre": [
+    {
+     "concept": "marketing",
+     "texte": "Image de marque et campagnes publicitaires"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de",
+    "en"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s128",
+   "nom": "Reto U.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Location machines · synthétique n°128",
+   "commune": "Brigue",
+   "type": "membre_club",
+   "secteurs": [
+    "location_machines"
+   ],
+   "offre": [
+    {
+     "concept": "location_machines",
+     "texte": "Location de nacelles et de machines"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "de",
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s129",
+   "nom": "Pierre K.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Vins · synthétique n°129",
+   "commune": "Bagnes",
+   "type": "membre_club",
+   "secteurs": [
+    "vins"
+   ],
+   "offre": [
+    {
+     "concept": "vins",
+     "texte": "Domaine viticole"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "developpement_web",
+     "texte": "Nous cherchons : developpement web"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s130",
+   "nom": "Chloé Z.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Developpement web · synthétique n°130",
+   "commune": "Bagnes",
+   "type": "membre_club",
+   "secteurs": [
+    "developpement_web"
+   ],
+   "offre": [
+    {
+     "concept": "developpement_web",
+     "texte": "Création de sites web et boutiques en ligne"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s131",
+   "nom": "Luc H.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Marketing · synthétique n°131",
+   "commune": "Vex",
+   "type": "membre_club",
+   "secteurs": [
+    "marketing"
+   ],
+   "offre": [
+    {
+     "concept": "marketing",
+     "texte": "Image de marque et campagnes publicitaires"
+    },
+    {
+     "concept": "financement",
+     "texte": "Leasing d'équipements"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s132",
+   "nom": "Inès M.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Marketing · synthétique n°132",
+   "commune": "Nendaz",
+   "type": "membre_club",
+   "secteurs": [
+    "marketing"
+   ],
+   "offre": [
+    {
+     "concept": "marketing",
+     "texte": "Communication et réseaux sociaux"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s133",
+   "nom": "Thomas B.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Informatique · synthétique n°133",
+   "commune": "Sion",
+   "type": "membre_club",
+   "secteurs": [
+    "informatique"
+   ],
+   "offre": [
+    {
+     "concept": "informatique",
+     "texte": "Réseau informatique et sauvegardes"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "recrutement",
+     "texte": "Nous cherchons : recrutement"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s134",
+   "nom": "Reto P.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Marketing · synthétique n°134",
+   "commune": "Naters",
+   "type": "membre_club",
+   "secteurs": [
+    "marketing"
+   ],
+   "offre": [
+    {
+     "concept": "marketing",
+     "texte": "Communication et réseaux sociaux"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "de",
+    "fr",
+    "en"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s135",
+   "nom": "Paul E.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Droit travail · synthétique n°135",
+   "commune": "Fully",
+   "type": "membre_club",
+   "secteurs": [
+    "droit_travail"
+   ],
+   "offre": [
+    {
+     "concept": "droit_travail",
+     "texte": "Droit du travail pour employeurs"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de",
+    "en"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s136",
+   "nom": "Reto M.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Informatique · synthétique n°136",
+   "commune": "Vex",
+   "type": "membre_club",
+   "secteurs": [
+    "informatique"
+   ],
+   "offre": [
+    {
+     "concept": "informatique",
+     "texte": "Infogérance et support informatique"
+    },
+    {
+     "concept": "marketing",
+     "texte": "Communication et réseaux sociaux"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "marketing",
+     "texte": "Nous cherchons : marketing"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s137",
+   "nom": "Laura Y.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Recrutement · synthétique n°137",
+   "commune": "Riddes",
+   "type": "membre_club",
+   "secteurs": [
+    "recrutement"
+   ],
+   "offre": [
+    {
+     "concept": "recrutement",
+     "texte": "Recrutement de saisonniers"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "en"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s138",
+   "nom": "Thomas C.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Financement · synthétique n°138",
+   "commune": "Chamoson",
+   "type": "membre_club",
+   "secteurs": [
+    "financement"
+   ],
+   "offre": [
+    {
+     "concept": "financement",
+     "texte": "Leasing d'équipements"
+    },
+    {
+     "concept": "developpement_web",
+     "texte": "Création de sites web et boutiques en ligne"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s139",
+   "nom": "Marc F.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Marketing · synthétique n°139",
+   "commune": "Riddes",
+   "type": "membre_club",
+   "secteurs": [
+    "marketing"
+   ],
+   "offre": [
+    {
+     "concept": "marketing",
+     "texte": "Communication et réseaux sociaux"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "en"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s140",
+   "nom": "Léa M.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Tourisme · synthétique n°140",
+   "commune": "Sierre",
+   "type": "membre_club",
+   "secteurs": [
+    "tourisme"
+   ],
+   "offre": [
+    {
+     "concept": "tourisme",
+     "texte": "Hôtellerie et hébergement de groupes"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "photo_video",
+     "texte": "Nous cherchons : photo video"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s141",
+   "nom": "Jan I.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Menuiserie · synthétique n°141",
+   "commune": "Vex",
+   "type": "membre_club",
+   "secteurs": [
+    "menuiserie"
+   ],
+   "offre": [
+    {
+     "concept": "menuiserie",
+     "texte": "Menuiserie et agencement sur mesure"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "recrutement",
+     "texte": "Nous cherchons : recrutement"
+    },
+    {
+     "concept": "location_machines",
+     "texte": "Nous cherchons : location machines"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": false,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s142",
+   "nom": "Sonja U.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Fiduciaire · synthétique n°142",
+   "commune": "Viège",
+   "type": "membre_club",
+   "secteurs": [
+    "fiduciaire"
+   ],
+   "offre": [
+    {
+     "concept": "fiduciaire",
+     "texte": "Fiscalité et TVA des indépendants"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "de",
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s143",
+   "nom": "Marc G.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Vins · synthétique n°143",
+   "commune": "Sion",
+   "type": "membre_club",
+   "secteurs": [
+    "vins"
+   ],
+   "offre": [
+    {
+     "concept": "vins",
+     "texte": "Vins du Valais et encavage"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "export_suisse_alemanique",
+     "texte": "Nous cherchons : export_suisse_alemanique"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s144",
+   "nom": "Nina W.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Vins · synthétique n°144",
+   "commune": "Riddes",
+   "type": "membre_club",
+   "secteurs": [
+    "vins"
+   ],
+   "offre": [
+    {
+     "concept": "vins",
+     "texte": "Vins du Valais et encavage"
+    },
+    {
+     "concept": "location_machines",
+     "texte": "Location de nacelles et de machines"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "developpement_web",
+     "texte": "Nous cherchons : developpement web"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s145",
+   "nom": "Simon L.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Tourisme · synthétique n°145",
+   "commune": "Martigny",
+   "type": "membre_club",
+   "secteurs": [
+    "tourisme"
+   ],
+   "offre": [
+    {
+     "concept": "tourisme",
+     "texte": "Hôtellerie et hébergement de groupes"
+    },
+    {
+     "concept": "efficacite_energetique",
+     "texte": "Rénovation énergétique de bâtiments"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "recrutement",
+     "texte": "Nous cherchons : recrutement"
+    }
+   ],
+   "langues": [
+    "fr",
+    "de",
+    "en"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s146",
+   "nom": "Sonja F.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Financement · synthétique n°146",
+   "commune": "Fully",
+   "type": "membre_club",
+   "secteurs": [
+    "financement"
+   ],
+   "offre": [
+    {
+     "concept": "financement",
+     "texte": "Financement et crédit pour PME"
+    },
+    {
+     "concept": "droit_travail",
+     "texte": "Droit du travail pour employeurs"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s147",
+   "nom": "David G.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Menuiserie · synthétique n°147",
+   "commune": "Sion",
+   "type": "membre_club",
+   "secteurs": [
+    "menuiserie"
+   ],
+   "offre": [
+    {
+     "concept": "menuiserie",
+     "texte": "Charpente bois"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "recrutement",
+     "texte": "Nous cherchons : recrutement"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s148",
+   "nom": "Nadia K.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Vins · synthétique n°148",
+   "commune": "Naters",
+   "type": "membre_club",
+   "secteurs": [
+    "vins"
+   ],
+   "offre": [
+    {
+     "concept": "vins",
+     "texte": "Vins du Valais et encavage"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "emballage",
+     "texte": "Nous cherchons : emballage"
+    }
+   ],
+   "langues": [
+    "de",
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse romande"
+   ],
+   "accepte_introductions": true,
+   "disponible": false,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s149",
+   "nom": "Emma K.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Menuiserie · synthétique n°149",
+   "commune": "Chamoson",
+   "type": "membre_club",
+   "secteurs": [
+    "menuiserie"
+   ],
+   "offre": [
+    {
+     "concept": "menuiserie",
+     "texte": "Charpente bois"
+    }
+   ],
+   "recherche": [
+    {
+     "concept": "location_machines",
+     "texte": "Nous cherchons : location machines"
+    }
+   ],
+   "langues": [
+    "fr"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": false,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  },
+  {
+   "id": "s150",
+   "nom": "Inès W.",
+   "fonction": "Dirigeant·e",
+   "entreprise": "Traiteur · synthétique n°150",
+   "commune": "Riddes",
+   "type": "membre_club",
+   "secteurs": [
+    "traiteur"
+   ],
+   "offre": [
+    {
+     "concept": "traiteur",
+     "texte": "Service traiteur pour entreprises"
+    },
+    {
+     "concept": "assurance",
+     "texte": "Assurance responsabilité civile"
+    }
+   ],
+   "recherche": [],
+   "langues": [
+    "fr",
+    "de"
+   ],
+   "zones_service": [
+    "Valais",
+    "Suisse alémanique"
+   ],
+   "accepte_introductions": true,
+   "disponible": true,
+   "presentation": "",
+   "maj": "2026-09"
+  }
+ ]
+}

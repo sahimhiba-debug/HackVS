@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Soirée du Club · plan de rencontres</title>
+  <meta name="description" content="Qui doit rencontrer qui, à quel tour, et pourquoi : plan optimisé et comparé.">
+  <link rel="icon" href="/favicon.ico" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+  <style>
+    .controles { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: end; margin: 8px 0 24px; }
+    .controles label { font-weight: 700; font-size: 14px; display: grid; gap: 6px; }
+    table.cmp { border-collapse: collapse; width: 100%; font-size: 17px; background: var(--surface); }
+    table.cmp th, table.cmp td { padding: 10px 14px; border-bottom: 1.5px solid var(--ligne); text-align: right; }
+    table.cmp th:first-child, table.cmp td:first-child { text-align: left; }
+    table.cmp td.opt { font-weight: 700; color: var(--vert); }
+    .solveur { color: var(--encre-2); font-size: 15px; margin: 10px 0 0; }
+    .tours { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; margin-top: 16px; }
+    .tour h3 { font-size: 15px; text-transform: uppercase; letter-spacing: .08em; color: var(--encre-2); margin: 0 0 10px; }
+    .rdv { background: var(--surface); border: 1.5px solid var(--ligne); border-radius: var(--rayon); padding: 12px 14px; margin-bottom: 10px; animation: entre .3s ease-out both; }
+    .rdv.moi { border: 2px solid var(--rouge); box-shadow: 0 0 0 3px var(--rouge-pale); }
+    .rdv .paire { font-weight: 700; font-size: 17px; }
+    .rdv .table { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--encre-2); }
+    .rdv p { margin: 6px 0 0; font-size: 14px; color: var(--encre-2); }
+    .rdv .reciproque { display: inline-block; margin-top: 6px; font-size: 12px; font-weight: 700; color: var(--vert); background: var(--vert-pale); padding: 2px 8px; border-radius: 999px; }
+    .attente { color: var(--encre-2); }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#principal">Aller au contenu</a>
+  <header class="barre">
+    <div class="marque"><span class="logo" aria-hidden="true"></span><span>Le Fil du Club · soirée</span></div>
+    <div class="badges"><span class="badge demo">Démo · données fictives</span></div>
+    <div class="barre-actions"><a class="btn petit" href="/club">Vue du Club</a><a class="btn petit" href="/">Espace membre</a></div>
+  </header>
+  <main id="principal">
+    <section class="vue">
+      <p class="surtitre">Avant chaque soirée du Club</p>
+      <h1 style="font-size:clamp(32px,4.6vw,60px)">Qui doit rencontrer qui,<br>et pourquoi.</h1>
+      <p class="sous">Chaque rencontre proposée repose sur une aide possible, prouvée par une offre déclarée. Le plan maximise les rencontres utiles et veille à ce que chacun en ait au moins une.</p>
+      <div class="controles">
+        <label>Données
+          <select id="donnees"><option value="club">Club de démonstration (37 profils fictifs)</option><option value="synthetique">Club synthétique (150 membres générés)</option></select></label>
+        <label>Tours de rencontres
+          <select id="tours"><option>2</option><option selected>3</option><option>4</option></select></label>
+        <label>Mon programme
+          <select id="moi"><option value="">(tous)</option></select></label>
+        <button class="btn primaire" type="button" id="calculer">Calculer le plan</button>
+      </div>
+      <div id="resultat" aria-live="polite"></div>
+    </section>
+  </main>
+  <div class="toasts" role="region" aria-label="Notifications"><div role="status" aria-live="polite" id="toasts-live"></div></div>
+  <script type="module">
+    import { $, api, h, occupe, libre, toast } from "/static/js/outils.js";
+    let dernier = null;
+    function rendre() {
+      const r = dernier, moi = $("#moi").value;
+      const c = r.comparaison, lignes = [
+        ["Rencontres utiles (valeur totale)", "valeur_totale"], ["Participants avec ≥ 1 rencontre utile", "participants_avec_rencontre_utile"],
+        ["Aides couvertes (sens compris)", "aides_couvertes"]];
+      const tours = [...Array(r.tours).keys()].map((t) => r.rencontres.filter((m) => m.tour === t + 1));
+      const aide = (qui, a, autre) => a ? h("p", {}, `${autre.nom.split(" ")[0]} peut aider ${qui.nom.split(" ")[0]} : « ${a.preuve} »`) : null;
+      $("#resultat").replaceChildren(
+        h("table", { class: "cmp" },
+          h("thead", {}, h("tr", {}, h("th", {}, `${r.participants} participants éligibles sur ${r.membres} membres · ${r.tours} tours`), h("th", {}, "Plan optimisé"), h("th", {}, "Glouton"), h("th", {}, "Aléatoire (moy. 30)"))),
+          h("tbody", {}, lignes.map(([lib, k]) => h("tr", {}, h("td", {}, lib), h("td", { class: "opt" }, String(c.optimal[k])), h("td", {}, String(c.glouton[k])), h("td", {}, String(c.aleatoire_moyenne_30[k])))))),
+        h("p", { class: "solveur" }, `Programme linéaire en nombres entiers (HiGHS) : ${r.solveur.optimal_prouve ? "optimum prouvé" : r.solveur.statut} en ${r.solveur.duree_ms ?? 0} ms · ${r.solveur.variables ?? 0} variables · ${r.paires_utiles_possibles} paires utiles possibles.`),
+        h("div", { class: "tours" }, tours.map((liste, t) => h("div", { class: "tour" }, h("h3", {}, `Tour ${t + 1} · ${liste.length} rencontres`),
+          liste.filter((m) => !moi || m.a.id === moi || m.b.id === moi).slice(0, moi ? 5 : 12).map((m) =>
+            h("article", { class: "rdv" + (moi && (m.a.id === moi || m.b.id === moi) ? " moi" : "") },
+              h("span", { class: "table" }, `Table ${m.table}`),
+              h("div", { class: "paire" }, `${m.a.nom} ↔ ${m.b.nom}`),
+              aide(m.a, m.b_aide_a, m.b), aide(m.b, m.a_aide_b, m.a),
+              m.reciproque ? h("span", { class: "reciproque" }, "Aide dans les deux sens") : null)),
+          !moi && liste.length > 12 ? h("p", { class: "attente" }, `+ ${liste.length - 12} autres rencontres`) : null,
+          moi && !liste.some((m) => m.a.id === moi || m.b.id === moi) ? h("p", { class: "attente" }, "Pas de rencontre ciblée : réseautage libre.") : null))),
+        r.sans_rencontre.length ? h("p", { class: "aide" }, `Sans rencontre utile identifiée (${r.sans_rencontre.length}) : libres pour le réseautage ouvert.`) : null,
+        h("p", { class: "aide" }, "Valeur d'une rencontre : 1 si l'aide est déclarée (offre qui couvre une recherche), 0,5 si partielle, +0,3 si réciproque. Données fictives."));
+    }
+    async function calculer(ev) {
+      const b = ev?.target?.closest("button") || $("#calculer");
+      occupe(b, "Optimisation…");
+      try {
+        dernier = await api(`/api/soiree/plan?donnees=${$("#donnees").value}&tours=${$("#tours").value}`);
+        const noms = [...new Map(dernier.rencontres.flatMap((m) => [[m.a.id, m.a.nom], [m.b.id, m.b.nom]])).entries()].sort((x, y) => x[1].localeCompare(y[1]));
+        $("#moi").replaceChildren(h("option", { value: "" }, "(tous)"), ...noms.map(([id, nom]) => h("option", { value: id }, nom)));
+        rendre();
+      } catch (e) { toast(e.message, "erreur"); }
+      finally { libre(b); }
+    }
+    $("#calculer").addEventListener("click", calculer);
+    $("#moi").addEventListener("change", () => dernier && rendre());
+    calculer();
+  </script>
+</body>
+</html>

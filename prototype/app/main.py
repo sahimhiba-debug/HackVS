@@ -24,7 +24,7 @@ from pydantic import BaseModel
 
 import threading
 
-from . import analyse, club, parser_llm, parser_rules, semantique
+from . import analyse, club, parser_llm, parser_rules, semantique, soiree
 from .baseline import rechercher_mots_cles
 from .matching import rechercher
 from .models import Besoin, Profil
@@ -554,6 +554,19 @@ def tableau_club():
     return club.tableau(MAGASIN, profils_effectifs(), TAX) | {"donnees_fictives": True}
 
 
+@app.get("/api/soiree/plan")
+def plan_soiree(donnees: Literal["club", "synthetique"] = "club", tours: int = Query(3, ge=1, le=5)):
+    """Plan de rencontres optimisé (MILP) pour une soirée du Club. Démo : tous les membres sont supposés présents."""
+    if MODE != "demo":
+        raise HTTPException(501, "Liste des inscrits à une soirée non disponible en mode réel.")
+    if donnees == "synthetique":
+        brut = json.loads((DATA_DIR / "profils_synthetiques.json").read_text(encoding="utf-8"))
+        participants, besoins = [Profil(**p) for p in brut["profils"]], []
+    else:
+        participants, besoins = profils_effectifs(), MAGASIN.besoins()
+    return soiree.planifier(participants, besoins, TAX, tours=tours) | {"donnees": donnees, "donnees_fictives": True}
+
+
 @app.post("/api/demo/historique")
 def charger_historique():
     if MODE != "demo":
@@ -624,6 +637,11 @@ def rejoindre(request: Request):
 @app.get("/presentation")
 def presentation():
     return FileResponse(WEB / "presentation.html")
+
+
+@app.get("/soiree")
+def page_soiree():
+    return FileResponse(WEB / "soiree.html")
 
 
 @app.get("/club")

@@ -223,12 +223,49 @@ def test_qr_code_local():
 def test_mode_reel_ne_simule_rien(tmp_path: Path):
     code = ("from fastapi.testclient import TestClient; from app.main import app; c=TestClient(app); "
             "print(c.get('/api/moi').status_code, c.get('/api/membres').status_code, c.post('/api/demo/reinitialiser').status_code, "
-            "c.get('/api/journal').status_code, c.get('/api/club/tableau').status_code)")
+            "c.get('/api/journal').status_code, c.get('/api/club/tableau').status_code, c.get('/api/soiree/plan').status_code)")
     env = {**os.environ, "HACKVS_MODE": "reel", "HACKVS_DB": ":memory:"}
     env.pop("HACKVS_PROFILS", None)
     sortie = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True,
                             cwd=Path(__file__).resolve().parent.parent).stdout.split()
-    assert sortie == ["503", "501", "403", "501", "501"]  # le journal (identités) n'est pas exposé hors démo
+    assert sortie == ["503", "501", "403", "501", "501", "501"]  # le journal (identités) n'est pas exposé hors démo
+
+
+# ---------------------------------------------------------------- plan de soirée (programme linéaire)
+def _verifier_plan(r):
+    vus = set()
+    for t in range(1, r["tours"] + 1):
+        gens = [x for m in r["rencontres"] if m["tour"] == t for x in (m["a"]["id"], m["b"]["id"])]
+        assert len(gens) == len(set(gens)), "une personne à deux tables dans le même tour"
+    for m in r["rencontres"]:
+        paire = frozenset((m["a"]["id"], m["b"]["id"]))
+        assert paire not in vus, "même paire deux fois"
+        vus.add(paire)
+        assert m["b_aide_a"] or m["a_aide_b"], "rencontre sans aide prouvée"
+
+
+@pytest.mark.parametrize("donnees", ["club", "synthetique"])
+def test_plan_soiree_optimal_et_contraintes(donnees):
+    r = client.get(f"/api/soiree/plan?donnees={donnees}&tours=3").json()
+    assert r["donnees_fictives"] and r["solveur"]["optimal_prouve"]
+    _verifier_plan(r)
+    c = r["comparaison"]
+    objectif = lambda s: s["valeur_totale"] + 0.5 * s["participants_avec_rencontre_utile"]
+    assert objectif(c["optimal"]) >= objectif(c["glouton"]) - 1e-6
+    assert objectif(c["optimal"]) >= objectif(c["aleatoire_moyenne_30"]) - 1e-6
+    if donnees == "synthetique":
+        assert r["membres"] == 150 and c["optimal"]["participants_avec_rencontre_utile"] > c["glouton"]["participants_avec_rencontre_utile"]
+
+
+def test_plan_soiree_preuves_verbatim_et_besoin_anonyme_jamais_expose():
+    publier(anonyme=True)  # le besoin anonyme de Sophie ne doit pas créer de rencontre nominative
+    r = client.get("/api/soiree/plan?tours=3").json()
+    for m in r["rencontres"]:
+        for aidant, aide in ((m["b"], m["b_aide_a"]), (m["a"], m["a_aide_b"])):
+            if aide:
+                textes = [o.texte for o in PAR_ID[aidant["id"]].offre] + [PAR_ID[aidant["id"]].presentation]
+                assert any(aide["preuve"] in t for t in textes), aide
+                assert BESOIN_ZURICH not in aide["besoin"]
 
 
 # ---------------------------------------------------------------- analyse par Claude (client simulé)
