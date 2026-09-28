@@ -43,7 +43,25 @@ def _critere_ok(attendu: dict, criteres) -> bool:
                and ("obligatoire" not in attendu or c.obligatoire == attendu["obligatoire"]) for c in criteres)
 
 
-def evaluer(claude: bool = False, jeu: str = "base", semantique: bool = False) -> dict:
+def confirmer_simule(besoin, voulus: set, tax):
+    """Reproduit le clic du membre dans l'interface (web/js/composants.js, editeurCriteres) :
+    il choisit l'option qui correspond à son vrai besoin si elle est proposée, sinon « Aucune ».
+    HYPOTHÈSE (borne haute) : le membre reconnaît toujours la bonne compétence ; hors catalogue, il ne choisit rien."""
+    from app.models import Critere
+    for a in list(besoin.ambiguites):
+        choix = next((o for o in a.options if any(tax.meme_famille(o.valeur, v) for v in voulus)), None)
+        besoin.ambiguites.remove(a)
+        if choix:
+            for x in besoin.criteres:
+                if x.type == "expertise":
+                    x.obligatoire = False
+            besoin.criteres = [Critere(type="expertise", valeur=choix.valeur, libelle=choix.libelle, obligatoire=True,
+                                       extrait=a.extrait, note="précisé par vous")] + [x for x in besoin.criteres if x.type != "texte_libre"]
+            besoin.avertissements = []
+    return besoin
+
+
+def evaluer(claude: bool = False, jeu: str = "base", semantique: bool = False, membre_simule: bool = False) -> dict:
     tax = charger_taxonomie()
     profils, par_id, moi = charger()
     cas = json.loads((ICI / JEUX[jeu]).read_text(encoding="utf-8"))["cas"]
@@ -67,6 +85,14 @@ def evaluer(claude: bool = False, jeu: str = "base", semantique: bool = False) -
         else:
             besoin = parser_rules.analyser(c["texte"], tax)
         latences_analyse.append((time.perf_counter() - t0) * 1000)
+        if semantique and not c["abstention"] and besoin.ambiguites and not any(x.type == "expertise" for x in besoin.criteres):
+            # mesure de l'aide à la clarification : une compétence des profils attendus figure-t-elle parmi les suggestions ?
+            concepts_attendus = {o.concept for pid in c["attendus"] for o in par_id[pid].offre if o.concept}
+            options = {o.valeur for a in besoin.ambiguites for o in a.options}
+            suggestions.append(bool(options & {x for x in tax.concepts if any(tax.meme_famille(x, y) for y in concepts_attendus)}))
+        if membre_simule and besoin.ambiguites:
+            voulus = set() if c["abstention"] else {o.concept for pid in c["attendus"] for o in par_id[pid].offre if o.concept}
+            besoin = confirmer_simule(besoin, voulus, tax)
         resultats = {
             "moteur": rechercher(besoin, moi, profils, tax),
             "reference": rechercher_mots_cles(besoin, moi, profils, tax),
@@ -77,11 +103,6 @@ def evaluer(claude: bool = False, jeu: str = "base", semantique: bool = False) -
         for a in c.get("criteres_interdits", []):
             crit_total += 1
             crit_ok += not _critere_ok(a, besoin.criteres)
-        if semantique and not c["abstention"] and besoin.ambiguites and not any(x.type == "expertise" for x in besoin.criteres):
-            # mesure de l'aide à la clarification : une compétence des profils attendus figure-t-elle parmi les suggestions ?
-            concepts_attendus = {o.concept for pid in c["attendus"] for o in par_id[pid].offre if o.concept}
-            options = {o.valeur for a in besoin.ambiguites for o in a.options}
-            suggestions.append(bool(options & {x for x in tax.concepts if any(tax.meme_famille(x, y) for y in concepts_attendus)}))
         ligne = {"id": c["id"], "categorie": c["categorie"],
                  "criteres": [f"{x.type}:{x.valeur}{'' if x.obligatoire else '?'}" for x in besoin.criteres]}
         for nom, r in resultats.items():
@@ -108,7 +129,8 @@ def evaluer(claude: bool = False, jeu: str = "base", semantique: bool = False) -
         }
 
     return {
-        "analyseur": "claude" if claude else ("regles+semantique" if semantique else "regles"),
+        "analyseur": ("claude" if claude else ("regles+semantique" if semantique else "regles"))
+        + (" + membre simulé" if membre_simule else ""),
         "jeu": jeu,
         "nb_cas": len(cas),
         "nb_profils": len(profils),
@@ -177,13 +199,15 @@ if __name__ == "__main__":
     ap.add_argument("--jeu", choices=list(JEUX) + ["tous"], default="tous")
     ap.add_argument("--semantique", action="store_true", help="analyse hybride : règles + IA sémantique locale calibrée")
     ap.add_argument("--archive", help="étiquette : copie aussi le résultat dans eval/archives/<étiquette>_<jeu>.md")
+    ap.add_argument("--membre-simule", action="store_true",
+                    help="le membre répond aux questions (borne haute : il reconnaît la bonne compétence si elle est proposée)")
     ap.add_argument("--verifier", action="store_true", help="CI : compare à eval/reference_ci.json, code de sortie 1 si régression")
     a = ap.parse_args()
     if a.verifier:
         raise SystemExit(verifier(ICI / "reference_ci.json"))
     for jeu in (list(JEUX) if a.jeu == "tous" else [a.jeu]):
-        res = evaluer(claude=a.claude, jeu=jeu, semantique=a.semantique)
-        suffixe = "_claude" if a.claude else ("_semantique" if a.semantique else "")
+        res = evaluer(claude=a.claude, jeu=jeu, semantique=a.semantique, membre_simule=a.membre_simule)
+        suffixe = ("_claude" if a.claude else ("_semantique" if a.semantique else "")) + ("_membre_simule" if a.membre_simule else "")
         (ICI / f"resultats_{jeu}{suffixe}.md").write_text(en_markdown(res), encoding="utf-8")
         if a.archive:
             (ICI / "archives").mkdir(exist_ok=True)
