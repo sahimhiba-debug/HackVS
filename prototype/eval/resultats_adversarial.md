@@ -12,7 +12,7 @@ Critères extraits conformes (type, valeur, obligatoire/souhaité ; critères in
 
 Preuves citées retrouvées mot pour mot dans le profil : 47/47 (vrai par construction pour l'extraction par règles ; le garde-fou compte surtout si un LLM rédige un jour les explications).
 
-Latence médiane : analyse 1.26 ms, recherche 8.91 ms (machine locale, 33 profils).
+Latence médiane : analyse 1.21 ms, recherche 8.43 ms (machine locale, 37 profils).
 
 | Cas | Catégorie | Critères extraits | Moteur top 3 | ok | Référence top 3 | ok |
 |---|---|---|---|---|---|---|
@@ -37,4 +37,4 @@ Latence médiane : analyse 1.26 ms, recherche 8.91 ms (machine locale, 33 profil
 | info_manquante_aide | information manquante | — | abstention | ✓ | abstention | ✓ |
 | info_manquante_zone_seule | information manquante | zone:Suisse alémanique | abstention | ✓ | p06, p01, p03 | ✗ |
 
-**Limites** : cas écrits par l'auteur de la taxonomie (circularité), 33 profils fictifs, aucun utilisateur réel. Ces chiffres montrent que le mécanisme fonctionne comme conçu, pas qu'il est utile aux membres.
+**Limites** : cas écrits par l'auteur de la taxonomie (circularité), 37 profils fictifs, aucun utilisateur réel. Ces chiffres montrent que le mécanisme fonctionne comme conçu, pas qu'il est utile aux membres.

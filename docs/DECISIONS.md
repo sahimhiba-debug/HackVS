@@ -1,111 +1,115 @@
-# Décisions : choix, alternatives, compromis
+# Décisions : problème, proposition de valeur, choix et compromis
 
-Chaque décision importante suit la même structure : **problème → choix → pourquoi → compromis → pour la défendre devant le jury.**
+Format de chaque décision : **problème → choix → pourquoi → compromis → pour la défendre devant le jury.**
+Mise à jour : lot 2 (28.09.2026). Les décisions du cycle 1 encore valables sont conservées ; les révisions sont signalées.
 
-## 0. Correctif de cadrage (28.09.2026)
+## 1. Le problème, l'existant, notre proposition
 
-Hiba a précisé que son profil ne doit **pas** limiter le produit. Nous avons réexaminé chaque choix :
+**Problème visé (hypothèse, non confirmée par des membres).** Le Club des Affaires réunit plus de 100 dirigeants lors de rendez-vous
+physiques (pré-ouverture, Rendez-vous économique, Soirée Wow, soirée de printemps : faits publics). **Entre deux rendez-vous**, quand un
+membre a un besoin précis (un transporteur, un juriste, un distributeur), rien de visible ne lui permet de savoir qui, dans le Club,
+peut l'aider. Et un membre qui pourrait aider n'apprend jamais que ce besoin existe.
 
-| Choix initial | Limité par le profil ? | Ajustement |
+**Ce qui existe** (RESEARCH.md §C, sources officielles) :
+- plateformes événementielles (Brella, Swapcard, Grip) : matching par intention, rendez-vous à double consentement, recommandations expliquées, **le temps d'un événement** ;
+- plateforme de communauté (Hivebrite) : annuaire, mentorat, **permanente** ;
+- réseaux locaux (CCI Valais, FER Valais, Valais Network) et BNI.
+
+**Notre proposition de valeur, spécifique.**
+> *Un membre dit ce dont il a besoin ; le Club le fait parvenir aux seuls membres capables d'y répondre, avec la preuve de pourquoi eux ;
+> ceux-ci proposent leur aide ; la mise en relation se fait avec consentement, et le Club voit ce qu'elle a produit.*
+
+Les trois différences défendables :
+1. **Déclenché par un besoin et dirigé vers les bons membres (sens inverse)**, entre les événements. C'est la Bourse.
+2. **Preuves exactes et abstention** : pas de suggestion sans citation vérifiable du profil ; « je préfère ne rien proposer » plutôt qu'un mauvais contact.
+3. **Outil d'une communauté**, pas une plateforme événementielle.
+
+**Correction du lot 2.** Le double consentement et les « recommandations expliquées » ne sont **plus** présentés comme distinctifs :
+Brella et Swapcard les proposent déjà.
+
+**Hypothèses encore non confirmées** : voir ASSUMPTIONS.md (H1 à H8). Les plus structurantes : H1 (des besoins surviennent entre les
+événements), H3 (les membres rempliront 3 lignes de profil), H4 (le Club animerait une Bourse).
+
+**Ce qui justifierait un changement de direction** (à surveiller dès le brief) :
+
+| Signal | Pivot proposé |
+|---|---|
+| Le brief porte sur les **exposants** ou les **visiteurs**, pas sur les membres | Réutiliser le moteur pour « 3 exposants à voir selon votre besoin », avec la même abstention |
+| Les membres disent « je sais qui appeler, je n'ai pas le temps d'entretenir mes relations » | Compagnon relationnel : rappels et suivi après les rencontres (concept C du cycle 1), le moteur servant à prioriser |
+| Le Club ne veut pas de publication de besoins (confidentialité) | Garder le mode privé seul (solliciter soi-même), sans Bourse |
+| Des données réelles sont fournies, mais sans champ « offre » structuré | Priorité au hors catalogue et à l'extraction par LLM depuis les descriptions, avec validation humaine |
+| Le jury attend surtout de l'IA générative visible | Brancher Claude en direct (flux déjà prêt) sans changer les garde-fous |
+
+## 2. Concept retenu : la Bourse des besoins (A + B du cycle 1)
+
+**Problème.** Au cycle 1, le parcours « je cherche → je sollicite » (A) ressemblait à un annuaire intelligent.
+**Choix.** Le même moteur, dans les deux sens :
+- **auteur** : besoin → critères → aperçu → publication (ou mode privé) → sollicitation ou offres reçues → suivi → clôture ;
+- **membre qui peut aider** : sa **Bourse** ne montre que les besoins qui correspondent à *son* profil, avec la raison → il propose son aide.
+**Pourquoi.** C'est ce qui transforme un annuaire en communauté : l'aide devient visible et réciproque. Le concept C (compagnon de
+soirée) reste une extension future du même moteur.
+**Compromis.** Il faut une masse critique de membres et de profils renseignés. Sans animation par le Club, la Bourse peut rester vide.
+**Pour la défendre.** « Le même moteur, les mêmes règles, dans les deux sens : si Julien voit le besoin de Sophie, c'est exactement parce
+que Sophie aurait vu Julien. » (propriété testée : `test_bourse_et_correspondances_sont_symetriques`)
+
+## 3. Moteur : « le LLM pour la nuance, le code pour les règles » (conservé, renforcé)
+
+Pipeline : analyse du besoin → **filtres durs dans le code** → classement → **preuves vérifiées** → abstention si rien de fiable.
+
+Corrections du lot 2, une par fragilité signalée par l'audit :
+
+| Fragilité | Correction | Vérifiée par |
 |---|---|---|
-| Analyse du besoin par règles comme mode principal | En partie. Les règles avaient aussi été retenues par prudence : pas de clé API dans l'environnement | **Claude devient le mode vitrine** (sortie structurée validée par le code) ; les règles deviennent le filet de secours hors ligne |
-| Concept limité au matchmaking | Oui, par cadrage initial | Ajout de concepts plus ambitieux (§1) ; le moteur actuel devient le noyau commun |
-| Backend Python/FastAPI | Non, après réexamen (voir §3) | Conservé, pour ses mérites propres |
-| Front sans framework | Non (voir §3) | Conservé ; ajout de la saisie vocale et des View Transitions |
-| Pas d'embeddings, pas de LangGraph ni de MCP | Non : aucune utilité démontrée à ce stade | MCP identifié comme extension à forte valeur (§4.4) |
+| Préférences transformées en obligations | Portée des marqueurs limitée à la clause (`,` `;` `:` `mais`) ; les compétences secondaires sont souhaitées par défaut ; des marqueurs forts existent (« impérativement »…) | cas `pref_*`, 18/18 critères conformes |
+| Négations mal interprétées | Une compétence niée devient une **exclusion** appliquée aux offres ET aux présentations ; dans un profil, l'expression la plus longue l'emporte (« sécurité informatique » ≠ « informatique ») | `neg_*`, `test_preference_negation_implantation` |
+| Spécialités mal interprétées | Le plus précis l'emporte (« avocat » + « droit du travail » → droit du travail) | `spec_*` |
+| Citations exactes qui ne prouvent pas la compétence | Une phrase de présentation ne prouve une compétence que si elle **affirme une offre** (« nous assurons… ») et ne décrit ni un besoin (« nous cherchons… ») ni une clientèle (« nos clients : … ») ; ce type de preuve donne au mieux une correspondance « partielle » | `citation_*` + profils pièges p33 et p34 |
+| Confusion implantation / zone d'intervention | Deux critères distincts : **zone d'intervention** (où il travaille : `zones_service`) et **implantation** (où il est installé : commune) ; « nous sommes basés à Sion » = contexte, pas critère ; affichage « Implanté·e à X · intervient : Y » | `implantation_*` |
+| Résultats obsolètes après modification | Besoins **versionnés** ; tout critère modifié **grise** les résultats et bloque les actions jusqu'à actualisation ; une mise en relation garde la version d'origine et affiche « besoin modifié depuis » | `test_modification_versionnee…`, capture 24 |
+| Limites du vocabulaire fermé | Critère **hors catalogue** (recherche par mots dans les offres déclarées, seuil strict), clarification en cas d'ambiguïté, abstention sinon | jeu adversarial ; EVALUATION.md |
 
-## 1. Concept
+**Compromis assumé.** Le jeu réservé montre un moteur **précis mais peu couvrant** sur des formulations nouvelles (3 fausses abstentions sur 14, 0 violation).
+Nous avons préféré un système qui se tait à un système qui se trompe. Le LLM est la voie prévue pour améliorer la couverture, sans toucher aux garde-fous.
 
-### Trois concepts réellement distincts (+ une extension)
+## 4. Claude : sortie structurée en flux, validée par le code
 
-**A. « Le Fil du Club » : du besoin à l'introduction consentie** *(construit)*
-Un membre écrit ou dicte un besoin. Le produit en tire des critères éditables, propose 1 à 3 membres
-avec des raisons citées mot pour mot, demande une introduction avec double consentement, puis suit le résultat.
+**Problème.** Les règles ne comprennent pas les paraphrases ; une IA générative peut halluciner.
+**Choix.** `client.messages.stream(..., output_config={"format": {"type": "json_schema", …}})`. Pendant la génération, les critères
+complets sont affichés comme **provisoires** (pointillés, recherche désactivée). À la fin, le code valide : vocabulaire fermé, extraits présents
+dans le texte, compétence principale obligatoire. En cas de panne, de refus ou de JSON invalide, l'analyse **bascule sur les règles et le signale**.
+Le modèle ne voit **jamais** les profils.
+**Pourquoi.** Afficher les critères au fur et à mesure rend la transformation visible et réduit l'attente perçue, sans jamais agir sur
+une donnée non validée.
+**Compromis.** Non exécuté contre l'API réelle (pas de clé). Latence et coût inconnus. Modèle par défaut `claude-opus-5` (configurable).
+Le paramètre de repli côté serveur d'Anthropic n'est pas activé : c'est notre repli local qui s'applique.
+**Pour la défendre.** « L'IA propose, le code dispose. Un critère provisoire ne décide jamais rien. »
 
-**B. « La Bourse des besoins » : le besoin circule vers ceux qui peuvent aider**
-Le membre publie un besoin (avec consentement). Le système l'adresse aux seuls membres capables d'y répondre,
-qui choisissent de se manifester. Un digest mensuel et un mur projeté lors des soirées du Club rendent visible
-l'entraide (« 12 besoins ouverts, 7 résolus ce mois »). Le moteur est le même que A, en sens inverse.
+## 5. Stack (réexaminée sans considération de familiarité)
 
-**C. « Le Compagnon de soirée » : avant, pendant et après chaque événement du Club**
-Avant la Soirée Wow ou le Rendez-vous économique, chaque inscrit reçoit « 3 personnes à rencontrer, et pourquoi ».
-Pendant l'événement, un QR code enregistre la rencontre. Après, le produit relance et consigne le résultat. Il prolonge
-les événements existants au lieu d'en créer.
-
-### Comparaison (qualitative, sans score inventé)
-
-| Critère | A. Fil du Club | B. Bourse des besoins | C. Compagnon de soirée |
-|---|---|---|---|
-| Intensité du besoin | Forte quand un besoin précis survient (fournisseur, partenaire) | Moyenne à forte ; dépend de la culture d'entraide | Moyenne ; ponctuelle |
-| Fréquence | Irrégulière, mais toute l'année | Continue si la masse critique est atteinte | 4 à 6 fois par an (calendrier du Club) |
-| Adéquation au brief supposé (« prolonger la communauté ») | Forte : agit entre les événements | Très forte : rend la communauté visible | Forte : prolonge les événements existants |
-| Différence avec l'existant | Nette (ni annuaire, ni app d'événement) | Nette (ressemble à BNI, mais outillé) | Faible : Brella et Swapcard le font déjà |
-| Accès aux données | Profils structurés des membres (à obtenir, avec consentement) | Idem, plus des besoins publiés | Listes d'inscrits aux événements |
-| Faisabilité en 24 h | **Déjà fonctionnel** | Réutilise A ; + publication et modération | Réutilise A ; + QR codes et agenda |
-| Force de démonstration | Forte : transformation visible en 60 s | Forte en visuel (mur), plus faible en preuve | Moyenne : difficile à montrer sans événement réel |
-| Valeur après l'événement | Directe | Dépend de l'animation par le Club | Saisonnière |
-
-### Choix provisoire
-**A comme noyau démontrable, B comme horizon du pitch.** A se prouve en 60 secondes et réutilise
-exactement ce qui fonctionne. B (le même moteur en sens inverse : « 3 besoins du Club auxquels vous pouvez répondre »)
-est l'extension la plus différenciante. Elle rend la réciprocité visible, déjà amorcée dans A par le badge « Réciprocité ».
-C devient une fonctionnalité de A (une liste de rencontres par événement) plutôt qu'un produit.
-
-**Compromis** : A sans B peut être perçu comme un « annuaire intelligent ». Réponse : l'abstention, le consentement
-et le suivi du résultat ne relèvent pas d'un annuaire. Montrer B, même en maquette fonctionnelle, renforce ce point.
-
-**Pivot si la recherche terrain contredit l'hypothèse** : si les membres disent « je sais déjà qui appeler, mais je n'ai pas
-le temps d'entretenir mes relations », pivoter vers C avec suivi relationnel (rappels, historique des échanges) en gardant
-le moteur de pertinence pour prioriser.
-
-### Visualisation en réseau : écartée pour l'instant
-Avec 1 à 3 suggestions, un graphe n'aide pas à comprendre *pourquoi* une personne correspond. Les cartes avec
-citations le font. Un graphe pourra servir une vue « animateur du Club » (qui est isolé, quels secteurs se parlent). À tester seulement avec de vraies données.
-
-## 2. Moteur : « le LLM pour la nuance, le code pour les règles »
-
-**Problème.** Un membre écrit comme il parle. La décision de proposer quelqu'un doit rester sûre et vérifiable.
-**Choix.** Pipeline en 4 étapes :
-1. **Analyse du besoin** → critères typés (compétence, zone, langue, obligatoire ou souhaité, extrait source). Par Claude en
-   direct si configuré, sinon par règles (taxonomie + désambiguïsation par indices).
-2. **Filtres durs, écrits dans le code** : consentement, appartenance à la communauté, disponibilité, zone, langue, concurrence.
-   Une donnée inconnue ne satisfait jamais un critère obligatoire.
-3. **Classement** : couverture déclarée (offre) > déduite (présentation, phrases négatives ignorées) ; bonus sur les critères souhaités,
-   la réciprocité et la similarité TF-IDF.
-4. **Explications** : chaque raison est un extrait du profil **vérifié mot pour mot** avant affichage.
-
-**Pourquoi.** Un LLM peut se tromper de sens. Il ne doit jamais pouvoir rendre éligible un profil exclu. Le modèle ne voit
-d'ailleurs **pas** les profils : il ne fait que traduire la phrase en critères d'un vocabulaire fermé, que le code valide
-(concept inconnu ignoré, extrait inventé retiré, panne → repli visible).
-**Compromis.** La taxonomie est un vocabulaire fermé à entretenir. Un besoin hors taxonomie aboutit à une abstention
-(voulue) plutôt qu'à une approximation.
-**Pour le défendre.** « L'IA comprend la phrase, le code décide qui est proposé. Chaque raison affichée est une citation du profil. »
-
-## 3. Stack
-
-| Brique | Problème résolu | Pourquoi ce choix | Compromis | À savoir pour le jury |
+| Brique | Problème résolu | Pourquoi | Compromis | À savoir pour le jury |
 |---|---|---|---|---|
-| **FastAPI + Pydantic** | Un seul schéma de données pour l'API, la validation de la sortie du LLM et l'évaluation | Les schémas Pydantic servent à la fois de contrat d'API, de format de sortie structurée pour Claude (`messages.parse`) et de validation. L'écosystème Python sert aussi l'évaluation | Deux langages (Python + JS) | « Le même schéma contraint l'IA, l'API et les tests » |
-| **JS natif + CSS, sans build** | Démo sur projecteur, sans réseau, modifiable par une équipe formée sur place | Zéro dépendance ni étape de build : `uvicorn` suffit. View Transitions API pour des transitions natives | Pas de composants réutilisables ; à migrer vers Svelte/React au-delà d'une dizaine d'écrans | « Nous avons optimisé pour la robustesse de la démo, pas pour la mode » |
-| **SQLite** | Persister les introductions et leur historique | Fichier local, aucun service à lancer | Une seule instance ; PostgreSQL en production | Machine à états contrôlée côté serveur |
-| **Claude (`claude-opus-5`, sortie structurée)** | Comprendre des formulations variées, en FR ou en DE | Sortie validée par schéma, puis revalidée par le code. Modèle configurable (`HACKVS_CLAUDE_MODEL`) | Coût et latence par requête (non mesurés : pas de clé dans l'environnement) ; dépendance réseau | Repli automatique et **affiché** sur les règles |
-| **Web Speech API** (dictée) | Interaction mémorable, dire son besoin au lieu de l'écrire | Natif dans Chrome, aucune dépendance | Chrome envoie l'audio aux serveurs de Google (à signaler) ; absent de Firefox. Amélioration progressive | Si c'est indisponible, le bouton n'apparaît pas |
-| **Playwright** | Vérifier le parcours réel avant chaque présentation | Rejoue la démo et produit les captures | Nécessite Chromium | `scripts/parcours_demo.py` = test de fumée |
+| **FastAPI + Pydantic** | Un même schéma pour l'API, la sortie du LLM, l'évaluation | Les schémas servent de contrat partout | Deux langages (Python + JS) | « Le même schéma contraint l'IA, l'API et les tests » |
+| **SQLite + magasin unique** (`store.py`) | Des états cohérents entre toutes les vues | Toutes les règles métier au même endroit, transactions sous verrou | Une seule instance ; PostgreSQL en production | Une action faite par API directe ne contourne aucune règle |
+| **Server-Sent Events** (`/api/flux`, `/api/analyser/flux`) | Mise à jour en direct entre deux membres ; critères en flux | Natif dans le navigateur, unidirectionnel (suffisant), sans dépendance | Pas de canal retour (inutile ici) ; reconnexion gérée | La scène à deux écrans montre une vraie base partagée, pas une animation |
+| **JS natif en modules ES, sans build** | Démonstration hors ligne, modifiable par l'équipe | Zéro étape de build ; un module par vue | Pas de framework de composants ; à migrer au-delà d'une dizaine d'écrans | Choix de robustesse pour le jour J |
+| **View Transitions API, animations CSS** | Montrer ce qui change, sans décor | Natif, désactivé si l'utilisateur préfère réduire les animations | Rendu variable selon le navigateur | Chaque animation porte une information (arrivée d'un besoin, fil tracé) |
+| **Playwright** | Tester le parcours réel, produire captures et vidéo | Le même script sert de test de fumée et de générateur de support | Nécessite Chromium | `scripts/parcours_demo.py --video` |
 
-**Écartés à ce stade (réversible)** :
-- **Embeddings / recherche vectorielle.** Sur 33 profils fictifs, ils masqueraient le problème des faux amis au lieu de le résoudre,
-  et aucun modèle n'était téléchargeable ici. À ajouter comme 3e signal de rappel avec des données réelles, **évalué contre l'actuel**.
-- **LangGraph / multi-agents.** Le flux est linéaire (analyse → filtre → classement), sans boucle ni outil à choisir : pas de bénéfice observable.
-- **Brouillon de message rédigé par un LLM.** Pour l'instant, gabarit déterministe construit à partir des preuves validées : aucune
-  invention possible. Un LLM pourrait adapter le ton, à condition de revérifier chaque affirmation.
+**Écartés à ce stade (réversibles)** : embeddings (voir EVALUATION.md) ; LangGraph et multi-agents (flux linéaire, sans boucle ni choix d'outil : aucun bénéfice observable) ;
+brouillon de message par LLM (le gabarit déterministe n'invente rien) ; serveur MCP « Club » (intéressant pour l'après-hackathon : exposer
+`chercher_membres`, `publier_besoin` et `proposer_aide` aux assistants IA des membres avec les mêmes garde-fous ; non construit).
 
-## 4. Choix produit notables
+## 6. Choix produit notables
 
-1. **Abstention assumée** : « Je préfère ne rien vous proposer plutôt qu'un mauvais contact. » Les pistes plus larges sont
-   montrées séparément, étiquetées « non vérifiées », et limitées à la catégorie parente directe.
-2. **Raisons d'exclusion sans nom** : on affiche « 1 profil ne souhaite pas recevoir d'introductions », jamais qui.
-3. **Double consentement** : les coordonnées ne sont partagées qu'après acceptation. En démo, la réponse est simulée par un bouton
-   au contour pointillé rouge, étiqueté « Simuler ». En mode réel, l'API refuse toute simulation (403).
-4. **Extension à forte valeur : un serveur MCP « Club ».** Exposer `chercher_membres`, `demander_introduction` et `mes_introductions`
-   comme outils MCP. Un membre pourrait alors solliciter le Club depuis Claude ou ChatGPT, avec les mêmes garde-fous (le code
-   décide). Démonstration possible : « même depuis votre assistant IA, le consentement tient ». Non construit ; candidat au cycle 3.
+1. **Humains simulés = identités incarnées, pas des boutons.** En démo, on incarne tour à tour Sophie et Julien (sélecteur « Vous incarnez (démo) »
+   ou vue `/scene`). Chaque action est réellement faite par le rôle autorisé. En mode réel, l'API refuse toute identité simulée (501).
+2. **Publier = consentir aux offres pour ce besoin.** Un auteur peut recevoir des propositions d'aide même s'il a désactivé les introductions entrantes en général.
+3. **Anonymat facultatif** : nom masqué dans la Bourse (« Un membre du Club · secteur boissons »), révélé seulement à la personne dont on accepte l'aide.
+4. **Retrait du consentement** : le membre disparaît des recherches et de la Bourse ; ses demandes **en attente** sont annulées avec un motif visible ; les relations **déjà acceptées** restent (le consentement avait été donné) et peuvent être annulées.
+5. **Clôture d'un besoin** : « Résolu grâce à X » (seulement avec une relation acceptée) ou « Clos sans suite » ; les demandes en attente sont annulées.
+6. **Exclusions anonymes** : « 1 membre ne souhaite pas recevoir d'introductions », jamais qui.
+7. **Visualisation en réseau** : toujours écartée. Le « pont » besoin ↔ preuves explique mieux une correspondance qu'un graphe.
+
+## 7. Historique (cycle 1, résumé)
+Trois concepts comparés (A : du besoin à l'introduction ; B : Bourse des besoins ; C : compagnon de soirée). A était démontrable et B portait l'horizon.
+Au lot 2, B a été construit sur le moteur de A ; C reste une extension.

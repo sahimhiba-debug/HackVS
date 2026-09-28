@@ -217,17 +217,38 @@ def analyser_flux(texte: str = Query(...), analyseur: str = "auto"):
     return StreamingResponse(evenements(), media_type="text/event-stream", headers={"Cache-Control": "no-cache"})
 
 
+def besoin_valide(b: Besoin) -> Besoin:
+    """Le client peut modifier les critères : le serveur n'accepte que le vocabulaire fermé
+    et recalcule les libellés (on ne fait jamais confiance au libellé envoyé)."""
+    propres = []
+    for c in b.criteres:
+        if c.type == "expertise" and c.valeur in TAX.concepts:
+            propres.append(c.model_copy(update={"libelle": TAX.libelle(c.valeur)}))
+        elif c.type in ("zone", "implantation") and c.valeur in TAX.zones:
+            propres.append(c.model_copy(update={"libelle": c.valeur}))
+        elif c.type == "langue" and c.valeur in TAX.langues:
+            propres.append(c.model_copy(update={"libelle": TAX.langues[c.valeur]["libelle"]}))
+        elif c.type == "texte_libre" and 0 < len(c.valeur.strip()) <= 200:
+            propres.append(c.model_copy(update={"libelle": "Compétence hors catalogue"}))
+        else:
+            raise HTTPException(422, f"Critère non reconnu : {c.type} « {c.valeur[:40]} ».")
+    excl = [e.model_copy(update={"libelle": TAX.libelle(e.valeur)}) for e in b.exclusions if e.valeur in TAX.concepts]
+    if len(excl) != len(b.exclusions):
+        raise HTTPException(422, "Exclusion non reconnue.")
+    return b.model_copy(update={"criteres": propres, "exclusions": excl})
+
+
 # ---------------------------------------------------------------- recherche (aperçu avant enregistrement)
 @app.post("/api/rechercher")
 def api_rechercher(e: EntreeRecherche, x_membre: Optional[str] = Header(None)):
-    return rechercher(e.besoin, moi(x_membre), profils_effectifs(), TAX, mode=MODE)
+    return rechercher(besoin_valide(e.besoin), moi(x_membre), profils_effectifs(), TAX, mode=MODE)
 
 
 @app.post("/api/comparer")
 def comparer(e: EntreeRecherche, x_membre: Optional[str] = Header(None)):
-    m = moi(x_membre)
-    return {"moteur": rechercher(e.besoin, m, profils_effectifs(), TAX, mode=MODE),
-            "reference": rechercher_mots_cles(e.besoin, m, profils_effectifs(), TAX)}
+    m, b = moi(x_membre), besoin_valide(e.besoin)
+    return {"moteur": rechercher(b, m, profils_effectifs(), TAX, mode=MODE),
+            "reference": rechercher_mots_cles(b, m, profils_effectifs(), TAX)}
 
 
 # ---------------------------------------------------------------- besoins
@@ -252,7 +273,8 @@ def _vue_besoin(b, pour: Profil) -> dict:
 @app.post("/api/besoins")
 def creer_besoin(e: EntreeBesoin, x_membre: Optional[str] = Header(None)):
     m = moi(x_membre)
-    return _erreurs(lambda: _vue_besoin(MAGASIN.creer_besoin(m.id, e.besoin, e.publier, e.anonyme), m))
+    b = besoin_valide(e.besoin)
+    return _erreurs(lambda: _vue_besoin(MAGASIN.creer_besoin(m.id, b, e.publier, e.anonyme), m))
 
 
 @app.get("/api/besoins")
@@ -264,7 +286,8 @@ def mes_besoins(x_membre: Optional[str] = Header(None)):
 @app.put("/api/besoins/{besoin_id}")
 def modifier_besoin(besoin_id: str, e: EntreeModif, x_membre: Optional[str] = Header(None)):
     m = moi(x_membre)
-    return _erreurs(lambda: _vue_besoin(MAGASIN.modifier_besoin(besoin_id, m.id, e.besoin, e.anonyme), m))
+    b = besoin_valide(e.besoin)
+    return _erreurs(lambda: _vue_besoin(MAGASIN.modifier_besoin(besoin_id, m.id, b, e.anonyme), m))
 
 
 @app.post("/api/besoins/{besoin_id}/{action}")
@@ -422,14 +445,24 @@ def transition(relation_id: str, action: str, e: EntreeTransition, x_membre: Opt
 
 
 # ---------------------------------------------------------------- journal et flux temps réel
+def _journal_autorise() -> None:
+    # Le journal contient l'identité des acteurs (y compris l'auteur d'un besoin anonyme) :
+    # c'est un instrument de DÉMONSTRATION (vue scène). En mode réel, il faudrait un flux filtré par membre authentifié.
+    if MODE != "demo":
+        raise HTTPException(501, "Journal réservé au mode démo : flux filtré par membre non implémenté.")
+
+
 @app.get("/api/journal")
 def journal(depuis: int = 0):
+    _journal_autorise()
     return MAGASIN.journal(depuis)
 
 
 @app.get("/api/flux")
 async def flux(request: Request, depuis: int = 0):
     """SSE : pousse chaque nouvel événement du journal (utilisé par la vue « scène » et le rafraîchissement)."""
+    _journal_autorise()
+
     async def generateur():
         seq = depuis
         yield "retry: 1500\n\n"

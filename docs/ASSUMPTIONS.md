@@ -23,13 +23,17 @@ Statuts : **H** hypothèse · **I** inconnu critique · **C** confirmé (voir RE
 | H5 | Les exposants ne sont pas membres par défaut et ne doivent pas être sollicités sans accord | H | Porteur du challenge |
 | H6 | Les outils actuels du Club sont surtout événementiels (invitations, courriels) | I | « Comment le Club communique-t-il avec vous entre deux événements ? » |
 | H7 | La réciprocité (« il cherche aussi quelque chose que vous offrez ») augmente l'acceptation | H | Non testable avant usage réel |
+| H8 | Un membre préfère parfois publier un besoin sans son nom (anonymat jusqu'à acceptation) | H | « Publieriez-vous un besoin sous votre nom devant les autres membres ? » |
+| H9 | Un membre qui voit un besoin qui lui correspond proposera son aide (logique « Givers Gain ») | H | « Si un membre cherchait exactement ce que vous faites, voudriez-vous le savoir ? » |
+| H10 | Les membres emploient des formulations variées, parfois en allemand | H (plausible en Valais) | Recueillir 5 besoins réels formulés librement (sans données personnelles) → nouveaux cas d'évaluation |
 
 ## Hypothèses techniques
 
 | # | Hypothèse | Risque | Mitigation |
 |---|---|---|---|
 | T1 | Claude transforme correctement des besoins réels en critères de la taxonomie | Mauvaise compréhension, latence | Validation par le code + repli sur les règles ; `python -m eval.run_eval --claude` dès qu'une clé est disponible |
-| T2 | 35 concepts suffisent pour une démo crédible | Besoins hors vocabulaire | Abstention explicite ; ajout de concepts = édition de `taxonomie.json` |
+| T2 | 35 concepts + recherche hors catalogue suffisent pour une démo crédible | Jeu réservé : 3 fausses abstentions sur 14 (paraphrases) | Claude pour les paraphrases (à mesurer) ; ajout de concepts = édition de `taxonomie.json` |
+| T4 | Le schéma de sortie structurée est accepté tel quel par l'API Claude | Jamais soumis à l'API réelle | `scripts/verifier_claude.py` dès qu'une clé existe ; repli automatique et affiché |
 | T3 | La dictée vocale fonctionne dans la salle | Wi-Fi saturé, micro | Démo principale au clavier ; la dictée est un bonus |
 
 ## Questions à poser sur place (liste courte à imprimer)

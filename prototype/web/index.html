@@ -18,11 +18,11 @@
       <select id="choix-membre" aria-label="Membre incarné (démonstration)"></select>
     </div>
   </header>
-  <div class="bandeau-demo" id="bandeau-demo" hidden>
+  <div class="bandeau-demo" id="bandeau-demo" role="region" aria-label="Avertissement de démonstration" hidden>
     Démonstration · personnes et entreprises <strong>fictives</strong> · aucun message n'est envoyé
   </div>
 
-  <nav class="onglets" role="tablist" aria-label="Sections">
+  <nav class="onglets" aria-label="Sections"><div class="liste-onglets" role="tablist" aria-label="Sections">
     <button class="onglet" role="tab" id="tab-nouveau" data-vue="nouveau" aria-controls="vue-nouveau">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nouveau besoin</button>
     <button class="onglet" role="tab" id="tab-besoins" data-vue="besoins" aria-controls="vue-besoins">
@@ -33,7 +33,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="6" cy="12" r="2"/><circle cx="18" cy="12" r="2"/><path d="M8 12h8"/></svg>Suivi<span class="compteur" data-compteur="suivi" hidden></span></button>
     <button class="onglet" role="tab" id="tab-profil" data-vue="profil" aria-controls="vue-profil">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Profil</button>
-  </nav>
+  </div></nav>
 
   <main id="principal">
     <section class="vue" id="vue-nouveau" role="tabpanel" aria-labelledby="tab-nouveau" hidden></section>
@@ -56,7 +56,7 @@
     </form>
   </dialog>
 
-  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+  <div class="toasts" id="toasts" role="region" aria-label="Notifications"><div role="status" aria-live="polite" id="toasts-live"></div></div>
   <footer class="pied" id="pied"></footer>
   <script type="module" src="/static/js/app.js"></script>
 </body>

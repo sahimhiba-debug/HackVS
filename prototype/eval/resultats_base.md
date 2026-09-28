@@ -2,7 +2,6 @@
 
 Jeu : **base** · analyseur : **regles** · 20 cas · généré par `python -m eval.run_eval --jeu base`
 
-Critères extraits conformes (type, valeur, obligatoire/souhaité ; critères interdits absents) : 0/0
 
 | Mesure | Le Fil du Club | Mots-clés + mêmes filtres |
 |---|---|---|
@@ -12,7 +11,7 @@ Critères extraits conformes (type, valeur, obligatoire/souhaité ; critères in
 
 Preuves citées retrouvées mot pour mot dans le profil : 41/41 (vrai par construction pour l'extraction par règles ; le garde-fou compte surtout si un LLM rédige un jour les explications).
 
-Latence médiane : analyse 1.3 ms, recherche 8.66 ms (machine locale, 33 profils).
+Latence médiane : analyse 1.98 ms, recherche 14.68 ms (machine locale, 37 profils).
 
 | Cas | Catégorie | Critères extraits | Moteur top 3 | ok | Référence top 3 | ok |
 |---|---|---|---|---|---|---|
@@ -37,4 +36,4 @@ Latence médiane : analyse 1.3 ms, recherche 8.66 ms (machine locale, 33 profils
 | absent_droit_maritime | absence de bonne correspondance | texte_libre:droit maritime | abstention | ✓ | p13, p12 | ✗ (viol.) |
 | absent_traiteur | absence de bonne correspondance | expertise:traiteur | abstention | ✓ | p20, p18 | ✗ |
 
-**Limites** : cas écrits par l'auteur de la taxonomie (circularité), 33 profils fictifs, aucun utilisateur réel. Ces chiffres montrent que le mécanisme fonctionne comme conçu, pas qu'il est utile aux membres.
+**Limites** : cas écrits par l'auteur de la taxonomie (circularité), 37 profils fictifs, aucun utilisateur réel. Ces chiffres montrent que le mécanisme fonctionne comme conçu, pas qu'il est utile aux membres.

@@ -81,7 +81,7 @@ def scene(pw, url: str, sortie: Path, video: bool) -> None:
     # 2. Publication → apparaît en direct chez Julien
     g.locator("#btn-enregistrer").click()
     expect(d.locator(".opportunite")).to_be_visible(timeout=8000)
-    expect(d.locator(".opportunite h3")).to_contain_text("Sophie")
+    expect(d.locator(".opportunite h2")).to_contain_text("Sophie")
     page.wait_for_timeout(1600)
     page.screenshot(path=sortie / "13_scene_bourse_julien.png")
     pause(5000)
@@ -103,7 +103,7 @@ def scene(pw, url: str, sortie: Path, video: bool) -> None:
     pause(3000)
     g.get_by_role("button", name="Accepter et partager nos coordonnées").click()
     expect(d.locator(".opportunite .etat-relation")).to_contain_text("acceptée", timeout=8000)
-    expect(d.locator(".opportunite h3")).to_contain_text("Sophie")
+    expect(d.locator(".opportunite h2")).to_contain_text("Sophie")
     pause(2500)
 
     # 5. Julien planifie, rencontre, Sophie clôt le besoin

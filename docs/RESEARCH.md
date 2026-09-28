@@ -42,6 +42,8 @@ non sourcé ou source secondaire), **inconnu** (non trouvé).
 | Une liste PDF des membres 2023-2024 (colonnes « Nom Prénom Entreprise ») est publiée | confirmé (titre du résultat) ; **contenu non consulté et volontairement non utilisé** (données personnelles) | https://www.foireduvalais.ch/media/document/0/club-des-affaires-de-la-foire-du-valais-membres-2023-2024.pdf |
 | Outils numériques existants du Club (plateforme, groupe de messagerie, newsletter…) | **inconnu** | — |
 | Difficultés documentées des membres | **inconnu**, aucune source trouvée | — |
+| Le Club des Affaires aurait été « lancé il y a 2 ans » (date de la page inconnue) | confirmé (extrait) ; date à préciser | https://foireduvalais.ch/fr/le-club-foire-du-valais-1604 |
+| Outils de communication du Club (WhatsApp, newsletter, application) | **inconnu** : aucune mention trouvée (lot 2) | recherche du 28.09.2026 |
 
 **Membres, exposants, visiteurs** (lecture actuelle, à confirmer sur place) :
 - *Membres du Club des Affaires* : adhérents payants, orientés affaires, se rencontrent plusieurs fois par an. **Cœur de la communauté à prolonger.**
@@ -53,22 +55,28 @@ Observation (interprétation) : l'offre actuelle repose sur des **rendez-vous ph
 Entre deux événements, rien de visible ne permet de solliciter le réseau pour un besoin précis.
 C'est l'hypothèse de problème du prototype. Elle n'est **pas confirmée par des membres**.
 
-## C. Solutions comparables
+## C. Solutions comparables (corrigé au lot 2, sources officielles des éditeurs)
 
-Pages marketing uniquement (extraits) : l'absence d'une fonctionnalité dans l'extrait ne prouve pas son absence.
+Consultation du 28.09.2026, via les extraits du moteur de recherche **restreint aux domaines officiels**
+(brella.io, swapcard.com, grip.events, hivebrite.io, bni.com). Les pages n'ont pas pu être lues en entier (proxy).
+Les chiffres cités sont **ceux des éditeurs**, non vérifiés. L'absence d'une fonctionnalité dans un extrait ne prouve pas son absence.
 
-| Solution | Public | Parcours / valeur | Fonctionnalités vérifiées (extraits) | Limites observables | Source |
-|---|---|---|---|---|---|
-| **Brella** | Organisateurs d'événements B2B | Mise en relation pendant un événement | Matching « basé sur l'intention » (objectifs, intérêts, interactions) ; mise en relation bidirectionnelle (exposants / participants) ; rendez-vous prêts pour l'agenda | Centré sur un événement daté ; valeur entre événements non démontrée dans les extraits | https://www.brella.io/event-matchmaking |
-| **Swapcard** | Salons et conférences, hybrides | Plateforme événementielle tout-en-un | Moteur de recommandation « basé sur un graphe » ; demandes de rendez-vous ; scan de badges ; affirmation « 22 % des interactions générées par l'IA » (chiffre éditeur, non vérifié) | Même limite : cycle de vie de l'événement | https://www.swapcard.com/features/event-networking |
-| **Grip** | Grands événements tech/finance | Recommandations IA pour réunions d'affaires | Positionnement « AI-powered event platform built for business networking » | Mise en place lourde selon un blog tiers (≈ 4 mois, **hypothèse**) | https://getperspective.ai/blog/best-conference-networking-matchmaking-software-2026-compared (source secondaire) |
-| **Hivebrite** | Associations, alumni, communautés | Plateforme de communauté permanente | Annuaire filtrable (rôle, organisation, compétences, lieu), carte, champs personnalisés, visibilité contrôlée par le membre | Annuaire : le membre doit savoir quoi chercher ; pas de mise en relation consentie visible dans l'extrait | https://hivebrite.io/features/member-directory/ |
-| **BNI** | PME, indépendants | Recommandations d'affaires structurées | Une profession par groupe, réunions hebdomadaires, principe « Givers Gain » ; 77 pays, > 355 000 membres (chiffres éditeur) | Engagement hebdomadaire lourd ; peu numérique | https://www.bni.com/the-latest/blog-news/what-is-bni-and-how-it-works/ |
+| Solution | Public | Fonctionnalités documentées (extraits officiels) | Ce que cela change pour nous | Sources |
+|---|---|---|---|---|
+| **Brella** | Conférences B2B, salons, associations | Matchmaking « sur deux couches » : intérêts ET intention (acheter, vendre, investir, recruter, mentorat) ; **rendez-vous soumis à l'accord des deux parties** ; réunions organisées par l'organisateur | Le **double consentement n'est PAS un différenciateur** (Brella le fait déjà). Le matching « par intention » non plus | https://www.brella.io/event-networking · https://www.brella.io/event-matchmaking · https://help.brella.io/en/organizers/best-practices-for-matchmaking |
+| **Swapcard** | Salons, conférences, hybrides | Recommandations IA à partir du profil et de l'activité ; **« brefs textes » dans le profil expliquant les intérêts partagés** ; générateur automatique de rendez-vous ; chiffres éditeur (« 2,5× plus de leads qualifiés ») | Les **recommandations expliquées existent déjà**. Notre différence tient à la *nature* de l'explication : citation exacte vérifiée et abstention, à démontrer | https://www.swapcard.com/features/event-networking · https://www.swapcard.com/features/ai-personalized-recomendations |
+| **Grip** | Grands salons (SXSW, Money20/20 cités par l'éditeur) | Matchmaking IA (« 70 millions de points de données, 16 stratégies », selon l'éditeur) ; planification ; lecture de badges ; application mobile | Une solution industrielle centrée sur l'événement et les exposants. Elle remplace la source secondaire citée au cycle 1 | https://www.grip.events/products/event-matchmaking · https://www.grip.events/ |
+| **Hivebrite** | Associations, alumni, communautés | Annuaire filtrable ; **module de mentorat** (appariement par l'administrateur ou auto-sélection, sur les données du profil) ; carte des membres | Une plateforme de communauté **permanente**, donc le concurrent le plus proche entre les événements. Aucune « bourse des besoins » n'a été trouvée dans les extraits (**inconnu**, non prouvé absent) | https://hivebrite.io/features/member-directory/ · https://hivebrite.io/mentoring/ |
+| **BNI** | PME, indépendants | Groupes à une profession par métier ; réunions hebdomadaires ; principe « Givers Gain » | La logique de recommandation est proche de la Bourse, mais avec une contrainte sociale forte | https://www.bni.com/the-latest/blog-news/what-is-bni-and-how-it-works/ |
+| **Alternatives locales** | Entreprises valaisannes | La **CCI Valais** affiche des « possibilités de réseautage » et une « plateforme d'échange » pour ses membres ; la FER Valais propose des événements de réseautage ; Valais Network est un réseau d'entreprises | Les membres ont déjà d'autres réseaux. **À vérifier sur place** : outil utilisé réellement (hypothèse : courriel, WhatsApp, LinkedIn, contacts directs) | https://www.cci-valais.ch/ · https://www.fer-valais.ch/fr/association-patronale/services-aux-membres/evenements-et-reseautage/ · https://www.valais-network.ch/ |
 
-**Ce qui nous distingue (hypothèse à défendre)** : ni plateforme d'événement (Brella, Swapcard), ni annuaire passif
-(Hivebrite), ni club à forte contrainte (BNI). Nous proposons une **mise en relation déclenchée par un besoin, entre deux événements**,
-avec des explications vérifiables, un double consentement et un suivi du résultat. Le mécanisme de recommandation
-à la BNI (« je connais quelqu'un qui… ») est ici outillé, sans l'obligation hebdomadaire.
+### Ce qui reste distinctif, formulé prudemment
+1. **Le besoin comme point de départ, entre les événements.** Brella, Swapcard et Grip sont organisés autour d'un événement daté ; Hivebrite est permanent mais part de l'annuaire ou du mentorat.
+2. **Le sens inverse : le besoin va vers ceux qui peuvent aider.** Un membre voit uniquement les besoins qui correspondent à *son* offre, avec la raison. Nous n'avons pas trouvé cette fonction chez les solutions examinées (statut : **non observé**, pas « absent »).
+3. **Des preuves vérifiables et le droit de dire non.** Chaque raison est une citation exacte, contrôlée par le code ; le moteur s'abstient s'il n'a pas de preuve. Les concurrents « expliquent », mais nous ignorons s'ils vérifient.
+4. **Petite échelle, club unique.** Pas de plateforme événementielle à déployer : l'outil prolonge une communauté d'une centaine de membres.
+
+Ce qui **n'est plus** revendiqué comme distinctif : le double consentement (Brella), les recommandations expliquées (Swapcard), le matching « par intention » (Brella).
 
 ## D. Hackathons précédents
 
@@ -89,6 +97,11 @@ Nous n'avons visionné aucune vidéo, exécuté aucun dépôt et lu aucun motif 
 **Interprétation (notre lecture, non sourcée comme telle)** : ces formats récompensent une démonstration qui fonctionne
 en direct sur un problème posé par un partenaire, avec un récit court. D'où nos priorités : parcours réel de bout en bout,
 cas d'échec assumé (abstention) et preuve comparative.
+
+## Mise à jour du lot 2 sur le challenge
+Nouvelle recherche le 28.09.2026 : aucune information publique supplémentaire sur les briefs, le jury, les critères ou le règlement de Hack VS.
+Seule nouveauté : la page de la Ville de Martigny sur la 66e Foire (https://www.martigny.ch/fr/bienvenue/manifestations/66e-foire-du-valais-14797/).
+**Les inconnues I1 à I5 restent ouvertes** (ASSUMPTIONS.md).
 
 ## À faire dès que le réseau le permet
 1. Ouvrir les deux pages Hack VS et relever les informations mot pour mot.

@@ -101,6 +101,7 @@ def evaluer(claude: bool = False, jeu: str = "base") -> dict:
         "analyseur": "claude" if claude else "regles",
         "jeu": jeu,
         "nb_cas": len(cas),
+        "nb_profils": len(profils),
         "criteres_corrects": f"{crit_ok}/{crit_total}",
         "moteur": synthese(agg["moteur"]),
         "reference": synthese(agg["reference"]),
@@ -115,13 +116,14 @@ def evaluer(claude: bool = False, jeu: str = "base") -> dict:
 def en_markdown(res: dict) -> str:
     o = [f"# Résultats d'évaluation (exploratoire, données fictives)\n",
          f"Jeu : **{res['jeu']}** · analyseur : **{res['analyseur']}** · {res['nb_cas']} cas · généré par `python -m eval.run_eval --jeu {res['jeu']}`\n",
-         f"Critères extraits conformes (type, valeur, obligatoire/souhaité ; critères interdits absents) : {res['criteres_corrects']}\n",
+         (f"Critères extraits conformes (type, valeur, obligatoire/souhaité ; critères interdits absents) : {res['criteres_corrects']}\n"
+          if not res['criteres_corrects'].endswith("/0") else ""),
          "| Mesure | Le Fil du Club | Mots-clés + mêmes filtres |", "|---|---|---|"]
     for k in ("succes@3", "violations", "abstention_correcte"):
         o.append(f"| {k} | {res['moteur'][k]} | {res['reference'][k]} |")
     o.append(f"\nPreuves citées retrouvées mot pour mot dans le profil : {res['preuves_verifiees']} "
              "(vrai par construction pour l'extraction par règles ; le garde-fou compte surtout si un LLM rédige un jour les explications).")
-    o.append(f"\nLatence médiane : analyse {res['latence_analyse_ms_mediane']} ms, recherche {res['latence_recherche_ms_mediane']} ms (machine locale, 33 profils).\n")
+    o.append(f"\nLatence médiane : analyse {res['latence_analyse_ms_mediane']} ms, recherche {res['latence_recherche_ms_mediane']} ms (machine locale, {res['nb_profils']} profils).\n")
     o.append("| Cas | Catégorie | Critères extraits | Moteur top 3 | ok | Référence top 3 | ok |")
     o.append("|---|---|---|---|---|---|---|")
     for l in res["detail"]:
@@ -131,7 +133,7 @@ def en_markdown(res: dict) -> str:
         o.append(f"| {l['id']} | {l['categorie']} | {', '.join(l['criteres']) or '—'} | "
                  f"{', '.join(l['moteur']['top3']) or 'abstention'} | {ok(l['moteur'])} | "
                  f"{', '.join(l['reference']['top3']) or 'abstention'} | {ok(l['reference'])} |")
-    o.append("\n**Limites** : cas écrits par l'auteur de la taxonomie (circularité), 33 profils fictifs, "
+    o.append(f"\n**Limites** : cas écrits par l'auteur de la taxonomie (circularité), {res['nb_profils']} profils fictifs, "
              "aucun utilisateur réel. Ces chiffres montrent que le mécanisme fonctionne comme conçu, pas qu'il est utile aux membres.")
     return "\n".join(o) + "\n"
 

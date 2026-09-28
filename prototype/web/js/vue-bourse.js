@@ -59,13 +59,13 @@ function carteOpportunite({ besoin: b, correspondance: c, relation: r }) {
       h("strong", {}, b.statut === "en_cours" ? "Besoin en cours" : "Nouveau besoin du Club"),
       h("span", {}, `Publié le ${dateCourte(b.cree_le)}` + (b.version > 1 ? ` · modifié (version ${b.version})` : ""))),
     h("div", { class: "accroche" },
-      h("h3", {}, `${qui} cherche : ${principal ? (principal.type === "texte_libre" ? principal.valeur : principal.libelle.toLowerCase()) : "…"}`),
+      h("h2", { class: "titre-opportunite" }, `${qui} cherche : ${principal ? (principal.type === "texte_libre" ? principal.valeur : principal.libelle.toLowerCase()) : "…"}`),
       h("p", { class: "aide" }, auteur.anonyme ? `${auteur.entreprise} · ${auteur.commune || "Valais"} · nom révélé si la personne accepte votre aide`
         : `${auteur.fonction ? auteur.fonction + " · " : ""}${auteur.entreprise} · ${auteur.commune}`)),
     c ? h("div", { class: "pont" },
-      h("div", { class: "cote" }, h("h4", {}, "Son besoin"), criteres.map((x) => puceCritere(x, x === principal))),
+      h("div", { class: "cote" }, h("h3", {}, "Son besoin"), criteres.map((x) => puceCritere(x, x === principal))),
       fil,
-      h("div", { class: "cote" }, h("h4", {}, "Pourquoi vous"), c.preuves.map((p, i) => pucePreuve(p, i === 0)))) : null,
+      h("div", { class: "cote" }, h("h3", {}, "Pourquoi vous"), c.preuves.map((p, i) => pucePreuve(p, i === 0)))) : null,
     c?.a_verifier?.length ? h("ul", { class: "averifier", style: "padding:0 22px" }, c.a_verifier.map((a) => h("li", {}, a))) : null,
     h("div", { class: "pied-carte" },
       c ? h("span", { class: "niveau " + c.niveau }, c.niveau === "forte" ? "Correspondance forte" : "Correspondance partielle · à vérifier")

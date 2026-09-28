@@ -169,14 +169,24 @@ def test_on_ne_sollicite_que_qui_correspond():
     assert client.post("/api/relations", json={"besoin_id": b["id"], "message": "Moi !"}, headers={"X-Membre": "p15"}).status_code == 409
 
 
+def test_le_serveur_refuse_un_critere_invente():
+    b = client.post("/api/analyser", json={"texte": BESOIN_ZURICH}).json()["besoin"]
+    b["criteres"][0]["libelle"] = "<img src=x onerror=alert(1)>"
+    ok = client.post("/api/besoins", json={"besoin": b, "publier": True}, headers=SOPHIE).json()
+    assert ok["besoin"]["criteres"][0]["libelle"] == "Transport frigorifique"  # libellé recalculé
+    b["criteres"] = [{"type": "expertise", "valeur": "teleportation", "libelle": "x", "obligatoire": True}]
+    assert client.post("/api/besoins", json={"besoin": b, "publier": True}, headers=SOPHIE).status_code == 422
+
+
 def test_mode_reel_ne_simule_rien(tmp_path: Path):
     code = ("from fastapi.testclient import TestClient; from app.main import app; c=TestClient(app); "
-            "print(c.get('/api/moi').status_code, c.get('/api/membres').status_code, c.post('/api/demo/reinitialiser').status_code)")
+            "print(c.get('/api/moi').status_code, c.get('/api/membres').status_code, c.post('/api/demo/reinitialiser').status_code, "
+            "c.get('/api/journal').status_code)")
     env = {**os.environ, "HACKVS_MODE": "reel", "HACKVS_DB": ":memory:"}
     env.pop("HACKVS_PROFILS", None)
     sortie = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True,
                             cwd=Path(__file__).resolve().parent.parent).stdout.split()
-    assert sortie == ["503", "501", "403"]
+    assert sortie == ["503", "501", "403", "501"]  # le journal (identités) n'est pas exposé hors démo
 
 
 # ---------------------------------------------------------------- analyse par Claude (client simulé)

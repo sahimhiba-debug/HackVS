@@ -47,7 +47,7 @@ export async function api(chemin, { methode, corps } = {}) {
 
 export function toast(msg, genre = "") {
   const t = h("div", { class: "toast " + genre }, msg);
-  $("#toasts").append(t);
+  ($("#toasts-live") || $("#toasts")).append(t);
   setTimeout(() => t.remove(), genre === "erreur" ? 6000 : 4500);
 }
 
