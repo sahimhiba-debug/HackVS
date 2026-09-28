@@ -134,7 +134,7 @@ def test_api_cycle(tmp_path):
 
     from app.cycle_api import creer_routeur
     app = FastAPI()
-    app.include_router(creer_routeur(lambda: P, TAX, ":memory:"))
+    app.include_router(creer_routeur(lambda: P, TAX, me.Memoire()))
     c = TestClient(app)
     plan = c.post("/api/cycle/soiree", json={}).json()
     rid = plan["run"]["run_id"]

@@ -6,8 +6,8 @@ une rencontre sans rien de nouveau depuis donne une abstention, comptée et affi
 
 Raisons admises (chacune avec ses preuves citées) :
 - NOUVEAU_BESOIN : l'un a publié un besoin APRÈS la rencontre, et l'autre peut y répondre (offre citée) ;
-- PRESENTATION : la personne rencontrée connaît quelqu'un qui peut vous aider (ami d'un ami, preuve citée) — seulement
-  si le lien vers l'intermédiaire a eu un SUIVI (on ne demande pas une présentation à quelqu'un vu une fois).
+- PRESENTATION : proposée à l'INTERMÉDIAIRE (qui connaît déjà les deux personnes) — seulement si son lien avec la
+  personne aidée a eu un SUIVI. La personne aidée n'apprend l'existence du lien que si l'intermédiaire accepte.
 """
 from __future__ import annotations
 
@@ -119,8 +119,11 @@ def relances(m: Memoire, profils: list[Profil], tax: Taxonomie, maintenant: date
                     continue
                 aide = calculer_aides([par_id[x], par_id[z]], besoins, tax).get((x, z))
                 if aide:
-                    raisons.append({"type": "PRESENTATION", "pour": x, "avec": via, "vers": z, "force": aide["niveau"],
-                                    "message": f"{par_id[via].nom} a rencontré {par_id[z].nom}, qui peut aider {par_id[x].nom}.",
+                    # Adressée à l'INTERMÉDIAIRE, qui connaît déjà les deux : x n'apprend rien du lien via–z
+                    # tant que via n'a pas accepté de faire la présentation (confidentialité par défaut).
+                    raisons.append({"type": "PRESENTATION", "pour": via, "avec": x, "vers": z, "force": aide["niveau"],
+                                    "message": f"Vous connaissez {par_id[x].nom} et {par_id[z].nom} ; {par_id[z].nom} peut aider "
+                                               f"{par_id[x].nom}. Accepteriez-vous de les présenter ?",
                                     "preuves": [{"statut": g[via][z]["statut"].value, "quoi": f"rencontre {par_id[via].nom} – {par_id[z].nom}",
                                                  "extrait": f"le {g[via][z]['derniere'].isoformat()}"},
                                                 {"statut": "INFERE" if aide["nature_preuve"] != "declare" else "DECLARE",
@@ -161,9 +164,9 @@ def repondre(m: Memoire, profils, tax, maintenant: date, relance_id: str, accept
                   statut=Statut.DECLARE))
     m.ajouter(Evt(type="SUIVI", le=maintenant, acteurs=p["paire"], donnees={"relance_id": relance_id, "raison": r["message"]}, statut=Statut.DECLARE))
     ouvertes = []
-    if r["type"] == "PRESENTATION":
-        e = m.ajouter(Evt(type="OPPORTUNITE_OUVERTE", le=maintenant, acteurs=sorted([r["pour"], r["vers"]]),
-                          donnees={"via": r["avec"], "raison": r["message"], "relance_id": relance_id}, statut=Statut.INFERE))
+    if r["type"] == "PRESENTATION":  # l'intermédiaire a accepté : la présentation devient visible pour les deux
+        e = m.ajouter(Evt(type="OPPORTUNITE_OUVERTE", le=maintenant, acteurs=sorted([r["avec"], r["vers"]]),
+                          donnees={"via": r["pour"], "raison": r["message"], "relance_id": relance_id}, statut=Statut.INFERE))
         ouvertes.append(e.acteurs)
     return {"suivi": True, "opportunites_ouvertes": ouvertes}
 

@@ -393,6 +393,11 @@ class Magasin:
         with self._verrou:
             l = self._db.execute(f"SELECT donnees FROM {table} WHERE id = ?", (obj_id,)).fetchone()
             d = json.loads(l[0])
+            # L'historique est décalé du MÊME écart : sinon ses événements resteraient datés d'aujourd'hui
+            # (incohérence visible dès qu'on en dérive une ligne de temps).
+            ecart = cree_le - datetime.fromisoformat(d["cree_le"])
+            for ev in d.get("historique", []):
+                ev["horodatage"] = (datetime.fromisoformat(ev["horodatage"]) + ecart).isoformat(timespec="seconds")
             d["cree_le"] = cree_le.isoformat(timespec="seconds")
             if maj_le is not None and "maj_le" in d:
                 d["maj_le"] = maj_le.isoformat(timespec="seconds")

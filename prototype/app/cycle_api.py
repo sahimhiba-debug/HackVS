@@ -2,7 +2,6 @@
 opportunité → soirée suivante. Horloge SIMULÉE (avancée à la main) ; membres fictifs ; rien n'est envoyé."""
 from __future__ import annotations
 
-import os
 from datetime import date
 from typing import Callable
 
@@ -51,12 +50,15 @@ class Confirmation(BaseModel):
     par: str
 
 
-def creer_routeur(profils_effectifs: Callable[[], list[Profil]], tax: Taxonomie, chemin: str) -> APIRouter:
+def creer_routeur(profils_effectifs: Callable[[], list[Profil]], tax: Taxonomie, m: me.Memoire,
+                  chemin_journal: str = ":memory:", avant_lecture: Callable[[], None] = lambda: None) -> APIRouter:
+    """`m` : LA mémoire du réseau (partagée avec l'application) ; `avant_lecture` y projette le magasin."""
     r = APIRouter(prefix="/api/cycle", tags=["cycle"])
-    m, journal = me.Memoire(chemin), Journal(":memory:" if chemin == ":memory:" else chemin + ".runs")
-    debut = date.fromisoformat(os.environ.get("HACKVS_SOIREE_DEBUT", "2026-10-03T18:30")[:10])  # date FICTIVE
+    journal = Journal(chemin_journal)
+    debut = date.today()  # même origine que le reste du réseau ; ensuite seule l'horloge SIMULÉE avance
 
     def jour() -> date:
+        avant_lecture()
         return m.maintenant(debut)
 
     def fournisseur():

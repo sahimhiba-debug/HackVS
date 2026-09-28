@@ -364,3 +364,13 @@ dialog h2 { font-size: clamp(22px, 3vw, 30px); margin: 0; }
 .grille-creneaux { border-collapse: collapse; font-size: 14px; margin-bottom: 4px; }
 .grille-creneaux th, .grille-creneaux td { padding: 4px 8px; text-align: center; }
 .grille-creneaux th[scope="row"] { text-align: left; font-weight: 600; }
+
+/* Dimensions d'une recommandation et boîte réseau */
+.dimensions { margin-top: var(--e3); font-size: 14px; }
+.dimensions p { margin: 6px 0 0; }
+.puces-dim { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.puces-dim li { font-size: 12px; font-weight: 700; border: 1.5px solid var(--ligne); border-radius: 999px; padding: 2px 8px; }
+.savoir summary { cursor: pointer; font-weight: 700; margin-top: 6px; }
+.boite-reseau { background: var(--surface); border: 1.5px solid var(--ligne); border-radius: var(--rayon); padding: var(--e3) var(--e4); margin: 0 0 var(--e5); }
+.boite-reseau h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--encre-2); margin: 0 0 8px; }
+.boite-reseau ul { margin: 0; padding-left: 18px; }

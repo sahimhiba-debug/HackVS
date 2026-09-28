@@ -230,7 +230,26 @@ export function carteCorrespondance(s, { piste = false, action = null, besoin = 
       listePreuves(s.preuves),
       s.a_verifier?.length ? h("ul", { class: "averifier" }, s.a_verifier.map((a) => h("li", {}, a))) : null,
       s.reciprocite ? h("p", { class: "reciproque" }, `Réciprocité : cherche aussi « ${s.reciprocite.extrait} »`) : null,
+      s.dimensions ? blocDimensions(s.dimensions) : null,
       besoin ? pliExplication(besoin, p.id, "Pourquoi cette personne ? Critère par critère") : null));
+}
+
+const RESEAU = { DIRECT: "Déjà en relation", PRESENTATION: "Un de vos contacts la connaît", LOINTAIN: "Chemin indirect",
+  PONT: "Relierait deux groupes du réseau", NOUVEAU: "Premier lien dans le réseau" };
+
+// Pourquoi maintenant / comment nous le savons / ce qui reste inconnu — jamais un score, jamais une coordonnée.
+function blocDimensions(d) {
+  return h("div", { class: "dimensions" },
+    h("ul", { class: "puces-dim", "aria-label": "Dimensions de la recommandation" },
+      h("li", {}, d.reciprocite.etablie ? "✓ Intérêt réciproque documenté" : "Réciprocité non établie"),
+      h("li", {}, RESEAU[d.reseau.type] || d.reseau.type),
+      h("li", {}, d.contexte.libelle)),
+    d.pourquoi_maintenant.length ? h("p", {}, h("strong", {}, "Pourquoi maintenant : "), d.pourquoi_maintenant.join(" · ")) : null,
+    h("details", { class: "savoir" }, h("summary", {}, "Comment nous le savons · ce qui reste inconnu"),
+      d.comment_nous_savons.connu.length ? h("p", {}, h("strong", {}, "Connu : "), d.comment_nous_savons.connu.join(" · ")) : null,
+      d.comment_nous_savons.deduit.length ? h("p", {}, h("strong", {}, "Déduit : "), d.comment_nous_savons.deduit.join(" · ")) : null,
+      h("p", {}, h("strong", {}, "Inconnu : "), d.inconnu.join(" · ") || "rien de signalé"),
+      h("p", { class: "aide" }, d.reseau.message + ". " + d.confidentialite + ".")));
 }
 
 export function blocResultats(res, { action, titre = true, besoin = null } = {}) {

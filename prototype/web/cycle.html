@@ -166,7 +166,7 @@
       const opps = S.opps ?? etat.opportunites;  // instantané pris au moment du suivi (après la soirée 2, elle est réalisée)
       els.push(etape(6, "Une nouvelle opportunité", "Grâce au suivi", [
         opps.length ? opps.map((o) => h("div", { class: "boite" }, h("p", { style: "margin:0" }, o.raison, " ", puce("INFERE")),
-          h("p", { class: "note" }, `${prenom(o.via)} connaît ${prenom(o.a)} et ${prenom(o.c)} ; ils ne se sont jamais rencontrés.`)))
+          h("p", { class: "note" }, `Vue de la plateforme uniquement. ${prenom(o.a)} n'apprend rien du lien entre ${prenom(o.via)} et ${prenom(o.c)} : la plateforme le propose d'abord à ${prenom(o.via)}, qui les connaît tous deux, et l'utilise pour la prochaine soirée.`)))
           : h("p", { class: "note" }, "Aucune opportunité documentée : on ne fabrique pas de « contacts suggérés »."),
         S.etape === 6 ? btn("Avancer de 20 jours jusqu'à la prochaine soirée", async () => { await api("/api/cycle/avancer", { methode: "POST", corps: { jours: 20 } }); S.etape = 7; }) : null,
       ], S.etape > 6));

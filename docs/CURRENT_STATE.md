@@ -102,3 +102,27 @@ adaptateur de challenge séparé du cœur générique.
 
 Exigences non tenues à dessein : pas de bus d'événements, pas de Kubernetes, pas de base de graphe (une seule
 instance, < 200 nœuds : NetworkX en mémoire suffit ; voir TARGET_ARCHITECTURE).
+
+## 13. Nouvelle cible « Club Network OS » — audit et premier pas (mise à jour)
+
+Audit du code réel (pas de la description) :
+- déjà présent : besoin → candidats prouvés, filtres durs, abstention ; introduction en DOUBLE ACCORD (le magasin :
+  proposée → acceptée [coordonnées partagées] → rencontre → clôture avec résultat) ; moteur de décision complet ;
+  mémoire temporelle et relances documentées ;
+- défaut d'abstraction trouvé : DEUX sources de vérité pour les relations (magasin des introductions ≠ mémoire des
+  soirées) ; une introduction rencontrée n'entrait jamais dans le cycle de suivi ;
+- manques : classement par pertinence seule, pas d'état de relation explicite, pas de chemin chaud, pas de boîte réseau.
+
+Premier pas livré (`adaptateurs/club/reseau.py`) :
+- une seule ligne de temps : le magasin (propriétaire du workflow et des permissions) est PROJETÉ dans la mémoire,
+  de façon idempotente ; la réinitialisation vide les deux (plus de faits orphelins) ;
+- état de relation dérivé des faits : AUCUNE → RECOMMANDEE → INTRO_DEMANDEE → INTRO_ACCEPTEE → RENCONTREE →
+  SUIVI_EN_ATTENTE (≥ 10 jours) → SUIVI → OPPORTUNITE → RESULTAT_UTILE ; terminaux DECLINEE, SANS_SUITE ;
+  A_RAVIVER (> 90 jours, hypothèse de produit) ; PAS_MAINTENANT ;
+- chaque candidat : pertinence, réciprocité, réseau (direct / via un contact / pont entre groupes / premier lien),
+  contexte, POURQUOI MAINTENANT, CONNU / DÉDUIT / INCONNU ; jamais de coordonnée, jamais de score de personne ;
+- boîte réseau (onglet Suivi) : seulement des actions possibles maintenant.
+
+Défauts trouvés par l'attaque et corrigés : l'intermédiaire d'un chemin chaud était NOMMÉ (le lien intermédiaire–candidat
+lui appartient) → la proposition de présentation va d'abord à l'intermédiaire ; `retrodater` ne décalait pas
+l'historique (historique fictif incohérent) ; horloges du cycle et du réseau d'origines différentes (+10 jours valait 15).

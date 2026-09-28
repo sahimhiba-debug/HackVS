@@ -8,8 +8,10 @@ export async function vueSuivi() {
   try { rels = await api("/api/relations"); }
   catch (e) { racine.replaceChildren(erreurBloc(e.message, vueSuivi)); return; }
   const aFaire = rels.filter(aMonTour);
+  const boite = await api("/api/reseau/boite").catch(() => null);
   racine.replaceChildren(
     h("h1", {}, "Suivi"),
+    boite ? blocBoite(boite) : null,
     h("p", { class: "sous" }, rels.length ? `${rels.length} mise${rels.length > 1 ? "s" : ""} en relation · ${aFaire.length} attend${aFaire.length > 1 ? "ent" : ""} votre action` : ""),
     rels.length ? h("div", {}, [...aFaire, ...rels.filter((r) => !aFaire.includes(r))].map(carte))
       : h("div", { class: "vide" }, h("strong", {}, "Aucune mise en relation."),
@@ -70,4 +72,23 @@ function carte(r) {
     r.date_rencontre ? h("p", { class: "info" }, `Rencontre prévue le ${dateCourte(r.date_rencontre)}`) : null,
     h("details", {}, h("summary", { class: "aide" }, "Voir le message"), h("p", { class: "message" }, r.message)),
     boutons.length ? h("div", { class: "boutons" }, boutons) : null);
+}
+
+// Boîte réseau : les prochains mouvements utiles, comptés ; aucune section vide n'est affichée.
+const SECTIONS = [["introductions_a_repondre", "introduction à laquelle répondre", "introductions auxquelles répondre"],
+  ["mes_demandes_en_attente", "demande en attente de réponse", "demandes en attente de réponse"],
+  ["rencontres_a_confirmer", "rencontre à planifier ou confirmer", "rencontres à planifier ou confirmer"],
+  ["suivis_proposes", "raison documentée de reprendre contact", "raisons documentées de reprendre contact"],
+  ["presentations_recommandees", "présentation proposée", "présentations proposées"],
+  ["relations_a_raviver", "relation sans interaction depuis 90 jours", "relations sans interaction depuis 90 jours"]];
+
+function blocBoite(b) {
+  const lignes = SECTIONS.filter(([k]) => b[k]?.length).map(([k, un, plusieurs]) => {
+    const n = b[k].length;
+    const detail = k === "suivis_proposes" ? b[k].map((x) => x.raison).join(" · ") : "";
+    return h("li", {}, h("strong", {}, String(n)), ` ${n > 1 ? plusieurs : un}`, detail ? h("span", { class: "aide" }, ` — ${detail}`) : null);
+  });
+  return h("section", { class: "boite-reseau", "aria-label": "Mon réseau" },
+    h("h2", {}, "Mon réseau"),
+    lignes.length ? h("ul", {}, lignes) : h("p", { class: "aide" }, "Rien à faire maintenant. Nous ne relançons que s'il y a une raison nouvelle."));
 }

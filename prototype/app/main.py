@@ -31,6 +31,9 @@ from .matching import expliquer, rechercher
 from .models import Besoin, Profil
 from .store import ErreurMetier, Interdit, Magasin
 from .taxonomy import DATA_DIR, charger_taxonomie
+from adaptateurs.club import cycle as cycle_club
+from adaptateurs.club import reseau
+from plateforme.memoire import Memoire
 
 RACINE = Path(__file__).resolve().parent.parent
 MODE = os.environ.get("HACKVS_MODE", "demo")
@@ -52,6 +55,18 @@ def _charger_profils() -> tuple[list[Profil], Optional[str]]:
 PROFILS, UTILISATEUR_DEFAUT = _charger_profils()
 PAR_ID = {p.id: p for p in PROFILS}
 MAGASIN = Magasin(os.environ.get("HACKVS_DB", str(RACINE / "var" / f"fil_{MODE}.db")))
+# Mémoire du réseau : journal d'événements temporel. Le magasin y est PROJETÉ (source unique par fait, cf. adaptateurs/club/reseau.py).
+CHEMIN_MEMOIRE = os.environ.get("HACKVS_CYCLE_DB", str(RACINE / "var" / f"reseau_{MODE}.db"))
+MEMOIRE = Memoire(CHEMIN_MEMOIRE)
+
+
+def projeter_reseau() -> None:
+    reseau.projeter(MEMOIRE, MAGASIN.relations())
+
+
+def aujourdhui_reseau() -> date:
+    projeter_reseau()
+    return MEMOIRE.maintenant(date.today())
 
 app = FastAPI(title="Le Fil du Club (prototype exploratoire)", version="0.2.0")
 
@@ -402,9 +417,14 @@ def correspondances(besoin_id: str, x_membre: Optional[str] = Header(None)):
     res.besoin_id, res.besoin_version = b.id, b.version
     rels = {r.aidant_id: r for r in MAGASIN.relations(m.id) if r.besoin_id == b.id and r.etat != "retiree"}
     d = res.model_dump()
+    t = aujourdhui_reseau()
+    g = reseau.graphe_de_confiance(MEMOIRE, t)
+    par_id = {p.id: p for p in profils_effectifs()}
+    publie = next((date.fromisoformat(e.horodatage[:10]) for e in b.historique if e.action.startswith("creer")), None)
     for s in d["suggestions"]:
         r = rels.get(s["profil"]["id"])
         s["relation"] = r.model_dump() if r else None
+        s["dimensions"] = reseau.dimensions(MEMOIRE, m, s, par_id, t, publie, g)
     return d
 
 
@@ -627,6 +647,7 @@ def charger_historique():
     if MODE != "demo":
         raise HTTPException(403, "Historique fictif réservé au mode démo.")
     MAGASIN.reinitialiser()
+    MEMOIRE.vider()  # la mémoire est dérivée du magasin (+ scénarios) : pas de faits orphelins
     n = club.charger_historique(MAGASIN, profils_effectifs(), TAX)
     return {"besoins_charges": n}
 
@@ -636,6 +657,7 @@ def reinitialiser():
     if MODE != "demo":
         raise HTTPException(403, "Réinitialisation réservée au mode démo.")
     MAGASIN.reinitialiser()
+    MEMOIRE.vider()
     return {"ok": True}
 
 
@@ -708,7 +730,26 @@ if MODE == "demo":  # espace de décision (plateforme + adaptateur Club) : insta
 
 if MODE == "demo":  # cycle de vie des relations : horloge simulée, membres fictifs
     from .cycle_api import creer_routeur as _routeur_cycle
-    app.include_router(_routeur_cycle(profils_effectifs, TAX, os.environ.get("HACKVS_CYCLE_DB", str(RACINE / "var" / "cycle_demo.db"))))
+    app.include_router(_routeur_cycle(profils_effectifs, TAX, MEMOIRE, ":memory:" if CHEMIN_MEMOIRE == ":memory:" else CHEMIN_MEMOIRE + ".runs",
+                                      avant_lecture=projeter_reseau))
+
+
+@app.get("/api/reseau/boite")
+def boite_reseau(x_membre: Optional[str] = Header(None)):
+    """Boîte réseau : les prochains mouvements utiles du membre (pas un fil d'actualité)."""
+    m = moi(x_membre)
+    t = aujourdhui_reseau()
+    rel = cycle_club.relances(MEMOIRE, profils_effectifs(), TAX, t)
+    return reseau.boite(MEMOIRE, m, profils_effectifs(), MAGASIN.relations(m.id), rel, t)
+
+
+@app.get("/api/reseau/relation/{autre_id}")
+def memoire_relation(autre_id: str, x_membre: Optional[str] = Header(None)):
+    """Où nous sommes-nous rencontrés ? Que s'est-il passé ensuite ? — uniquement pour une relation dont je fais partie."""
+    m = moi(x_membre)
+    if autre_id not in PAR_ID:
+        raise HTTPException(404, "Membre inconnu.")
+    return reseau.memoire_relation(MEMOIRE, m.id, autre_id, aujourdhui_reseau())
 
 
 @app.get("/cycle")
