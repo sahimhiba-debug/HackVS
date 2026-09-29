@@ -158,7 +158,13 @@ _FORMES_JURIDIQUES = {"sarl", "sa", "ag", "gmbh", "sas", "sasu", "eurl", "sagl",
 def organisation(p: Profil) -> str:
     """Clé d'organisation : casse, accents, ponctuation et forme juridique ignorés (« Vergers du Rhône Sàrl » =
     « VERGERS DU RHONE SARL »). Vide si l'entreprise n'est pas renseignée : deux inconnues ne sont pas « la même »."""
-    mots = re.sub(r"[^a-z0-9&]+", " ", norm(p.entreprise or "")).split()
+    return _cle_organisation(p.entreprise or "")
+
+
+@lru_cache(maxsize=65536)
+def _cle_organisation(entreprise: str) -> str:
+    """Fonction PURE d'une chaîne, mémorisée (mesure : 20 % du temps d'analyse à 3 000 membres)."""
+    mots = re.sub(r"[^a-z0-9&]+", " ", norm(entreprise)).split()
     return " ".join(m for m in mots if m not in _FORMES_JURIDIQUES)
 
 

@@ -16,7 +16,7 @@ from __future__ import annotations
 import hashlib
 import time
 from collections import Counter
-from typing import Optional
+from typing import Any, Optional
 
 from app.matching import _mots
 from app.models import Besoin, Profil
@@ -54,12 +54,23 @@ class Detecteur:
         self.ecartees: Counter = Counter()           # raison → nombre (jamais nominatif)
         self.paires_ecartees: list[tuple[str, str, str]] = []   # INTERNE (banc, audit) : jamais exposé à l'interface
         self.bloques: list[dict] = []
+        self._cache_f: dict[tuple, list[dict]] = {}
+        self._racines: dict[str, frozenset] = {}
+
+    def _rac(self, texte: str) -> frozenset:
+        r = self._racines.get(texte)
+        if r is None:
+            r = self._racines[texte] = frozenset(m[:6] for m in _mots(texte))
+        return r
 
     # ------------------------------------------------------------------ fournisseurs éligibles d'une capacité
     def fournisseurs(self, beneficiaire: Profil, concept: str, besoin: Optional[Besoin] = None,
                      texte: str = "", introduction: bool = True) -> list[dict]:
+        cle = (beneficiaire.id, concept, id(besoin), texte, introduction)
+        if cle in self._cache_f:                          # même question, même réponse (et les exclusions déjà comptées)
+            return list(self._cache_f[cle])
         par_id = self.r.par_id()
-        res = []
+        res: list[dict[str, Any]] = []
         for pid, extrait, nature in self.e.offreurs.get(concept, []):
             if pid == beneficiaire.id or pid in self.exclus:
                 continue
@@ -72,9 +83,34 @@ class Detecteur:
             res.append({"id": pid, "extrait": extrait, "nature": nature, "dormant": self.e.dormant(pid)})
         # l'offre la plus SPÉCIFIQUE à la demande (mots communs), déclarée avant déduite, disponible maintenant avant
         # « disponible plus tard », profil le plus récent, puis identifiant (déterministe)
-        demande = {m[:6] for m in _mots(texte or (besoin.texte if besoin else ""))}
-        return sorted(res, key=lambda x: (-len(demande & {m[:6] for m in _mots(x["extrait"])}), x["nature"] != "declare",
-                                          bool(par_id[x["id"]].note_disponibilite), self.e.age_profil(par_id[x["id"]]) or 0, x["id"]))
+        demande = self._rac(texte or (besoin.texte if besoin else ""))
+        res = sorted(res, key=lambda x: (-len(demande & self._rac(x["extrait"])), x["nature"] != "declare",
+                                         bool(par_id[x["id"]].note_disponibilite), self.e.age_profil(par_id[x["id"]]) or 0, x["id"]))
+        self._cache_f[cle] = res
+        return list(res)
+
+    def _meilleur(self, a: Profil, concept: str, texte: str, offres_a: set[str]) -> Optional[dict]:
+        """Le meilleur fournisseur ÉLIGIBLE pour un intérêt latent : candidats triés d'abord par des critères bon marché
+        (événement commun, intérêt réciproque, spécificité de l'offre…), règles dures vérifiées paresseusement jusqu'au
+        premier qui passe. Même résultat que « tout filtrer puis prendre le minimum », sans le coût quadratique."""
+        par_id, tax = self.r.par_id(), self.tax
+        demande = self._rac(texte)
+        cands = []
+        for pid, extrait, nature in self.e.offreurs.get(concept, []):
+            if pid == a.id or pid in self.exclus:
+                continue
+            b = par_id[pid]
+            recip = any(rr.concept and any(tax.meme_famille(rr.concept, o) for o in offres_a) for rr in b.recherche)
+            cands.append(((self._fenetre(a.id, [pid]) is None, not recip, -len(demande & self._rac(extrait)), nature != "declare",
+                           bool(b.note_disponibilite), self.e.age_profil(b) or 0, pid), pid, extrait, nature))
+        for _, pid, extrait, nature in sorted(cands):
+            raison = self.e.exclusion(a, par_id[pid], None, introduction=False)
+            if raison is None:
+                return {"id": pid, "extrait": extrait, "nature": nature, "dormant": self.e.dormant(pid)}
+            if raison not in RAISONS_SILENCIEUSES:
+                self.ecartees[raison] += 1
+            self.paires_ecartees.append((a.id, pid, raison))
+        return None
 
     def raisons_blocage(self, beneficiaire: Profil, concept: str, besoin: Optional[Besoin]) -> dict:
         """Capacité non couverte : absente du Club, ou présente mais écartée — et par quelle règle (comptes seulement)."""
@@ -175,16 +211,21 @@ class Detecteur:
                 continue
             if self.e.dormant(r.membre):
                 res.append(f"{par_id[r.membre].nom} n'a eu aucune rencontre depuis 6 mois : réponse incertaine")
-            if benef and r.concept and not r.role.startswith("partenaire"):
-                alt = [x for x in self.fournisseurs(benef, r.concept, introduction=False) if x["id"] not in dans]
-                if not alt:
-                    res.append(f"aucune alternative si {par_id[r.membre].nom} refuse")
+            if benef and r.concept and not r.role.startswith("partenaire") and not self._alternative_existe(benef, r.concept, dans):
+                res.append(f"aucune alternative si {par_id[r.membre].nom} refuse")
         ev = next((e for e in self.r.evenements if e.id == o.evenement), None)
         if ev and (ev.le - self.e.aujourd_hui).days <= 14:
             res.append(f"fenêtre courte : {ev.nom} dans {(ev.le - self.e.aujourd_hui).days} jours")
         if o.confiance == "faible":
             res.append("une capacité n'est qu'affirmée dans une présentation, pas déclarée")
         return res
+
+    def _alternative_existe(self, benef: Profil, concept: str, dans: set[str]) -> bool:
+        """Existe-t-il AU MOINS une autre personne éligible ? On s'arrête à la première (pas de liste complète)."""
+        par_id = self.r.par_id()
+        return any(pid not in dans and pid != benef.id and pid not in self.exclus
+                   and self.e.exclusion(benef, par_id[pid], None, introduction=False) is None
+                   for pid, _, _ in self.e.offreurs.get(concept, []))
 
     def _ajouter(self, opps: dict[str, Opportunite], o: Optional[Opportunite]) -> None:
         if o is None:
@@ -200,7 +241,8 @@ class Detecteur:
     def _fenetre(self, a: str, autres: list[str]) -> Optional[tuple[str, str]]:
         par_id = self.r.par_id()
         for ev in self.e.evenements_proches:
-            if a in ev.participants and all(x in ev.participants for x in autres):
+            part = self.e.participants[ev.id]
+            if a in part and all(x in part for x in autres):
                 qui = ", ".join(par_id[x].nom for x in [a, *autres] if x in par_id)
                 return ev.id, f"{ev.nom}, le {ev.le.isoformat()} (dans {(ev.le - self.e.aujourd_hui).days} jours) : {qui} y sont inscrits"
         return None
@@ -365,27 +407,23 @@ class Detecteur:
         couverts: list[tuple[str, str, dict, Profil]] = []       # (concept, extrait de l'intérêt, fournisseur, profil)
         manque: list[str] = []
         for r in interets:
-            f = self.fournisseurs(a, r.concept, texte=r.texte, introduction=False) if r.concept else []
-            if not f:
+            x = self._meilleur(a, r.concept, r.texte, offres_a) if r.concept else None
+            if x is None:
                 manque.append(r.texte if not r.concept else tax.libelle(r.concept))
                 continue
-            # préférer qui sera au même événement proche, puis qui cherche ce que `a` produit
-            def cle(ix: tuple[int, dict]) -> tuple:
-                b = par_id[ix[1]["id"]]
-                recip = any(rr.concept and any(tax.meme_famille(rr.concept, o) for o in offres_a) for rr in b.recherche)
-                return (self._fenetre(a.id, [b.id]) is None, not recip, ix[0])   # ix[0] : rang de spécificité
-            x = min(enumerate(f), key=cle)[1]
             couverts.append((r.concept or "", r.texte, x, par_id[x["id"]]))
         if not couverts:
             return None
         # partenaires réciproques : cherchent ce que `a` produit (règles dures appliquées)
         reciproques: list[tuple[Profil, str]] = []
+        vus_r: set[tuple[str, str]] = set()
         for c in sorted(offres_a):
             for bid, texte in self.e.recherches.get(c, []):
                 b = par_id.get(bid)
-                if b and bid != a.id and bid not in self.exclus and not self.e.exclusion(a, b, introduction=False):
-                    if (b, texte) not in reciproques:
-                        reciproques.append((b, texte))
+                if b and bid != a.id and bid not in self.exclus and (bid, texte) not in vus_r \
+                        and not self.e.exclusion(a, b, introduction=False):
+                    vus_r.add((bid, texte))
+                    reciproques.append((b, texte))
         contributeurs = list(dict.fromkeys(p.id for _, _, _, p in couverts))
         recip_utiles = [(b, t) for b, t in reciproques if b.id in contributeurs or self._fenetre(a.id, [b.id])]
         partenaires = contributeurs + [b.id for b, _ in recip_utiles if b.id not in contributeurs]

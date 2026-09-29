@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import date, timedelta
 from typing import Optional
 
-from app.matching import couverture, filtres_durs, meme_organisation
+from app.matching import couverture, filtres_durs, organisation
 from app.models import Besoin, Profil
 from app.taxonomy import Taxonomie, norm
 
@@ -38,23 +38,29 @@ class Etat:
     evenements_proches: list[Evenement] = field(default_factory=list)
     motifs: list[dict] = field(default_factory=list)
     mesures: dict[str, float] = field(default_factory=dict)
+    orgs: dict[str, str] = field(default_factory=dict)                 # clé d'organisation, calculée UNE fois par membre
+    participants: dict[str, frozenset] = field(default_factory=dict)   # événement → participants (ensemble)
+    _ages: dict[tuple, Optional[int]] = field(default_factory=dict)
 
     @property
     def aujourd_hui(self) -> date:
         return self.reseau.aujourd_hui
 
     def age_profil(self, p: Profil) -> Optional[int]:
-        try:
-            return (self.aujourd_hui - date.fromisoformat(p.maj[:10])).days
-        except ValueError:
-            return None
+        cle = (p.id, p.maj)                                  # mémorisé : la date d'un profil est lue des milliers de fois
+        if cle not in self._ages:
+            try:
+                self._ages[cle] = (self.aujourd_hui - date.fromisoformat(p.maj[:10])).days
+            except ValueError:
+                self._ages[cle] = None
+        return self._ages[cle]
 
     def dormant(self, pid: str) -> bool:
         d = self.derniere_rencontre.get(pid)
         return d is None or (self.aujourd_hui - d).days > DORMANT_JOURS
 
     def evenement_commun(self, a: str, b: str) -> Optional[Evenement]:
-        return next((e for e in self.evenements_proches if a in e.participants and b in e.participants), None)
+        return next((e for e in self.evenements_proches if a in self.participants[e.id] and b in self.participants[e.id]), None)
 
     def exclusion(self, beneficiaire: Profil, candidat: Profil, besoin: Optional[Besoin] = None,
                   introduction: bool = True) -> Optional[str]:
@@ -66,7 +72,8 @@ class Etat:
         else:
             if candidat.id == beneficiaire.id:
                 return "vous-même"
-            if meme_organisation(candidat, beneficiaire):
+            oa, ob = self.orgs.get(candidat.id) or organisation(candidat), self.orgs.get(beneficiaire.id) or organisation(beneficiaire)
+            if oa and oa == ob:
                 return "même organisation"
             if not candidat.accepte_introductions:
                 return "ne souhaite pas recevoir d'introductions"
@@ -91,6 +98,7 @@ def observer(reseau: Reseau, tax: Taxonomie) -> Etat:
     t0 = time.perf_counter()
     e = Etat(reseau=reseau, tax=tax)
     for p in reseau.profils:
+        e.orgs[p.id] = organisation(p)
         vus: set[str] = set()
         for o in p.offre:
             if o.concept:
@@ -127,6 +135,7 @@ def observer(reseau: Reseau, tax: Taxonomie) -> Etat:
                 e.derniere_rencontre[x] = ev.le
     e.evenements_proches = sorted((ev for ev in reseau.evenements
                                    if 0 <= (ev.le - reseau.aujourd_hui).days <= FENETRE_EVENEMENT_JOURS), key=lambda x: (x.le, x.id))
+    e.participants = {ev.id: frozenset(ev.participants) for ev in reseau.evenements}
     e.motifs = apprentissage.motifs(m, reseau.aujourd_hui)
     e.mesures["relations_ms"] = round((time.perf_counter() - t1) * 1000, 1)
     return e
