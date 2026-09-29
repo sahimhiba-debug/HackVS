@@ -13,7 +13,7 @@ import pytest
 
 RACINE = Path(__file__).resolve().parent.parent
 HTTP = {"fastapi", "starlette", "uvicorn"}
-ADAPTATEURS_HTTP = {"app.main", "app.pulse_api", "app.stage", "app.cycle_api", "app.decisions_api", "app.observabilite",
+ADAPTATEURS_HTTP = {"app.main", "app.pulse_api", "app.essai_api", "app.stage", "app.cycle_api", "app.decisions_api", "app.observabilite",
                     "app.protections", "app.mcp_serveur"}
 BIBLIOTHEQUES_APP = ["models", "taxonomy", "parser_rules", "parser_llm", "matching", "agenda", "securite", "semantique"]
 
@@ -66,6 +66,7 @@ def test_un_seul_endroit_choisit_le_fournisseur_ia():
 def test_l_api_club_pulse_ne_contient_pas_de_regle_metier():
     """L'adaptateur HTTP n'accède au moteur qu'à travers le service (`ClubPulse`) : aucun import du moteur, de la
     détection, du coffre ou de la politique au-delà du spectateur."""
-    imp = _imports(RACINE / "app" / "pulse_api.py")
-    assert not _viole(imp, {"intelligence.activation", "intelligence.detection", "intelligence.identite", "intelligence.observateur",
-                            "plateforme"})
+    for nom in ("pulse_api.py", "essai_api.py"):
+        imp = _imports(RACINE / "app" / nom)
+        assert not _viole(imp, {"intelligence.activation", "intelligence.detection", "intelligence.identite", "intelligence.observateur",
+                                "intelligence.essai", "plateforme"}), nom

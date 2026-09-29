@@ -62,7 +62,7 @@ class OffreEntree(BaseModel):
     quoi: str = Field(min_length=3, max_length=200)
     duree_max_min: Optional[int] = Field(default=None, ge=1, le=240)
     capacite: int = Field(default=1, ge=1, le=20)
-    du: date
+    du: Optional[date] = None                          # absent : la date du monde (simulée en démonstration)
     au: date
     conditions: str = Field(default="", max_length=300)
 
@@ -120,7 +120,8 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     # ------------------------------------------------------------------ offres volontaires (les siennes)
     @r.post("/moi/offres")
     def publier_offre(o: OffreEntree, pid: str = Depends(membre)) -> dict:
-        return au_monde(lambda c: {"offre": c.banc.publier_offre(pid, o.nature, o.quoi, o.capacite, o.du, o.au, o.duree_max_min, o.conditions)})
+        return au_monde(lambda c: {"offre": c.banc.publier_offre(pid, o.nature, o.quoi, o.capacite, o.du or c.jour, o.au, o.duree_max_min,
+                                                                o.conditions)})
 
     @r.patch("/moi/offres/{oid}")
     def modifier_offre(oid: str, m: OffreModif, pid: str = Depends(membre)) -> dict:

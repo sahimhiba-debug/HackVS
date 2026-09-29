@@ -306,7 +306,7 @@
       const au = h("input", { id: "o-au", type: "date" });
       return h("details", {}, h("summary", {}, "Publier une offre"), h("div", { class: "champ" }, q), h("div", { class: "ligne" }, n, d, h("span", {}, "min au plus · jusqu'au"), au),
         h("button", { class: "btn discret petit", style: "margin-top:8px", onclick: agir(() => api("/api/pulse/moi/offres", { corps: { nature: n.value, quoi: q.value, duree_max_min: Number(d.value),
-          capacite: 1, du: new Date().toISOString().slice(0, 10), au: au.value } }), "Offre publiée.") }, "Publier"));
+          capacite: 1, au: au.value } }), "Offre publiée.") }, "Publier"));
     }
 
     // ------------------------------------------------------------------ routeur

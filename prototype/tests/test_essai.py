@@ -265,3 +265,24 @@ def test_rejeu_pur_et_redemarrage(tmp_path):
     relu.b.alternatives(eid)
     relu.b.reservations(m.markus)
     assert relu.b.m.empreinte() == avant                                    # relire n'écrit rien (aucun effet rejoué)
+
+
+def test_panne_au_milieu_d_une_commande_rien_d_ecrit_a_moitie(monkeypatch):
+    """Tout ou rien : si la publication échoue après avoir écrit la nouvelle version (panne, redémarrage), ni la
+    version, ni l'accord du porteur, ni la transition ne restent dans le journal."""
+    m = Monde()
+    b = m.b
+    p = Protocole(question="Étiquette comprise en 10 s ?", critere="3 personnes", echeance=J + timedelta(days=10),
+                  etapes=[Etape(id="e1", nature="temps", geste="Regarder l'étiquette 10 s", duree_min=10)])
+    eid = b.brouillon(SOPHIE, p)
+    avant = len(b.m.evenements())
+    vraie = Banc._transition
+
+    def panne(self, eid_, vers, par, raison):
+        if vers == "PROPOSE":
+            raise RuntimeError("coupure simulée")
+        return vraie(self, eid_, vers, par, raison)
+    monkeypatch.setattr(Banc, "_transition", panne)
+    with pytest.raises(RuntimeError):
+        b.proposer(SOPHIE, eid, 0)
+    assert len(b.m.evenements()) == avant and b.etat(eid) == "BROUILLON" and b.version(eid) == 0

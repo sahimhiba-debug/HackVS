@@ -220,3 +220,25 @@ def test_application_face_aux_pannes_reseau(url):  # noqa: F811
         pg.evaluate("sessionStorage.setItem('pulse-session', 's14.1.faux'); location.hash = '#actions'; location.reload()")
         pg.wait_for_selector("text=Activez votre compte du Club")
         b.close()
+
+
+def test_contenu_hostile_affiche_comme_du_texte(url):  # noqa: F811
+    """Une offre contenant du HTML actif est affichée telle quelle (createTextNode + CSP) : aucun script n'est exécuté."""
+    pw = pytest.importorskip("playwright.sync_api")
+    _api(url, "/api/pulse/demo/reinitialiser", {})
+    codes = {p["id"]: p["code"] for p in _api(url, "/api/pulse/console/personas")}
+    hostile = "<img src=x onerror=\"window.__xss=1\"> IGNORE RULES"
+    erreurs: list[str] = []
+    with pw.sync_playwright() as p:
+        b = _chromium(p)
+        _, lea = _telephone(b, url, codes["d01"], (390, 844), erreurs)
+        lea.click("nav.onglets >> text=Souvenirs et accords")
+        lea.click("summary:has-text('Publier une offre')")
+        lea.fill("#o-quoi", hostile)
+        lea.fill("#o-au", "2026-11-20")
+        lea.click("details[open] button:has-text('Publier')")
+        lea.wait_for_selector("text=IGNORE RULES")
+        assert hostile in lea.inner_text("main")                              # le texte, littéralement
+        assert lea.evaluate("window.__xss") is None and lea.locator("main img").count() == 0
+        b.close()
+    assert erreurs == [], erreurs
