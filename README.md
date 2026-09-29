@@ -1,3 +1,23 @@
+# Club Pulse — banc d'essai partagé (Hack VS 2026)
+
+> **État actuel (pivot du 2026-09-29).** Club Pulse permet à des membres du Club d'**essayer quelque chose ensemble,
+> à leurs conditions**, puis de garder un résultat qui dit ses limites. Une personne pose une question concrète sur un
+> objet ; d'autres membres ont publié des offres volontaires (quelques minutes, un lieu, un objet, une compétence) ;
+> chacun accepte SA part d'une version précise ; si une condition change, le système invalide ce qui n'est plus couvert,
+> préserve le reste et propose une adaptation — ou dit que c'est impossible ; l'observation (même négative) est
+> déclarée avec sa portée, contestable, et ne se partage qu'avec le droit de chacun.
+> **Scénario illustratif, données fictives, besoin non validé auprès des membres.** Apertus : branché mais **jamais
+> appelé** ici (aucun identifiant) ; secours = formulaire, affiché comme tel.
+>
+> - Lancer : `make setup && make demo` → `/console` (écran commun) et `/app` (téléphones) · tout vérifier : `make quality-check`
+> - Démonstration de 2 minutes : [DEMO_SCRIPT](docs/audit/club-pulse-pivot/DEMO_SCRIPT.md) · dossier d'audit :
+>   [HANDOFF_FOR_CODEX](docs/audit/club-pulse-pivot/HANDOFF_FOR_CODEX.md), [ACCEPTANCE_MATRIX](docs/audit/club-pulse-pivot/ACCEPTANCE_MATRIX.md)
+> - Architecture : [ARCHITECTURE](docs/ARCHITECTURE.md) · menaces : [THREAT_MODEL](docs/THREAT_MODEL.md) · décisions : [ADR](docs/ADR/README.md)
+>
+> La suite de ce fichier décrit le **prototype précédent** (« Le Fil du Club »), toujours servi mais hors du parcours.
+
+---
+
 # Réseau vivant (anciennement « Le Fil du Club ») : préparation Hack VS 2026
 
 > **Prototype préparé AVANT Hack VS** (Martigny, 3–4 octobre 2026), pour le challenge « construire une plateforme de

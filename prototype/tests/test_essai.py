@@ -286,3 +286,21 @@ def test_panne_au_milieu_d_une_commande_rien_d_ecrit_a_moitie(monkeypatch):
     with pytest.raises(RuntimeError):
         b.proposer(SOPHIE, eid, 0)
     assert len(b.m.evenements()) == avant and b.etat(eid) == "BROUILLON" and b.version(eid) == 0
+
+
+def test_retrait_puis_reacceptation_ne_consomme_pas_deux_fois_une_offre():
+    """Pauline (capacité 1) accepte l'essai A, se retire, accepte l'essai B, puis tente de réaccepter A : refusé."""
+    m = Monde()
+    b = m.b
+    b.publier_offre("s02", "lieu", "Un coin de vitrine éclairé", 1, J, J + timedelta(days=30), duree_max_min=20)  # A reste adaptable
+    a, va = m.essai()
+    bb, vb = m.essai("Un autre critère : la couleur est-elle perçue comme « bio » ?")
+    assert m.contributeurs(a)["e2"] == PAULINE and m.contributeurs(bb)["e2"] == PAULINE
+    b.decider(PAULINE, a, va, True)
+    b.retirer(PAULINE, a)
+    assert b.etat(a) == "A_ADAPTER" and b.reservations(m.pauline) == 0     # le retrait libère la place
+    b.decider(PAULINE, bb, vb, True)
+    assert b.reservations(m.pauline) == 1
+    with pytest.raises(Conflit, match="capacité"):
+        b.decider(PAULINE, a, va, True)                                     # réaccepter A dépasserait la capacité
+    assert b.reservations(m.pauline) == 1

@@ -1,5 +1,10 @@
 # Architecture — Club Pulse
 
+> **Pivot du 2026-09-29.** Le parcours visible est désormais le **banc d'essai partagé** : `intelligence/essai.py`
+> (domaine), `intelligence/vues_essai.py` (vues par personne), `app/essai_api.py` (routes), mêmes couches et mêmes règles
+> de dépendance que ci-dessous. Architecture courte et état exact : [audit/club-pulse-pivot/HANDOFF_FOR_CODEX.md](audit/club-pulse-pivot/HANDOFF_FOR_CODEX.md).
+> Les sections sur la détection d'opportunités et l'activation décrivent du code conservé mais **retiré du parcours visible**.
+
 > **Statut.** Prototype durci autour de préoccupations de production — **pas** un système en production. Monde de
 > démonstration **fictif** (150 membres générés + personnages de scène). Un seul processus. Chaque affirmation de ce
 > document renvoie à du code ou à un test ; la direction des dépendances est **vérifiée** par `tests/test_architecture.py`.

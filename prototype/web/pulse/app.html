@@ -192,8 +192,8 @@
         h("p", { class: "surtitre" }, `Essai · version ${e.version} · ${e.mode}`), h("h1", { class: "grand" }, e.question),
         h("p", { style: "margin-top:8px" }, h("span", { class: "puce" + (e.etat === "A_ADAPTER" || e.etat === "IMPOSSIBLE" ? " rouge" : "") }, e.etat_libelle)),
         h("p", { class: "note", style: "margin-top:6px" }, `Porteur : ${e.porteur}${e.objet ? " · objet : " + e.objet : ""} · échéance : ${e.echeance}`),
-        section("Prochaine décision", h("p", { class: "encadre" }, e.prochaine)),
-        e.pourquoi ? section("Pourquoi", h("p", {}, e.pourquoi)) : null,
+        section("Prochaine décision", h("p", { class: "encadre" }, e.prochaine))];
+      const details = [e.pourquoi ? section("Pourquoi", h("p", {}, e.pourquoi)) : null,
         section("Critère d'observation", h("p", {}, e.critere || "—")),
         section("Qui fait quoi", gestes),
         e.manque.length ? section("Ce qui manque", h("ul", {}, e.manque.map((x) => h("li", {}, x)))) : null,
@@ -231,6 +231,7 @@
       if (A.has("retirer")) acts.push(h("button", { class: "btn discret petit", onclick: post("retirer", {}, "Participation retirée.") }, "Retirer ma participation"));
       if (A.has("annuler")) acts.push(h("button", { class: "btn discret petit", onclick: post("annuler", { raison: "annulé par le porteur" }, "Essai annulé.") }, "Annuler l'essai"));
       if (acts.length) blocs.push(section("Vos actions", h("div", { class: "actions", style: "flex-direction:column;align-items:stretch" }, acts)));
+      blocs.push(...details);                                   // la décision d'abord, le détail du protocole ensuite
       if (e.observation) blocs.push(carteObservation(e.observation, e.reutilisation));
       blocs.push(h("details", {}, h("summary", {}, "Historique"), h("ol", { class: "chrono" }, e.historique.map((x) => h("li", {}, h("span", { class: "note" }, x.le + " · "), x.quoi)))));
       afficher(blocs);
