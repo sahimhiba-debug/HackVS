@@ -422,6 +422,9 @@ class Moteur:
             raise ErreurActivation("contribution déjà reçue pour cette étape")
         self._ecrire("CONTRIBUTION_RECUE", le, [membre], aid=aid, etape=e["id"], nature=nature, titre=titre.strip()[:120],
                      contenu=contenu.strip()[:4000], reutilisable=reutilisable, geste="humain")
+        benef = self.opportunite(aid).beneficiaire
+        if benef and benef != membre:                  # le réseau change : une collaboration réelle crée une relation
+            self._ecrire("COLLABORATION", le, sorted([benef, membre]), aid=aid, nature=nature)
         attendues = {x["id"] for x in self.plan(aid)["etapes"] if x["type"] in ("contribution", "animation")}
         recues = {x.donnees["etape"] for x in self._evs(aid, "CONTRIBUTION_RECUE")}
         if attendues <= recues:

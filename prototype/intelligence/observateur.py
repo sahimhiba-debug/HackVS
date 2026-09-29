@@ -109,7 +109,7 @@ def observer(reseau: Reseau, tax: Taxonomie) -> Etat:
     t1 = time.perf_counter()
     m = reseau.memoire
     limite = reseau.aujourd_hui - timedelta(days=RELATION_JOURS)
-    for ev in m.evenements("RENCONTRE", "INTRO_DECLINEE", jusqu_au=reseau.aujourd_hui):
+    for ev in m.evenements("RENCONTRE", "COLLABORATION", "INTRO_DECLINEE", jusqu_au=reseau.aujourd_hui):
         if len(ev.acteurs) < 2:
             continue
         paire = frozenset(ev.acteurs[:2])
