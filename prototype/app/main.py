@@ -904,8 +904,10 @@ def page_cycle():
 if MODE == "demo":  # scène de présentation : monde ISOLÉ et déterministe (données de scène fictives)
     from .stage import creer_routeur as _routeur_scene
     app.include_router(_routeur_scene(TAX))
+    from intelligence.reglages import Reglages as _Reglages
+
     from .pulse_api import creer_routeur as _routeur_pulse
-    app.include_router(_routeur_pulse(TAX))
+    app.include_router(_routeur_pulse(TAX, console_jeton=_Reglages.depuis_env().console_jeton))
 
 
 @app.get("/app")

@@ -103,12 +103,19 @@
       return el;
     }
     const toast = (m, g = "") => { const t = h("div", { class: "toast " + g }, m); $("#toasts").append(t); setTimeout(() => t.remove(), 4000); };
-    async function api(chemin, { methode, corps, session } = {}) {
-      const o = { method: methode || (corps === undefined ? "GET" : "POST"), headers: {} };
+    // En-tête de console : bloque les requêtes intersites ; si le serveur exige un jeton (HACKVS_CONSOLE_JETON), on le demande.
+    const lireJeton = () => { try { return sessionStorage.getItem("console-jeton") || "1"; } catch { return "1"; } };
+    async function api(chemin, { methode, corps, session } = {}, deuxieme = false) {
+      const o = { method: methode || (corps === undefined ? "GET" : "POST"), headers: { "X-Pulse-Console": lireJeton() } };
       if (session) o.headers["X-Pulse-Session"] = session;
       if (corps !== undefined) { o.headers["Content-Type"] = "application/json"; o.body = JSON.stringify(corps); }
-      const r = await fetch(chemin, o);
+      let r;
+      try { r = await fetch(chemin, o); } catch { throw new Error("Serveur injoignable : vérifiez qu'il est lancé."); }
       const d = await r.json().catch(() => ({}));
+      if (r.status === 403 && /jeton/.test(d.detail || "") && !deuxieme) {
+        const j = window.prompt("Jeton de la console du Club :");
+        if (j) { try { sessionStorage.setItem("console-jeton", j); } catch { /* stockage indisponible */ } return api(chemin, { methode, corps, session }, true); }
+      }
       if (!r.ok) throw new Error(typeof d.detail === "string" ? d.detail : `Erreur ${r.status}`);
       return d;
     }

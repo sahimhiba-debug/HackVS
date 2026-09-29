@@ -10,7 +10,7 @@
 - `Coffre` : SEUL endroit où vivent nom, organisation, courriel et téléphone. Le moteur d'intelligence reçoit des
   profils PSEUDONYMISÉS (« MEMBRE-042 ») : il raisonne sur des capacités, jamais sur des identités. Supprimer une
   identité du coffre rend le journal (ajout seul) illisible pour cette personne : effacement par destruction du lien.
-- Accès : code d'invitation (QR) vérifié → compte activé. Prototype : codes dérivés d'un secret local ; en production,
+- Accès : code d'invitation (QR) vérifié → compte activé. Prototype : codes dérivés du secret de `Reglages` ; en production,
   le Club émet les invitations depuis son système d'adhésion (lien magique ou code).
 """
 from __future__ import annotations
@@ -19,7 +19,7 @@ import csv
 import hashlib
 import hmac
 import io
-import os
+import re
 from typing import Literal, Optional, Protocol
 
 from pydantic import BaseModel
@@ -126,6 +126,33 @@ class AdhesionsCSV:
                       personnes=personnes, avertissements=avert)
 
 
+_COURRIEL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+_TELEPHONE = re.compile(r"(?<!\w)(?:\+|00)?\d[\d .-]{7,}\d(?!\w)")
+_URL = re.compile(r"https?://\S+|www\.\S+", re.I)
+RETIRE = "[retiré]"
+
+
+def nettoyer(texte: str, identites: list[str]) -> str:
+    """Retire d'un texte libre les courriels, téléphones, adresses web et les noms donnés (personne, organisation —
+    et chacun de leurs mots de plus de 3 lettres, hors mentions génériques)."""
+    if not texte:
+        return texte
+    t = _URL.sub(RETIRE, _COURRIEL.sub(RETIRE, texte))
+    t = _TELEPHONE.sub(RETIRE, t)
+    mots: set[str] = set()
+    for ident in identites:
+        base = re.sub(r"\(fictive?\)", "", ident, flags=re.I).strip()
+        if base:
+            mots.add(base)
+            mots.update(m for m in re.split(r"[\s'’-]+", base) if len(m) > 3 and m.lower() not in _GENERIQUES)
+    for m in sorted(mots, key=len, reverse=True):
+        t = re.sub(rf"(?<!\w){re.escape(m)}(?!\w)", RETIRE, t, flags=re.I)
+    return t
+
+
+_GENERIQUES = {"entreprise", "conseil", "services", "suisse", "valais", "groupe", "société", "sàrl", "sarl"}
+
+
 class NonConnecte(RuntimeError):
     pass
 
@@ -142,14 +169,16 @@ class AdhesionsAPIClub:
 class Coffre:
     """Identités (nom, organisation, contact) séparées des capacités. Le moteur ne voit que des pseudonymes."""
 
-    def __init__(self, imp: Import, secret: Optional[str] = None):
+    def __init__(self, imp: Import, secret: bytes):
         self.source, self.synthetique = imp.source, imp.synthetique
         self.orgs = {o.id: o for o in imp.organisations}
         self.adhesions = {a.id: a for a in imp.adhesions}
         self._personnes = {p.id: p for p in imp.personnes}
         self._pseudo = {pid: f"MEMBRE-{i:03d}" for i, pid in enumerate(sorted(self._personnes), start=1)}
         self._inverse = {v: k for k, v in self._pseudo.items()}
-        self._secret = (secret or os.environ.get("HACKVS_SECRET_INVITATIONS") or "demo-seulement").encode()
+        if len(secret) < 16:
+            raise ValueError("secret trop court pour dériver des codes d'invitation")
+        self._secret = secret                           # fourni par `Reglages` : jamais de valeur par défaut dans le code
         self.actives: set[str] = set()
 
     # -- pseudonymes
@@ -160,10 +189,19 @@ class Coffre:
         return self._inverse.get(pseudo)
 
     def pseudonymiser(self, p: Profil) -> Profil:
-        """Profil pour le moteur : capacités, langues, disponibilité ; nom = pseudonyme ; organisation = clé opaque."""
+        """Profil pour le moteur : capacités, langues, disponibilité ; nom = pseudonyme ; organisation = clé opaque.
+        Les TEXTES libres (présentation, offres, recherches) sont nettoyés : un membre a pu y écrire son nom, celui de
+        son entreprise, un courriel ou un téléphone — ils ne doivent atteindre ni le moteur, ni un modèle de langage."""
         per = self._personnes.get(p.id)
-        org = self.adhesions[per.adhesion_id].organisation_id if per else f"org-{p.id}"
-        return p.model_copy(update={"nom": self.pseudonyme(p.id), "entreprise": org, "fonction": "", "commune": p.commune})
+        adh = self.adhesions[per.adhesion_id] if per else None
+        org = adh.organisation_id if adh else f"org-{p.id}"
+        a_retirer = [x for x in ((per.nom if per else p.nom), self.orgs[org].nom if org in self.orgs else p.entreprise) if x]
+        net = lambda t: nettoyer(t, a_retirer)  # noqa: E731
+        return p.model_copy(update={
+            "nom": self.pseudonyme(p.id), "entreprise": org, "fonction": "", "commune": p.commune,
+            "presentation": net(p.presentation), "note_disponibilite": net(p.note_disponibilite),
+            "offre": [o.model_copy(update={"texte": net(o.texte)}) for o in p.offre],
+            "recherche": [o.model_copy(update={"texte": net(o.texte)}) for o in p.recherche]})
 
     # -- identités
     def identite(self, pid: str) -> Optional[Personne]:

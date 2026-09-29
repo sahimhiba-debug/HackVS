@@ -56,9 +56,10 @@ def test_console_demo_guidee_complete(url):  # noqa: F811
 @pytest.mark.parametrize("taille", [(390, 844), (412, 915)])                 # iPhone / Android
 def test_application_membre_de_l_invitation_au_pouls(url, taille):  # noqa: F811
     pw = pytest.importorskip("playwright.sync_api")
-    urllib.request.urlopen(urllib.request.Request(url + "/api/pulse/demo/reinitialiser", data=b"{}",
-                                                  headers={"Content-Type": "application/json"}))
-    code = next(x["code"] for x in json.loads(urllib.request.urlopen(url + "/api/pulse/console/personas").read()) if x["id"] == "n01")
+    console = {"Content-Type": "application/json", "X-Pulse-Console": "1"}
+    urllib.request.urlopen(urllib.request.Request(url + "/api/pulse/demo/reinitialiser", data=b"{}", headers=console))
+    personas = urllib.request.urlopen(urllib.request.Request(url + "/api/pulse/console/personas", headers=console)).read()
+    code = next(x["code"] for x in json.loads(personas) if x["id"] == "n01")
     with pw.sync_playwright() as p:
         b = _chromium(p)
         pg = b.new_page(viewport={"width": taille[0], "height": taille[1]})
