@@ -115,8 +115,8 @@ def test_toutes_les_entrees_sont_bornees():
         "note": client.post(f"/api/besoins/{besoin['id']}/cloturer", json={"note": g}, headers=SOPHIE),
         "identifiant": client.post("/api/relations", json={"besoin_id": g, "message": "x"}, headers=SOPHIE),
     }
-    for nom, rep in essais.items():
-        assert rep.status_code == 422, (nom, rep.status_code)
+    for nom, rep in essais.items():               # 413 : corps > 64 Kio arrêté avant lecture ; 422 : champ hors de ses bornes
+        assert rep.status_code in (413, 422), (nom, rep.status_code)
     assert client.get("/api/bourse", headers=JULIEN).status_code == 200
 
 

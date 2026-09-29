@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import random
 import re
@@ -30,9 +31,11 @@ from adaptateurs.club.synthese import verifier
 from app.models import Besoin
 from app.parser_llm import SCHEMA as SCHEMA_BESOIN
 from app.parser_llm import SortieLLM, _json_de, systeme, valider
+
 from app.parser_rules import analyser as analyser_regles
 from app.taxonomy import Taxonomie, norm
 
+_journal = logging.getLogger("intelligence.ia")
 PROMPTS = Path(__file__).resolve().parents[1] / "prompts"
 Statut = Literal["OK", "INCERTAIN", "REJETE", "INDISPONIBLE"]
 
@@ -242,6 +245,10 @@ class Intelligence:
     # ------------------------------------------------------------------ mécanique commune
     def _tracer(self, a: AppelIA) -> None:
         self.appels.append(a)
+        # métadonnées seulement : ni l'entrée, ni le prompt rempli, ni la sortie du modèle
+        _journal.log(logging.WARNING if a.repli and a.fournisseur != "deterministe" else logging.INFO, "appel IA",
+                     extra={"trace": a.trace, "tache": a.tache, "fournisseur": a.fournisseur, "modele": a.modele, "prompt": a.prompt,
+                            "statut": a.statut, "repli": a.repli, "politique": a.politique, "erreur_ia": a.erreur, "duree_ms": a.latence_ms})
         if self.journal:
             self.journal(a)
 

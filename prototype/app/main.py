@@ -26,9 +26,12 @@ from pydantic import BaseModel, Field
 import threading
 
 from . import agenda, analyse, club, parser_llm, parser_rules, securite, semantique, soiree
+from . import observabilite as _observabilite
 from .baseline import rechercher_mots_cles
 from .matching import expliquer, rechercher
 from .models import Besoin, Profil
+from .protections import Protections as _Protections
+from .protections import politique_contenu as _politique_contenu
 from .store import STATUTS_PUBLICS, ErreurMetier, Interdit, Magasin
 from .taxonomy import DATA_DIR, charger_taxonomie
 from adaptateurs.club import cycle as cycle_club
@@ -84,6 +87,11 @@ def aujourdhui_reseau() -> date:
     return MEMOIRE.maintenant(date.today())
 
 app = FastAPI(title="Le Fil du Club (prototype exploratoire)", version="0.2.0")
+WEB_PULSE = Path(__file__).resolve().parent.parent / "web" / "pulse"
+_observabilite.configurer(_observabilite.niveau_depuis_env(os.environ))
+# ordre : la dernière ajoutée est la plus EXTÉRIEURE → l'identifiant de requête couvre aussi les refus 413
+app.add_middleware(_Protections, csp=_politique_contenu([WEB_PULSE / "app.html", WEB_PULSE / "console.html"]))
+app.add_middleware(_observabilite.MiddlewareRequete)
 
 
 # ---------------------------------------------------------------- identité et données effectives

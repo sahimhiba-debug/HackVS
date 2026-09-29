@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import functools
 import hashlib
+import logging
 from datetime import date
 from typing import Callable, Optional, TypeVar, cast
 
@@ -36,6 +37,8 @@ from . import apprentissage
 from .detection import Detecteur
 from .erreurs import Conflit, ErreurMetier, Interdit, Introuvable, Invalide
 from .modele import Opportunite, Reseau
+
+_journal = logging.getLogger("intelligence.activation")
 
 ETATS = ("DETECTEE", "EVALUEE", "PLANIFIEE", "EN_ATTENTE_ACCORD", "ACTIVEE", "TERMINEE", "BLOQUEE", "REPLANIFICATION",
          "ALTERNATIVE_PROPOSEE", "ABANDONNEE", "REJETEE", "RESULTAT_CONFIRME", "RESULTAT_PARTIEL", "RESULTAT_NEGATIF",
@@ -111,6 +114,7 @@ class Moteur:
         if vers not in TRANSITIONS.get(de, set()):
             raise Conflit(f"transition interdite : {de or 'rien'} → {vers}")
         self._ecrire("ACTIVATION", le, [], aid=aid, de=de, etat=vers, agent=agent, raison=raison, details=details)
+        _journal.info("transition", extra={"activation": aid, "de": de or None, "vers": vers, "agent": agent})   # sans la raison (texte)
 
     def plan(self, aid: str) -> dict:
         p = self._evs(aid, "ACTIVATION_PLAN")
