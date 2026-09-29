@@ -167,3 +167,12 @@ Résultat · Cas d'échec · Décision · Preuve. Les hypothèses et baselines s
 - **Performance.** Diagnostic à 4 axes : 2,1 s à 150 membres (80 % dans les chemins de l'arbre des ponts) → arbres
   enracinés une fois, somme de chemin par ancêtre commun : **1,24 s** (500 membres : 17,7 → 10,3 s) ; exactitude
   revérifiée contre la force brute : 0 désaccord sur 4171 vérifications.
+
+## EXP-K — Prévention temporelle ROBUSTE (appliquer EXP-J à l'échéancier) — DELETE
+- **Hypothèse.** Raviver en priorité ce qui préserve le plus grand groupe robuste bat les baselines sur ce critère.
+- **Résultat (20 réseaux, 30 jours, 5 ravivements).** PERD : groupe robuste 2,30 contre 2,75 (« plus reliés d'abord ») ;
+  gagne 1, égalité 16, perd 3 ; n'utilise que 0,3 ravivement sur 5.
+- **Cause comprise.** (1) Myopie du glouton : reconstituer un cycle exige souvent DEUX ravivements simultanés ; chacun
+  seul a un gain nul → arrêt. (2) Réseaux générés arborescents : groupes robustes minuscules (5,4 aujourd'hui).
+- **Décision.** DELETE (code retiré, rien de gardé « parce que cela a demandé du travail »). Piste non explorée : gain par
+  PAIRES de ravivements (coût quadratique) — DEFER.
