@@ -8,6 +8,7 @@ import random
 from datetime import date, timedelta
 
 import pytest
+from pydantic import ValidationError
 
 from adaptateurs.club import cycle as cy
 from adaptateurs.club import reseau
@@ -94,3 +95,44 @@ def test_propriete_graphe_actuel_egal_etat_relation_sur_historiques_aleatoires()
         for a, b in base.edges():
             e = reseau.etat_relation(m, a, b, t)["etat"]
             assert actuel.has_edge(a, b) == (e not in reseau.ETATS_NON_ACTUELS), (graine, a, b, e)
+
+
+def test_cache_de_la_memoire_exact_face_a_un_autre_ecrivain(tmp_path):
+    """Le cache incrémental de la mémoire reste identique à une relecture complète : écritures d'un autre objet sur le
+    même fichier, vidage, ré-écritures, doublons idempotents."""
+    chemin = str(tmp_path / "m.sqlite")
+    m1, m2 = Memoire(chemin), Memoire(chemin)
+    rnd = random.Random(3)
+    for k in range(200):
+        qui = rnd.choice([m1, m2])
+        if rnd.random() < 0.03:
+            qui.vider()
+        else:
+            qui.ajouter(Evt(type=rnd.choice(["RENCONTRE", "SUIVI"]), le=J0 + timedelta(days=rnd.randint(0, 9)),
+                            acteurs=["a", "b"], statut=Statut.OBSERVE, donnees={"k": rnd.randint(0, 40)}))
+        lecteur = rnd.choice([m1, m2])
+        frais = Memoire(chemin).evenements()
+        assert [(e.id, e.seq) for e in lecteur.evenements()] == [(e.id, e.seq) for e in frais], k
+
+
+def test_un_evenement_lu_ne_peut_pas_etre_modifie_en_place():
+    m = Memoire()
+    m.ajouter(Evt(type="RENCONTRE", le=J0, acteurs=["a", "b"], statut=Statut.OBSERVE))
+    with pytest.raises(ValidationError):
+        m.evenements()[0].type = "SUIVI"
+
+
+def test_complexite_les_relances_lisent_la_memoire_un_nombre_constant_de_fois(monkeypatch):
+    """Régression de performance (déterministe, pas un chronomètre) : lire la mémoire une fois PAR PAIRE rendait les
+    relances quadratiques (20,8 s à 500 membres générés). Le nombre de lectures ne doit pas dépendre de la taille."""
+    from eval.perf_echelle import generer
+    appels = []
+    lire = Memoire.evenements
+    monkeypatch.setattr(Memoire, "evenements", lambda self, *a, **k: appels.append(1) or lire(self, *a, **k))
+    comptes = []
+    for n in (40, 160):
+        profils, m, t = generer(n)
+        appels.clear()
+        cy.relances(m, profils, TAX, t)
+        comptes.append(len(appels))
+    assert comptes[0] == comptes[1], comptes

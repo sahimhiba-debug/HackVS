@@ -90,6 +90,7 @@ def relances(m: Memoire, profils: list[Profil], tax: Taxonomie, maintenant: date
     from .reseau import graphe_actuel
     g = graphe(m, maintenant)
     actuel = graphe_actuel(m, maintenant)
+    sens_servis = _sens_servis(m, maintenant)
     deja, propositions, trop_tot, sans_raison = _traitees(m), [], [], []
     besoins = besoins_publies(m, maintenant)
     suivis = {cle(*e.acteurs) for e in m.evenements("SUIVI", jusqu_au=maintenant)}
@@ -116,7 +117,7 @@ def relances(m: Memoire, profils: list[Profil], tax: Taxonomie, maintenant: date
                                     "id": _id(a, b, "NOUVEAU_BESOIN", bp.evt)})
         # L'AUTRE SENS d'une rencontre : elle a servi un besoin de l'un ; l'autre cherche ce que le premier offre, et ce
         # n'était pas la raison documentée de la rencontre. Raison réelle (preuve citée), pas une relance de politesse.
-        servis = _sens_servis(m, a, b, maintenant)
+        servis = sens_servis.get(cle(a, b), set())
         for x, y in ((a, b), (b, a)):  # y peut aider x
             if (x, y) in servis or any(r["type"] == "NOUVEAU_BESOIN" and r["pour"] == x for r in raisons):
                 continue
@@ -163,18 +164,19 @@ def relances(m: Memoire, profils: list[Profil], tax: Taxonomie, maintenant: date
             "principe": "aucune relance sans raison NOUVELLE et documentée ; « restez en contact » n'en est pas une"}
 
 
-def _sens_servis(m: Memoire, a: str, b: str, maintenant: date) -> set[tuple[str, str]]:
-    """Directions (aidé, aidant) qui ÉTAIENT la raison documentée d'une rencontre a–b (soirée ou introduction)."""
-    k, res = cle(a, b), set()
-    besoin_auteur = {}
-    for e in m.evenements("INTRO_DEMANDEE", "INTRO_ACCEPTEE", jusqu_au=maintenant):
-        if cle(*e.acteurs[:2]) == k:
-            besoin_auteur[e.donnees.get("relation_id")] = e.acteurs[0]  # acteurs = [auteur du besoin, aidant]
-    for aut in besoin_auteur.values():
-        res.add((aut, b if aut == a else a))
-    for e in m.evenements("RENCONTRE", jusqu_au=maintenant):
-        if cle(*e.acteurs[:2]) == k:
-            res |= {(r["qui_est_aide"], r["qui_aide"]) for r in e.donnees.get("raisons", [])}
+def _sens_servis(m: Memoire, maintenant: date) -> dict[str, set[tuple[str, str]]]:
+    """Par paire : directions (aidé, aidant) qui ÉTAIENT la raison documentée d'une rencontre (soirée ou introduction).
+    Index construit en UNE passe (et non une lecture de la mémoire par paire : coût quadratique mesuré)."""
+    besoin_auteur: dict[str, dict] = {}
+    res: dict[str, set[tuple[str, str]]] = {}
+    for e in m.evenements("INTRO_DEMANDEE", "INTRO_ACCEPTEE", "RENCONTRE", jusqu_au=maintenant):
+        k = cle(*e.acteurs[:2])
+        if e.type == "RENCONTRE":
+            res.setdefault(k, set()).update((r["qui_est_aide"], r["qui_aide"]) for r in e.donnees.get("raisons", []))
+        else:   # acteurs = [auteur du besoin, aidant]
+            besoin_auteur.setdefault(k, {})[e.donnees.get("relation_id")] = (e.acteurs[0], e.acteurs[1])
+    for k, sens in besoin_auteur.items():
+        res.setdefault(k, set()).update(sens.values())
     return res
 
 

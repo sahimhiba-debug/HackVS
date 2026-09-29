@@ -19,13 +19,14 @@ from pathlib import Path
 from typing import Any, Optional
 
 import networkx as nx
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from .affirmations import Statut
 from .optimisation import cle
 
 
 class Evt(BaseModel):
+    model_config = ConfigDict(frozen=True)    # les événements lus sont partagés (cache) : jamais modifiés en place
     type: str
     le: date
     acteurs: list[str] = []
@@ -48,6 +49,20 @@ class Memoire:
         with self._v:
             self._db.execute("CREATE TABLE IF NOT EXISTS evenements (seq INTEGER PRIMARY KEY AUTOINCREMENT, id TEXT UNIQUE, donnees TEXT)")
             self._db.commit()
+        self._cache: list[Evt] = []      # journal APPEND-ONLY déjà désérialisé (lu une fois, puis par incrément)
+
+    def _synchroniser(self) -> list[Evt]:
+        """Cache incrémental : ne désérialise que les événements nouveaux. Resynchronisé à chaque lecture par une
+        requête légère (dernier seq, nombre) : reste exact si un autre objet écrit dans le même fichier ou le vide."""
+        dernier, nombre = self._db.execute("SELECT COALESCE(MAX(seq), 0), COUNT(*) FROM evenements").fetchone()
+        connu = self._cache[-1].seq if self._cache else 0
+        if dernier > connu:
+            for s, d in self._db.execute("SELECT seq, donnees FROM evenements WHERE seq > ? ORDER BY seq", (connu,)):
+                self._cache.append(Evt.model_validate_json(d).model_copy(update={"seq": s}))
+        if len(self._cache) != nombre:                     # vidé ou modifié ailleurs : relecture complète
+            self._cache = [Evt.model_validate_json(d).model_copy(update={"seq": s})
+                           for s, d in self._db.execute("SELECT seq, donnees FROM evenements ORDER BY seq")]
+        return self._cache
 
     def ajouter(self, e: Evt) -> Evt:
         """Idempotent : le même événement (même contenu) n'est jamais compté deux fois."""
@@ -60,9 +75,8 @@ class Memoire:
 
     def evenements(self, *types: str, jusqu_au: Optional[date] = None) -> list[Evt]:
         with self._v:
-            ls = self._db.execute("SELECT seq, donnees FROM evenements ORDER BY seq").fetchall()
-        res = [Evt.model_validate_json(d).model_copy(update={"seq": s}) for s, d in ls]
-        return [e for e in res if (not types or e.type in types) and (jusqu_au is None or e.le <= jusqu_au)]
+            res = self._synchroniser()
+            return [e for e in res if (not types or e.type in types) and (jusqu_au is None or e.le <= jusqu_au)]
 
     def maintenant(self, defaut: date) -> date:
         h = self.evenements("HORLOGE")
@@ -81,6 +95,7 @@ class Memoire:
         with self._v:
             self._db.execute("DELETE FROM evenements")
             self._db.commit()
+            self._cache = []
 
 
 # ------------------------------------------------------------------ graphe dérivé

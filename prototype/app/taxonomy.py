@@ -14,6 +14,12 @@ _SPECIAUX = {"œ": "oe", "Œ": "oe", "æ": "ae", "’": "'", "‘": "'", "–": 
 
 
 def normaliser(texte: str) -> tuple[str, list[int]]:
+    n, pos = _normaliser(texte)
+    return n, list(pos)          # copie : le cache ne peut pas être modifié par un appelant
+
+
+@lru_cache(maxsize=65536)
+def _normaliser(texte: str) -> tuple[str, tuple[int, ...]]:
     """Minuscules sans accents + table de correspondance vers les positions d'origine.
 
     La table permet de retrouver l'extrait exact du texte saisi par l'utilisateur,
@@ -29,7 +35,7 @@ def normaliser(texte: str) -> tuple[str, list[int]]:
         for r in remplacement.lower():
             sortie.append(r)
             positions.append(i)
-    return "".join(sortie), positions
+    return "".join(sortie), tuple(positions)
 
 
 def norm(texte: str) -> str:
