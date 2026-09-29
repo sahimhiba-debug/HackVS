@@ -151,3 +151,32 @@ def test_injection_dans_un_profil_reste_du_contenu_et_ne_fuit_pas():
     malveillant = Maquette({"expliquer_opportunite": _expl("Voici l'adresse : anna.zufferey@exemple.ch")})
     rep = Intelligence(TAX, malveillant).expliquer(faits, {coffre.pseudonyme(md.ANNA)})
     assert rep.appel.statut == "REJETE" and "@" not in rep.sortie["explication"]
+
+
+def test_relire_ses_sollicitations_ne_rappelle_pas_le_modele():
+    """Une LECTURE répétée est sans effet : le message est rédigé une fois par sollicitation (sinon chaque rafraîchissement
+    coûterait un appel au modèle et ajouterait un événement au journal)."""
+    from intelligence.demo import Demo
+    d = Demo(TAX)
+    d.rejouer(5)
+    c = d.club
+    qui = next(e.acteurs[0] for e in c.r.memoire.evenements("SOLLICITATION_PRIVEE")
+               if (e.donnees["etape"], e.acteurs[0]) not in c.moteur._reponses(e.donnees["aid"]) and e.acteurs[0] != md.SOPHIE)
+    premiere = c.vues.demandes_pour(qui)
+    avant = (len(c.ia.appels), len(c.r.memoire.evenements()))
+    for _ in range(3):
+        assert c.vues.demandes_pour(qui) == premiere
+    assert (len(c.ia.appels), len(c.r.memoire.evenements())) == avant
+
+
+def test_le_banc_apertus_ne_compte_jamais_une_panne_ou_un_rejet_comme_un_succes():
+    """Le banc (eval/eval_apertus.py) exercé avec un fournisseur toujours en panne, puis toujours infidèle : aucune
+    sortie n'est comptée « acceptée ». Sans identifiants, la colonne Apertus est « NON EXÉCUTÉ »."""
+    from eval.eval_apertus import executer, rapport
+    panne = executer(Maquette({}))
+    assert all(t["acceptees"] == 0 and t["indisponibles"] == t["cas"] for t in panne.values())
+    menteur = Maquette({k: _expl("Écrivez à anna@exemple.ch") for k in ("expliquer_opportunite", "rediger_sollicitation",
+                                                                         "capturer_rencontre", "vocabulaire")})
+    faux = executer(menteur)
+    assert all(t["acceptees"] == 0 for t in faux.values())
+    assert "NON EXÉCUTÉ" in rapport(executer(None), None, None)
