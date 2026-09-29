@@ -23,6 +23,9 @@ from .pareto import evaluer
 from .reseau import graphe_actuel
 
 
+ISSUES = ("REALISEE", "REFUSEE", "SIMULEE_SEULEMENT", "REMPLACEE", "SANS_SUITE_OBSERVEE")
+
+
 class ErreurDecision(ValueError):
     pass
 
@@ -40,22 +43,34 @@ def enregistrer(m: Memoire, le: date, plan: dict, par: str, membres: list[str]) 
                                   "hypothese": "projection supposant toutes les actions acceptées"}))
 
 
-def _suite(m: Memoire, a: str, b: str, depuis: date, maintenant: date) -> list[Evt]:
+def _suite(m: Memoire, a: str, b: str, depuis: date, maintenant: date, jusqu_a: Optional[date] = None) -> list[Evt]:
+    """Faits de la paire dans la FENÊTRE de la décision : [date de décision, décision suivante sur la même paire[."""
     k = cle(a, b)
     return sorted((e for e in m.evenements(jusqu_au=maintenant)
-                   if len(e.acteurs) >= 2 and cle(*e.acteurs[:2]) == k and e.le >= depuis), key=lambda e: (e.le, e.seq))
+                   if len(e.acteurs) >= 2 and cle(*e.acteurs[:2]) == k and e.le >= depuis
+                   and (jusqu_a is None or e.le < jusqu_a)), key=lambda e: (e.le, e.seq))
+
+
+def _decision_suivante(m: Memoire, decision: Evt, a: str, b: str, maintenant: date) -> Optional[date]:
+    """Date de la décision SUIVANTE qui reprend la même paire : un résultat n'est attribué qu'à la plus récente
+    (défaut trouvé par EXP-N : une acceptation était créditée à deux décisions)."""
+    suivantes = [e.le for e in m.evenements("DECISION_ORGANISATION", jusqu_au=maintenant)
+                 if (e.le, e.seq) > (decision.le, decision.seq) and sorted([a, b]) in e.donnees.get("paires", [])]
+    return min(suivantes) if suivantes else None
 
 
 def ecart(m: Memoire, decision: Evt, maintenant: date, membres: list[str]) -> dict:
     d = decision.donnees
     actions = []
     for a, b in d["paires"]:
-        suite = _suite(m, a, b, decision.le, maintenant)
+        suivante = _decision_suivante(m, decision, a, b, maintenant)
+        suite = _suite(m, a, b, decision.le, maintenant, suivante)
         niv = _atteint(suite, maintenant, 90)
         decisifs = [e for e in suite if e.type == "INTRO_DECLINEE" or (e.type in _CONNEXION and e.statut in _REEL)]
         refus = bool(decisifs) and decisifs[-1].type == "INTRO_DECLINEE"   # le fait le plus RÉCENT gouverne
         issue = ("REFUSEE" if refus else "REALISEE" if niv["CONNEXION"] is True
-                 else "SIMULEE_SEULEMENT" if niv["CONTACT"] is not None else "SANS_SUITE_OBSERVEE")
+                 else "SIMULEE_SEULEMENT" if niv["CONTACT"] is not None
+                 else "REMPLACEE" if suivante is not None else "SANS_SUITE_OBSERVEE")
         actions.append({"paire": [a, b], "issue": issue,
                         "activation_reelle": niv["ACTIVATION"] is True})
     g0 = graphe_actuel(m, decision.le)                    # le réseau tel qu'il était le jour de la décision
@@ -65,7 +80,7 @@ def ecart(m: Memoire, decision: Evt, maintenant: date, membres: list[str]) -> di
     prevu = d.get("projection", {})
     return {"decision_le": decision.le.isoformat(), "noms": d.get("noms", []), "actions": actions,
             "prevu": prevu, "realise": {k: obs[k] for k in ("inclusion", "cohesion")} | {"reciprocite": None},
-            "comptes": {i: sum(x["issue"] == i for x in actions) for i in ("REALISEE", "REFUSEE", "SIMULEE_SEULEMENT", "SANS_SUITE_OBSERVEE")},
+            "comptes": {i: sum(x["issue"] == i for x in actions) for i in ISSUES},
             "note": "réalisé = actions avec une connexion RÉELLE après la décision ; la réciprocité réalisée n'est pas observable"}
 
 
@@ -73,7 +88,7 @@ def historique(m: Memoire, maintenant: date, membres: list[str], n_min_taux: int
     decisions = m.evenements("DECISION_ORGANISATION", jusqu_au=maintenant)
     ecarts = [ecart(m, d, maintenant, membres) for d in decisions]
     total = sum(len(e["actions"]) for e in ecarts)
-    comptes = {i: sum(e["comptes"][i] for e in ecarts) for i in ("REALISEE", "REFUSEE", "SIMULEE_SEULEMENT", "SANS_SUITE_OBSERVEE")}
+    comptes = {i: sum(e["comptes"][i] for e in ecarts) for i in ISSUES}
     taux: Optional[float] = round(comptes["REALISEE"] / total, 2) if total >= n_min_taux else None
     return {"decisions": len(ecarts), "actions": total, "comptes": comptes, "taux_realisation": taux,
             "n_min_taux": n_min_taux, "ecarts": ecarts,

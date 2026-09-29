@@ -211,3 +211,21 @@ Résultat · Cas d'échec · Décision · Preuve. Les hypothèses et baselines s
 - **Limite.** « Raison prouvée » = aide dans un sens au moins ; une relation peut avoir d'autres bonnes raisons que le
   système ignore (dit).
 - **Décision.** KEEP. **Preuve.** `tests/test_diagnostic.py::test_chaque_changement_recoit_une_action_prouvee_ou_le_silence`.
+
+## EXP-N — La boucle sur trois mois : fait-elle mieux que ne rien faire ?
+- **Hypothèse.** Jouée chaque mois (diagnostic → plan ÉQUILIBRE → décision enregistrée → une part des actions acceptée
+  → vieillissement), la boucle garde plus de membres reliés et un plus grand groupe robuste que le même réseau sans
+  action — même avec un taux d'acceptation faible — et le bilan prévu/réalisé retrouve exactement ce qui a été accepté.
+- **Baseline.** Le même réseau, les mêmes mois, sans aucune action.
+- **Hypothèses déclarées.** Taux d'acceptation SIMULÉ (30 %, 60 %, 100 %), tirage reproductible ; une action acceptée
+  produit une introduction acceptée ; aucune autre interaction.
+- **Implémentation.** `eval/simulation_boucle.py` (5 réseaux de 120 membres, 3 mois, plan ÉQUILIBRE de 5 actions).
+- **Défaut trouvé par le contrôle d'intégrité.** Le bilan comptait 5,8 réalisations pour 5,0 acceptations (30 %) :
+  double attribution d'une acceptation à deux décisions sur la même paire → FAILURES n° 38, corrigé ; après correction,
+  réalisé selon le bilan = accepté **exactement** (5,0 / 8,4 / 15,0), figé dans un test.
+- **Résultat.** Membres reliés en fin de période : sans action **1,4** ; boucle à 30 % **9,2** ; 60 % **13,8** ;
+  100 % **19,6**. Plus grand groupe robuste : 1,0 / 1,0 / 1,6 / 5,0 — le plan ÉQUILIBRE construit peu de robustesse.
+- **Lecture honnête.** Monde pessimiste (aucune interaction spontanée : sans action, presque tout s'éteint) ; le gain est
+  mécanique (des actions acceptées créent des relations). Ce qui est démontré : la boucle fonctionne de bout en bout,
+  et son bilan est EXACT par rapport à ce qui s'est passé.
+- **Décision.** KEEP (preuve d'intégrité). **Preuve.** `eval/resultats_simulation_boucle.md`, `tests/test_boucle.py`.

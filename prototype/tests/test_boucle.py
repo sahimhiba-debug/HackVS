@@ -32,7 +32,7 @@ def test_prevu_contre_realise_sur_faits_reels_seulement():
     _e(m, "INTRO_DEMANDEE", 7, "a", "e", r=1)
     _e(m, "INTRO_DECLINEE", 8, "a", "e", r=1)                  # refusée
     ec = boucle.ecart(m, dec, J0 + timedelta(days=30), MEMBRES)  # b–f : rien
-    assert ec["comptes"] == {"REALISEE": 1, "REFUSEE": 1, "SIMULEE_SEULEMENT": 1, "SANS_SUITE_OBSERVEE": 1}
+    assert ec["comptes"] == {"REALISEE": 1, "REFUSEE": 1, "SIMULEE_SEULEMENT": 1, "REMPLACEE": 0, "SANS_SUITE_OBSERVEE": 1}
     assert ec["prevu"]["inclusion"] == 3 and ec["realise"]["inclusion"] == 1     # seul d a été relié pour de vrai
     assert ec["realise"]["cohesion"] == 4                                          # a-b-c-d
 
@@ -89,3 +89,22 @@ def test_api_decision_n_accepte_que_des_actions_proposables_puis_prevu_realise()
     assert ok.status_code == 200
     h = c.get("/api/reseau/decisions").json()
     assert h["decisions"] == 1 and h["comptes"]["REALISEE"] == 0 and h["taux_realisation"] is None
+
+
+def test_un_resultat_n_est_attribue_qu_a_la_decision_la_plus_recente_pour_cette_paire():
+    """Défaut trouvé par EXP-N : une paire décidée deux fois (mois 1 sans suite, mois 2 acceptée) était créditée aux DEUX
+    décisions — le bilan comptait plus de réalisations que d'acceptations."""
+    m = Memoire()
+    d1 = boucle.enregistrer(m, J0, {"paires": [["c", "d"]], "objectifs": {}}, "org", MEMBRES)
+    d2 = boucle.enregistrer(m, J0 + timedelta(days=30), {"paires": [["c", "d"]], "objectifs": {"inclusion": 1}}, "org", MEMBRES)
+    _e(m, "INTRO_ACCEPTEE", 33, "c", "d")
+    fin = J0 + timedelta(days=60)
+    assert boucle.ecart(m, d1, fin, MEMBRES)["actions"][0]["issue"] == "REMPLACEE"
+    assert boucle.ecart(m, d2, fin, MEMBRES)["actions"][0]["issue"] == "REALISEE"
+    assert boucle.historique(m, fin, MEMBRES)["comptes"]["REALISEE"] == 1
+
+
+def test_integrite_de_la_boucle_sur_plusieurs_mois_le_bilan_retrouve_exactement_les_acceptations():
+    from eval.simulation_boucle import jouer
+    r = jouer(1100, 2, 0.5)
+    assert r["decisions"] == 2 and r["realisees_selon_bilan"] == r["acceptees"]
