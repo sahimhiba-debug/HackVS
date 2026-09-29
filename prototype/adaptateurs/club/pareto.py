@@ -75,17 +75,20 @@ def frontiere(g0: nx.Graph, membres: list[str], cands: list[Candidate], k: int,
               plafond: int = 1, pas: int = 4, plans_supplementaires: list[list[Candidate]] | None = None) -> dict:
     """Front des plans NON DOMINÉS parmi tous les plans générés (pondérations + plans heuristiques fournis). C'est une
     APPROXIMATION du vrai front (la recherche exhaustive est combinatoire) : on le dit dans la sortie."""
+    if not cands:   # rien de prouvé à proposer : pas de « plan vide idéal » baptisé de quatre noms (défaut trouvé)
+        return {"nature": "SIMULATION", "decision": "NE_RIEN_FAIRE", "raison": "aucune action fondée sur une aide prouvée",
+                "plans_explores": 0, "front": [], "ideal": {}, "un_plan_atteint_l_ideal": False, "plans_nommes": []}
     g0 = g0.copy()
     g0.add_nodes_from(membres)
     vus: dict[tuple, dict] = {}
     generes = [(w, glouton(g0, cands, k, w, plafond)) for w in simplexe(pas)]
     generes += [("heuristique", p) for p in plans_supplementaires or []]
-    for w, plan in generes:
+    for _origine, plan in generes:
         cle_plan = tuple(sorted((c.a, c.b) for c in plan))
         if cle_plan not in vus:
-            vus[cle_plan] = {"paires": [list(p) for p in cle_plan], "objectifs": evaluer(g0, membres, plan), "poids": [w]}
+            vus[cle_plan] = {"paires": [list(p) for p in cle_plan], "objectifs": evaluer(g0, membres, plan), "origines": 1}
         else:
-            vus[cle_plan]["poids"].append(w)
+            vus[cle_plan]["origines"] += 1
     plans = list(vus.values())
     front = [p for p in plans if not any(domine(q["objectifs"], p["objectifs"]) for q in plans)]
     ideal = {a: max(p["objectifs"][a] for p in front) for a in AXES} if front else {}
@@ -102,7 +105,7 @@ def frontiere(g0: nx.Graph, membres: list[str], cands: list[Candidate], k: int,
     fusionnes: dict[int, list[str]] = {}
     for nom, i in noms.items():
         fusionnes.setdefault(i, []).append(nom)
-    return {"nature": "SIMULATION", "plans_explores": len(plans), "front": front, "ideal": ideal,
+    return {"nature": "SIMULATION", "decision": "PROPOSER_A_L_HUMAIN", "plans_explores": len(plans), "front": front, "ideal": ideal,
             "un_plan_atteint_l_ideal": any(all(p["objectifs"][a] == ideal[a] for a in AXES) for p in front),
             "plans_nommes": [{"noms": v, **front[i]} for i, v in sorted(fusionnes.items())],
             "hypotheses": ["toutes les actions supposées acceptées", "pondérations explorées sur un simplexe (pas 1/%d)" % pas,

@@ -115,3 +115,18 @@ Résultat · Cas d'échec · Décision · Preuve. Les hypothèses et baselines s
   recommandations par similarité n'ont aucune aide prouvée**.
 - **Décision.** DELETE l'idée « sérendipité par diversité sectorielle » (aucun mécanisme à ajouter) ; KEEP le fait mesuré
   (preuve vs similarité). Limite : 33 profils fictifs, écrits par nous. **Preuve.** `eval/resultats_serendipite.md`.
+
+## EXP-H — Diagnostic d'organisation : la boucle complète en une vue
+- **Hypothèse.** Les modules A–F s'assemblent en une vue unique (comprendre → diagnostiquer → voir venir → agir →
+  observer → se souvenir) utilisable à la taille du Club, sans écriture, avec « ne rien faire » quand rien n'est prouvé.
+- **Implémentation.** `adaptateurs/club/diagnostic.py`, route `/api/reseau/diagnostic` (organisation, démo). Phénomènes
+  triés par priorité (choix de produit déclaré : ce qui prive des membres de toute relation d'abord). Le front de Pareto
+  remplace les deux options du cycle 6 (dominées dans 13/20 et 11/20 réseaux, EXP-C).
+- **Défauts trouvés en l'exécutant.** (1) Pareto sans aucune action : un « plan vide » annoncé idéal et baptisé de
+  quatre noms → NE_RIEN_FAIRE explicite. (2) À 500 membres : KeyError, une relation menacée touchant un NON-membre
+  (exposant) → filtrée à la source (test rouge vérifié). (3) 5,2 s à 150 membres (204 s à 1000) : `calculer_aides` appelé
+  deux fois et reconnaissance de concepts recalculée sur les mêmes textes → une seule fois + mémorisation (fonction pure).
+- **Résultat.** 150 membres : **0,67 s** ; 500 : 5,8 s ; 1000 : 25 s. Sur la scène : 101 ms, 4 phénomènes triés, un seul
+  plan non dominé (pas de conflit sur ce petit réseau : dit, pas inventé). Non-régression : 201 tests, 20/20, benchmark
+  de matching par catégorie IDENTIQUE à l'octet près.
+- **Décision.** KEEP. **Preuve.** `tests/test_diagnostic.py`, `tests/test_extinction.py`.

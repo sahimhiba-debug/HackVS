@@ -131,6 +131,16 @@ class Taxonomie:
 
         « sécurité informatique » compte comme cybersécurité, pas comme informatique générale.
         """
+        cache = self.__dict__.setdefault("_cache_concepts", {})   # fonction PURE du texte : mémorisée (mesure : 85 % du diagnostic)
+        if texte_norm in cache:
+            return set(cache[texte_norm])                         # copie : l'appelant ne peut pas altérer le cache
+        if len(cache) > 50_000:
+            cache.clear()
+        res = self._concepts_dans(texte_norm)
+        cache[texte_norm] = frozenset(res)
+        return res
+
+    def _concepts_dans(self, texte_norm: str) -> set[str]:
         if not hasattr(self, "_triees"):
             self._triees = sorted(((e, c.id) for c in self.concepts.values() for e in c.expressions), key=lambda x: -len(x[0]))
         pris: list[tuple[int, int]] = [(m.start(), m.end()) for e in self.composes_trompeurs for m in motif(e).finditer(texte_norm)]

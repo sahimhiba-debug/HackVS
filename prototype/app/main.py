@@ -32,6 +32,7 @@ from .models import Besoin, Profil
 from .store import STATUTS_PUBLICS, ErreurMetier, Interdit, Magasin
 from .taxonomy import DATA_DIR, charger_taxonomie
 from adaptateurs.club import cycle as cycle_club
+from adaptateurs.club import diagnostic as diag_reseau
 from adaptateurs.club import interventions, reseau
 from plateforme.memoire import Memoire
 
@@ -815,6 +816,18 @@ def interventions_reseau(k: int = Query(5, ge=1, le=20), plafond: int = Query(1,
         for a in o["actions"]:
             a["noms"] = [ids[x].nom for x in a["paire"] if x in ids]
     return p | {"donnees_fictives": True}
+
+
+@app.get("/api/reseau/diagnostic")
+def diagnostic_reseau(k: int = Query(5, ge=1, le=20), horizon: int = Query(30, ge=7, le=90)):
+    """Vue ORGANISATION : comprendre → diagnostiquer → voir venir → agir (front de Pareto) → observer → se souvenir.
+    Rien n'est écrit ni envoyé ; projections et simulations étiquetées."""
+    if MODE != "demo":
+        raise HTTPException(501, "Vue d'organisation : rôle d'animateur·rice authentifié non implémenté.")
+    projeter_reseau()
+    t = aujourdhui_reseau()
+    d = diag_reseau.diagnostic(MEMOIRE, profils_effectifs(), MAGASIN.besoins() + cycle_club.besoins_publies(MEMOIRE, t), TAX, t, k, horizon)
+    return d | {"donnees_fictives": True}
 
 
 @app.get("/api/reseau/boite")

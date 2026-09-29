@@ -40,9 +40,10 @@ class Candidate:
     preuves: list[dict] = field(default_factory=list)
 
 
-def candidates(profils: list[Profil], besoins_publies: list, tax, g_actuel: nx.Graph, etats: dict[str, str]) -> list[Candidate]:
+def candidates(profils: list[Profil], besoins_publies: list, tax, g_actuel: nx.Graph, etats: dict[str, str],
+               aides: Optional[dict] = None) -> list[Candidate]:
     membres = [p for p in profils if p.type == "membre_club" and p.accepte_introductions and p.disponible]
-    aides = calculer_aides(membres, besoins_publies, tax)
+    aides = aides if aides is not None else calculer_aides(membres, besoins_publies, tax)
     par_id = {p.id: p for p in membres}
     res: dict[str, Candidate] = {}
     for (i, j), aide in sorted(aides.items()):

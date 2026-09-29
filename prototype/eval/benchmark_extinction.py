@@ -11,7 +11,7 @@ from __future__ import annotations
 import argparse
 import random
 import statistics
-from datetime import date, timedelta
+from datetime import timedelta
 from pathlib import Path
 
 import networkx as nx
@@ -21,9 +21,7 @@ from adaptateurs.club import reseau
 from eval.perf_echelle import generer
 
 
-def echeances(m, t) -> dict[str, date]:
-    return {k: date.fromisoformat(v["derniere_interaction"]) + timedelta(days=reseau.JOURS_AVANT_STALE + 1)
-            for k, v in reseau.etats_detailles(m, t).items() if v["derniere_interaction"]}
+echeances = ex.echeances
 
 
 def _plafonne(ordre: list[str], k: int, plafond: int) -> list[str]:

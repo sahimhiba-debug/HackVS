@@ -118,3 +118,8 @@ def test_temporel_donnees_vides_et_membres_inconnus():
     assert temporel.depuis(Memoire(), ["x"], date(2026, 1, 1), date(2026, 6, 1))["evenements"] == []
     g0 = nx.Graph([("a", "b"), ("b", "c")])
     assert temporel.changements(g0, nx.Graph(), ["z"]) == []    # des membres hors liste ne produisent aucun événement
+
+
+def test_pareto_sans_aucune_action_prouvee_ne_rien_faire():
+    f = pa.frontiere(nx.Graph([("a", "b")]), ["a", "b", "c"], [], k=3)
+    assert f["decision"] == "NE_RIEN_FAIRE" and f["front"] == [] and not f["un_plan_atteint_l_ideal"]

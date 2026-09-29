@@ -44,3 +44,12 @@ def test_echeancier_distingue_raison_prouvee_et_invitation():
     assert actions["a3|b1"]["raison_prouvee"] is False and "pas de relance" in actions["a3|b1"]["action"]
     assert e["sans_action"]["premiere_perte"] == (T + timedelta(days=10)).isoformat()
     assert e["avec_ravivements"]["a_l_horizon"]["sans_relation_actuelle"] < e["sans_action"]["a_l_horizon"]["sans_relation_actuelle"]
+
+
+def test_une_relation_avec_un_non_membre_est_ignoree_sans_plantage():
+    """Défaut trouvé à 500 membres : KeyError quand une relation menacée touche un non-membre (exposant, visiteur)."""
+    g, m, ech = _monde()
+    g.add_edge("a1", "exposant_z")
+    ech["a1|exposant_z"] = T + timedelta(days=3)
+    choix = ex.prevenir(g, m, ech, T, 30, k=5, plafond=3)
+    assert all("exposant_z" not in x for x in choix)

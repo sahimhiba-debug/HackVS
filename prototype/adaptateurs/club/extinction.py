@@ -16,10 +16,18 @@ from typing import Optional
 
 import networkx as nx
 
+from plateforme.memoire import Memoire
 from plateforme.optimisation import cle
 
 from .interventions import _composantes, indicateurs_actuels
+from .reseau import JOURS_AVANT_STALE, etats_detailles
 from .temporel import changements
+
+
+def echeances(m: Memoire, maintenant: date) -> dict[str, date]:
+    """Date d'extinction de chaque paire : dernière interaction + JOURS_AVANT_STALE + 1 (même règle que l'état)."""
+    return {k: date.fromisoformat(v["derniere_interaction"]) + timedelta(days=JOURS_AVANT_STALE + 1)
+            for k, v in etats_detailles(m, maintenant).items() if v["derniere_interaction"]}
 
 
 def projeter(g_act: nx.Graph, membres: list[str], echeances: dict[str, date], maintenant: date, horizon: int,
@@ -58,7 +66,9 @@ def prevenir(g_act: nx.Graph, membres: list[str], echeances: dict[str, date], ma
     Les deux sont en conflit mesuré (EXP-C, EXP-F) : l'humain choisit."""
     g, _ = projeter(g_act, membres, echeances, maintenant, horizon)
     fin = maintenant + timedelta(days=horizon)
-    menacees = sorted(k_ for k_, d in echeances.items() if maintenant < d <= fin and g_act.has_edge(*k_.split("|")))
+    dans = set(membres)   # une relation avec un non-membre (exposant, visiteur) n'est pas ravivable par le Club
+    menacees = sorted(k_ for k_, d in echeances.items() if maintenant < d <= fin and g_act.has_edge(*k_.split("|"))
+                      and set(k_.split("|")) <= dans)
     choisies: list[str] = []
     n: dict[str, int] = {}
     while len(choisies) < k:
