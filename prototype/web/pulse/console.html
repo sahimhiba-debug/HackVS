@@ -110,12 +110,14 @@
       if (session) o.headers["X-Pulse-Session"] = session;
       if (corps !== undefined) { o.headers["Content-Type"] = "application/json"; o.body = JSON.stringify(corps); }
       let r;
-      try { r = await fetch(chemin, o); } catch { throw new Error("Serveur injoignable : vérifiez qu'il est lancé."); }
+      if (AbortSignal.timeout) o.signal = AbortSignal.timeout(30000);
+      try { r = await fetch(chemin, o); } catch (e) { throw new Error(e && e.name === "TimeoutError" ? "Le serveur ne répond pas (30 s)." : "Serveur injoignable : vérifiez qu'il est lancé."); }
       const d = await r.json().catch(() => ({}));
       if (r.status === 403 && /jeton/.test(d.detail || "") && !deuxieme) {
         const j = window.prompt("Jeton de la console du Club :");
         if (j) { try { sessionStorage.setItem("console-jeton", j); } catch { /* stockage indisponible */ } return api(chemin, { methode, corps, session }, true); }
       }
+      if (r.status >= 500) throw new Error(`Erreur du serveur${d.requete ? " (référence " + d.requete + ")" : ""}.`);
       if (!r.ok) throw new Error(typeof d.detail === "string" ? d.detail : `Erreur ${r.status}`);
       return d;
     }

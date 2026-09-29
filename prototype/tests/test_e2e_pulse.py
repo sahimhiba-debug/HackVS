@@ -26,11 +26,11 @@ def test_console_demo_guidee_complete(url):  # noqa: F811
         pg.on("console", lambda m: erreurs.append(m.text) if m.type == "error" else None)
         pg.goto(url + "/console")
         pg.click("#reinit")
-        pg.wait_for_function("document.querySelector('#etape').textContent.includes('Étape 0/10')")
+        pg.wait_for_function("() => document.querySelector('#etape').textContent.includes('Étape 0/10')")
         for i in range(1, 11):
             pg.click("#suivant")
             try:
-                pg.wait_for_function(f"document.querySelector('#etape').textContent.includes('Étape {i}/10')")
+                pg.wait_for_function(f"() => document.querySelector('#etape').textContent.includes('Étape {i}/10')")
             except Exception as e:                                          # message utile en cas d'échec
                 raise AssertionError((i, pg.inner_text("#etape"), pg.inner_text("#toasts"), erreurs,
                                       pg.evaluate("document.querySelector('#suivant').disabled"))) from e
@@ -101,3 +101,55 @@ def test_application_membre_de_l_invitation_au_pouls(url, taille):  # noqa: F811
         assert _sans_debordement(pg)
         b.close()
     assert erreurs == []
+
+
+def test_application_face_aux_pannes_reseau(url):  # noqa: F811
+    """Réponse lente d'un écran quitté (jamais affichée par-dessus le nouvel écran), panne serveur (écran d'erreur avec
+    « Réessayer » et référence de requête), hors ligne (message explicite), session invalide (retour à l'accès)."""
+    pw = pytest.importorskip("playwright.sync_api")
+    console = {"Content-Type": "application/json", "X-Pulse-Console": "1"}
+    urllib.request.urlopen(urllib.request.Request(url + "/api/pulse/demo/aller/10", data=b"{}", headers=console))
+    personas = json.loads(urllib.request.urlopen(urllib.request.Request(url + "/api/pulse/console/personas", headers=console)).read())
+    session = next(x["session"] for x in personas if x["id"] == "n01")
+    with pw.sync_playwright() as p:
+        b = _chromium(p)
+        ctx = b.new_context(viewport={"width": 390, "height": 844})
+        pg = ctx.new_page()
+        pg.set_default_timeout(60_000)
+        pg.goto(url + f"/app?session={session}#profil")
+        pg.wait_for_selector("text=Je peux aider avec")
+        assert "session=" not in pg.url                                      # le jeton ne reste pas dans l'adresse
+
+        # 1. réponse périmée : le Pouls répond lentement, le membre est déjà passé au Profil
+        def lent(route):
+            pg.wait_for_timeout(1500)
+            route.continue_()
+        pg.route("**/api/pulse/moi/pouls", lent)
+        pg.evaluate("location.hash = '#pouls'")
+        pg.evaluate("location.hash = '#profil'")
+        pg.wait_for_selector("text=Je peux aider avec")
+        pg.wait_for_timeout(2500)                                            # la réponse lente est arrivée entre-temps
+        texte = pg.inner_text("main")
+        assert "Se déconnecter" in texte and "Ce que votre réseau" not in texte   # le Profil est resté affiché
+        pg.unroute("**/api/pulse/moi/pouls")
+
+        # 2. panne serveur : écran d'erreur, référence, puis « Réessayer » rétablit
+        pg.route("**/api/pulse/moi/activations", lambda r: r.fulfill(status=500, content_type="application/json",
+                                                                     body='{"detail": "x", "requete": "ref123456789"}'))
+        pg.evaluate("location.hash = '#activations'")
+        pg.wait_for_selector("text=Impossible d'afficher cet écran")
+        assert "ref123456789" in pg.inner_text("main")
+        pg.unroute("**/api/pulse/moi/activations")
+        pg.click("text=Réessayer")
+        pg.wait_for_selector("text=Impossible d'afficher cet écran", state="detached")
+
+        # 3. hors ligne : message explicite, pas d'écran figé
+        ctx.set_offline(True)
+        pg.evaluate("location.hash = '#memoire'")
+        pg.wait_for_selector("text=Hors ligne")
+        ctx.set_offline(False)
+
+        # 4. session invalide : retour à l'écran d'accès
+        pg.evaluate("sessionStorage.setItem('pulse-session', 'n01.1.faux'); location.hash = '#pouls'; location.reload()")
+        pg.wait_for_selector("text=Activez votre compte du Club")
+        b.close()

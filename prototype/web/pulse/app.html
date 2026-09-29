@@ -73,17 +73,37 @@
     const ecrire = (k, v) => { try { v === null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch { /* stockage indisponible */ } };
     const params = new URLSearchParams(location.search);
     let session = params.get("session") || lire("pulse-session");
-    if (params.get("session")) ecrire("pulse-session", session);
+    if (params.get("session")) {                    // jeton reçu de la console : rangé, puis RETIRÉ de l'adresse (historique, captures)
+      ecrire("pulse-session", session);
+      params.delete("session"); params.delete("t");
+      history.replaceState(null, "", location.pathname + (params.toString() ? "?" + params : "") + location.hash);
+    }
     function toast(msg, genre = "") { const t = h("div", { class: "toast " + genre }, msg); $("#toasts").append(t); setTimeout(() => t.remove(), 3800); }
+    // Chaque navigation ouvre une GÉNÉRATION : une réponse arrivée après qu'on a changé d'écran est périmée et n'est jamais
+    // affichée (sinon un écran lent pourrait recouvrir l'écran demandé ensuite). Les lectures en cours sont annulées.
+    let generation = 0, lectures = new AbortController();
+    class Perime extends Error {}
+    const DELAI_MS = 15000;
+    const MESSAGES = { 403: "Vous n'avez pas accès à cet élément.", 429: "Trop de demandes : réessayez dans une minute." };
     async function api(chemin, { methode, corps } = {}) {
+      const g = generation;
+      const lecture = corps === undefined && !methode;
       const o = { method: methode || (corps === undefined ? "GET" : "POST"), headers: {} };
       if (session) o.headers["X-Pulse-Session"] = session;
       if (corps !== undefined) { o.headers["Content-Type"] = "application/json"; o.body = JSON.stringify(corps); }
+      const signaux = [AbortSignal.timeout ? AbortSignal.timeout(DELAI_MS) : null, lecture ? lectures.signal : null].filter(Boolean);
+      if (signaux.length) o.signal = AbortSignal.any ? AbortSignal.any(signaux) : signaux[0];
       let r;
-      try { r = await fetch(chemin, o); } catch { throw new Error("Hors ligne : Club Pulse a besoin du réseau pour cette action."); }
+      try { r = await fetch(chemin, o); } catch (e) {
+        if (lecture && g !== generation) throw new Perime();
+        if (e && e.name === "TimeoutError") throw new Error("Le serveur ne répond pas : réessayez.");
+        throw new Error(navigator.onLine === false ? "Hors ligne : Club Pulse a besoin du réseau pour cette action." : "Serveur injoignable : réessayez.");
+      }
       const d = await r.json().catch(() => ({}));
-      if (r.status === 401) { ecrire("pulse-session", null); session = null; location.hash = "#acces"; }
-      if (!r.ok) throw new Error(typeof d.detail === "string" ? d.detail : "Données invalides.");
+      if (r.status === 401) { ecrire("pulse-session", null); session = null; if (location.hash !== "#acces") location.hash = "#acces"; throw new Error("Session expirée : entrez à nouveau votre code."); }
+      if (lecture && g !== generation) throw new Perime();          // réponse d'un écran quitté entre-temps
+      if (r.status >= 500) throw new Error(`Erreur du serveur${d.requete ? " (référence " + d.requete + ")" : ""} : réessayez.`);
+      if (!r.ok) throw new Error(MESSAGES[r.status] || (typeof d.detail === "string" ? d.detail : "Données invalides."));
       return d;
     }
     const ICONES = { opportunite: "⚡", contribution: "🤝", accord: "🤝", activation: "⇄", evenement: "📅", memoire: "🧠" };
@@ -335,16 +355,30 @@
 
     // ------------------------------------------------------------------ routeur
     async function route() {
+      const g = ++generation;
+      lectures.abort(); lectures = new AbortController();
       const [nom, id] = (location.hash.slice(1) || "pouls").split("/");
       if (!session && nom !== "acces") { location.hash = "#acces"; return; }
       $("#onglets").hidden = nom === "acces" || nom === "accueil";
       document.querySelectorAll("#onglets a").forEach((a) => a.setAttribute("aria-current", a.dataset.o === nom ? "page" : "false"));
+      const ecran = $("#ecran");
+      ecran.setAttribute("aria-busy", "true");
+      const attente = setTimeout(() => { if (g === generation) ecran.replaceChildren(h("p", { class: "note chargement", role: "status" }, "Chargement…")); }, 250);
       try {
-        ({ acces: ecranAcces, accueil: ecranAccueil, pouls: ecranPouls, opp: () => ecranOpportunite(id), demande: () => ecranDemande(id), act: () => ecranActivation(id),
+        await ({ acces: ecranAcces, accueil: ecranAccueil, pouls: ecranPouls, opp: () => ecranOpportunite(id), demande: () => ecranDemande(id), act: () => ecranActivation(id),
           activations: ecranActivations, evenements: ecranEvenements, memoire: ecranMemoire, profil: ecranProfil }[nom] || ecranPouls)();
-      } catch (e) { toast(e.message, "erreur"); }
-      window.scrollTo(0, 0);
+      } catch (e) {
+        if (e instanceof Perime || g !== generation) return;          // un écran plus récent a pris la place : rien à dire
+        ecran.replaceChildren(h("div", { class: "carte", role: "alert" }, h("span", { class: "surtitre" }, "Impossible d'afficher cet écran"),
+          h("p", { style: "margin-top:6px" }, e.message), h("div", { class: "actions", style: "margin-top:10px" }, h("button", { class: "btn plein petit", onclick: route }, "Réessayer"))));
+      } finally {
+        clearTimeout(attente);
+        if (g === generation) ecran.removeAttribute("aria-busy");
+      }
+      if (g === generation) window.scrollTo(0, 0);
     }
+    window.addEventListener("online", () => toast("De retour en ligne."));
+    window.addEventListener("offline", () => toast("Hors ligne : les actions attendront le réseau.", "erreur"));
     window.addEventListener("hashchange", route);
     window.addEventListener("message", (ev) => { if (ev.origin === location.origin && ev.data === "rafraichir") route(); });
     if (params.get("code") && !session) location.hash = "#acces";
