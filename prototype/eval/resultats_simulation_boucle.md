@@ -5,8 +5,8 @@
 | Scénario | Membres reliés (fin) | Plus grand groupe robuste (fin) | Actions acceptées | Réalisées selon le bilan |
 |---|---|---|---|---|
 | SANS ACTION | 1.4 | 1.0 | 0.0 | 0.0 |
-| BOUCLE, 30 % acceptées | 9.2 | 1.0 | 5.0 | 5.0 |
-| BOUCLE, 60 % acceptées | 13.8 | 1.6 | 8.4 | 8.4 |
+| BOUCLE, 30 % acceptées | 9.8 | 1.0 | 5.0 | 5.0 |
+| BOUCLE, 60 % acceptées | 14.0 | 1.6 | 8.4 | 8.4 |
 | BOUCLE, 100 % acceptées | 19.6 | 5.0 | 15.0 | 15.0 |
 
 Le bilan prévu/réalisé doit retrouver EXACTEMENT les actions acceptées (contrôle d'intégrité de la boucle).
@@ -17,6 +17,6 @@ Le bilan prévu/réalisé doit retrouver EXACTEMENT les actions acceptées (cont
 |---|---|---|---|
 | INCLUSION | 18.2 | 2.0 | 1.0 |
 | COHESION | 13.4 | 5.4 | 1.0 |
-| COHESION_ROBUSTE | 13.2 | 5.4 | 1.0 |
-| RECIPROCITE | 13.2 | 4.6 | 1.6 |
-| EQUILIBRE | 13.8 | 4.4 | 1.6 |
+| COHESION_ROBUSTE | 13.2 | 5.6 | 1.0 |
+| RECIPROCITE | 13.6 | 4.4 | 1.6 |
+| EQUILIBRE | 14.0 | 4.6 | 1.6 |

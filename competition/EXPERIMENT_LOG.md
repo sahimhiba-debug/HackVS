@@ -223,14 +223,14 @@ Résultat · Cas d'échec · Décision · Preuve. Les hypothèses et baselines s
 - **Défaut trouvé par le contrôle d'intégrité.** Le bilan comptait 5,8 réalisations pour 5,0 acceptations (30 %) :
   double attribution d'une acceptation à deux décisions sur la même paire → FAILURES n° 38, corrigé ; après correction,
   réalisé selon le bilan = accepté **exactement** (5,0 / 8,4 / 15,0), figé dans un test.
-- **Résultat.** Membres reliés en fin de période : sans action **1,4** ; boucle à 30 % **9,2** ; 60 % **13,8** ;
-  100 % **19,6**. Plus grand groupe robuste : 1,0 / 1,0 / 1,6 / 5,0 — le plan ÉQUILIBRE construit peu de robustesse.
+- **Résultat** (régénéré après EXP-O, l'hystérésis modifiant le plan choisi d'un mois à l'autre). Membres reliés en fin
+  de période : sans action **1,4** ; boucle à 30 % **9,8** ; 60 % **14,0** ; 100 % **19,6**. Plus grand groupe robuste : 1,0 / 1,0 / 1,6 / 5,0 — le plan ÉQUILIBRE construit peu de robustesse.
 - **Lecture honnête.** Monde pessimiste (aucune interaction spontanée : sans action, presque tout s'éteint) ; le gain est
   mécanique (des actions acceptées créent des relations). Ce qui est démontré : la boucle fonctionne de bout en bout,
   et son bilan est EXACT par rapport à ce qui s'est passé.
 - **Décision.** KEEP (preuve d'intégrité). **Preuve.** `eval/resultats_simulation_boucle.md`, `tests/test_boucle.py`.
 - **Comparaison de politiques sur une saison (60 %, 3 mois, 5 réseaux) — INCONCLUSIVE.** Membres reliés : INCLUSION
-  18,2 ; ÉQUILIBRE 13,8 ; COHÉSION 13,4 ; ROBUSTE 13,2 ; RÉCIPROCITÉ 13,2. Groupe robuste ≈ 1 partout. Dans un monde
+  18,2 ; ÉQUILIBRE 14,0 ; RÉCIPROCITÉ 13,6 ; COHÉSION 13,4 ; ROBUSTE 13,2 (valeurs régénérées après EXP-O). Groupe robuste ≈ 1 partout. Dans un monde
   sans interaction spontanée ni soirée, 5 actions par mois ne maintiennent pas un réseau de 120 membres : les
   interventions ciblées sont MARGINALES face aux événements. Comparer des politiques exigerait de simuler aussi les
   soirées (hypothèses empilées) : non fait. Aucune recommandation de politique n'est tirée de cette mesure.
@@ -248,3 +248,8 @@ Résultat · Cas d'échec · Décision · Preuve. Les hypothèses et baselines s
   décision). Courbe : ε = 0 → 0,71 ; **ε = 0,1 → 0,76** (regret perdu moyen 0,006, max 0,1) ; ε = 0,3 → 0,77 (0,026).
 - **Décision.** KEEP modeste (ε = 0,1, seulement si une décision précédente existe) ; gain faible, dit comme tel.
   **Preuve.** `tests/test_observatoire.py::test_hysteresis…`.
+
+## Reproductibilité du sprint
+- `python scripts/reproduire_sprint.py` rejoue les 7 benchmarks du sprint (≈ 4 min). Première exécution : 6 fichiers
+  identiques à l'octet ; 1 fichier (simulation de la boucle) PÉRIMÉ par rapport au code — généré avant l'hystérésis
+  (EXP-O) — régénéré, chiffres corrigés ci-dessus ; deux exécutions successives identiques (déterminisme vérifié).
