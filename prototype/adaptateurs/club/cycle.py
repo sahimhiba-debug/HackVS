@@ -223,7 +223,8 @@ def repondre(m: Memoire, profils, tax, maintenant: date, relance_id: str, accept
     if par not in p["paire"]:
         raise ErreurCycle("seul un des deux membres concernés peut répondre")
     if not accepte:
-        m.ajouter(Evt(type="RELANCE_REFUSEE", le=maintenant, acteurs=p["paire"], donnees={"relance_id": relance_id, "par": par}, statut=Statut.DECLARE))
+        m.ajouter(Evt(type="RELANCE_REFUSEE", le=maintenant, acteurs=p["paire"], statut=Statut.DECLARE,
+                      donnees={"relance_id": relance_id, "par": par, "raison": r["type"]}))   # type : pour le bilan des interventions
         return {"suivi": False}
     m.ajouter(Evt(type="RELANCE_ACCEPTEE", le=maintenant, acteurs=p["paire"], donnees={"relance_id": relance_id, "par": par, "raison": r["type"]},
                   statut=Statut.DECLARE))
