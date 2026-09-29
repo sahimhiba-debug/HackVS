@@ -15,7 +15,6 @@
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 import os
@@ -257,7 +256,9 @@ class Intelligence:
                   local_seulement: Optional[str] = None) -> Reponse:
         """entrée → fournisseur → sortie BRUTE (non fiable) → validation (schéma, vocabulaire, extraits, faits, données
         personnelles) → acceptée, ou rejetée au profit du repli déterministe. Chaque issue est tracée."""
-        trace = hashlib.sha256(f"{tache}|{message}|{len(self.appels)}".encode()).hexdigest()[:12]
+        # identifiant d'appel SANS lien avec le contenu : une empreinte du message (ancienne version) permettait, à qui
+        # lit les journaux, de confirmer une supposition sur une note privée courte
+        trace = f"ia-{len(self.appels) + 1:06d}"
         t0 = time.perf_counter()
         ms = lambda: round((time.perf_counter() - t0) * 1000, 1)  # noqa: E731
         if self.f is None or local_seulement:

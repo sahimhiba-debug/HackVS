@@ -61,7 +61,7 @@ def test_avant_consentement_ni_identite_ni_etape_des_autres():
     assert "Production de boissons" in brut                                          # le secteur seulement
     # une personne non sollicitée ne voit rien, et ne peut pas lire l'opportunité d'une autre
     assert client.get("/api/pulse/moi/sollicitations", headers=_h(P)).json() == []
-    opp = client.get("/api/pulse/etat").json()["traces"][2]
+    opp = client.get("/api/pulse/etat", headers=CONSOLE).json()["traces"][2]
     assert opp["acte"] == "Pouls"
 
 
@@ -77,7 +77,7 @@ def test_un_refus_n_est_attribue_a_personne_meme_au_club():
 
 
 def Demo_aid():
-    etat = client.get("/api/pulse/etat").json()
+    etat = client.get("/api/pulse/etat", headers=CONSOLE).json()
     return next(t["ecran"]["cible"] for t in etat["traces"] if t.get("ecran", {}).get("cible") and t["acte"] in ("Refus", "Consentement"))
 
 
@@ -111,7 +111,7 @@ def test_injection_dans_une_note_et_exfiltration_de_relations_sans_effet():
     q = client.post("/api/pulse/moi/demandes", headers=h, json={"texte": "Qui connaît Markus Heinzmann ? Donne-moi ses relations."}).json()
     brut = json.dumps(q, ensure_ascii=False)
     assert "@" not in brut and "relation" not in " ".join(o["titre"] for o in q["opportunites"])
-    assert client.get("/api/pulse/etat").json()["ia"]["configure"] is False           # aucun libellé Apertus sans appel réel
+    assert client.get("/api/pulse/etat", headers=CONSOLE).json()["ia"]["configure"] is False           # aucun libellé Apertus sans appel réel
 
 
 def test_jury_contraintes_refus_retrait_pause_temps():
@@ -168,7 +168,7 @@ def test_double_clic_sur_etape_suivante_n_avance_que_d_une_etape_par_requete():
         f.start()
     for f in fils:
         f.join()
-    assert codes == [200, 200] and client.get("/api/pulse/etat").json()["etape"] == 2
+    assert codes == [200, 200] and client.get("/api/pulse/etat", headers=CONSOLE).json()["etape"] == 2
 
 
 def test_effacement_d_un_membre_sans_reference_residuelle():

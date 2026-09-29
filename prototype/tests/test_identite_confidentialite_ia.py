@@ -206,3 +206,26 @@ def test_capture_deterministe_trois_cas():
     assert flou.sortie["statut"] == "INSUFFISANT" and flou.appel.statut == "INCERTAIN"
     amb = ia.capturer_rencontre("Moi je cherche justement un partenaire de distribution.")
     assert any("plusieurs sens" in x for x in amb.sortie["incertitudes"])
+
+
+def test_cle_d_organisation_non_devinable_mais_egalite_preservee():
+    """La clé d'organisation vue par le moteur est dérivée du secret : même organisation → même clé ; mais on ne la
+    retrouve pas en hachant le nom de l'entreprise (défaut réel : empreinte non salée, réversible par dictionnaire)."""
+    import hashlib
+    r = md.construire()
+    imp = AdhesionsSynthetiques(r.profils).importer()
+    a, b = Coffre(imp, secret=b"secret-A-de-test-assez-long"), Coffre(imp, secret=b"secret-B-de-test-assez-long")
+    vus_a = {p.id: a.pseudonymiser(p).entreprise for p in r.profils}
+    for adh in imp.adhesions:
+        membres = [p.id for p in imp.personnes if p.adhesion_id == adh.id]
+        assert len({vus_a[m] for m in membres}) == 1                        # l'égalité (« même organisation ») est gardée
+    for o in imp.organisations:
+        devinettes = {"org-" + hashlib.sha256(x.encode()).hexdigest()[:8] for x in (o.nom, o.nom.lower(), o.nom.strip().lower())}
+        assert not devinettes & set(vus_a.values()) and o.id not in vus_a.values()
+    assert set(vus_a.values()) != {b.pseudonymiser(p).entreprise for p in r.profils}   # autre secret, autres clés
+
+
+def test_identifiant_d_appel_ia_sans_lien_avec_le_contenu():
+    t1 = Intelligence(TAX, None).comprendre_demande("Je cherche un avocat.").appel.trace
+    t2 = Intelligence(TAX, None).comprendre_demande("Je cherche un traducteur.").appel.trace
+    assert t1 == t2 == "ia-000001"                                          # un compteur : rien ne se déduit du message

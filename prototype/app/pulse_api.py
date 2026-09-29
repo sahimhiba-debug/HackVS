@@ -30,6 +30,7 @@ from .taxonomy import Taxonomie
 
 T = TypeVar("T")
 ANIMATRICE = Spectateur("animatrice")
+LOCALES = {"127.0.0.1", "::1", "localhost", "testclient"}      # « testclient » : client de test en processus
 
 
 # ---------------------------------------------------------------------- contrats d'entrée (tout est borné)
@@ -165,11 +166,16 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     def membre(x_pulse_session: Optional[str] = Header(None)) -> str:
         return au_monde(lambda c: c.verifier_session(x_pulse_session or ""))
 
-    def console(x_pulse_console: Optional[str] = Header(None)) -> None:
+    def console(request: Request, x_pulse_console: Optional[str] = Header(None)) -> None:
         if not x_pulse_console:
             raise HTTPException(403, "Console du Club : en-tête X-Pulse-Console requis.")
-        if console_jeton and not hmac.compare_digest(x_pulse_console, console_jeton):
-            raise HTTPException(403, "Console du Club : jeton invalide.")
+        if console_jeton:
+            if not hmac.compare_digest(x_pulse_console, console_jeton):
+                raise HTTPException(403, "Console du Club : jeton invalide.")
+        elif (request.client.host if request.client else "") not in LOCALES:
+            # sans jeton configuré, la console (qui peut incarner chaque membre) ne répond qu'à CETTE machine :
+            # un déploiement accessible depuis le réseau doit définir HACKVS_CONSOLE_JETON
+            raise HTTPException(403, "Console du Club : hors de cette machine, définissez HACKVS_CONSOLE_JETON.")
 
     def limiter(lim: Limiteur, cle: str) -> None:
         try:
@@ -178,7 +184,7 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
             raise traduire(e) from None
 
     # ------------------------------------------------------------------ démonstration (console)
-    @r.get("/etat")
+    @r.get("/etat", dependencies=[Depends(console)])     # le récit de la démonstration nomme des personnes : console seulement
     def lire_etat() -> dict:
         d = etat["demo"]
         return {"etape": d.etape, "total": len(d.ETAPES), "traces": d.traces, "date": d.club.jour.isoformat(),

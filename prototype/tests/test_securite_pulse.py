@@ -32,7 +32,7 @@ def _h(pid):
 
 
 def _aid():
-    return next(t["ecran"]["cible"] for t in client.get("/api/pulse/etat").json()["traces"] if t["acte"] == "Refus")
+    return next(t["ecran"]["cible"] for t in client.get("/api/pulse/etat", headers=CONSOLE).json()["traces"] if t["acte"] == "Refus")
 
 
 # ------------------------------------------------------------------ authentification ≠ autorisation
@@ -90,6 +90,21 @@ def test_console_exige_son_en_tete_et_son_jeton():
     c = TestClient(appli)
     assert c.get("/api/pulse/console", headers={"X-Pulse-Console": "1"}).status_code == 403
     assert c.get("/api/pulse/console", headers={"X-Pulse-Console": "jeton-console-de-test"}).status_code == 200
+    assert client.get("/api/pulse/etat").status_code == 403                  # le récit de la démo nomme des personnes
+
+
+def test_console_sans_jeton_ne_repond_qu_a_cette_machine():
+    """Sans HACKVS_CONSOLE_JETON, la console (qui peut incarner chaque membre) refuse un client distant ; avec un jeton,
+    elle l'accepte. Défaut réel : déployée telle quelle, n'importe qui sur le réseau obtenait la session de chacun."""
+    distant = TestClient(app, client=("203.0.113.9", 50000))
+    for chemin in ("/api/pulse/console/personas", "/api/pulse/etat", "/api/pulse/console"):
+        r = distant.get(chemin, headers=CONSOLE)
+        assert r.status_code == 403 and "HACKVS_CONSOLE_JETON" in r.json()["detail"], chemin
+    assert client.get("/api/pulse/console/personas", headers=CONSOLE).status_code == 200    # même machine : démo locale
+    appli = FastAPI()
+    appli.include_router(creer_routeur(TAX, console_jeton="jeton-console-de-test"))
+    loin = TestClient(appli, client=("203.0.113.9", 50000))
+    assert loin.get("/api/pulse/console", headers={"X-Pulse-Console": "jeton-console-de-test"}).status_code == 200
 
 
 def test_deviner_un_code_d_invitation_est_limite():
@@ -121,7 +136,7 @@ def test_entrees_hors_limites_refusees():
 # ------------------------------------------------------------------ idempotence et concurrence
 def test_double_activation_rejetee_en_conflit():
     _aller(4)
-    oid = client.get("/api/pulse/etat").json()["traces"][3]["ecran"]["cible"]
+    oid = client.get("/api/pulse/etat", headers=CONSOLE).json()["traces"][3]["ecran"]["cible"]
     h = _h(S)
     premier = client.post(f"/api/pulse/moi/opportunites/{oid}/activer", headers=h, json={})
     second = client.post(f"/api/pulse/moi/opportunites/{oid}/activer", headers=h, json={})

@@ -24,9 +24,9 @@ def _lignes(caplog) -> list[dict]:
 
 
 def test_identifiant_de_requete_renvoye_et_assaini():
-    r = client.get("/api/pulse/etat", headers={"X-Request-ID": "abc-123-def-456"})
+    r = client.get("/api/pulse/etat", headers={"X-Request-ID": "abc-123-def-456"} | CONSOLE)
     assert r.headers["x-request-id"] == "abc-123-def-456"                  # corrélation avec l'appelant
-    r = client.get("/api/pulse/etat", headers={"X-Request-ID": "<script>\nfaux"})
+    r = client.get("/api/pulse/etat", headers={"X-Request-ID": "<script>\nfaux"} | CONSOLE)
     assert re.fullmatch(r"[0-9a-f]{16}", r.headers["x-request-id"])        # valeur hostile : remplacée, jamais recopiée
 
 
@@ -38,8 +38,8 @@ def test_en_tetes_de_securite_et_csp_par_empreintes():
         assert "unsafe-inline" not in script_src and "sha256-" in script_src
         assert "frame-ancestors 'self'" in csp and "object-src 'none'" in csp
         assert h["x-content-type-options"] == "nosniff" and h["referrer-policy"] == "no-referrer"
-    assert client.get("/api/pulse/etat").headers["cache-control"] == "no-store"   # données personnelles : pas de cache
-    assert "content-security-policy" not in client.get("/api/pulse/etat").headers
+    assert client.get("/api/pulse/etat", headers=CONSOLE).headers["cache-control"] == "no-store"   # données personnelles : pas de cache
+    assert "content-security-policy" not in client.get("/api/pulse/etat", headers=CONSOLE).headers
 
 
 def test_chaque_script_en_ligne_a_son_empreinte():

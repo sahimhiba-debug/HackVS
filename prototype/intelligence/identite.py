@@ -197,8 +197,11 @@ class Coffre:
         org = adh.organisation_id if adh else f"org-{p.id}"
         a_retirer = [x for x in ((per.nom if per else p.nom), self.orgs[org].nom if org in self.orgs else p.entreprise) if x]
         net = lambda t: nettoyer(t, a_retirer)  # noqa: E731
+        # clé d'organisation dérivée du SECRET : le moteur n'a besoin que de l'égalité (« même organisation ») ; l'identifiant
+        # d'import (empreinte non salée du nom de l'entreprise) se retrouvait par dictionnaire des entreprises valaisannes
+        cle_org = "ORG-" + hmac.new(self._secret, f"organisation|{org}".encode(), hashlib.sha256).hexdigest()[:10]
         return p.model_copy(update={
-            "nom": self.pseudonyme(p.id), "entreprise": org, "fonction": "", "commune": p.commune,
+            "nom": self.pseudonyme(p.id), "entreprise": cle_org, "fonction": "", "commune": p.commune,
             "presentation": net(p.presentation), "note_disponibilite": net(p.note_disponibilite),
             "offre": [o.model_copy(update={"texte": net(o.texte)}) for o in p.offre],
             "recherche": [o.model_copy(update={"texte": net(o.texte)}) for o in p.recherche]})

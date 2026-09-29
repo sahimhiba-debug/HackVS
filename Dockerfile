@@ -24,6 +24,7 @@ RUN useradd --create-home app && chown -R app /srv
 USER app
 EXPOSE 8080
 # Une seule instance : SQLite et le flux temps réel sont locaux au conteneur.
-# Secrets : HACKVS_SECRET (≥ 32 caractères) et HACKVS_CONSOLE_JETON se passent à `docker run -e` ; sans eux, secret
-# aléatoire par démarrage (sessions invalidées au redémarrage) et console protégée par en-tête seulement (démo locale).
+# Secrets : HACKVS_SECRET (≥ 32 caractères) et HACKVS_CONSOLE_JETON se passent à `docker run -e`. Sans secret : secret
+# aléatoire par démarrage (sessions invalidées au redémarrage). Sans jeton, la console du Club ne répond qu'à la machine
+# locale — depuis l'hôte d'un conteneur, il FAUT donc `-e HACKVS_CONSOLE_JETON=<jeton>` (la console le demande).
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --no-access-log --timeout-keep-alive 5"]
