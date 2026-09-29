@@ -313,7 +313,7 @@ def _invitation(m, duree=60, eligibilite=None):
     p = Protocole(question="Comment entrer sur le marché allemand avec nos tisanes ?", critere="deux contacts de distributeurs à relancer",
                   echeance=J + timedelta(days=10), origine={"opportunite": "o-test", "type": "SUIVI", "concepts": ["export_allemagne"]},
                   etapes=[Etape(id="e1", nature="competence", geste="Échange sur la distribution en Allemagne", duree_min=duree,
-                                contributeur=MARKUS, invitation=True)])
+                                contributeur=MARKUS, invitation=True, concept="export_allemagne")])
     eid = m.b.brouillon(SOPHIE, p)
     return eid, m.b.proposer(SOPHIE, eid, 0)
 
@@ -335,7 +335,9 @@ def test_invitation_moins_de_temps_raccourcir_ou_remplacer_ou_rien():
     m = Monde()
     b = m.b
     claudia = b.publier_offre("s15", "competence", "Conseil pour un lancement de produit en Allemagne", 2, J, J + timedelta(days=30),
-                              duree_max_min=60)
+                              duree_max_min=60, concept="export_allemagne")
+    b.publier_offre("s13", "competence", "Une heure de conseil fiduciaire", 2, J, J + timedelta(days=30), duree_max_min=60,
+                    concept="fiduciaire")                                  # même nature, autre capacité : jamais proposée
     eid, v = _invitation(m)
     b.decider(MARKUS, eid, v, True)
     o = b.offre_de(eid, b.protocole(eid).etapes[0])
@@ -343,6 +345,7 @@ def test_invitation_moins_de_temps_raccourcir_ou_remplacer_ou_rien():
     assert b.etat(eid) == "A_ADAPTER" and "demande 60 min, l'offre en accepte 20" in b.couverture(eid)[MARKUS]
     alts = {a["type"]: a for a in b.alternatives(eid)}
     assert set(alts) == {"raccourcir", "remplacer"} and alts["remplacer"]["offre"] == claudia and alts["raccourcir"]["duree"] == 20
+    assert [a["membre"] for a in b.alternatives(eid) if a["type"] == "remplacer"] == ["s15"]
     b.choisir_alternative(SOPHIE, eid, v, alts["raccourcir"]["id"])
     assert b.couverture(eid)[MARKUS] == "sa part a changé depuis son accord"   # 20 min : il redonne son accord
     b.decider(MARKUS, eid, b.version(eid), True)
@@ -352,7 +355,8 @@ def test_invitation_moins_de_temps_raccourcir_ou_remplacer_ou_rien():
 def test_invitation_remplacer_l_accord_de_markus_ne_suit_pas_claudia():
     m = Monde()
     b = m.b
-    b.publier_offre("s15", "competence", "Conseil pour un lancement de produit en Allemagne", 2, J, J + timedelta(days=30), duree_max_min=60)
+    b.publier_offre("s15", "competence", "Conseil pour un lancement de produit en Allemagne", 2, J, J + timedelta(days=30), duree_max_min=60,
+                    concept="export_allemagne")
     eid, v = _invitation(m)
     b.decider(MARKUS, eid, v, True)
     b.modifier_offre(MARKUS, b.offre_de(eid, b.protocole(eid).etapes[0]).id, duree_max_min=20)
@@ -367,7 +371,7 @@ def test_invitation_regles_dures_du_reseau_appliquees_a_la_personne_designee():
     with pytest.raises(Conflit, match="aucune langue commune"):
         _invitation(m, eligibilite=lambda porteur, candidat: "aucune langue commune" if candidat == MARKUS else None)
     m2 = Monde()
-    m2.b.publier_offre("s15", "competence", "Conseil Allemagne", 2, J, J + timedelta(days=30), duree_max_min=60)
+    m2.b.publier_offre("s15", "competence", "Conseil Allemagne", 2, J, J + timedelta(days=30), duree_max_min=60, concept="export_allemagne")
     eid, v = _invitation(m2, eligibilite=lambda porteur, candidat: "introduction déjà déclinée" if candidat == "s15" else None)
     m2.b.decider(MARKUS, eid, v, False)
     assert m2.b.etat(eid) == "IMPOSSIBLE"                                   # Claudia écartée par la règle : aucune alternative

@@ -8,9 +8,10 @@ Quatre questions, chacune avec une référence qui peut PERDRE :
    profil obsolète, même organisation, aucune langue commune, introduction déclinée, indisponible, déjà en relation,
    simple ressemblance) sont-ils évités ? Comparé à deux références naïves : l'appariement par capacité (tout besoin ×
    tout offreur de la capacité) et la ressemblance (profils qui offrent la même chose).
-2. REPLANIFICATION — après un refus, l'alternative proposée est-elle éligible (JUSTE) et en propose-t-on une chaque
-   fois qu'il en existe (COMPLÈTE) ? Oracle : les règles dures réappliquées par force brute à TOUS les membres
-   (réécrites ici, pas appelées dans le moteur ; seule l'observation — qui offre quoi, âges, relations — est partagée).
+2. ADAPTATION — après une perturbation réelle d'un essai (retrait, disponibilité réduite), le remplacement proposé
+   est-il admissible (JUSTE) et en propose-t-on un chaque fois qu'il en existe (COMPLET) ? Oracle : les règles
+   réécrites ici et appliquées par force brute à TOUTES les offres volontaires (pas appelées dans le banc ; seule
+   l'observation — âges, relations — est partagée).
 3. CONFIDENTIALITÉ — identités dans ce que voit le moteur ; nom d'une personne qui a décliné ou texte d'une note
    privée dans les écrans d'un AUTRE membre (démonstration complète, 150 membres, chaque écran).
 4. MÉMOIRE — la situation plantée « déjà résolue dans le Club » est-elle retrouvée ?
@@ -23,27 +24,31 @@ from __future__ import annotations
 
 import json
 import platform
+import random
 import sys
 import time
 from collections import Counter, defaultdict
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 from app.matching import organisation
 from app.taxonomy import charger_taxonomie
-from intelligence.activation import BUDGET_ATTENTION, Moteur
 from intelligence.club_synthetique import generer
 from intelligence.demo import NOTE_SOPHIE, Demo
-from intelligence.detection import Detecteur, scanner
+from intelligence.detection import scanner
+from intelligence.erreurs import ErreurMetier
+from intelligence.essai import Banc
 from intelligence.identite import AdhesionsSynthetiques, Coffre
-from intelligence.observateur import PROFIL_OBSOLETE_JOURS
+from intelligence.observateur import PROFIL_OBSOLETE_JOURS, observer
+from intelligence.passerelle import CRITERE_SUGGERE, brouillon
 from intelligence.politique import Spectateur
+from plateforme.memoire import Memoire
 
 ICI = Path(__file__).resolve().parent
 TAX = charger_taxonomie()
 GRAINES = range(1, 11)
 TAILLES = (150, 500)
-K_ACTIVATIONS = 12                     # refus provoqués par club généré
+K_ESSAIS = 12                          # essais perturbés par club généré
 
 
 def _membres(o) -> frozenset:
@@ -87,64 +92,97 @@ def detection(n: int, graine: int) -> dict:
     return {"trouvees": trouvees, "pieges": pieges, "opportunites": len(ops)}
 
 
-# ---------------------------------------------------------------------- 2. replanification
-def _oracle(r, mo: Moteur, benef, concept: str, hors: set[str], ouvertes: dict[str, int]) -> set[str]:
-    """Règles dures réécrites (pas d'appel au moteur de décision) sur TOUS les membres. `ouvertes` : sollicitations en
-    cours AU MOMENT du refus (après, l'alternative choisie compte une sollicitation de plus)."""
-    e = Detecteur(r, TAX).e                                                 # observation seulement : offreurs, âges, relations
-    org_b = organisation(benef)
-    res = set()
+# ---------------------------------------------------------------------- 2. adaptation (banc d'essai)
+DUREES = (15, 30, 60, 90)
+
+
+def _semer_offres(r, banc: Banc, rnd: random.Random) -> None:
+    """Offres volontaires SYNTHÉTIQUES : un membre sur deux qui déclare une capacité publie une disponibilité pour l'une
+    d'elles (durée, capacité, validité au hasard) — dont des offres trop courtes, expirées, à venir ou d'une autre
+    capacité : l'adaptation doit les écarter."""
+    j = r.aujourd_hui
     for p in r.profils:
-        if p.id in hors or p.id == benef.id or p.id in mo.exclus:
+        if not p.offre or rnd.random() < 0.5:
             continue
-        if not any(pid == p.id for pid, _, _ in e.offreurs.get(concept, [])):
+        du = j + timedelta(days=rnd.choice([-30, -5, 0, 0, 0, 3]))
+        au = du + timedelta(days=rnd.choice([2, 10, 20, 40]))
+        declaree = rnd.choice(p.offre)                                     # une capacité DÉCLARÉE dans son profil
+        banc.publier_offre(p.id, "competence", declaree.texte, rnd.choice([1, 2]), du, au, duree_max_min=rnd.choice(DUREES),
+                           concept=declaree.concept)
+
+
+def _oracle(r, e_obs, banc: Banc, eid: str, etape_id: str, hors: set[str]) -> set[str]:
+    """Offres qui PEUVENT remplacer ce geste : règles réécrites ici (pas d'appel aux règles du banc ni aux exclusions de
+    l'observateur), appliquées par force brute à TOUTES les offres publiques. Seule l'observation (âges, refus
+    d'introduction passés) est partagée."""
+    p = banc.protocole(eid)
+    e = next(x for x in p.etapes if x.id == etape_id)
+    par_id = r.par_id()
+    benef = par_id[banc.porteur(eid)]
+    autres = {x.contributeur for x in p.etapes if x.contributeur and x.id != etape_id}
+    res = set()
+    for o in banc.offres(publiques=True):
+        c = par_id[o.auteur]
+        age = e_obs.age_profil(c)
+        if o.auteur in hors | autres or o.auteur == benef.id or retiree(banc, o.id) \
+                or not o.du <= r.aujourd_hui <= o.au or o.au < p.echeance or o.nature != e.nature \
+                or (e.concept is not None and o.concept != e.concept) \
+                or (o.duree_max_min is not None and o.duree_max_min < e.duree_min) \
+                or (organisation(c) or c.id) == (organisation(benef) or benef.id) or not c.accepte_introductions or not c.disponible \
+                or age is None or age > PROFIL_OBSOLETE_JOURS or not set(c.langues) & set(benef.langues) \
+                or frozenset((benef.id, c.id)) in e_obs.declinees:
             continue
-        age = e.age_profil(p)
-        paire = frozenset((benef.id, p.id))
-        if (organisation(p) and organisation(p) == org_b) or not p.accepte_introductions or not p.disponible \
-                or age is None or age > PROFIL_OBSOLETE_JOURS or not set(p.langues) & set(benef.langues) \
-                or paire in e.declinees or paire in e.relies or ouvertes.get(p.id, 0) >= BUDGET_ATTENTION:
-            continue
-        res.add(p.id)
+        res.add(o.id)
     return res
 
 
-def replanification(n: int, graine: int) -> list[dict]:
+def retiree(banc: Banc, oid: str) -> bool:
+    return any(e.donnees["offre"] == oid for e in banc.m.evenements("OFFRE_RETIREE"))
+
+
+def adaptation(n: int, graine: int) -> list[dict]:
+    """Pour chaque opportunité à bénéficiaire : le bénéficiaire propose l'essai (passerelle), la personne invitée accepte
+    (elle DÉCLARE 60 min), puis une perturbation réelle — elle se retire, ou n'a plus que 20 min. Le banc propose-t-il
+    une adaptation chaque fois qu'il en existe une (COMPLET), seulement des adaptations admissibles (JUSTE), et
+    s'arrête-t-il proprement sinon ? Chaque cas a son propre banc (aucune capacité partagée entre cas)."""
     r, _ = generer(n, graine, plantes=True)
-    le: date = r.aujourd_hui
-    mo = Moteur(r, TAX)
+    e_obs = observer(r, TAX)
+    par_id = r.par_id()
     cas = []
     for o in scanner(r, TAX)["opportunites"]:
-        if len(cas) >= K_ACTIVATIONS or not o.beneficiaire or o.type in ("CONVERGENCE", "LACUNE"):
+        if len(cas) >= K_ESSAIS or not o.beneficiaire or o.type in ("CONVERGENCE", "LACUNE"):
             continue
-        aid = mo.creer(o, le)
-        plan = mo.plan(aid)
-        etape = next((e for e in plan["etapes"] if e["type"] == "contribution" and e.get("concept")), None)
-        if etape is None or mo.ouvertes().get(o.beneficiaire, 0) >= BUDGET_ATTENTION:
+        rnd = random.Random(f"{graine}-{o.id}")
+        banc = Banc(Memoire(), lambda: r.aujourd_hui, lambda pid: organisation(par_id[pid]) or pid,
+                    lambda porteur, cand: e_obs.exclusion(par_id[porteur], par_id[cand], None, introduction=False))
+        _semer_offres(r, banc, rnd)
+        p = brouillon(o, r, TAX, r.aujourd_hui)
+        if not p.etapes:
             continue
+        eid = banc.brouillon(o.beneficiaire, p.model_copy(update={"critere": CRITERE_SUGGERE}))
         try:
-            mo.lancer(aid, le)
-            mo.repondre(aid, le, o.beneficiaire, True)
-        except Exception as e:                                              # refus métier (budget) : cas non comptés
-            if type(e).__name__ in ("Conflit", "Interdit", "Invalide", "Limite"):
-                continue
-            raise
-        refuseur = etape["membre"]
-        if (etape["id"], refuseur) not in mo._sollicitations(aid):
+            v = banc.proposer(o.beneficiaire, eid, 0)
+            invite = p.etapes[0].contributeur or ""
+            banc.decider(invite, eid, v, True)
+        except ErreurMetier:                                                # désignée non sollicitable : refusé, compté
+            cas.append({"perturbation": "aucune", "resultat": "refus à la publication"})
             continue
-        benef = r.par_id()[o.beneficiaire]
-        dans_plan = {x["membre"] for x in plan["etapes"] if x.get("membre")}
-        ouvertes = mo.ouvertes()
-        ouvertes[refuseur] = ouvertes.get(refuseur, 1) - 1                  # son refus libère sa place (il reste exclu)
-        oracle = _oracle(r, mo, benef, etape["concept"], dans_plan | {refuseur}, ouvertes)
-        mo.repondre(aid, le, refuseur, False)
-        j = mo.journal(aid)
-        alt = next((t["details"].get("alternative") for t in reversed(j) if t["etat"] == "ALTERNATIVE_PROPOSEE"), None)
-        final = "ALTERNATIVE_PROPOSEE" if alt else ("ABANDONNEE" if mo.etat(aid) == "ABANDONNEE" else mo.etat(aid))
-        refus_seq = mo._reponses(aid)[(etape["id"], refuseur)].seq
-        relance = any(ev.acteurs[0] == refuseur and ev.donnees["aid"] == aid and ev.seq > refus_seq
-                      for ev in r.memoire.evenements("SOLLICITATION_PRIVEE"))
-        cas.append({"oracle": len(oracle), "resultat": final, "juste": alt is None or alt in oracle, "relance_du_refus": relance})
+        perturbation = rnd.choice(["retrait", "reduction"])
+        if perturbation == "retrait":
+            banc.retirer(invite, eid)
+        else:
+            banc.modifier_offre(invite, banc.offre_de(eid, banc.protocole(eid).etapes[0]).id, duree_max_min=20)  # type: ignore[union-attr]
+        oracle = _oracle(r, e_obs, banc, eid, "e1", {invite} if perturbation == "retrait" else set())
+        alts = banc.alternatives(eid) if banc.etat(eid) == "A_ADAPTER" else []
+        remplacer = [a for a in alts if a["type"] == "remplacer"]
+        raccourcir = [a for a in alts if a["type"] == "raccourcir"]
+        releve = {"perturbation": perturbation, "oracle": len(oracle), "etat": banc.etat(eid),
+                  "remplacer": len(remplacer), "remplacer_admissibles": sum(a["offre"] in oracle for a in remplacer),
+                  "raccourcir": len(raccourcir), "raccourcir_meme_personne": sum(a["membre"] == invite for a in raccourcir)}
+        if remplacer:                                                       # choisir : la personne partie n'est pas redemandée
+            banc.choisir_alternative(o.beneficiaire, eid, banc.version(eid), remplacer[0]["id"])
+            releve["redemande_apres_retrait"] = perturbation == "retrait" and invite in {x.contributeur for x in banc.protocole(eid).etapes}
+        cas.append(releve)
     return cas
 
 
@@ -199,27 +237,32 @@ def executer() -> dict:
             pieges[p["type"]]["total"] += 1
             for k in ("moteur", "appariement par capacité", "ressemblance de profils"):
                 pieges[p["type"]][k] += int(p[k])
-    rep = [c for n in TAILLES for g in GRAINES for c in replanification(n, g)]
-    avec = [c for c in rep if c["oracle"] > 0]
-    sans = [c for c in rep if c["oracle"] == 0]
+    ad = [c for n in TAILLES for g in GRAINES for c in adaptation(n, g)]
+    perturbes = [c for c in ad if c["perturbation"] != "aucune"]
+    avec = [c for c in perturbes if c["oracle"] > 0]
+    sans = [c for c in perturbes if c["oracle"] == 0]
+    reduits = [c for c in perturbes if c["perturbation"] == "reduction"]
     return {
-        "configuration": {"tailles": list(TAILLES), "graines": list(GRAINES), "clubs": len(det), "activations_par_club": K_ACTIVATIONS},
+        "configuration": {"tailles": list(TAILLES), "graines": list(GRAINES), "clubs": len(det), "essais_par_club": K_ESSAIS},
         "detection": {"par_type": {k: {"trouvees": v[0], "plantees": v[1]} for k, v in sorted(par_type.items())},
                       "pieges": {k: dict(v) for k, v in sorted(pieges.items())},
                       "opportunites_par_club_moyenne": round(sum(d["opportunites"] for *_, d in det) / len(det), 1)},
-        "replanification": {"refus_provoques": len(rep), "avec_alternative_selon_oracle": len(avec),
-                            "alternative_proposee_quand_il_en_existe": sum(c["resultat"] == "ALTERNATIVE_PROPOSEE" for c in avec),
-                            "alternatives_eligibles": sum(c["juste"] for c in rep if c["resultat"] == "ALTERNATIVE_PROPOSEE"),
-                            "alternatives_proposees": sum(c["resultat"] == "ALTERNATIVE_PROPOSEE" for c in rep),
-                            "sans_alternative_selon_oracle": len(sans),
-                            "abandon_propre_quand_il_n_en_existe_pas": sum(c["resultat"] == "ABANDONNEE" for c in sans),
-                            "refus_relances": sum(c["relance_du_refus"] for c in rep)},
+        "adaptation": {"essais_perturbes": len(perturbes), "refus_a_la_publication": len(ad) - len(perturbes),
+                       "retraits": sum(c["perturbation"] == "retrait" for c in perturbes), "reductions": len(reduits),
+                       "avec_remplacement_selon_oracle": len(avec),
+                       "remplacement_propose_quand_il_en_existe": sum(c["remplacer"] > 0 for c in avec),
+                       "remplacements_proposes": sum(c["remplacer"] for c in perturbes),
+                       "remplacements_admissibles": sum(c["remplacer_admissibles"] for c in perturbes),
+                       "sans_remplacement_selon_oracle": len(sans),
+                       "arret_ou_raccourci_quand_il_n_en_existe_pas": sum(c["etat"] == "IMPOSSIBLE" or c["raccourcir"] > 0 for c in sans),
+                       "raccourcir_propose_apres_reduction": sum(c["raccourcir_meme_personne"] > 0 for c in reduits),
+                       "retire_redemande": sum(bool(c.get("redemande_apres_retrait")) for c in perturbes)},
         "confidentialite": {"moteur": [confidentialite_moteur(n, 1) for n in TAILLES], "ecrans": confidentialite_ecrans()},
     }
 
 
 def rapport(res: dict) -> str:
-    d, rp, cf = res["detection"], res["replanification"], res["confidentialite"]
+    d, ad, cf = res["detection"], res["adaptation"], res["confidentialite"]
     cfg = res["configuration"]
     lignes = ["# SYNTHETIC BENCHMARK — Club Pulse", "",
               f"Données **SYNTHÉTIQUES** : {cfg['clubs']} clubs générés (tailles {cfg['tailles']}, graines {cfg['graines'][0]}–{cfg['graines'][-1]}), "
@@ -237,16 +280,19 @@ def rapport(res: dict) -> str:
     lignes += [f"| **total** | **{total['moteur']} / {t}** | **{total['appariement par capacité']} / {t}** | **{total['ressemblance de profils']} / {t}** |",
                "", f"Opportunités détectées par club (moyenne) : {d['opportunites_par_club_moyenne']} — leur précision sur le FOND n'est "
                "pas mesurable (aucune vérité terrain hors situations plantées).", "",
-               "## 2. Replanification après un refus", "",
-               f"{rp['refus_provoques']} refus provoqués (le premier contributeur sollicité décline). Oracle : règles dures réécrites et "
-               "appliquées par force brute à tous les membres, budget d'attention compris.", "",
+               "## 2. Adaptation après une perturbation (banc d'essai)", "",
+               f"{ad['essais_perturbes']} essais proposés depuis une opportunité détectée ; la personne invitée accepte (elle déclare "
+               f"60 min) puis se retire ({ad['retraits']}) ou n'a plus que 20 min ({ad['reductions']}). Oracle : règles réécrites et "
+               "appliquées par force brute à toutes les offres volontaires publiques (synthétiques, dont des offres trop courtes, "
+               f"expirées, à venir ou d'une autre capacité). {ad['refus_a_la_publication']} publication(s) refusée(s).", "",
                "| Mesure | Résultat |", "|---|---|",
-               "| Alternative proposée quand l'oracle en trouve une (complétude) | "
-               f"{rp['alternative_proposee_quand_il_en_existe']} / {rp['avec_alternative_selon_oracle']} |",
-               f"| Alternative proposée éligible selon l'oracle (justesse) | {rp['alternatives_eligibles']} / {rp['alternatives_proposees']} |",
-               "| Abandon propre quand il n'existe aucune alternative | "
-               f"{rp['abandon_propre_quand_il_n_en_existe_pas']} / {rp['sans_alternative_selon_oracle']} |",
-               f"| Personne ayant décliné sollicitée à nouveau | {rp['refus_relances']} |", "",
+               "| Remplacement proposé quand l'oracle en trouve un (complétude) | "
+               f"{ad['remplacement_propose_quand_il_en_existe']} / {ad['avec_remplacement_selon_oracle']} |",
+               f"| Remplacements proposés admissibles selon l'oracle (justesse) | {ad['remplacements_admissibles']} / {ad['remplacements_proposes']} |",
+               "| Sans remplacement possible : arrêt propre (IMPOSSIBLE) ou raccourcir avec la même personne | "
+               f"{ad['arret_ou_raccourci_quand_il_n_en_existe_pas']} / {ad['sans_remplacement_selon_oracle']} |",
+               f"| « Raccourcir avec la même personne » proposé après une réduction | {ad['raccourcir_propose_apres_reduction']} / {ad['reductions']} |",
+               f"| Personne retirée redésignée après adaptation | {ad['retire_redemande']} |", "",
                "## 3. Confidentialité", "", "| Contrôle | Résultat |", "|---|---|"]
     for m in cf["moteur"]:
         lignes.append(f"| Identités (nom, courriel, organisation) dans ce que voit le moteur — {m['profils']} membres | "
@@ -289,8 +335,9 @@ def main() -> int:
     if "--performance" in sys.argv:
         (ICI / "performance_pulse.md").write_text(performance(), encoding="utf-8")
         print(performance())
-    rp, cf = res["replanification"], res["confidentialite"]
-    garde_fous = [rp["alternatives_eligibles"] == rp["alternatives_proposees"], rp["refus_relances"] == 0,
+    ad, cf = res["adaptation"], res["confidentialite"]
+    garde_fous = [ad["remplacements_admissibles"] == ad["remplacements_proposes"], ad["retire_redemande"] == 0,
+                  ad["remplacement_propose_quand_il_en_existe"] == ad["avec_remplacement_selon_oracle"],
                   all(m["fuites"] == 0 for m in cf["moteur"]), not cf["ecrans"]["fuites"],
                   sum(v.get("moteur", 0) for v in res["detection"]["pieges"].values()) == 0]
     return 0 if all(garde_fous) else 1                    # une règle dure violée est un échec, pas un chiffre

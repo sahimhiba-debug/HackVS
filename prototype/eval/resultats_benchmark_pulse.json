@@ -17,7 +17,7 @@
    10
   ],
   "clubs": 20,
-  "activations_par_club": 12
+  "essais_par_club": 12
  },
  "detection": {
   "par_type": {
@@ -104,15 +104,19 @@
   },
   "opportunites_par_club_moyenne": 57.5
  },
- "replanification": {
-  "refus_provoques": 240,
-  "avec_alternative_selon_oracle": 198,
-  "alternative_proposee_quand_il_en_existe": 198,
-  "alternatives_eligibles": 198,
-  "alternatives_proposees": 198,
-  "sans_alternative_selon_oracle": 42,
-  "abandon_propre_quand_il_n_en_existe_pas": 42,
-  "refus_relances": 0
+ "adaptation": {
+  "essais_perturbes": 240,
+  "refus_a_la_publication": 0,
+  "retraits": 121,
+  "reductions": 119,
+  "avec_remplacement_selon_oracle": 121,
+  "remplacement_propose_quand_il_en_existe": 121,
+  "remplacements_proposes": 185,
+  "remplacements_admissibles": 185,
+  "sans_remplacement_selon_oracle": 119,
+  "arret_ou_raccourci_quand_il_n_en_existe_pas": 119,
+  "raccourcir_propose_apres_reduction": 119,
+  "retire_redemande": 0
  },
  "confidentialite": {
   "moteur": [

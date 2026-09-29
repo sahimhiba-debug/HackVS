@@ -31,7 +31,7 @@ class Monde:
                       lambda porteur, cand: e.exclusion(par_id[porteur], par_id[cand], None, introduction=False))
         j = self.r.aujourd_hui
         self.b.publier_offre(CLAUDIA, "competence", "Conseil pour un lancement de produit en Allemagne", 2, j, j + timedelta(days=30),
-                             duree_max_min=60)
+                             duree_max_min=60, concept="export_allemagne")
 
     def opportunites(self, pour: str) -> list:
         mem = memoire_club.reutilisables_par_le_club(memoire_club.souvenirs(self.b))
@@ -114,3 +114,14 @@ def test_le_brouillon_n_ecrit_pas_le_critere_a_la_place_du_beneficiaire():
     from intelligence.erreurs import Invalide
     with pytest.raises(Invalide, match="critère"):
         m.b.proposer(S, eid, 0)                                             # publier sans critère : refusé
+
+
+def test_une_opportunite_a_six_personnes_donne_un_essai_de_quatre_et_le_dit():
+    """Trouvé par le banc d'adaptation : une composition à 6 personnes faisait échouer la passerelle (4 gestes au plus)."""
+    from intelligence.modele import Role
+    m = Monde()
+    o = m.opportunites(S)[0]
+    o = o.model_copy(update={"roles": o.roles + [Role(membre=f"c0000{i}", role="contributeur", concept="export_allemagne") for i in range(5)]})
+    p = brouillon(o, m.r, TAX, m.r.aujourd_hui)
+    assert len(p.etapes) == 4 and p.origine["non_invites"] == 2
+    assert all(e.concept == "export_allemagne" for e in p.etapes)           # la capacité demandée suit le geste

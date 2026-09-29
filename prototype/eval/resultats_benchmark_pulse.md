@@ -30,16 +30,17 @@ Données **SYNTHÉTIQUES** : 20 clubs générés (tailles [150, 500], graines 1�
 
 Opportunités détectées par club (moyenne) : 57.5 — leur précision sur le FOND n'est pas mesurable (aucune vérité terrain hors situations plantées).
 
-## 2. Replanification après un refus
+## 2. Adaptation après une perturbation (banc d'essai)
 
-240 refus provoqués (le premier contributeur sollicité décline). Oracle : règles dures réécrites et appliquées par force brute à tous les membres, budget d'attention compris.
+240 essais proposés depuis une opportunité détectée ; la personne invitée accepte (elle déclare 60 min) puis se retire (121) ou n'a plus que 20 min (119). Oracle : règles réécrites et appliquées par force brute à toutes les offres volontaires publiques (synthétiques, dont des offres trop courtes, expirées, à venir ou d'une autre capacité). 0 publication(s) refusée(s).
 
 | Mesure | Résultat |
 |---|---|
-| Alternative proposée quand l'oracle en trouve une (complétude) | 198 / 198 |
-| Alternative proposée éligible selon l'oracle (justesse) | 198 / 198 |
-| Abandon propre quand il n'existe aucune alternative | 42 / 42 |
-| Personne ayant décliné sollicitée à nouveau | 0 |
+| Remplacement proposé quand l'oracle en trouve un (complétude) | 121 / 121 |
+| Remplacements proposés admissibles selon l'oracle (justesse) | 185 / 185 |
+| Sans remplacement possible : arrêt propre (IMPOSSIBLE) ou raccourcir avec la même personne | 119 / 119 |
+| « Raccourcir avec la même personne » proposé après une réduction | 119 / 119 |
+| Personne retirée redésignée après adaptation | 0 |
 
 ## 3. Confidentialité
 

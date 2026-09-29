@@ -53,6 +53,7 @@ TRANSITIONS: dict[str, set[str]] = {
     "RESULTAT_INCONNU": {"OBSERVEE"},               # une observation tardive reste possible, et datée comme telle
 }
 FINAUX = {"ANNULE", "EXPIRE", "IMPOSSIBLE", "OBSERVEE"}
+MAX_GESTES = 4                                         # un essai reste petit : au plus 4 gestes, donc 4 personnes sollicitées
 AVANT_LANCEMENT = {"BROUILLON", "PROPOSE", "AUTORISE", "A_ADAPTER"}
 # une part À REDEMANDER (réponse attendue, portée changée) n'est pas une part PERDUE (refus, retrait, offre qui ne
 # couvre plus) : la première attend une décision, la seconde exige une adaptation ou un arrêt
@@ -74,6 +75,10 @@ class Etape(BaseModel):
     # SUR INVITATION : la personne est nommée par une opportunité détectée, sans offre publiée. Aucune disponibilité
     # n'est supposée : c'est SON acceptation qui la déclare (une offre personnelle, pour ce seul essai, modifiable).
     invitation: bool = False
+    # la CAPACITÉ demandée (catalogue du Club), quand le geste vient d'une opportunité détectée : seule une offre qui
+    # déclare cette capacité peut le porter ou le remplacer (on ne remplace pas un conseil export par une fiduciaire).
+    # None : un geste libre (« quelques minutes de regard neuf ») — toute offre de même nature convient.
+    concept: Optional[str] = Field(default=None, max_length=64)
 
 
 class Protocole(BaseModel):
@@ -82,7 +87,7 @@ class Protocole(BaseModel):
     pourquoi: str = Field(default="", max_length=300)                 # contexte (modifiable sans redemander d'accord)
     critere: str = Field(default="", max_length=300)                  # ce qu'on observera, et comment on le lira
     echeance: date
-    etapes: list[Etape] = Field(default_factory=list, max_length=4)
+    etapes: list[Etape] = Field(default_factory=list, max_length=MAX_GESTES)
     # d'où vient cet essai (opportunité détectée : identifiant, type, capacités) — sert la MÉMOIRE, jamais une décision
     origine: Optional[dict] = None
 
@@ -100,6 +105,7 @@ class OffreVolontaire(BaseModel):
     version: int = 1
     pour_essai: Optional[str] = None                                  # offre personnelle déclarée EN acceptant un essai
     pour_etape: Optional[str] = None
+    concept: Optional[str] = Field(default=None, max_length=64)       # capacité déclarée que l'offre met à disposition
 
 
 def _mots(t: str) -> set[str]:
@@ -117,7 +123,7 @@ def portee(p: Protocole, porteur: str, membre: str) -> dict:
     if membre == porteur:
         return {"porteur": True, **p.model_dump(mode="json", exclude={"pourquoi"})}
     return {"question": p.question, "objet": p.objet, "critere": p.critere, "echeance": p.echeance.isoformat(), "partage": PARTAGE,
-            "gestes": [e.model_dump(mode="json", include={"nature", "geste", "duree_min", "offre_id", "invitation"})
+            "gestes": [e.model_dump(mode="json", include={"nature", "geste", "duree_min", "offre_id", "invitation", "concept"})
                        for e in p.etapes if e.contributeur == membre]}
 
 
@@ -142,13 +148,14 @@ class Banc:
 
     # ------------------------------------------------------------------ offres volontaires
     def publier_offre(self, auteur: str, nature: str, quoi: str, capacite: int, du: date, au: date,
-                      duree_max_min: Optional[int] = None, conditions: str = "", pour: Optional[tuple[str, str]] = None) -> str:
+                      duree_max_min: Optional[int] = None, conditions: str = "", pour: Optional[tuple[str, str]] = None,
+                      concept: Optional[str] = None) -> str:
         if au < du:
             raise Invalide("la période de l'offre se termine avant de commencer")
         oid = "of-" + _empreinte([auteur, quoi, len(self.m.evenements())])[:8]
         o = OffreVolontaire(id=oid, auteur=auteur, nature=nature, quoi=quoi, capacite=capacite, du=du, au=au,  # type: ignore[arg-type]
                             duree_max_min=duree_max_min, conditions=conditions,
-                            pour_essai=pour[0] if pour else None, pour_etape=pour[1] if pour else None)
+                            pour_essai=pour[0] if pour else None, pour_etape=pour[1] if pour else None, concept=concept)
         self._ecrire("OFFRE", [auteur], offre=o.model_dump(mode="json"))
         return oid
 
@@ -160,8 +167,10 @@ class Banc:
 
     def offres(self, publiques: bool = False) -> list[OffreVolontaire]:
         """`publiques=True` : seulement les offres ouvertes à tout essai (pas celles déclarées pour un essai précis)."""
-        ids = list(dict.fromkeys(e.donnees["offre"]["id"] for e in self.m.evenements("OFFRE")))
-        return [o for o in (self.offre(i) for i in ids) if not (publiques and o.pour_essai)]
+        dernieres: dict[str, dict] = {}                          # un seul passage : la dernière version de chaque offre
+        for e in self.m.evenements("OFFRE"):
+            dernieres[e.donnees["offre"]["id"]] = e.donnees["offre"]
+        return [o for o in (OffreVolontaire(**d) for d in dernieres.values()) if not (publiques and o.pour_essai)]
 
     def offre_de(self, eid: str, e: Etape) -> Optional[OffreVolontaire]:
         """L'offre qui porte ce geste : l'offre choisie, ou — sur invitation — celle que la personne a déclarée EN
@@ -226,6 +235,8 @@ class Banc:
             return {"retiree": "offre retirée", "expiree": "offre expirée", "a_venir": "offre pas encore ouverte"}[etat]
         if o.nature != e.nature:
             return "nature différente"
+        if e.concept and o.concept != e.concept:
+            return "capacité différente de celle demandée"
         if o.duree_max_min is not None and e.duree_min > o.duree_max_min:
             return f"demande {e.duree_min} min, l'offre en accepte {o.duree_max_min}"
         if echeance > o.au:
@@ -615,7 +626,8 @@ class Banc:
                     o = self.offre_de(eid, e)
                     if o is None and e.invitation:            # accepter une invitation = déclarer SA disponibilité
                         oid = self.publier_offre(membre, e.nature, e.geste, 1, self._jour(), p.echeance, duree_max_min=e.duree_min,
-                                                 conditions=f"déclarée en acceptant l'essai « {p.question[:80]} »", pour=(eid, e.id))
+                                                 conditions=f"déclarée en acceptant l'essai « {p.question[:80]} »", pour=(eid, e.id),
+                                                 concept=e.concept)
                         o = self.offre(oid)
                     raison = self.offre_couvre(o, e, p.echeance, sauf=eid) if o else "aucune offre"
                     if raison:
