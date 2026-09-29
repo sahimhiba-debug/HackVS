@@ -39,16 +39,38 @@ def arbre_des_ponts(g: nx.Graph) -> tuple[dict[str, int], dict[int, int], nx.Gra
     arbre = nx.Graph()
     arbre.add_nodes_from(taille)
     arbre.add_edges_from((ident[a], ident[b]) for a, b in ponts)
-    return ident, taille, arbre, max(taille.values(), default=0)
+    # enracinement unique de chaque arbre : parent, profondeur, somme des tailles depuis la racine (requêtes de chemin
+    # en O(profondeur) au lieu d'un plus court chemin par candidate — mesure : 80 % du temps du diagnostic)
+    racine, parent, prof, pref = {}, {}, {}, {}
+    for r in sorted(taille):
+        if r in racine:
+            continue
+        racine[r], parent[r], prof[r], pref[r] = r, None, 0, taille[r]
+        pile = [r]
+        while pile:
+            x = pile.pop()
+            for y in arbre[x]:
+                if y not in racine:
+                    racine[y], parent[y], prof[y], pref[y] = r, x, prof[x] + 1, pref[x] + taille[y]
+                    pile.append(y)
+    return ident, taille, arbre, max(taille.values(), default=0), (racine, parent, prof, pref)
 
 
 def gain_robuste(a: str, b: str, ponts: tuple) -> int:
-    """Accroissement du plus grand groupe robuste si la relation a–b est ajoutée (exact, sans recalcul du graphe)."""
-    ident, taille, arbre, maxi = ponts
-    ia, ib = ident[a], ident[b]
-    if ia == ib or not nx.has_path(arbre, ia, ib):
+    """Accroissement du plus grand groupe robuste si la relation a–b est ajoutée (exact, sans recalcul du graphe).
+    Somme des tailles sur le chemin u→v de l'arbre = pref[u] + pref[v] − 2·pref[ancêtre] + taille[ancêtre]."""
+    ident, taille, _, maxi, (racine, parent, prof, pref) = ponts
+    u, v = ident[a], ident[b]
+    if u == v or racine[u] != racine[v]:
         return 0
-    return max(0, sum(taille[x] for x in nx.shortest_path(arbre, ia, ib)) - maxi)
+    x, y = u, v
+    while prof[x] > prof[y]:
+        x = parent[x]
+    while prof[y] > prof[x]:
+        y = parent[y]
+    while x != y:
+        x, y = parent[x], parent[y]
+    return max(0, pref[u] + pref[v] - 2 * pref[x] + taille[x] - maxi)
 
 
 def plus_grand_groupe_robuste(g: nx.Graph, membres: list[str]) -> int:

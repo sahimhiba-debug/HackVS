@@ -164,3 +164,6 @@ Résultat · Cas d'échec · Décision · Preuve. Les hypothèses et baselines s
   l'inclusion (−0,47) ; front médian 21 plans ; aucun plan idéal (0/20) ; hasard de contrôle dominé 167/200.
 - **Décision.** KEEP : axe COHÉSION_ROBUSTE dans le front. **Preuve.** `tests/test_observatoire.py`
   (cas construit + égalité rapide/brute), `eval/resultats_benchmark_pareto.md`.
+- **Performance.** Diagnostic à 4 axes : 2,1 s à 150 membres (80 % dans les chemins de l'arbre des ponts) → arbres
+  enracinés une fois, somme de chemin par ancêtre commun : **1,24 s** (500 membres : 17,7 → 10,3 s) ; exactitude
+  revérifiée contre la force brute : 0 désaccord sur 4171 vérifications.
