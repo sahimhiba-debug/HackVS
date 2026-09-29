@@ -412,16 +412,16 @@ class Detecteur:
             signaux.append(Signal(source="evenement", extrait=fen[1], le=ev.le.isoformat()))
             raisonnement.append(f"Pourquoi maintenant : {fen[1]}.")
         ids_roles = [r_.membre for r_ in roles[1:]]
-        suivis = [x for x in ids_roles if frozenset((a.id, x)) in self.e.relies]
-        for x in suivis:
-            quand, ou = self.e.relation_info[frozenset((a.id, x))]
-            signaux.append(Signal(source="relation", membre=x, extrait=f"rencontre : {ou}", le=quand.isoformat()))
-            raisonnement.append(f"{a.nom} a déjà rencontré {par_id[x].nom} ({ou}, le {quand.isoformat()}) : "
+        suivis = [q for q in ids_roles if frozenset((a.id, q)) in self.e.relies]
+        for q in suivis:
+            quand, ou = self.e.relation_info[frozenset((a.id, q))]
+            signaux.append(Signal(source="relation", membre=q, extrait=f"rencontre : {ou}", le=quand.isoformat()))
+            raisonnement.append(f"{a.nom} a déjà rencontré {par_id[q].nom} ({ou}, le {quand.isoformat()}) : "
                                 "c'est une suite à donner, pas une introduction.")
             for r_ in roles:
-                if r_.membre == x:
+                if r_.membre == q:
                     r_.role = r_.role.split(" — ")[0] + " — suite d'une rencontre"
-        nouveaux = [x for x in ids_roles if x not in suivis]
+        nouveaux = [q for q in ids_roles if q not in suivis]
         raisonnement.append(("Aucune autre personne n'est déjà en relation avec " + a.nom if nouveaux and suivis else
                              "Aucun d'eux n'est déjà en relation avec " + a.nom if nouveaux else "Personne d'autre n'est sollicité")
                             + " ; aucune règle dure violée.")
