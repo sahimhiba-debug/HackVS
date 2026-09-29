@@ -4,15 +4,17 @@ Produit par `scripts/mesurer_scene.py`. Lecture à voix haute ≈ 200 mots/min :
 
 | Étape | Titre | Attente après clic | Mots | Sous la ligne de flottaison |
 |---|---|---|---|---|
-| 0 | La Foire crée les rencontres. Qu'en reste-t-il un mois plus tard ? | 0 ms | 53 | 0 % |
-| 1 | Sophie écrit son besoin, avec ses mots ⚠ | 173 ms | 148 | 22 % |
-| 2 | Une proposition vérifiable ⚠ | 54 ms | 112 | 4 % |
-| 3 | Markus accepte ; ils se rencontrent | 87 ms | 66 | 0 % |
-| 4 | La vue de l'organisatrice ⚠ | 96 ms | 152 | 17 % |
-| 5 | Une seule introduction ce mois-ci : laquelle ? ⚠ | 91 ms | 124 | 0 % |
-| 6 | Et si une relation s'éteignait ? ⚠ | 73 ms | 95 | 0 % |
-| 7 | Dix jours plus tard : parler, ou se taire ? ⚠ | 71 ms | 98 | 0 % |
-| 8 | Ce que le système refuse de faire ⚠ | 62 ms | 117 | 31 % |
-| 9 | Ce que vous venez de voir ⚠ | 63 ms | 97 | 0 % |
+| 0 | La Foire crée des rencontres. Que deviennent-elles quand elle se termine ? | 0 ms | 47 | 0 % |
+| 1 | Sophie rejoint le Club | 51 ms | 87 | 0 % |
+| 2 | Son besoin, avec ses mots ⚠ | 68 ms | 99 | 0 % |
+| 3 | Qui peut l'aider — et pourquoi ⚠ | 66 ms | 91 | 0 % |
+| 4 | Une introduction, pas un numéro | 72 ms | 33 | 0 % |
+| 5 | Ils se rencontrent | 63 ms | 32 | 0 % |
+| 6 | Dix jours plus tard : parler, ou se taire ? | 62 ms | 68 | 0 % |
+| 7 | Le suivi devient une opportunité | 76 ms | 54 | 0 % |
+| 8 | Le réseau qui évolue ⚠ | 94 ms | 101 | 0 % |
+| 9 | Je pourrais inventer une connexion. Je préfère m'abstenir. | 61 ms | 72 | 0 % |
+| 10 | Trois soirées de suite | 77 ms | 71 | 0 % |
+| 11 | Des rencontres ponctuelles, un réseau vivant | 73 ms | 73 | 0 % |
 
 Erreurs de console : 0

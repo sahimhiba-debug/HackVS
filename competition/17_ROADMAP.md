@@ -6,4 +6,5 @@
 3. Canal d'envoi réel derrière l'autorisation humaine (le plan d'action existe : aperçu → autorisation → exécution → vérification).
 4. Vérification d'une IA externe (Apertus hébergé en Suisse, si l'accès existe) contre le banc d'essai existant.
 5. Micro-cercles et projets du Club, avec consentement au format de groupe.
-6. Vue du Club agrégée (tour de contrôle factuelle) : zones sous-connectées, ponts nouveaux, suites en attente.
+6. Tour de contrôle : prototype fait (8 chiffres expliqués, `/api/stage/tour`) ; à brancher sur les données réelles avec un rôle d'organisatrice authentifié.
+7. Diagnostic en tâche de fond (24 s à 1000 membres générés) et base serveur avant 10 000 membres.

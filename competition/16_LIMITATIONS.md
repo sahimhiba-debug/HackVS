@@ -21,3 +21,11 @@
 - L'invitation ciblée n'apporte rien de plus qu'une règle simple quand les hôtes sont nombreux.
 - Les interventions ciblées sont marginales face aux événements eux-mêmes (EXP-N) ; aucune politique « de saison »
   n'est recommandée.
+- Démonstration : AUCUNE IA générative (décision du 29.09 : aucun modèle accessible, et une démo ne doit pas dépendre
+  d'une clé) ; la phrase du besoin est comprise par des règles ; les phrases très libres restent une faiblesse (22/112).
+- Performance du diagnostic : 0,91 s / 6,8 s / 24,2 s à 150 / 500 / 1000 membres générés (croissance plus que
+  linéaire) ; jamais mesuré au-delà. Les temps publiés auparavant étaient périmés (FAILURES n° 46).
+- Benchmark de connexions : l'avantage « membres servis » de l'optimiseur vient du nombre d'introductions placées, pas
+  de meilleurs choix (par introduction : 0,72 contre 0,74) (FAILURES n° 47).
+- Tour de contrôle et front de plans : démonstration seulement (pas de rôle d'organisatrice authentifié).
+

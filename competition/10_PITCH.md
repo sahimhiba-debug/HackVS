@@ -9,7 +9,7 @@ PROBLÈME → INSIGHT → TENSION → NOUVELLE APPROCHE → PREUVE → DÉMO →
   facile ; savoir *quand* se taire, *qui* peut présenter qui sans rien divulguer, et ce que le réseau entier y gagne, non.
 - **Approche.** Une intelligence relationnelle : chaque rencontre devient un fait daté, chaque relance a une preuve,
   chaque introduction un double accord, et l'on simule le réseau avant d'agir.
-- **Preuve.** Démo en direct, calculée par le moteur ; benchmark synthétique contre cinq méthodes ; 41 défauts trouvés
+- **Preuve.** Démo en direct, calculée par le moteur ; benchmark synthétique contre cinq méthodes ; 47 défauts trouvés
   en attaquant notre propre système.
 - **Impact / vision.** Le Club garde ses moments forts ; nous leur donnons une suite toute l'année.
 

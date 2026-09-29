@@ -11,8 +11,8 @@ stricte : tout ce qui existe avant le début officiel est du travail préparatoi
   Rien d'autre ne peut être présenté ainsi.
 
 ## Préparé AVANT l'événement (à dire tel quel)
-Le moteur (mémoire datée, recherche fondée sur preuves, double accord, relances, diagnostic, plans, contrefactuel), la
-scène en trois actes, les bancs d'évaluation, les tests, ce dossier.
+Le moteur (mémoire datée, recherche fondée sur preuves, double accord, relances, diagnostic, plans, contrefactuel),
+l'histoire de démonstration en 11 étapes, la tour de contrôle, les bancs d'évaluation, les tests, ce dossier.
 
 ## Réalisé PENDANT l'événement
 _(vide à ce jour — à remplir uniquement à partir de `git log debut-hack-vs..HEAD`)_

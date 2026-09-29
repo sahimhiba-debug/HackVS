@@ -2,26 +2,30 @@
 
 > Généré par `prototype/scripts/generer_competition.py` depuis `captions.json` (source unique). Ne pas éditer.
 
-La Foire crée les rencontres. Un mois plus tard, qu'en reste-t-il ? Et que doit faire l'organisatrice du Club ?
+La Foire crée des rencontres. Que deviennent-elles quand elle se termine ?
 
-Scène A. Sophie écrit son besoin avec ses mots. Nos règles lisent mal cette phrase et s'abstiennent. Ici, aucun modèle d'IA n'est configuré : l'écran le dit, et le produit demande une phrase plus simple. L'IA n'est jamais simulée.
+Sophie rejoint le Club. Elle ne connaît personne.
 
-Pas une liste : Markus, dont le profil prouve qu'il peut aider. Et il cherche justement ce que Sophie produit.
+Elle écrit son besoin. Le système comprend — et montre pourquoi.
 
-Une introduction, pas un numéro. Il pouvait refuser. Les coordonnées ne circulent qu'après son accord.
+Markus peut l'aider : son profil le prouve. Et il cherche ce qu'elle produit.
 
-Scène B. La vue de l'organisatrice : deux parties du Club ne tiennent qu'à une seule relation.
+Une introduction, pas un numéro. Il peut refuser.
 
-Une seule introduction ce mois-ci. Réunir les îlots : huit puis quinze membres reliés, mais par un seul fil. Consolider : huit résistent à une perte, sans rien réunir. Aucun plan ne gagne sur tout. Elle choisit.
+Il accepte. Ils se rencontrent.
 
-Et si cette relation s'éteignait ? Quatre membres seraient coupés de leur groupe. Calculé, pas deviné — et affiché comme une simulation.
+Dix jours plus tard : une seule raison de se reparler. Dix-sept silences.
 
-On clique une autre relation : celle-ci est doublée par un autre chemin. Personne n'est perdu.
+Une affaire en cours : une opportunité, pas encore un résultat.
 
-Scène C. Dix jours plus tard : une seule relance, avec sa preuve. Pour les dix-sept autres paires : rien de nouveau, donc silence.
+Trois introductions prouvées : les deux îlots n'en forment plus qu'un.
 
-Trois demandes refusées, chacune avec sa raison : aucune preuve pour le Japon, un membre qui a refusé d'être présenté, une introduction sans aide prouvée.
+Chantal est seule. Le système pourrait la relier à quinze personnes.
+
+Aucune raison prouvée. Il préfère s'abstenir.
+
+Trois soirées de suite : neuf rencontres utiles, puis une, puis zéro. Il s'abstient.
 
 Tout est fictif et calculé en direct. La valeur réelle se mesurera par un pilote.
 
-Chaque événement crée des rencontres. Nous faisons en sorte qu'elles deviennent quelque chose.
+Des rencontres ponctuelles, un réseau vivant.

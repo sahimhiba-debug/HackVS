@@ -30,8 +30,8 @@ CALQUE = """
   let c = document.getElementById('sous-titre');
   if (!c) {
     c = document.createElement('div'); c.id = 'sous-titre';
-    c.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:86px;max-width:1100px;width:calc(100% - 64px);' +
-      'background:rgba(17,17,17,.88);color:#fff;font:600 24px/1.35 "Helvetica Neue",Arial,sans-serif;padding:14px 22px;' +
+    c.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:86px;max-width:1200px;width:calc(100% - 64px);' +
+      'background:rgba(17,17,17,.88);color:#fff;font:700 30px/1.3 "Helvetica Neue",Arial,sans-serif;padding:14px 22px;' +
       'border-radius:8px;z-index:99;text-align:center;transition:opacity .3s';
     document.body.appendChild(c);
   }

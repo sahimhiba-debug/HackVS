@@ -44,7 +44,7 @@ faits datés (RENCONTRE, INTRO_*, RELANCE_*, DECISION_ORGANISATION…)
 | 150 | 29 ms | 134 ms | 101 Mo |
 | 1000 | 221 ms | 798 ms | 114 Mo |
 | 5000 | 904 ms | 5,3 s | 166 Mo |
-Diagnostic complet de l'organisation : 0,67 s à 150 membres, 5,8 s à 500, 25 s à 1000 (**limite**). Scène : < 200 ms
+Diagnostic complet de l'organisation (médianes de 3, une machine) : 0,91 s à 150 membres, 6,8 s à 500, 24,2 s à 1000 — **limite** : croissance plus que linéaire, aucune mesure au-delà de 1000. Avant l'optimisation du 29.09 : 1,22 s / 11,2 s / ≈ 45 s (FAILURES n° 46). Scène : < 200 ms
 par étape dans le navigateur (`competition/rehearsal/MESURES_SCENE.md`).
 
 ## 5. Qualité

@@ -15,6 +15,7 @@ import math
 import re
 import time
 from collections import Counter
+from functools import lru_cache
 from typing import Optional
 
 from .models import Besoin, Critere, Ecart, Explication, LigneExplication, Preuve, Profil, ProfilPublic, Resultat, Suggestion
@@ -125,8 +126,10 @@ def preuve_valide(p: Profil, pr: Preuve) -> bool:
     return False
 
 
-def _tokens(texte: str) -> list[str]:
-    return [t.rstrip("s") for t in _mots(texte)]
+@lru_cache(maxsize=65536)
+def _tokens(texte: str) -> tuple[str, ...]:
+    """Fonction PURE d'une chaîne, mémorisée : les mêmes textes de profil sont tokenisés à chaque recherche."""
+    return tuple(t.rstrip("s") for t in _mots(texte))
 
 
 def texte_profil(p: Profil) -> str:

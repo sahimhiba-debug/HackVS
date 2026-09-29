@@ -24,6 +24,6 @@ MÉMOIRE                      (tout est rejouable)
   HiGHS, graphe, validation L0–L8, critique / gardien / médiateur, exécution et rejeu, certificat, passerelle de
   modèles, plan d'action, **mémoire temporelle**.
 - `prototype/adaptateurs/club/` (propre au Club) : vocabulaire, cycle des relations, réseau (projection, état de
-  relation, chemin chaud, boîte), micro-cercles.
+  relation, chemin chaud, boîte), micro-cercles (hors démo).
 - Frontière d'interopérabilité : serveur MCP (jetons, portées, confirmation humaine). Pas de bus d'événements, pas de
   microservices : une instance suffit (ARCHITECTURE_DECISIONS AD-08).

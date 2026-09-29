@@ -1,118 +1,61 @@
-# 13 — Questions du jury (44 questions difficiles)
+# 13 — Questions difficiles du jury (45) : RÉPONSE · PREUVE · LIMITE
 
-Format : **Q** · **Réponse** · *Preuve* · Limite · Relance possible. Règle : ne jamais citer un chiffre absent de
-`15_CLAIMS.md` ; dire « nous ne savons pas » quand c'est le cas.
+Règle : répondre en une ou deux phrases, montrer la preuve si on la demande, dire la limite avant qu'on la trouve.
+Trois jurés simulés : **B** (business), **T** (technique), **P** (produit).
 
-## BUSINESS
-1. **Q : Qui paie, et pourquoi ?** — Le Club, parce que la valeur d'une adhésion annuelle se joue entre les événements :
-   des suites concrètes justifient le renouvellement. *Hypothèse de produit (INFERRED), non mesurée.* Limite : aucun
-   entretien avec des membres réels. Relance : « Comment le vérifieriez-vous ? » → pilote après un seul événement,
-   mesurer suites acceptées et renouvellements.
-2. **Q : Quel indicateur montrerait le succès ?** — Suites acceptées après un événement, introductions acceptées,
-   opportunités déclarées, membres isolés reliés. *Tous calculés par le prototype sur données fictives.* Limite :
-   aucune donnée réelle.
-3. **Q : Pourquoi le Club ne prendrait-il pas simplement un outil existant ?** — Il peut ; notre couche s'y ajoute
-   (mémoire, suivis prouvés, consentement relationnel). *20_COMPETITIVE_ANALYSIS.* 
-4. **Q : Quelle est la première chose à déployer ?** — Après le prochain événement : proposer seulement les suites
-   justifiées, en silence pour le reste. Une seule fonction, mesurable en un mois.
-5. **Q : Combien de membres faut-il pour que ça marche ?** — Nous l'avons mesuré sur données fictives : un petit club
-   épuise vite les rencontres utiles sans besoins nouveaux (le club de démonstration n'a plus rien à proposer à la
-   3e soirée, et le système s'abstient). *docs/EVALUATION.md §6 ter.* C'est pourquoi la boucle des besoins compte.
+## Juré business
+| # | Question | Réponse | Preuve | Limite |
+|---|---|---|---|---|
+| B1 | Pourquoi pas LinkedIn ? | LinkedIn est un réseau ouvert ; le Club est un réseau fermé, dont la valeur naît de ses événements et dont les contacts ne sont pas publics. Nous faisons vivre les relations nées au Club, avec l'accord des deux. | 20_COMPETITIVE_ANALYSIS ; scène étape 4 | Nous ne remplaçons pas LinkedIn ; un membre peut y aller en parallèle. |
+| B2 | Pourquoi pas Swapcard ? | Swapcard recommande très bien pendant l'événement. Nous n'avons pas trouvé dans ses documents publics de suivi fondé sur une preuve ni de plans chiffrés pour l'organisateur ; nous pourrions nous y ajouter comme couche de suivi. | AUDIT_CHAMPIONNAT § 7 (sources) | Pages éditeur non consultables depuis notre environnement ; absence de preuve ≠ preuve d'absence. |
+| B3 | Pourquoi pas Grip ? | Grip apprend de comportements à grande échelle (« 16 stratégies »). Nous ne cherchons pas à mieux prédire un clic : nous exigeons une preuve d'aide et nous savons nous taire. | AUDIT § 7 [G1] | Grip a des données et des clients ; nous n'en avons aucun. |
+| B4 | Et Brella, qui a une offre pour les associations ? | C'est le concurrent le plus proche sur « toute l'année ». Notre différence défendable : abstention, silence justifié, consentement relationnel testé, vue réseau pour l'organisatrice. | AUDIT § 7 [B2] | Nous n'avons pas testé Brella. |
+| B5 | Pourquoi le Club l'utiliserait-il entre deux événements ? | Pour trois moments précis : un besoin publié reçoit une réponse prouvée ; une raison nouvelle déclenche une relance ; l'organisatrice choisit ses introductions du mois en connaissant leur prix. | VALEUR_METIER § 1 ; scène | Fréquence réelle de ces moments non mesurée. |
+| B6 | Quelle action nouvelle pour l'organisatrice ? | Voir ce qui se défait (îlots, ponts fragiles), choisir une introduction en connaissant son effet, et savoir quand ne rien faire. | Tour de contrôle (T) ; scène étapes 8–10 | Aucune organisatrice réelle ne l'a utilisée. |
+| B7 | Combien de travail humain évite-t-il ? | Nous ne le chiffrons pas : nous n'avons pas mesuré la pratique actuelle. Le pilote mesure les minutes de l'organisatrice. | VALEUR_METIER § 3, § 6 | Pas de chiffre d'économie. |
+| B8 | Combien cela coûte ? | Une machine, aucune clé d'API, aucune licence propriétaire ; l'IA générative est optionnelle. | 16_LIMITATIONS ; C14 | Coût d'hébergement et de maintenance non chiffré. |
+| B9 | Comment mesurez-vous votre avantage ? | Par un pilote de trois mois : part des membres avec une relation actuelle, introductions acceptées, relances acceptées ou ignorées, décisions de l'organisatrice réalisées. Critère d'échec fixé d'avance. | VALEUR_METIER § 6 | Aucun résultat de pilote à ce jour. |
+| B10 | Et si les membres ne remplissent rien ? | Le système se tait — honnête mais sans valeur. C'est notre premier indicateur : moins d'un volontaire sur cinq qui publie un besoin = échec. | VALEUR_METIER § 5 | Risque principal du produit. |
+| B11 | Qui paie ? | Hypothèse : le Club, comme service à ses membres. | — | Non validé avec le Club. |
+| B12 | Pourquoi vous croire, sur des données fictives ? | Nous ne demandons pas de croire à une valeur : nous montrons des mécanismes, vérifiables, et un protocole pour mesurer la valeur. | 14_PROOF_LEDGER | La valeur reste à prouver. |
+| B13 | Qu'avez-vous fait pendant le hackathon ? | Seulement ce qui a un commit après le début officiel ; le reste est préparé avant, et nous le disons. | CONTRIBUTIONS_HACKATHON | Règlement officiel pas encore reçu. |
+| B14 | Le Club a-t-il validé le besoin ? | Non. C'est une hypothèse de produit (INFERRED). | C21 | À confronter au brief exact. |
+| B15 | Quelle est la suite ? | Pilote, rôles authentifiés, mesure réelle de l'IA générative, puis intégration à une plateforme d'événement existante. | 17_ROADMAP | Rien de cela n'est commencé. |
 
-## TECHNIQUE
-6. **Q : Pourquoi un solveur plutôt qu'un classement ?** — Un classement optimise une personne à la fois ; le solveur
-   optimise le réseau sous contraintes (budget par membre, consentement, pas de répétition) et PROUVE l'optimum.
-   *C10–C11, AD-03.* Limite : plus lent (0,4 s), et il perd sur la réciprocité face à une méthode dédiée.
-7. **Q : Pourquoi un graphe temporel ?** — Pour savoir quand une relation s'éteint, ce qui s'est passé après et quand un
-   suivi est dû ; tout l'état est rejouable. *AD-01.*
-8. **Q : Pourquoi pas une base de graphe ?** — 16 à 150 membres : NetworkX en mémoire suffit ; complexité non méritée.
-9. **Q : Comment garantissez-vous une seule source de vérité ?** — Le magasin des introductions est projeté dans la
-   mémoire, jamais dupliqué ; nous avons trouvé et corrigé ce défaut. *FAILURES #1, AD-02.*
-10. **Q : Comment gérez-vous le temps ?** — Une seule horloge, injectée partout ; nous avons découvert deux horloges
-    incohérentes grâce à un test rouge. *FAILURES #4–5.*
-11. **Q : Que se passe-t-il à 5 000 membres ?** — Non mesuré. Le solveur a tourné sur 150 membres générés ; au-delà,
-    il faudrait découper par événement ou par communauté. Nous ne le prétendons pas testé.
-12. **Q : Comment testez-vous ?** — Plus de 100 tests, lint, CI ; scénarios à attendu fixé avant exécution ; tests
-    rouges écrits avant les corrections ; tests de mutation sur les explications. *C06, C13, C15.*
+## Juré technique
+| # | Question | Réponse | Preuve | Limite |
+|---|---|---|---|---|
+| T1 | Pourquoi pas de simples embeddings ? | La ressemblance n'est pas l'aide : un moteur par ressemblance aurait proposé quelqu'un à Chantal, sans raison. Nous exigeons un extrait qui prouve l'aide. | Scène étape 9 ; SYNTHETIC_BENCHMARK (similarité : 67,7 % de ponts) | Une couche sémantique locale existe en option ; elle ne décide pas seule. |
+| T2 | Pourquoi un solveur ? | Parce que les décisions collectives (une soirée, les introductions du mois) ont des contraintes et des objectifs en conflit ; un tri individuel envoie tout le monde vers les mêmes personnes. | AD-05 ; benchmark : 95,7 % de ponts | Front approché ; par introduction, pas d'avantage en membres servis. |
+| T3 | Pourquoi un graphe ? | Pour voir ce qu'aucun membre ne voit seul : îlots, ponts fragiles, qui serait coupé si une relation s'éteint. | Scène étape 8 ; contrefactuel ; AD-01 | NetworkX en mémoire : pas au-delà de quelques milliers de membres. |
+| T4 | Pourquoi le LLM n'agit-il pas directement ? | Il peut halluciner et être manipulé par injection ; le consentement et les refus sont du code testé. Le LLM peut proposer des critères ; le code les revalide ; il ne décide jamais. | AD-09 ; `parser_llm.valider` | Aucun modèle mesuré à ce jour. |
+| T5 | Où est l'IA générative, alors ? | Pas dans la démo. Elle a une place mesurable : comprendre des phrases très libres (22 échecs des règles sur 112 cas) et mettre un diagnostic en mots sous contrôle d'un vérificateur de fidélité. | GENAI_RESEARCH ; banc G1/G2 | NON EXÉCUTÉ faute de modèle accessible. |
+| T6 | Que faites-vous quand il n'y a pas assez de preuves ? | Nous nous abstenons, et nous disons pourquoi et ce qui changerait la décision. | C01, C23, C24 | Le système paraît souvent silencieux. |
+| T7 | Et si les données sont fausses ? | Chaque proposition cite sa source (déclaré / déduit) et son âge ; un profil ancien est signalé ; une offre déclarée reste une déclaration. | Cartes « Inconnu » ; SYNTHETIC_BENCHMARK (20 % d'offres périmées simulées) | Aucune vérification externe des déclarations. |
+| T8 | Et des preuves contradictoires ? | Un refus ancien n'écrase pas une relation devenue vivante ; un terme ambigu avec des indices contradictoires reste une incertitude affichée. | `test_adversarial_reseau.py` ; `test_compilateur_besoin.py` | Contradictions de sens complexes non détectées. |
+| T9 | Votre benchmark est-il représentatif ? | Non, et nous le disons : réseaux générés, vérité définie par nous. Il sert à attraper des idées fausses — nous y avons trouvé nos propres biais. | 06_BENCHMARKS ; FAILURES n° 8, 47 | Ne prédit pas la valeur réelle. |
+| T10 | Que se passe-t-il à 10 000 membres ? | Recherche : 904 ms à 5000 membres générés. Diagnostic : 24 s à 1000, plus que linéaire : il faudrait le calculer en tâche de fond et passer à une base serveur. | 06_BENCHMARKS § 3 | Jamais mesuré à 10 000. |
+| T11 | Comment protégez-vous les membres ? | Invisible par défaut, coordonnées après double accord, refus jamais contourné, qui refuse n'est ni nommé ni compté, entrées bornées. | `test_securite_api.py`, `test_scene.py` ; FAILURES n° 19–22 | Pas d'authentification réelle des membres. |
+| T12 | Comment savez-vous que l'explication dit vrai ? | Elle est recalculée indépendamment et comparée à la décision ; une fausse explication injectée est attrapée. | C06 | Couvre les explications affichées, pas tout le texte libre. |
+| T13 | La démo est-elle truquée ? | Non : les étapes appellent les mêmes fonctions que l'application, rejouées à l'identique, testées dans un vrai navigateur en CI. | AD-12 ; `test_e2e_scene.py` | Le monde est fictif et l'horloge simulée. |
+| T14 | Qu'est-ce qui casse aujourd'hui ? | Paraphrases très libres, diagnostic lent au-delà de 500 membres, aucun envoi réel, pas de rôles authentifiés. | 16_LIMITATIONS | — |
+| T15 | Déploiement réel ? | Un conteneur, SQLite, sans dépendance externe ; à passer sur une base serveur et une authentification avant tout pilote. | 04_ARCHITECTURE | Jamais déployé publiquement. |
 
-## IA
-13. **Q : Pourquoi avez-vous besoin d'IA ?** — Pour comprendre le langage (besoins, profils) et proposer ; pas pour
-    décider des permissions ou des règles. Sans clé, le produit fonctionne entièrement (règles locales + IA locale).
-    *C14, AD-04.*
-14. **Q : Pourquoi pas simplement des embeddings ?** — Ils rapprochent des domaines voisins sans pouvoir citer de preuve
-    (« droit maritime » ≈ « droit des sociétés »). Nous utilisons un vocabulaire contrôlé et citons les phrases
-    exactes ; l'IA locale ne fait que proposer. *AD-11.*
-15. **Q : Avez-vous testé Claude ou Apertus ?** — Non contre leurs API réelles : aucune clé dans notre environnement.
-    Testés contre des serveurs simulés ; la passerelle les déclare « configurés », jamais « vérifiés ». *C14.*
-16. **Q : L'IA peut-elle être manipulée par un profil malveillant ?** — Les profils sont traités comme des données non
-    fiables ; une injection est signalée et ne change pas le classement ; aucune règle n'est levée par un texte.
-17. **Q : Y a-t-il des agents ?** — Des rôles à responsabilité démontrable (compilateur, solveur, validateurs, critique,
-    gardien, médiateur), déterministes ; pas d'agent pour faire joli. *AD-09.*
-
-## CONFIDENTIALITÉ
-18. **Q : Comment protégez-vous les relations privées ?** — Le lien entre un intermédiaire et un candidat n'est jamais
-    révélé ; la présentation est proposée d'abord à l'intermédiaire. *C04, FAILURES #2.*
-19. **Q : Qui voit les coordonnées ?** — Personne, avant l'accord des deux ; le prototype n'en stocke aucune. *C02.*
-20. **Q : Un nouveau membre est-il exposé ?** — Non : invisible par défaut, recommandable seulement s'il le choisit. *C17.*
-21. **Q : Et les besoins sensibles (céder son entreprise) ?** — Un brouillon ou un besoin clos n'est jamais utilisé ; nous
-    avons trouvé cette fuite et l'avons corrigée à la source. *C18, FAILURES #6.*
-22. **Q : Faites-vous du scoring de personnes ?** — Non. Nous mesurons des phénomènes du réseau (ponts, isolement), jamais
-    la « valeur » d'un membre.
-23. **Q : Que voit l'administration du Club ?** — Dans la scène, une vue de démonstration ; en production, la vue du Club
-    doit rester agrégée (le prototype affiche déjà des agrégats sans noms dans la vue du Club).
-
-## DONNÉES
-24. **Q : Que se passe-t-il quand les données sont fausses ?** — Les preuves sont citées, les profils anciens et les
-    preuves déduites sont signalés comme inconnues ; une affirmation périmée fait échouer la validation (scénario S17).
-25. **Q : Vos données sont-elles réelles ?** — Non. Tout est fictif ou synthétique, et étiqueté comme tel.
-26. **Q : Et le démarrage à froid ?** — Un nouveau membre est servi par ses déclarations validées ; nous ne prétendons
-    jamais avoir appris une préférence non observée.
-
-## BENCHMARK
-27. **Q : Quelle est la limite de votre benchmark ?** — Données générées ; vérité latente définie par nous ; 60 membres ;
-    5 réseaux. Il montre des compromis, pas une performance réelle. *C10–C12 (SYNTHÉTIQUE).*
-28. **Q : Pourquoi votre méthode serait meilleure qu'un classement ?** — Elle ne l'est pas partout : elle gagne sur les
-    ponts, les membres servis et les isolés, perd sur la réciprocité. Nous le montrons.
-29. **Q : Comment savez-vous que le benchmark n'est pas biaisé en votre faveur ?** — Nous y avons trouvé un biais
-    (candidats différents) et l'avons corrigé, ce qui a réduit notre avantage. Mêmes candidats, même budget, vérité
-    cachée à toutes les méthodes ; testé. *FAILURES #8.*
-30. **Q : Le front de Pareto n'est-il pas artificiel ?** — Sur nos données de démo, il était dégénéré (1 point) : nous
-    l'avons dit, puis construit un benchmark à conflits contrôlés (3 à 10 points). *C12.*
-
-## ÉTHIQUE
-31. **Q : Comment évitez-vous les bulles ?** — L'optimiseur valorise les ponts entre communautés du réseau ; « ami d'ami » et
-    « similarité » créent moins de ponts (mesuré, SYNTHÉTIQUE). Nuance mesurée (EXP-G) : sur nos profils, la similarité ne
-    relie PAS davantage le même secteur (86 % de paires inter-secteurs) ; sa vraie limite est de proposer sans raison
-    (92 % de ses paires sans aide prouvée).
-32. **Q : Ne favorisez-vous pas les membres populaires ?** — Un budget par membre limite la sollicitation ; notre
-    benchmark de soirée ne discrimine pas ce biais. Depuis : budget d'attention (3 relances par membre et par jour, le reste
-    reporté) testé sur un cas construit ; et sur le benchmark d'intervention, la méthode « relier les plus connectés » garde
-    un léger avantage sur la taille du plus grand groupe : nous ne revendiquons rien de plus.
-33. **Q : Que se passe-t-il si l'utilisateur refuse ?** — Le refus est un fait enregistré ; la relance n'est jamais
-    reproposée ; aucune pénalité. *test_relance_refusee_n_insiste_pas.*
-
-## UX
-34. **Q : N'est-ce pas trop complexe pour un membre ?** — Le membre voit une boîte d'actions possibles maintenant ; la
-    complexité reste dans le moteur.
-35. **Q : Pourquoi le système se tait-il autant ?** — Parce qu'une relance sans raison est du bruit ; le silence est
-    compté et affiché.
-36. **Q : Et sur mobile ?** — Vérifié à 390 px (scène et espace membre), sans débordement.
-
-## DÉPLOIEMENT / COÛT
-37. **Q : Combien cela coûte ?** — Sans IA externe : le coût d'un petit serveur ; avec une IA externe, un coût par
-    analyse que nous n'avons pas mesuré (aucune clé). Nous ne donnons pas de chiffre non mesuré.
-38. **Q : Comment le Club pourrait-il le déployer ?** — Conteneur unique (Dockerfile), données du Club importées avec
-    autorisation ; authentification des membres à ajouter (non implémentée).
-39. **Q : Qu'est-ce qui manque pour la production ?** — Authentification, canal d'envoi réel, import des données réelles,
-    vérification d'une IA externe, tests avec de vrais membres. *16_LIMITATIONS.*
-40. **Q : Où sont les données hébergées ?** — Où le Club le décide : tout tourne en local ; Apertus (modèle suisse) est
-    prévu en option, non vérifié.
-
-## CONCURRENCE / FUTUR
-41. **Q : Pourquoi pas LinkedIn ?** — Voir 20_COMPETITIVE_ANALYSIS (réseau fermé, annuel, consentement, événements).
-42. **Q : Swapcard et Brella ont une communauté 365 jours.** — Oui ; ce n'est pas notre différenciation. La nôtre : ce
-    qui se passe après la recommandation, prouvé et consenti.
-43. **Q : Qu'avez-vous fait pendant les 24 heures ?** — À préciser honnêtement le jour J : le prototype a été préparé
-    avant l'événement ; ne jamais présenter ce travail comme réalisé pendant Hack VS.
-44. **Q : Et après ?** — Pilote sur un événement réel du Club, avec consentement ; mesurer suites acceptées et
-    introductions ; puis micro-cercles et projets. *17_ROADMAP.*
+## Juré produit
+| # | Question | Réponse | Preuve | Limite |
+|---|---|---|---|---|
+| P1 | En une phrase ? | Ce système transforme des rencontres ponctuelles en réseau vivant. | Pitch | — |
+| P2 | Qu'est-ce que le jury doit retenir ? | Il propose seulement ce qu'il peut prouver — et il sait s'abstenir. | Scène étape 9 | — |
+| P3 | Pourquoi le système se tait-il autant ? | Une relance sans raison fatigue un réseau ; 17 paires n'avaient rien de nouveau à se dire. | C05 | Taux de silence réel inconnu. |
+| P4 | N'est-ce pas frustrant pour un membre ? | Il reçoit une abstention claire et ce qui changerait la réponse, plutôt qu'un mauvais contact. | Scène étape 9 | Non testé avec des membres. |
+| P5 | Comment un membre remplit-il son profil ? | Une phrase ; le système propose, il valide ; invisible par défaut. | Scène étape 1 | Proposition parfois imparfaite (visible à l'écran). |
+| P6 | Et le démarrage à froid ? | Un nouveau membre est trouvable dès son premier besoin ou sa première offre validée ; sa réciprocité est dite prouvée ou non. | C17 ; `test_explications.py` | Sans rien de publié, rien ne se passe. |
+| P7 | Pourquoi l'organisatrice ne choisit-elle pas simplement ? | Elle choisit : le système montre l'effet et le prix de chaque plan, et refuse ce qui n'a pas de preuve. | Scène étape 8 ; C09 | — |
+| P8 | Les soirées ne suffisent-elles pas ? | Elles créent l'essentiel des rencontres ; nous l'avons mesuré : enchaîner les soirées épuise les rencontres utiles (9 → 1 → 0). Nous aidons entre elles. | C24 ; EXP-N | Simulation fictive. |
+| P9 | Que voit un membre, que voit l'organisatrice ? | Un membre voit ses propres relations et propositions ; l'organisatrice voit des chiffres expliqués (tour de contrôle). | Tour de contrôle ; AD-07 | Rôles non authentifiés dans le prototype. |
+| P10 | Pourquoi pas une app de rencontres pour dirigeants ? | Nous avons commencé par la mise en relation ; un réseau professionnel qui ressemble à une application de rencontres n'était probablement pas le brief. | 10_PITCH (humour de réserve) | — |
+| P11 | Et si Markus refuse ? | La demande est close, rien n'est révélé à Sophie au-delà du refus, et aucune table de soirée ne les réunira. | AD-08 ; FAILURES n° 26 | — |
+| P12 | L'IA peut-elle écrire le message d'introduction ? | Possible plus tard (G5), sous contrôle : aucune donnée privée ajoutée ; évaluation humaine nécessaire. | GENAI_RESEARCH G5 | Non construit. |
+| P13 | Qu'est-ce qui est fait, simulé, non mesuré ? | Faits enregistrés (fictifs), simulations étiquetées, valeur réelle non mesurée — l'écran final le dit. | Scène étape 11 | — |
+| P14 | Accessibilité, mobile ? | La scène fonctionne à 390 px sans défilement horizontal (testé) ; clavier : flèches, R, T, Entrée sur une relation. | `test_e2e_scene.py` | Pas d'audit d'accessibilité complet. |
+| P15 | Pourquoi vous, pourquoi maintenant ? | Parce que la Foire crée chaque année les rencontres, et qu'entre deux éditions rien ne les fait vivre ; nous avons un prototype qui le prouve mécanisme par mécanisme. | Démo | Hypothèse de besoin non validée avec le Club. |

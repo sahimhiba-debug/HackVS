@@ -12,7 +12,7 @@
 | Opportunité ≠ résultat | étape 10 | états dérivés |
 | Présentation via un intermédiaire, proposée d'abord à lui | étape 11 | `test_reseau.py` |
 | Micro-cercle explicable avec inconnues | étape 11 | `cercles.py`, `test_scene.py` |
-| Simulation avant / après | étape 12 | `reseau.simuler` |
+| Simulation avant / après (groupes 2 → 1, robuste 4 → 15) | étape 8 | `diagnostic` + `pareto` (copie du graphe) |
 | Boîte réseau (actions possibles maintenant) | onglet « Suivi » | `test_reseau.py` |
 | Moteur de décision : spécification, solveur, validation L0–L8, critique, gardien, certificat, rejeu | `/decision` | `eval_decisions.py` (20/20) |
 | Cycle des soirées : plan optimisé, relances à 10 jours, croissance | `/cycle` | `test_cycle.py` |

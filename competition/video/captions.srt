@@ -1,47 +1,55 @@
 1
-00:00:00,000 --> 00:00:08,000
-La Foire crée les rencontres. Un mois plus tard, qu'en reste-t-il ? Et que doit faire l'organisatrice du Club ?
+00:00:00,000 --> 00:00:06,000
+La Foire crée des rencontres. Que deviennent-elles quand elle se termine ?
 
 2
-00:00:08,000 --> 00:00:26,000
-Scène A. Sophie écrit son besoin avec ses mots. Nos règles lisent mal cette phrase et s'abstiennent. Ici, aucun modèle d'IA n'est configuré : l'écran le dit, et le produit demande une phrase plus simple. L'IA n'est jamais simulée.
+00:00:06,000 --> 00:00:14,000
+Sophie rejoint le Club. Elle ne connaît personne.
 
 3
-00:00:26,000 --> 00:00:38,000
-Pas une liste : Markus, dont le profil prouve qu'il peut aider. Et il cherche justement ce que Sophie produit.
+00:00:14,000 --> 00:00:23,000
+Elle écrit son besoin. Le système comprend — et montre pourquoi.
 
 4
-00:00:38,000 --> 00:00:47,000
-Une introduction, pas un numéro. Il pouvait refuser. Les coordonnées ne circulent qu'après son accord.
+00:00:23,000 --> 00:00:32,000
+Markus peut l'aider : son profil le prouve. Et il cherche ce qu'elle produit.
 
 5
-00:00:47,000 --> 00:01:00,000
-Scène B. La vue de l'organisatrice : deux parties du Club ne tiennent qu'à une seule relation.
+00:00:32,000 --> 00:00:39,000
+Une introduction, pas un numéro. Il peut refuser.
 
 6
-00:01:00,000 --> 00:01:17,000
-Une seule introduction ce mois-ci. Réunir les îlots : huit puis quinze membres reliés, mais par un seul fil. Consolider : huit résistent à une perte, sans rien réunir. Aucun plan ne gagne sur tout. Elle choisit.
+00:00:39,000 --> 00:00:45,000
+Il accepte. Ils se rencontrent.
 
 7
-00:01:17,000 --> 00:01:28,000
-Et si cette relation s'éteignait ? Quatre membres seraient coupés de leur groupe. Calculé, pas deviné — et affiché comme une simulation.
+00:00:45,000 --> 00:00:54,000
+Dix jours plus tard : une seule raison de se reparler. Dix-sept silences.
 
 8
-00:01:28,000 --> 00:01:38,000
-On clique une autre relation : celle-ci est doublée par un autre chemin. Personne n'est perdu.
+00:00:54,000 --> 00:01:00,000
+Une affaire en cours : une opportunité, pas encore un résultat.
 
 9
-00:01:38,000 --> 00:01:50,000
-Scène C. Dix jours plus tard : une seule relance, avec sa preuve. Pour les dix-sept autres paires : rien de nouveau, donc silence.
+00:01:00,000 --> 00:01:11,000
+Trois introductions prouvées : les deux îlots n'en forment plus qu'un.
 
 10
-00:01:50,000 --> 00:02:03,000
-Trois demandes refusées, chacune avec sa raison : aucune preuve pour le Japon, un membre qui a refusé d'être présenté, une introduction sans aide prouvée.
+00:01:11,000 --> 00:01:21,000
+Chantal est seule. Le système pourrait la relier à quinze personnes.
 
 11
-00:02:03,000 --> 00:02:12,000
-Tout est fictif et calculé en direct. La valeur réelle se mesurera par un pilote.
+00:01:21,000 --> 00:01:30,000
+Aucune raison prouvée. Il préfère s'abstenir.
 
 12
-00:02:12,000 --> 00:02:19,000
-Chaque événement crée des rencontres. Nous faisons en sorte qu'elles deviennent quelque chose.
+00:01:30,000 --> 00:01:40,000
+Trois soirées de suite : neuf rencontres utiles, puis une, puis zéro. Il s'abstient.
+
+13
+00:01:40,000 --> 00:01:47,000
+Tout est fictif et calculé en direct. La valeur réelle se mesurera par un pilote.
+
+14
+00:01:47,000 --> 00:01:54,000
+Des rencontres ponctuelles, un réseau vivant.

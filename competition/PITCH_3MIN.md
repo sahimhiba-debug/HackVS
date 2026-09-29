@@ -32,7 +32,7 @@ Notre système a un défaut : il se tait souvent. Dans une démo, c'est angoissa
 
 **[2:25 — les preuves]**
 Derrière ce silence, il y a des preuves citées, l'accord des deux personnes, des refus qu'aucun calcul ne contourne,
-une optimisation, et le temps. Nous avons essayé de casser notre propre système : 41 défauts trouvés et corrigés,
+une optimisation, et le temps. Nous avons essayé de casser notre propre système : 47 défauts trouvés et corrigés,
 chacun avec son test. Tout ce que vous avez vu est fictif et calculé en direct ; la valeur pour un vrai Club se
 mesurera par un pilote, dont le critère d'échec est déjà écrit.
 

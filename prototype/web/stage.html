@@ -24,6 +24,9 @@
     .lien.planA { stroke: var(--vert); stroke-width: 3; stroke-dasharray: 7 5; opacity: 1; }
     .lien.planB { stroke: var(--rouge); stroke-width: 3; stroke-dasharray: 7 5; opacity: 1; }
     .lien.retire { stroke: var(--rouge-fonce); stroke-width: 3; stroke-dasharray: 2 6; opacity: 1; }
+    .lien.ancien { stroke: var(--encre-3); stroke-width: 1.2; stroke-dasharray: 1 4; opacity: .55; }
+    .noeud.ilotA circle { fill: #dbe8f7; stroke: #2d5d93; }
+    .noeud.ilotB circle { fill: #f6e3c4; stroke: #8a5a14; }
     .lien.inventee { stroke: var(--encre-3); stroke-width: 2.5; stroke-dasharray: 3 6; opacity: .9; }
     dialog#tour { max-width: 720px; width: calc(100% - 32px); border: 1.5px solid var(--ligne); border-radius: var(--rayon); background: var(--surface); color: var(--encre); padding: 20px 24px; }
     dialog#tour::backdrop { background: rgba(0,0,0,.35); }
@@ -103,7 +106,8 @@
     <section class="graphe" aria-label="Réseau du Club (fictif)">
       <svg id="svg" viewBox="0 0 1000 720" role="img" aria-labelledby="titre-graphe"><title id="titre-graphe">Graphe des relations du réseau de scène</title></svg>
       <div class="legende" aria-hidden="true">
-        <span><svg viewBox="0 0 28 10"><line x1="0" y1="5" x2="28" y2="5" class="lien"/></svg>rencontre passée</span>
+        <span><svg viewBox="0 0 28 10"><line x1="0" y1="5" x2="28" y2="5" class="lien"/></svg>relation actuelle</span>
+        <span><svg viewBox="0 0 28 10"><line x1="0" y1="5" x2="28" y2="5" class="lien ancien"/></svg>endormie (plus de 90 jours)</span>
         <span><svg viewBox="0 0 28 10"><line x1="0" y1="5" x2="28" y2="5" class="lien intro"/></svg>relation née d'une introduction</span>
         <span><svg viewBox="0 0 28 10"><line x1="0" y1="5" x2="28" y2="5" class="lien planA"/></svg>introduction proposée (simulation)</span>
         <span><svg viewBox="0 0 28 10"><line x1="0" y1="5" x2="28" y2="5" class="lien inventee"/></svg>connexion refusée faute de preuve</span>
@@ -165,7 +169,19 @@
           gz.append(z);
         }
       };
-      for (const l of vue.liens) ligne(l.a, l.b, l.types.includes("INTRO_ACCEPTEE") || l.types.includes("RENCONTRE") && (l.a === SOPHIE || l.b === SOPHIE) ? "intro" : "", true);
+      for (const l of vue.liens) ligne(l.a, l.b, !l.actuelle ? "ancien" : l.types.includes("INTRO_ACCEPTEE") || l.types.includes("RENCONTRE") && (l.a === SOPHIE || l.b === SOPHIE) ? "intro" : "", l.actuelle);
+      // Étape « réseau » : colorer les groupes ACTUELS (relations de moins de 90 jours) pour voir les ponts les relier
+      const groupe = {};
+      if (e === 7) {
+        const parent = {};
+        const racine = (x) => (parent[x] ??= x) === x ? x : (parent[x] = racine(parent[x]));
+        vue.liens.filter((l) => l.actuelle).forEach((l) => { parent[racine(l.a)] = racine(l.b); });
+        const tailles = {};
+        vue.liens.filter((l) => l.actuelle).flatMap((l) => [l.a, l.b]).forEach((x) => { groupe[x] = racine(x); });
+        Object.values(groupe).forEach((r) => { tailles[r] = (tailles[r] || 0) + 1; });
+        const rangs = [...new Set(Object.values(groupe))].sort((a, b) => tailles[b] - tailles[a] || (a < b ? -1 : 1));
+        Object.keys(groupe).forEach((x) => { groupe[x] = rangs.indexOf(groupe[x]) === 0 ? "ilotA" : rangs.indexOf(groupe[x]) === 1 ? "ilotB" : ""; });
+      }
       const markus = trace(2)?.faits.candidats[0]?.id;
       if (e === 2) (trace(2)?.faits.candidats || []).forEach((c) => { ligne(SOPHIE, c.id, "candidat"); focus.add(c.id); });
       if (e >= 3 && e <= 6 && markus) focus.add(markus);
@@ -178,7 +194,7 @@
       for (const n of vue.noeuds) {
         if (!n.present) continue;
         const [x, y] = P[n.id];
-        const g = el("g", { class: `noeud${n.id === SOPHIE ? " sophie" : ""}${focus.has(n.id) ? " focus" : ""}${coupes.has(n.id) || alerte.has(n.id) ? " coupe" : ""}` });
+        const g = el("g", { class: `noeud${n.id === SOPHIE ? " sophie" : ""}${focus.has(n.id) ? " focus" : ""}${coupes.has(n.id) || alerte.has(n.id) ? " coupe" : ""}${groupe[n.id] ? " " + groupe[n.id] : ""}` });
         g.append(el("circle", { cx: x, cy: y, r: n.id === SOPHIE ? 13 : focus.has(n.id) || alerte.has(n.id) ? 11 : 8 }));
         // étiquette côté intérieur (jamais coupée au bord), ou dessous si les deux côtés sont occupés
         const proche = (sens) => vue.noeuds.some((m) => m.present && m.id !== n.id && Math.abs(P[m.id][1] - y) < 16
@@ -259,9 +275,10 @@
       8: (f) => [h("div", { class: "tuiles" }, tuile("introductions possibles", f.introductions_possibles, "consentement respecté"),
           tuile("fondées sur une preuve", f.introductions_fondees, "aide prouvée"),
           tuile("décision", f.decision === "S_ABSTENIR" ? "Abstention" : "Proposer", "")),
-        f.par_ressemblance ? h("p", {}, `Un moteur « par ressemblance » proposerait ${f.par_ressemblance.nom} (ressemblance ${f.par_ressemblance.ressemblance}) — trait gris sur le graphe. Mais ressembler n'est pas aider.`) : null,
-        h("div", { class: "abst" }, h("strong", {}, "Raison objective : "), Object.entries(f.raisons).map(([r, n]) => `${r} (${n})`).join(" ; "), "."),
-        h("p", { class: "note" }, `Ce qui changerait la décision : ${f.ce_qui_changerait}. Même règle pour Sophie : « ${f.japon.demande} » → ${f.japon.decision === "S_ABSTENIR" ? "abstention" : "proposition"}.`)],
+        f.par_ressemblance ? h("p", {}, `Un moteur « par ressemblance » proposerait ${f.par_ressemblance.nom} (trait gris). Ressembler n'est pas aider.`) : null,
+        h("div", { class: "abst" }, h("strong", {}, "Raison objective : "), Object.entries(f.raisons).map(([r, n]) => `${r.split(" :")[0]} (${n})`).join(" ; "), "."),
+        details("Détail et ce qui changerait la décision", h("ul", {}, Object.keys(f.raisons).map((r) => h("li", {}, r))),
+          h("p", { class: "note" }, `Ce qui changerait : ${f.ce_qui_changerait}. Même règle pour Sophie : « ${f.japon.demande} » → ${f.japon.decision === "S_ABSTENIR" ? "abstention" : "proposition"}.`))],
       9: (f) => [h("div", { class: "tuiles" }, ...f.soirees.map((s) => tuile(`soirée ${s.soiree}`, s.decision === "S_ABSTENIR" ? "—" : s.tables,
           s.decision === "S_ABSTENIR" ? "abstention" : `rencontres utiles (${s.membres_servis} membres servis)`))),
         f.raison ? h("div", { class: "abst" }, h("strong", {}, "Soirée " + f.soirees[f.soirees.length - 1].soiree + " : abstention. "), f.raison, ".") : null,

@@ -8,7 +8,7 @@ Statut : **aucun membre ni organisateur du Club n'a été interrogé.** Tout ce 
 Parce que c'est entre deux événements que les rencontres meurent. Le prototype transforme ce temps mort en trois
 moments précis, et seulement s'ils sont fondés :
 - **un membre publie un besoin** → il reçoit des personnes du Club dont le profil prouve qu'elles peuvent aider, ou
-  une abstention franche (scène A) ;
+  une abstention franche (scène, étapes 3 et 9) ;
 - **une raison nouvelle apparaît** (un besoin publié auquel un contact rencontré peut répondre) → une relance, avec la
   preuve ; sinon, rien (scène C : 1 relance, 17 silences) ;
 - **chaque mois, l'organisatrice** voit ce qui se défait et choisit une ou deux introductions (scène B).
@@ -33,7 +33,7 @@ plateformes comparées (AUDIT_CHAMPIONNAT § 7, avec ses limites).
 | Trouver « qui peut aider X » | mémoire de l'organisatrice, carnet d'adresses | recherche avec preuves citées, en millisecondes | vitesse : oui (fictif) ; qualité réelle : non |
 | Demander l'accord des deux avant de présenter | courriels ou appels | workflow en double accord, coordonnées partagées après | non (aucun envoi réel) |
 | Décider qui relancer | rien, ou relance générale « restez en contact » | seulement les paires avec raison nouvelle | non |
-| Repérer ce qui se défait dans le réseau | impossible à l'œil au-delà de quelques dizaines de membres | diagnostic : 0,67 s à 150 membres générés, mais 5,8 s à 500 et 25 s à 1000 (limite connue) | vitesse : oui (synthétique) |
+| Repérer ce qui se défait dans le réseau | impossible à l'œil au-delà de quelques dizaines de membres | diagnostic : 0,91 s à 150 membres générés, mais 6,8 s à 500 et 24 s à 1000 (limite connue) | vitesse : oui (synthétique) |
 Nous ne chiffrons PAS d'heures économisées : aucune mesure de la pratique actuelle n'existe.
 
 ## 4. Pourquoi un annuaire, un CRM ou une plateforme de mise en relation ne suffit pas ?
@@ -54,7 +54,7 @@ Principe : **aucune saisie longue, aucun formulaire de 20 champs.**
 |---|---|---|---|
 | Profil (offre, recherche) | description libre d'une phrase → proposition, le membre valide | ~1 minute | Oui (`extraire_profil`, validé par le membre) |
 | Présence aux événements | liste d'inscription du Club | aucun | Oui (import de faits `RENCONTRE`, fictifs) |
-| Besoin du moment | une phrase libre | ~30 s | Oui ; phrase complexe : exige l'IA (scène A) |
+| Besoin du moment | une phrase libre | ~30 s | Oui (règles : phrase du scénario et variantes comprises) ; phrases très libres : là où l'IA devra prouver sa valeur |
 | Suite d'une introduction | un clic (« rencontré », « sans suite ») | ~5 s | Oui |
 | Consentement | un interrupteur, invisible par défaut | ~5 s | Oui |
 Ce que nous ne ferons pas : lire les courriels, scraper LinkedIn, deviner des relations. Risque connu : si les membres

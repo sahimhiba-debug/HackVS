@@ -88,15 +88,22 @@ def _gains(g: nx.Graph, c: Candidate, comp: tuple, ponts: tuple) -> tuple[float,
 
 
 def glouton(g0: nx.Graph, cands: list[Candidate], k: int, poids: tuple[float, ...],
-            plafond: int = 1) -> list[Candidate]:
+            plafond: int = 1, cache: dict | None = None) -> list[Candidate]:
+    """`cache` : gains par ÉTAT (ensemble des actions déjà choisies), partagé entre les pondérations d'un même front.
+    Les gains ne dépendent que du graphe courant, jamais des poids : résultat identique, calcul fait une fois par état."""
     g, n, choix, restantes = g0.copy(), {}, [], list(cands)
+    cache = {} if cache is None else cache
     while len(choix) < k:
-        possibles = [c for c in restantes if n.get(c.a, 0) < plafond and n.get(c.b, 0) < plafond]
+        etat = frozenset((c.a, c.b) for c in choix)
+        if etat not in cache:
+            possibles = [c for c in restantes if n.get(c.a, 0) < plafond and n.get(c.b, 0) < plafond]
+            comp, ponts = (_composantes(g), arbre_des_ponts(g)) if possibles else (None, None)
+            gains = {id(c): _gains(g, c, comp, ponts) for c in possibles}
+            maxi = [max(gains[id(c)][i] for c in possibles) or 1.0 for i in range(len(AXES))] if possibles else []
+            cache[etat] = (possibles, gains, maxi)
+        possibles, gains, maxi = cache[etat]
         if not possibles:
             break
-        comp, ponts = _composantes(g), arbre_des_ponts(g)
-        gains = {id(c): _gains(g, c, comp, ponts) for c in possibles}
-        maxi = [max(gains[id(c)][i] for c in possibles) or 1.0 for i in range(len(AXES))]
         meilleure = min(possibles, key=lambda c: (-sum(w * gains[id(c)][i] / maxi[i] for i, w in enumerate(poids)),
                                                   -c.valeur, c.a, c.b))
         g.add_edge(meilleure.a, meilleure.b)
@@ -152,7 +159,8 @@ def frontiere(g0: nx.Graph, membres: list[str], cands: list[Candidate], k: int,
     g0 = g0.copy()
     g0.add_nodes_from(membres)
     vus: dict[tuple, dict] = {}
-    generes = [(w, glouton(g0, cands, k, w, plafond)) for w in simplexe(pas)]
+    partage: dict = {}                               # gains par état, communs à toutes les pondérations
+    generes = [(w, glouton(g0, cands, k, w, plafond, partage)) for w in simplexe(pas)]
     generes += [("heuristique", p) for p in plans_supplementaires or []]
     for _origine, plan in generes:
         cle_plan = tuple(sorted((c.a, c.b) for c in plan))

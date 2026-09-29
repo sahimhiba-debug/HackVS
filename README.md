@@ -1,47 +1,37 @@
-# Le Fil du Club : préparation Hack VS 2026
+# Réseau vivant (anciennement « Le Fil du Club ») : préparation Hack VS 2026
 
-> **Prototype préparé AVANT Hack VS** (Martigny, 3–4 octobre 2026), pour le challenge supposé « prolonger numériquement la
-> communauté du Club des Affaires de la Foire du Valais ». Le brief officiel n'est pas encore connu.
+> **Prototype préparé AVANT Hack VS** (Martigny, 3–4 octobre 2026), pour le challenge « construire une plateforme de
+> networking qui active le réseau du Club des Affaires toute l'année ». Le brief officiel complet n'est pas encore connu.
 > **Toutes les personnes et entreprises sont fictives.** Aucun message réel n'est envoyé.
 
-**Le problème.** Entre deux soirées du Club, le besoin d'un dirigeant (« un transporteur frigorifique pour Zurich ») ne
-rencontre pas le membre qui pourrait y répondre.
+**Le problème.** La Foire crée des rencontres. Quand elle se termine, ces relations peuvent disparaître avec elle.
 
-**Ce que fait le produit.** Le membre écrit son besoin comme il le dirait. Le Club le fait parvenir **aux seuls membres
-capables d'y répondre**, avec **la preuve** de pourquoi eux ; la mise en relation se fait avec consentement ; avant chaque
-soirée, un plan de rencontres optimisé dit qui doit voir qui. Quand personne ne convient, le produit **le dit**, et le
-Club voit quelles compétences lui manquent.
+**Ce que fait le produit.** Un membre écrit son besoin comme il le dirait ; le système lui propose seulement les membres
+dont le profil **prouve** qu'ils peuvent aider (avec l'extrait qui le justifie), organise l'introduction **avec l'accord
+des deux**, relance **seulement** quand une raison nouvelle existe, et montre à l'organisatrice ce que ses introductions
+changeraient au réseau entier. Quand rien n'est prouvé, il **s'abstient** — et dit pourquoi.
 
-**Pourquoi l'IA, et pourquoi ce n'est pas un chatbot.** L'IA **comprend et propose** (règles multilingues, modèle
-sémantique local, LLM optionnel Claude ou Apertus) ; le **code décide** (consentement, zone, langue, concurrence,
-preuves citées mot pour mot) ; **l'humain confirme**. Nous avons mesuré que la similarité sémantique ne sait pas dire
-« je ne sais pas » : elle n'a donc jamais le dernier mot. Un assistant IA externe peut piloter tout le Club via **MCP**,
-sauf décider à la place du membre.
+**Où est l'IA.** Pas dans la démonstration : la phrase du besoin est comprise par des règles vérifiables (chaque
+critère cite le texte ; l'ambigu est demandé, pas deviné). Une IA générative (Claude ou Apertus) peut s'y brancher pour
+les phrases très libres, **sous contrôle du code, sans jamais décider** ; elle n'a pas encore été mesurée (aucun modèle
+accessible ici) : [GENAI_RESEARCH](competition/GENAI_RESEARCH.md).
 
-![Pourquoi cette personne ? Critère par critère, preuves citées](docs/captures/27_pourquoi.png)
+**Voir en 3 minutes** : `/demo/stage` (l'histoire en 11 étapes, touche T : tour de contrôle) · `/presentation` (deck) ·
+vidéo de secours [`competition/video/demo.webm`](competition/video/demo.webm) · dossier : [`competition/`](competition/README.md).
 
 ## Ce qui fonctionne (vérifié)
-
 | | Détail | Preuve |
 |---|---|---|
-| Parcours complet | besoin → critères → clarification → membres + preuves → publication → proposition d'aide → acceptation → rencontre → clôture | parcours navigateur bureau et mobile, captures dans `docs/captures` |
-| « Pourquoi / pourquoi pas » | critère par critère ; raison tue si elle touche au consentement | `27_pourquoi`, `28_pourquoi_pas` |
-| IA locale | propose 1 à 3 compétences quand les règles échouent (e5 multilingue, ONNX, CPU, ≈ 77 ms) | jeu réservé : hit@3 0,875 → **0,917**, options hors sujet 69 % → 54 % ; **italien sans aucune règle : 12/12** |
-| Boucle « IA propose, membre confirme » | jeux réservés les plus durs : succès@3 3/15 → **15/15**, 0 mauvais contact ajouté (borne haute : membre simulé) | [EVALUATION.md §3](docs/EVALUATION.md) |
-| Plan de soirée | programme linéaire, **optimum prouvé** (< 0,1 s) ; 150 membres : 92 participants avec une rencontre utile contre 74 (glouton) ; langue commune ; export agenda | `/soiree`, `36_soiree` |
-| Espace de décision | intention → spécification → preuves → solveur → validation indépendante L0-L8 → critique / gardien → certificat → **décision humaine** ; rejeu identique, branches « et si », test de stress ; aucun LLM | `/decision`, [EVALUATION.md §6 bis](docs/EVALUATION.md) (20/20 scénarios) |
-| Cycle des relations | soirée → rencontres → 10 jours plus tard « pourquoi reprendre contact ? » **seulement avec une raison nouvelle et prouvée** (sinon abstention) → suivi accepté → opportunité « ami d'un ami » → soirée suivante ; journal d'événements rejouable | `/cycle`, [EVALUATION.md §6 ter](docs/EVALUATION.md) |
-| Agent IA (MCP) | 10 outils, confirmation humaine obligatoire, jetons + portées en HTTP, erreurs à code stable | [transcription](docs/captures/agent_mcp.md) |
-| Sécurité | profils = données non fiables ; LLM sans accès aux profils ; injection testée ; télémétrie tierce coupée | [EVALUATION.md §7](docs/EVALUATION.md) |
-| Ingénierie | 84 tests, lint, intégration continue verte, non-régression des évaluations, jeux réservés écrits avant le code | `.github/workflows/ci.yml` |
+| Histoire de démonstration | nouveau membre → besoin → candidats → accord → rencontre → suivi → opportunité → réseau avant/après → abstention → soirées → bilan ; rejouable à l'identique | `tests/test_scene.py`, `tests/test_e2e_scene.py` (vrai navigateur, bureau + mobile, en CI) |
+| Compréhension du besoin | règles + taxonomie ; phrase du scénario et variantes comprises ; ambiguïtés explicites | `tests/test_compilateur_besoin.py` ; 112 cas écrits avant exécution |
+| Preuve et abstention | chaque proposition cite une preuve ; sans preuve, abstention motivée | registre des preuves C01, C23, C24 |
+| Consentement | invisible par défaut, double accord, refus jamais contourné (règle unique, vérifiée sur toutes les paires) | `test_scene.py`, `test_securite_api.py`, `test_adversarial_sprint.py` |
+| Réseau | diagnostic (8 phénomènes), front de plans en conflit, contrefactuel « si cette relation disparaît », tour de contrôle | `competition/06_BENCHMARKS.md` (SYNTHETIC_BENCHMARK) |
+| Ingénierie | suite pytest complète, lint, CI (qualité, bout en bout, reproductibilité des benchmarks à l'octet), registre des affirmations exécutable | `.github/workflows/ci.yml`, `competition/14_PROOF_LEDGER.md` |
 
-**Expérience en cours — intentions scellées** (`/scelle`, mode démo) : rapprocher ce que personne n'écrit
-publiquement (céder, reprendre, lever des fonds) sans que le Club puisse le lire ; intersection privée d'ensembles entre
-agents, catégories k-anonymes, révélation simultanée. Pourquoi et mesures : [STRATEGIC_RESEARCH.md](docs/STRATEGIC_RESEARCH.md).
-
-**Simulé / fictif** : 37 profils de démo, 150 profils synthétiques, historique du Club, confirmations du « membre
-simulé », agent scripté de la transcription. **Non vérifié** : Claude et Apertus contre leurs API réelles (pas de clé
-ni d'accès réseau ici ; testés contre des serveurs simulés), utilité auprès de vrais membres. Voir [LIMITATIONS.md](docs/LIMITATIONS.md).
+**Simulé / fictif** : tous les profils, rencontres et besoins ; toutes les projections du réseau (étiquetées
+SIMULATION). **Non vérifié** : Claude et Apertus contre leurs API réelles ; utilité auprès de vrais membres. Voir
+[16_LIMITATIONS](competition/16_LIMITATIONS.md) et [FAILURES](competition/FAILURES.md) (47 défauts trouvés en attaquant notre propre système).
 
 ## Lancer
 ```bash
@@ -50,7 +40,7 @@ pip install -r requirements.txt            # + requirements-dev.txt pour tests e
 python scripts/telecharger_modele.py       # facultatif : IA locale (2,2 Go, sans clé)
 uvicorn app.main:app                       # http://localhost:8000
 ```
-Pages : `/` espace membre · `/decision` espace de décision · `/cycle` cycle des relations · `/soiree` plan de soirée · `/club` vue du Club · `/scene` deux membres en direct ·
+Pages : `/demo/stage` démonstration · `/` espace membre · `/decision` espace de décision · `/cycle` cycle des relations · `/soiree` plan de soirée · `/club` vue du Club · `/scene` deux membres en direct ·
 `/presentation` pitch hors ligne. Docker : `docker build -t fil-du-club . && docker run -p 8080:8080 fil-du-club`.
 
 Brancher un assistant IA : `claude mcp add fil-du-club -e HACKVS_API_URL=http://localhost:8000 -e HACKVS_MCP_MEMBRE=p00 -- python <chemin>/prototype/scripts/mcp_club.py` (détails : [HANDOFF.md](docs/HANDOFF.md)).
@@ -64,9 +54,11 @@ Brancher un assistant IA : `claude mcp add fil-du-club -e HACKVS_API_URL=http://
 
 ## Vérifier
 ```bash
-python -m pytest -q                        # 84 tests (dont MCP stdio et HTTP de bout en bout)
+python -m pytest -q                        # suite complète (dont MCP stdio/HTTP et navigateur réel si Chromium est présent)
 python -m eval.eval_decisions              # 20 scénarios de la plateforme de décision
 python -m eval.run_eval --verifier         # non-régression des 6 jeux
+python scripts/validate_competition_claims.py   # chaque chiffre du pitch, du deck et de la vidéo est-il prouvé ?
+python scripts/mesurer_scene.py            # lisibilité de la démo dans un vrai navigateur
 python scripts/parcours_demo.py --url http://localhost:8000   # navigateur réel → docs/captures/
 python scripts/demo_agent_mcp.py           # transcription de l'agent MCP
 ```

@@ -147,3 +147,12 @@ def test_le_graphe_ne_trahit_pas_qui_refuse_les_introductions():
     assert all(set(n) == {"id", "nom", "x", "y", "present"} for n in v["noeuds"])
     html = (stage.DATA_DIR.parent / "web" / "stage.html").read_text(encoding="utf-8")
     assert ".consent" not in html and ".refus" not in html and '" refus"' not in html
+
+
+def test_le_graphe_ne_contredit_pas_la_carte_isolee():
+    """Défaut trouvé à l'écran : Chantal était dessinée reliée (relations de plus de 90 jours) alors que la carte dit
+    « aucune relation ». Le graphe distingue désormais relation actuelle et endormie, avec la même règle que le moteur."""
+    v = client.post("/api/stage/aller/9").json()
+    seul = v["traces"][8]["faits"]["membre_id"]
+    touches = [lien for lien in v["liens"] if seul in (lien["a"], lien["b"])]
+    assert touches and not any(lien["actuelle"] for lien in touches)

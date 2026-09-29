@@ -28,7 +28,7 @@ reproductibilité des benchmarks vérifiée en CI.
 | Effet des plans, disparition d'une relation | SIMULATION (actions supposées acceptées) | Étiquette SIMULATION sur chaque tuile |
 | Benchmarks (interventions, Pareto, extinction…) | SYNTHÉTIQUES, vérité définie par nous | Jamais présentés comme une valeur réelle |
 | Envoi de messages, authentification | ABSENTS | Dit dans les limites |
-| Interprétation par IA | **NON EXÉCUTÉE** (aucun modèle accessible) | La scène A le montre ; aucun chiffre d'IA |
+| Interprétation par IA | **NON EXÉCUTÉE** (aucun modèle accessible) | Retirée de la démo (règles vérifiables, dit à l'écran) ; aucun chiffre d'IA |
 | Utilité pour un vrai Club | **NON MESURÉE** | Protocole de pilote (VALEUR_METIER.md) |
 
 ## 4. Ce qui est ORIGINAL mais difficile à comprendre
@@ -52,12 +52,12 @@ reproductibilité des benchmarks vérifiée en CI.
 | Risque | Probabilité | Parade (vérifiée ?) |
 |---|---|---|
 | Réseau de la salle absent | moyenne | Tout tourne en local, aucune dépendance externe (vérifié : scène sans réseau) |
-| Modèle d'IA absent ou lent | **certaine aujourd'hui** | La scène A le dit et continue par la reformulation (testé) ; si un modèle est configuré, repli visible sur les règles en cas d'échec (testé avec un double) |
+| Modèle d'IA absent ou lent | **certaine aujourd'hui** | La démo n'utilise AUCUNE IA générative (décision du 29.09) : risque éliminé ; ancienne parade : si un modèle est configuré, repli visible sur les règles en cas d'échec (testé avec un double) |
 | Double clic, retour arrière, rafraîchissement | faible | Verrou serveur, rejeu déterministe (testé) |
 | Texte sous la ligne de flottaison sur le projecteur | moyenne | Captures 1440×900 vérifiées ; A1 et B1 longues → dire l'essentiel, faire défiler |
 | Question « c'est quoi le groupe robuste ? » | haute | Lexique affiché sous les plans |
-| Navigateur qui plante | faible | Vidéo de secours (à ré-enregistrer sur la scène en 3 actes) |
-| Jury : « vous ne faites que dire non » | haute | Scène A montre une proposition acceptée ; C montre UNE relance fondée |
+| Navigateur qui plante | faible | Vidéo de secours (réenregistrée sur l'histoire en 11 étapes) |
+| Jury : « vous ne faites que dire non » | haute | L'histoire montre d'abord une proposition acceptée, une relance fondée, une opportunité, un réseau réuni ; l'abstention vient APRÈS |
 
 ## 7. Matrice de différenciation (sources et limites)
 **Limite de méthode** : les pages des éditeurs sont bloquées par le réseau de notre environnement (29.09.2026). Les
@@ -89,7 +89,7 @@ explicite ni de plans d'organisation chiffrés avec leur prix. Nous ne prétendo
 **Ce que nous ne devons jamais dire** : « unique », « personne ne fait », « meilleur que Swapcard ».
 
 ## 8. Décisions prises par cet audit
-1. Démo = une page, trois scènes (A membre, B organisatrice, C silence) sur le même réseau fictif — FAIT (`/demo/stage`).
+1. Démo = une page, UNE histoire en 11 étapes (du nouveau membre au réseau qui change, puis l'abstention) — FAIT (`/demo/stage`) ; remplace la version en trois scènes (trop de démonstrations concurrentes).
 2. L'IA n'apparaît que là où elle doit prouver quelque chose (comprendre une phrase libre) ; sans modèle, la scène le dit.
 3. Le pitch n'ouvre pas sur l'IA ni sur « le réseau vu d'en haut », mais sur la question du Club : que reste-t-il des
    rencontres un mois plus tard, et que doit faire l'organisatrice ce mois-ci ?

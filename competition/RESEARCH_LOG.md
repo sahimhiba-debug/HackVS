@@ -14,6 +14,15 @@
 | antérieur | Une annonce « anonyme » est-elle anonyme ? | mesure sur le club de démonstration | 26 membres sur 34 ré-identifiables | l'anonymat par simple masquage ne suffit pas | besoins anonymes jamais projetés ; travail « intentions scellées » (docs/STRATEGIC_RESEARCH.md) |
 
 Réponses prêtes :
-- *Pourquoi un solveur ?* AD-03. *Pourquoi un graphe temporel ?* AD-01. *Pourquoi l'IA ne décide pas ?* AD-04.
-- *Pourquoi le consentement ainsi ?* AD-06 + la ligne « chemin chaud » ci-dessus. *Pourquoi pas du matchmaking ?* la
+- *Pourquoi un solveur ?* AD-05. *Pourquoi un graphe temporel ?* AD-01. *Pourquoi l'IA ne décide pas ?* AD-09.
+- *Pourquoi le consentement ainsi ?* AD-07, AD-08 + la ligne « chemin chaud » ci-dessus. *Pourquoi pas du matchmaking ?* la
   première ligne de ce journal : il existe déjà ; notre valeur est après.
+
+## Campagne finale (29.09.2026)
+- La démo racontait trois démonstrations concurrentes → UNE histoire en 11 étapes ; l'abstention (« je pourrais
+  inventer une connexion ») devient le moment de surprise, calculé par le moteur (15 possibles, 0 fondée).
+- La saturation des soirées, découverte plus tôt, devient une étape : 9 → 1 → 0 puis abstention.
+- « distribution » était de la logistique : faux positifs ; devenu un terme ambigu résolu par indices (AD-03).
+- Deux sources de vérité (besoins comptés deux fois), un deck obsolète, des temps publiés périmés, une métrique de
+  benchmark ambiguë : trouvés et corrigés (FAILURES n° 42–47).
+

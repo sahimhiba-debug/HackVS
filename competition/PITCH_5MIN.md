@@ -8,7 +8,7 @@ l'année. Nous ne refaisons pas cela. Nous nous sommes posé une autre question 
 devient quelque chose ? Trois choses : une raison documentée de se reparler, un accord des deux côtés, et quelqu'un
 qui regarde le réseau entier, pas seulement une personne.
 
-**[0:55 — démo complète `/demo/stage` : trois scènes, 9 étapes et un clic]** (texte : PITCH_3MIN de 0:20 à 2:30 ; script : 09_DEMO_SCRIPT)
+**[0:55 — démo complète `/demo/stage` : l'histoire complète, puis un clic et la tour de contrôle]** (texte : PITCH_3MIN de 0:15 à 2:25 ; script : 09_DEMO_SCRIPT)
 
 **[3:05 — méthode]** Tout ce que vous avez vu est calculé en direct ; la démonstration se rejoue à l'identique.
 Les explications ne sont pas rédigées à part : elles sont recalculées et comparées à la décision par des tests —
@@ -16,7 +16,7 @@ nous avons même injecté de fausses explications pour vérifier que les tests l
 Sur un benchmark synthétique, à budget égal et avec les mêmes candidats pour tous, notre optimiseur crée plus de ponts
 et sert plus de membres que 5 autres méthodes ; il perd sur la réciprocité face à la méthode qui ne vise qu'elle.
 Nous avions d'abord publié un écart plus flatteur ; en attaquant notre propre benchmark, nous avons trouvé le biais
-et corrigé le chiffre. Au total, 41 défauts réels trouvés et corrigés, chacun avec son test.
+et corrigé le chiffre. Au total, 47 défauts réels trouvés et corrigés, chacun avec son test.
 
 **[4:05 — déploiement]** Tout tourne sur une seule machine, sans clé d'API ; une IA externe est une option, jamais une
 dépendance : elle ne sert qu'à comprendre les phrases libres, sous contrôle du code, et nous ne publions aucun résultat

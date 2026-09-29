@@ -1,32 +1,33 @@
-# 09 — Script de démonstration : une page, trois scènes (`/demo/stage`)
+# 09 — Script de démonstration : une histoire, une page (`/demo/stage`)
 
 Données : réseau de scène FICTIF (16 membres inventés + Sophie, `prototype/data/stage_reseau.json`). Horloge simulée.
-Chaque chiffre est calculé en direct par le moteur réel ; la scène se rejoue à l'identique (testé 3 fois).
-Commandes : **→ / espace** suivant · **←** précédent · **R** réinitialiser · clic sur une relation du graphe (scène B).
-Mesures de lisibilité : `competition/rehearsal/MESURES_SCENE.md` (attente après clic < 200 ms ; aucune erreur).
+Chaque chiffre est calculé en direct par le moteur ; la scène se rejoue à l'identique (testé) ; aucune IA générative,
+aucun appel réseau. Commandes : **→ / espace** suivant · **←** précédent · **R** réinitialiser · **T** tour de contrôle ·
+clic sur une relation (à partir de l'étape 8) : simuler sa disparition.
+Lisibilité mesurée : `competition/rehearsal/MESURES_SCENE.md` · Bout en bout : `tests/test_e2e_scene.py`.
 
-**Durée cible : 2 min 30 s.** Les chiffres entre crochets sont ceux de la scène sans modèle d'IA (vérifiés par
-`validate_competition_claims.py`). Si un modèle est configuré, la scène A change : **rejouer toute la scène avant de
-monter sur scène** et lire les chiffres à l'écran, pas ceux de ce script.
+**Fil à raconter (une phrase par étape) :** nouveau membre → besoin → candidats → consentement → rencontre → suivi →
+opportunité → le réseau change → le refus → la saturation → ce qui est prouvé.
 
-| # | Scène | L'écran montre (calculé) | On dit (≤ 2 phrases) | Durée |
+| # | Chapitre | L'écran montre (calculé) | On dit | Durée |
 |---|---|---|---|---|
-| 0 | — | Deux îlots, 16 membres | « La Foire crée les rencontres. Un mois plus tard, qu'en reste-t-il — et que doit faire l'organisatrice ? » | 10 s |
-| 1 | A | La phrase de Sophie ; à gauche les règles (comprennent mal → s'abstiennent) ; à droite l'IA (non configurée ici, ou vérifiée) | « Une vraie phrase : trois besoins, une langue, une exclusion. Nos règles échouent — c'est exactement là que l'IA doit prouver sa valeur, et chaque critère qu'elle propose doit citer le texte. » | 25 s |
-| 2 | A | Markus : preuve citée, réciprocité PROUVÉE, inconnu affiché | « Pas une liste : une personne dont le profil prouve qu'elle peut aider — et qui cherche justement ce que Sophie produit. » | 15 s |
-| 3 | A | Coordonnées : non → oui après son accord ; ligne de temps | « Une introduction, pas un numéro. Il pouvait refuser. » | 10 s |
-| 4 | B | 4 phénomènes ; 2 ponts fragiles en orange | « Vue de l'organisatrice : deux parties du Club ne tiennent qu'à un fil. » | 15 s |
-| 5 | B | Plan vert « Consolider » [robuste 4 → 8] vs rouge « Réunir les îlots » [reliés 8 → 15, robuste reste 4] | « Une seule introduction ce mois-ci. Réunir les îlots, ou consolider ? Aucun plan ne gagne sur tout : le système montre le prix, elle choisit. » | 25 s |
-| 6 | B | Relation Jérôme – Thomas : [4 membres coupés de leur groupe de 8] ; **cliquer une autre relation** en direct | « Et si cette relation s'éteint ? Voici qui le Club perd. » (clic) « Celle-ci, en revanche, est doublée : personne n'est coupé. » | 20 s |
-| 7 | C | [1 relance, avec sa preuve ; 17 silences] | « Dix jours plus tard : une seule raison nouvelle de se reparler. Le reste : silence. » | 15 s |
-| 8 | C | 3 demandes refusées : Japon (abstention), membre qui a refusé, introduction sans aide prouvée | « Il sait dire non — et dit pourquoi. » | 10 s |
-| 9 | C | Ce qui est fait / observé / simulé / non mesuré | « Tout ceci est fictif et calculé. La valeur réelle se mesure par un pilote — voici comment. » | 5 s |
+| 0 | — | 16 membres, deux îlots | « La Foire crée des rencontres. Que deviennent-elles quand elle se termine ? » | 5 s |
+| 1 | Nouveau membre | Sa phrase ; le système propose, Sophie valide ; invisible par défaut | « Sophie arrive. Une phrase suffit ; c'est elle qui valide, et elle choisit d'être visible. » | 10 s |
+| 2 | Besoin | Besoin principal, langue, contrainte — chacun avec le mot qui le justifie | « Il comprend chaque demande et montre le mot qui la justifie. Des règles vérifiables, pas d'IA. » | 15 s |
+| 3 | Candidats | Markus : preuve citée, réciprocité prouvée, inconnu | « Pas parce qu'il lui ressemble : parce que son profil prouve qu'il peut l'aider. » | 15 s |
+| 4 | Consentement | Coordonnées cachées → partagées après son accord | « Une introduction, pas un numéro. Il peut refuser. » | 10 s |
+| 5 | Rencontre | Ligne de temps de la relation | « La relation garde son histoire. » | 5 s |
+| 6 | Suivi | [1 relance fondée · 17 silences] | « Une seule raison nouvelle de se reparler ; le reste, silence. » | 10 s |
+| 7 | Opportunité | « affaire en cours déclarée » | « Une opportunité — pas encore un résultat. » | 5 s |
+| 8 | Réseau | [groupes 2 → 1 · robuste 4 → 15 · isolés 2 → 2] | « Trois introductions prouvées : les îlots n'en forment plus qu'un. » | 20 s |
+| 9 | **Abstention** | « Je pourrais inventer une connexion. Je préfère m'abstenir. » [15 possibles · 0 fondée] ; trait gris : ce qu'un moteur par ressemblance proposerait | « Chantal n'a aucune relation. La relier embellirait notre propre indicateur. Aucune raison prouvée : il s'abstient. » | 25 s |
+| 10 | Saturation | Soirées [9 → 1 → 0] puis abstention | « Il ne fabrique pas de rencontres. » | 10 s |
+| 11 | Bilan | Fait / simulé / règles / non mesuré | « Tout est fictif et calculé en direct ; la valeur réelle se mesurera par un pilote. » | 5 s |
+
+Durée : ≈ 2 min 15. Les chiffres entre crochets sont vérifiés par `validate_competition_claims.py` (C05, C09, C23, C24).
+**Tour de contrôle (T)** : pour une question d'organisateur ; chaque chiffre s'ouvre sur sa définition et sa liste.
 
 ## Plans B
 - **Pas de réseau dans la salle** : tout tourne en local (`uvicorn app.main:app`), sans aucune dépendance externe.
-- **Modèle d'IA absent, lent ou en panne** : la scène A le dit elle-même et continue par la reformulation (testé :
-  panne → repli visible ; interprétation sans personne de prouvé → reformulation). Ne jamais dire « l'IA a compris »
-  si l'écran indique « non configurée ».
-- **Navigateur planté** : la vidéo de secours (`competition/video/`) — à régénérer sur cette scène en trois actes
-  (`scripts/enregistrer_video.py`).
-- **Question hors scène** : `/decision`, `/cycle`, `/` restent disponibles, mais ne sont pas montrés spontanément.
+- **Navigateur planté** : `competition/video/demo.webm` (même histoire, sous-titrée) ; ou **R** puis « Rejouer tout ».
+- **Clic sans effet** : une seule action est acceptée à la fois (protection du double clic) ; attendre une seconde.

@@ -346,8 +346,9 @@ def vue(w: Monde, pos: dict) -> dict:
     ids = w.par_id()
     # Aucun drapeau de consentement dans la vue : qui refuse les introductions ne doit pas se DEVINER sur le graphe.
     noeuds = [{"id": n, "nom": ids[n].nom if n in ids else n, "x": pos[n][0], "y": pos[n][1], "present": n in ids} for n in pos]
+    actuel = reseau.graphe_actuel(w.memoire, t)          # même définition que le diagnostic (moins de 90 jours)
     liens = [{"a": a, "b": b, "statut": d["statut"].value, "types": sorted(d["types"]),
-              "force": me.force(d["derniere"], t)} for a, b, d in sorted(g.edges(data=True))]
+              "force": me.force(d["derniere"], t), "actuelle": actuel.has_edge(a, b)} for a, b, d in sorted(g.edges(data=True))]
     return {"etape": w.etape, "total": len(ETAPES), "le": t.isoformat(), "horloge": "SIMULEE",
             "noeuds": noeuds, "liens": liens, "traces": w.traces,
             "avertissement": "Réseau de scène FICTIF : personnes et entreprises inventées, aucune donnée du Club."}
