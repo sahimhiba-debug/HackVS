@@ -30,10 +30,12 @@ TAX = charger_taxonomie()
 def etat(m, t, membres) -> dict:
     g = graphe_actuel(m, t)
     g.add_nodes_from(membres)
-    return {"relies": sum(1 for x in membres if g.degree(x) > 0), "robuste": plus_grand_groupe_robuste(g, membres)}
+    import networkx as nx
+    return {"relies": sum(1 for x in membres if g.degree(x) > 0), "robuste": plus_grand_groupe_robuste(g, membres),
+            "plus_grand": max(len(c) for c in nx.connected_components(g.subgraph(membres)))}
 
 
-def jouer(graine: int, mois: int, taux: float | None) -> dict:
+def jouer(graine: int, mois: int, taux: float | None, politique: str = "EQUILIBRE") -> dict:
     """taux=None : aucune action (baseline)."""
     profils, m, t = generer(120, graine)
     membres = sorted(p.id for p in profils if p.type == "membre_club")
@@ -43,7 +45,7 @@ def jouer(graine: int, mois: int, taux: float | None) -> dict:
         if taux is not None:
             d = dg.diagnostic(m, profils, cy.besoins_publies(m, t), TAX, t, k=5)
             plans = {n: p for p in d["agir"]["plans_nommes"] for n in p["noms"]}
-            plan = plans.get("EQUILIBRE")
+            plan = plans.get(politique)
             if plan and plan["paires"]:
                 boucle.enregistrer(m, t, plan, "organisation (simulation)", membres)
                 for a, b in plan["paires"]:
@@ -71,7 +73,13 @@ def main() -> None:
         runs = [jouer(1100 + s, a.mois, taux) for s in range(a.reseaux)]
         lignes.append(f"| {nom} | {statistics.mean(r['relies'] for r in runs):.1f} | {statistics.mean(r['robuste'] for r in runs):.1f} | "
                       f"{statistics.mean(r['acceptees'] for r in runs):.1f} | {statistics.mean(r['realisees_selon_bilan'] for r in runs):.1f} |")
-    lignes += ["", "Le bilan prévu/réalisé doit retrouver EXACTEMENT les actions acceptées (contrôle d'intégrité de la boucle)."]
+    lignes += ["", "Le bilan prévu/réalisé doit retrouver EXACTEMENT les actions acceptées (contrôle d'intégrité de la boucle).", "",
+               "## Quelle politique sur une saison ? (60 % d'acceptation)", "",
+               "| Politique mensuelle | Membres reliés (fin) | Plus grand groupe (fin) | Groupe robuste (fin) |", "|---|---|---|---|"]
+    for pol in ("INCLUSION", "COHESION", "COHESION_ROBUSTE", "RECIPROCITE", "EQUILIBRE"):
+        runs = [jouer(1100 + s, a.mois, 0.6, pol) for s in range(a.reseaux)]
+        lignes.append(f"| {pol} | {statistics.mean(r['relies'] for r in runs):.1f} | {statistics.mean(r['plus_grand'] for r in runs):.1f} | "
+                      f"{statistics.mean(r['robuste'] for r in runs):.1f} |")
     texte = "\n".join(lignes) + "\n"
     print(texte)
     if a.sortie:

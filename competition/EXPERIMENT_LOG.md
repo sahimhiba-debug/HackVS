@@ -229,3 +229,8 @@ Résultat · Cas d'échec · Décision · Preuve. Les hypothèses et baselines s
   mécanique (des actions acceptées créent des relations). Ce qui est démontré : la boucle fonctionne de bout en bout,
   et son bilan est EXACT par rapport à ce qui s'est passé.
 - **Décision.** KEEP (preuve d'intégrité). **Preuve.** `eval/resultats_simulation_boucle.md`, `tests/test_boucle.py`.
+- **Comparaison de politiques sur une saison (60 %, 3 mois, 5 réseaux) — INCONCLUSIVE.** Membres reliés : INCLUSION
+  18,2 ; ÉQUILIBRE 13,8 ; COHÉSION 13,4 ; ROBUSTE 13,2 ; RÉCIPROCITÉ 13,2. Groupe robuste ≈ 1 partout. Dans un monde
+  sans interaction spontanée ni soirée, 5 actions par mois ne maintiennent pas un réseau de 120 membres : les
+  interventions ciblées sont MARGINALES face aux événements. Comparer des politiques exigerait de simuler aussi les
+  soirées (hypothèses empilées) : non fait. Aucune recommandation de politique n'est tirée de cette mesure.

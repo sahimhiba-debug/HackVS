@@ -10,3 +10,13 @@
 | BOUCLE, 100 % acceptées | 19.6 | 5.0 | 15.0 | 15.0 |
 
 Le bilan prévu/réalisé doit retrouver EXACTEMENT les actions acceptées (contrôle d'intégrité de la boucle).
+
+## Quelle politique sur une saison ? (60 % d'acceptation)
+
+| Politique mensuelle | Membres reliés (fin) | Plus grand groupe (fin) | Groupe robuste (fin) |
+|---|---|---|---|
+| INCLUSION | 18.2 | 2.0 | 1.0 |
+| COHESION | 13.4 | 5.4 | 1.0 |
+| COHESION_ROBUSTE | 13.2 | 5.4 | 1.0 |
+| RECIPROCITE | 13.2 | 4.6 | 1.6 |
+| EQUILIBRE | 13.8 | 4.4 | 1.6 |
