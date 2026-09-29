@@ -138,3 +138,17 @@ class Demo:
         self.reinitialiser()
         for _ in range(max(0, min(n, len(self.ETAPES)))):
             self.suivant()
+
+    PERSONAS = (md.SOPHIE, md.ANNA, md.LEA, md.MARKUS, md.PAULINE)
+
+    def personas(self) -> list[dict]:
+        """DÉMO SEULEMENT : les membres fictifs que le jury peut incarner (code d'invitation, session si compte actif).
+        En production, chacun n'a que son propre téléphone : cette route n'existe pas."""
+        c = self.club
+        res = []
+        for p in self.PERSONAS:
+            per = c.coffre.identite(p)
+            res.append({"id": p, "nom": per.nom if per else p, "code": c.coffre.code_invitation(p),
+                        "session": c.session(p) if p in c.coffre.actives else None,
+                        "capacite": next((self.tax.libelle(o.concept) for o in c.profil(p).offre if o.concept), None)})
+        return res
