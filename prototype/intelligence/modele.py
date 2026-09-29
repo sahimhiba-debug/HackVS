@@ -51,10 +51,13 @@ class Reseau:
     nom: str = "Club fictif"
     fictif: bool = True
     _par_id: dict[str, Profil] = field(default_factory=dict, repr=False)
+    _source: Optional[list] = field(default=None, repr=False)
 
     def par_id(self) -> dict[str, Profil]:
-        if len(self._par_id) != len(self.profils):
+        """Index recalculé dès que la LISTE est remplacée (toute mise à jour de profil remplace la liste)."""
+        if self._source is not self.profils or len(self._par_id) != len(self.profils):
             self._par_id = {p.id: p for p in self.profils}
+            self._source = self.profils
         return self._par_id
 
 

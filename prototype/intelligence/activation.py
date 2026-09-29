@@ -37,7 +37,8 @@ from .modele import Opportunite, Reseau
 
 ETATS = ("DETECTEE", "EVALUEE", "PLANIFIEE", "EN_ATTENTE_ACCORD", "ACTIVEE", "TERMINEE", "BLOQUEE", "REPLANIFICATION",
          "ALTERNATIVE_PROPOSEE", "ABANDONNEE", "REJETEE", "RESULTAT_CONFIRME", "RESULTAT_PARTIEL", "RESULTAT_NEGATIF",
-         "RESULTAT_INCONNU")
+         "RESULTAT_INCONNU", "EN_PAUSE", "ANNULEE")
+PAUSABLES = {"PLANIFIEE", "EN_ATTENTE_ACCORD", "ACTIVEE"}
 TRANSITIONS: dict[str, set[str]] = {
     "": {"DETECTEE"},
     "DETECTEE": {"EVALUEE", "REJETEE"},
@@ -50,12 +51,16 @@ TRANSITIONS: dict[str, set[str]] = {
     "ACTIVEE": {"TERMINEE", "BLOQUEE"},
     "TERMINEE": {"RESULTAT_CONFIRME", "RESULTAT_PARTIEL", "RESULTAT_NEGATIF", "RESULTAT_INCONNU"},
     "RESULTAT_INCONNU": {"RESULTAT_CONFIRME", "RESULTAT_PARTIEL", "RESULTAT_NEGATIF"},
+    "EN_PAUSE": set(PAUSABLES) | {"ANNULEE"},
 }
-FINAUX = {"ABANDONNEE", "REJETEE", "RESULTAT_CONFIRME", "RESULTAT_PARTIEL", "RESULTAT_NEGATIF"}
+for _e in PAUSABLES | {"BLOQUEE", "REPLANIFICATION", "ALTERNATIVE_PROPOSEE", "EVALUEE", "DETECTEE"}:
+    TRANSITIONS[_e] = TRANSITIONS[_e] | {"ANNULEE"} | ({"EN_PAUSE"} if _e in PAUSABLES else set())
+FINAUX = {"ABANDONNEE", "REJETEE", "RESULTAT_CONFIRME", "RESULTAT_PARTIEL", "RESULTAT_NEGATIF", "ANNULEE"}
 DELAI_REPONSE_JOURS = 4        # sans réponse après 4 jours : on n'insiste pas, on passe à l'alternative
 DELAI_RESULTAT_JOURS = 21      # pas de confirmation 21 jours après la fin : RÉSULTAT INCONNU (jamais « réussi »)
 MAX_REMPLACEMENTS = 3          # garde-fou : une étape ne boucle pas indéfiniment sur des alternatives
 BUDGET_ATTENTION = 2           # sollicitations ouvertes au plus par membre, toutes activations confondues
+NATURES = ("ressource", "rencontre", "conseil", "validation", "introduction", "document", "seance")
 VERDICTS = {"debloque": "RESULTAT_CONFIRME", "partiel": "RESULTAT_PARTIEL", "non": "RESULTAT_NEGATIF"}
 
 
@@ -383,6 +388,48 @@ class Moteur:
         self._transition(aid, le, "PLANIFIEE", "Planificateur", f"un membre du plan a quitté le réseau : « {e['libelle']} » "
                          + ("réattribuée" if alt else "sans alternative"))
 
+    # ------------------------------------------------------------------ contrôle du Club et du membre
+    def mettre_en_pause(self, aid: str, le: date, par: str = "animatrice") -> None:
+        if self.etat(aid) not in PAUSABLES:
+            raise ErreurActivation("seule une activation planifiée ou en cours peut être mise en pause")
+        self._transition(aid, le, "EN_PAUSE", "Club", f"mise en pause par {par}", reprise=self.etat(aid))
+
+    def reprendre(self, aid: str, le: date) -> None:
+        if self.etat(aid) != "EN_PAUSE":
+            raise ErreurActivation("cette activation n'est pas en pause")
+        vers = self._evs(aid, "ACTIVATION")[-1].donnees["details"]["reprise"]
+        self._transition(aid, le, vers, "Club", "reprise")
+
+    def annuler(self, aid: str, le: date, par: str = "animatrice") -> None:
+        if self.etat(aid) in FINAUX or self.etat(aid) in ("TERMINEE", "RESULTAT_INCONNU"):
+            raise ErreurActivation("activation déjà terminée")
+        self._transition(aid, le, "ANNULEE", "Club", f"annulée par {par} ; les personnes sollicitées sont libérées")
+
+    def retirer_consentement(self, aid: str, le: date, membre: str) -> None:
+        """Un membre qui avait accepté se retire : l'étape repart en replanification ; sa visibilité est retirée."""
+        if self.etat(aid) not in ("EN_ATTENTE_ACCORD", "ACTIVEE"):
+            raise ErreurActivation("retrait possible tant que l'activation est en cours")
+        e = next((x for x in self.plan(aid)["etapes"] if x.get("membre") == membre and x["type"] in ("contribution", "animation")), None)
+        if e is None or not (self._reponses(aid).get((e["id"], membre)) and self._reponses(aid)[(e["id"], membre)].donnees["accepte"]):
+            raise ErreurActivation("seule une personne qui a accepté peut retirer son accord")
+        self._ecrire("RETRAIT_CONSENTEMENT", le, [membre], aid=aid, etape=e["id"], geste="humain")
+        self._bloquer(aid, le, e, "une personne a retiré son accord")
+
+    def retirer_capacite(self, membre: str, concept: str, le: date) -> list[str]:
+        """Un membre retire une capacité de son profil : les plans qui comptaient dessus se replanifient."""
+        touchees = []
+        for aid in self.activations():
+            etat = self.etat(aid)
+            for e in self.plan(aid)["etapes"]:
+                if e.get("membre") == membre and e.get("concept") == concept and e["type"] in ("contribution", "animation"):
+                    if etat in ("EN_ATTENTE_ACCORD", "ACTIVEE"):
+                        touchees.append(aid)
+                        self._bloquer(aid, le, e, "la capacité sollicitée a été retirée du profil")
+                    elif etat == "PLANIFIEE":
+                        touchees.append(aid)
+                        self._replanifier_avant_lancement(aid, le, e["id"])
+        return touchees
+
     def echeances(self, le: date) -> list[str]:
         """Coordinateur : silence au-delà du délai = « sans réponse » (on n'insiste pas) ; résultat non confirmé = INCONNU."""
         faits = []
@@ -408,20 +455,20 @@ class Moteur:
 
     # ------------------------------------------------------------------ contributions, résultat, mémoire
     def contribuer(self, aid: str, le: date, membre: str, nature: str, titre: str, contenu: str,
-                   reutilisable: bool = False) -> None:
+                   reutilisable: bool = False, attribution: bool = False) -> None:
         if self.etat(aid) != "ACTIVEE":
             raise ErreurActivation("on contribue à une activation dont tous les accords sont donnés")
         e = next((x for x in self.plan(aid)["etapes"] if x.get("membre") == membre and x["type"] in ("contribution", "animation")), None)
         if e is None:
             raise ErreurActivation("seule une personne engagée dans le plan contribue")
-        if nature not in ("ressource", "rencontre", "conseil", "seance"):
+        if nature not in NATURES:
             raise ErreurActivation("nature de contribution inconnue")
         if not titre.strip():
             raise ErreurActivation("une contribution a un titre")
         if any(x.donnees["etape"] == e["id"] for x in self._evs(aid, "CONTRIBUTION_RECUE")):
             raise ErreurActivation("contribution déjà reçue pour cette étape")
         self._ecrire("CONTRIBUTION_RECUE", le, [membre], aid=aid, etape=e["id"], nature=nature, titre=titre.strip()[:120],
-                     contenu=contenu.strip()[:4000], reutilisable=reutilisable, geste="humain")
+                     contenu=contenu.strip()[:4000], reutilisable=reutilisable, attribution=attribution, geste="humain")
         benef = self.opportunite(aid).beneficiaire
         if benef and benef != membre:                  # le réseau change : une collaboration réelle crée une relation
             self._ecrire("COLLABORATION", le, sorted([benef, membre]), aid=aid, nature=nature)
@@ -457,7 +504,8 @@ class Moteur:
                                     or {c for c in opp.capacites if c}), contributeurs=[x.acteurs[0] for x in contribs],
                     sequence=[e["libelle"] for e in p["etapes"]],
                     contributions=[{"nature": x.donnees["nature"], "titre": x.donnees["titre"], "contenu": x.donnees["contenu"],
-                                    "reutilisable": x.donnees["reutilisable"], "concept": next(
+                                    "reutilisable": x.donnees["reutilisable"], "attribution": x.donnees.get("attribution", False),
+                                    "auteur": x.acteurs[0], "concept": next(
                                         (e.get("concept") for e in p["etapes"] if e["id"] == x.donnees["etape"]), None)}
                                    for x in contribs if x.donnees["reutilisable"]],
                     resultat=verdict, activation=aid, statut=self.statut)

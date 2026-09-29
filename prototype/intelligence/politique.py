@@ -42,7 +42,7 @@ class Spectateur:
 class Contexte:
     """Faits de consentement et de relation, dérivés du journal (jamais déclarés par l'interface)."""
     relations: set[frozenset] = field(default_factory=set)           # rencontres/collaborations entre deux personnes
-    consentis: set[frozenset] = field(default_factory=set)           # accord mutuel dans une activation non anonyme
+    consentis: set[tuple[str, str]] = field(default_factory=set)     # (spectateur, sujet) : révélation autorisée par un accord
     preferences: dict[str, dict[str, Portee]] = field(default_factory=dict)
 
 
@@ -61,14 +61,15 @@ def peut_voir(sp: Spectateur, sujet: str, attribut: str, ctx: Contexte) -> bool:
     if sp.role == "animatrice":                  # le Club connaît ses membres ; jamais leurs notes ni leurs relations
         return attribut not in ("notes", "relations", "creneaux")
     paire = frozenset((sp.id or "", sujet))
+    accord = (sp.id or "", sujet) in ctx.consentis
     if p in ("PUBLIC", "CLUB_DECOUVRABLE"):
         return True
     if p == "RELATIONS":
         return paire in ctx.relations
     if p == "SUR_CONSENTEMENT":
-        return paire in ctx.consentis or paire in ctx.relations
+        return accord or paire in ctx.relations
     if p == "ACTIVATION":
-        return paire in ctx.consentis
+        return accord
     return False
 
 

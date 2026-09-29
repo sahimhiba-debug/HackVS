@@ -37,9 +37,8 @@ def _oid(*parts: str) -> str:
 def _etapes(b: BesoinActif, auteur: Profil) -> list[str]:
     """Capacités demandées, sans les mots qui décrivent la propre activité du demandeur (« vin » pour une vigneronne)."""
     propres = {o.concept for o in auteur.offre if o.concept} | set(auteur.secteurs)
-    toutes = list(dict.fromkeys(c.valeur for c in b.besoin.criteres if c.type == "expertise"))
-    utiles = [c for c in toutes if c not in propres]
-    return utiles or toutes
+    toutes = list(dict.fromkeys(c.valeur for c in b.besoin.criteres if c.type in ("expertise", "texte_libre")))
+    return [c for c in toutes if c not in propres]      # sa propre activité est du contexte, jamais une étape
 
 
 def _nom(e: Etat, pid: str) -> str:
@@ -144,19 +143,21 @@ class Detecteur:
                 self._ajouter(opps, o)
         mesures["complementarite_ms"] = round((time.perf_counter() - t1) * 1000, 1)
         # une latente incluse dans une plus large (mêmes personnes, même événement) n'est pas une opportunité de plus
-        latentes = [o for o in opps.values() if o.type == "LATENTE"]
+        latentes = [o for o in opps.values() if o.type in ("LATENTE", "SUIVI")]
         for k, o in list(opps.items()):
             ens = {r.membre for r in o.roles}
             hote = next((h for h in latentes if h is not o and h.evenement == o.evenement
-                         and ens < {r.membre for r in h.roles}), None) if o.type == "LATENTE" else None
+                         and ens < {r.membre for r in h.roles}), None) if o.type in ("LATENTE", "SUIVI") else None
             if hote:
                 hote.mecanismes.append(f"inclut l'intérêt de {_nom(self.e, o.beneficiaire or '')}")
                 hote.demandes_servies = max(hote.demandes_servies, len(hote.roles) - 1)
                 del opps[k]
         for o in opps.values():
             o.risques = self._risques(o)
-        # rang : ce que l'action débloque (demandes servies), puis la solidité, puis l'urgence, puis le coût en attention
-        liste = sorted(opps.values(), key=lambda o: (-o.demandes_servies, ORDRE_CONFIANCE[o.confiance],
+        # rang : d'abord ce qui EXPIRE (fenêtre d'événement ≤ 14 jours), puis ce que l'action débloque, la solidité,
+        # le coût en attention — un atelier peut attendre la semaine prochaine, un salon non
+        proches = {e.id for e in self.e.evenements_proches if (e.le - self.e.aujourd_hui).days <= 14}
+        liste = sorted(opps.values(), key=lambda o: (o.evenement not in proches, -o.demandes_servies, ORDRE_CONFIANCE[o.confiance],
                                                      o.evenement is None, o.personnes_a_solliciter, o.id))
         mesures["total_ms"] = round(sum(v for k, v in mesures.items() if k != "total_ms"), 1)
         return {"opportunites": liste, "ecartees": dict(sorted(self.ecartees.items())), "bloques": self.bloques,

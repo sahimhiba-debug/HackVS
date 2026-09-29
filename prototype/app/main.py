@@ -904,15 +904,35 @@ def page_cycle():
 if MODE == "demo":  # scène de présentation : monde ISOLÉ et déterministe (données de scène fictives)
     from .stage import creer_routeur as _routeur_scene
     app.include_router(_routeur_scene(TAX))
-    from .club_repond import creer_routeur as _routeur_club_repond
-    app.include_router(_routeur_club_repond(TAX))
+    from .pulse_api import creer_routeur as _routeur_pulse
+    app.include_router(_routeur_pulse(TAX))
 
 
-@app.get("/demo/club-repond")
-def page_club_repond():
+@app.get("/app")
+@app.get("/app/")
+def page_membre():
+    """Club Pulse — application du membre (PWA mobile d'abord)."""
     if MODE != "demo":
-        raise HTTPException(501, "Scène réservée au mode démo.")
-    return FileResponse(WEB / "club-repond.html")
+        raise HTTPException(501, "Club Pulse est présenté en mode démo (monde fictif).")
+    return FileResponse(WEB / "pulse" / "app.html")
+
+
+@app.get("/app/manifest.webmanifest")
+def manifeste():
+    return FileResponse(WEB / "pulse" / "manifest.webmanifest", media_type="application/manifest+json")
+
+
+@app.get("/app/sw.js")
+def service_worker():
+    return FileResponse(WEB / "pulse" / "sw.js", media_type="text/javascript", headers={"Service-Worker-Allowed": "/app"})
+
+
+@app.get("/console")
+def page_console():
+    """Club Pulse — tour de contrôle du Club (bureau) : que faut-il activer maintenant ?"""
+    if MODE != "demo":
+        raise HTTPException(501, "Club Pulse est présenté en mode démo (monde fictif).")
+    return FileResponse(WEB / "pulse" / "console.html")
 
 
 @app.get("/demo/stage")

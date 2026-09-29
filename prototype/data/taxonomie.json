@@ -463,7 +463,11 @@
         "cidre",
         "cidrerie",
         "sirop",
-        "boissons"
+        "boissons",
+        "tisane",
+        "tisanes",
+        "infusion",
+        "infusions"
       ]
     },
     "vins": {

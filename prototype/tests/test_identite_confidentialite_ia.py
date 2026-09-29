@@ -72,7 +72,7 @@ def test_nom_cache_avant_consentement_revele_apres():
     avant = rendu.nom(sophie, md.ANNA)
     assert "Anna" not in avant and avant.startswith("une personne du Club")
     assert rendu.contact(sophie, md.ANNA) is None
-    ctx.consentis.add(frozenset((md.SOPHIE, md.ANNA)))
+    ctx.consentis.add((md.SOPHIE, md.ANNA))
     assert rendu.nom(sophie, md.ANNA) == "Anna Zufferey" and rendu.contact(sophie, md.ANNA)
     ctx.consentis.clear()                                               # consentement retiré : la visibilité aussi
     assert "Anna" not in rendu.nom(sophie, md.ANNA)
