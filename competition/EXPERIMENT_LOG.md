@@ -193,6 +193,7 @@ Résultat · Cas d'échec · Décision · Preuve. Les hypothèses et baselines s
   les invités choisis par chaque méthode).
 - **Résultat.** Grande soirée (tous les actifs présents) : **égalité 20/20** avec « le plus d'aides d'abord » — la
   sophistication n'apporte RIEN quand les hôtes abondent. Petite soirée (15 présents, capacité 1, 15 invitations) :
-  **gagne 9, égalité 11, perd 0** ; 8,85 invités servis contre 8,20 (hasard 5,54). Optimalité vérifiée contre la force
+  **gagne 7, égalité 13, perd 0** ; 9,30 invités servis contre 8,65 (hasard 5,74) — chiffres du script
+  reproductible (une sonde ponctuelle antérieure, avec un autre tirage des présents, donnait 9/11 : non retenue). Optimalité vérifiée contre la force
   brute (60 instances) ; capacité, budget, preuve et abstention testés.
 - **Décision.** KEEP, avec une affirmation modeste : optimal par construction ; utile seulement quand les hôtes sont rares.
