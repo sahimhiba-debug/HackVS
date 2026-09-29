@@ -176,3 +176,8 @@ Résultat · Cas d'échec · Décision · Preuve. Les hypothèses et baselines s
   seul a un gain nul → arrêt. (2) Réseaux générés arborescents : groupes robustes minuscules (5,4 aujourd'hui).
 - **Décision.** DELETE (code retiré, rien de gardé « parce que cela a demandé du travail »). Piste non explorée : gain par
   PAIRES de ravivements (coût quadratique) — DEFER.
+
+## Red team du sprint — générateur pathologique contre Pareto et prévention
+- **Attaque.** 9 réseaux pathologiques + sain, candidates aléatoires : déterminisme, front non dominé, aucune action
+  inventée, plafond respecté même pour un hub ; prévention : seulement des relations menacées, plafond ; cas vides.
+- **Résultat.** 20 tests verts — **aucun défaut trouvé** (résultat négatif consigné). Preuve : `tests/test_adversarial_sprint.py`.
