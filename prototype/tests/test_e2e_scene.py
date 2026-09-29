@@ -51,6 +51,7 @@ def test_scene_complete_bureau_puis_mobile(url):
     with pw.sync_playwright() as p:
         b = _chromium(p)
         pg = b.new_page(viewport={"width": 1440, "height": 900})
+        pg.set_default_timeout(90_000)   # machine chargée (suite complète) : on teste le parcours, pas la vitesse (mesurer_scene.py)
         erreurs: list[str] = []
         pg.on("pageerror", lambda e: erreurs.append(str(e)))
         pg.on("console", lambda m: erreurs.append(m.text) if m.type == "error" else None)
