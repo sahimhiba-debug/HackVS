@@ -52,8 +52,10 @@ class Confirmation(BaseModel):
 
 
 def creer_routeur(profils_effectifs: Callable[[], list[Profil]], tax: Taxonomie, m: me.Memoire,
-                  chemin_journal: str = ":memory:", avant_lecture: Callable[[], None] = lambda: None) -> APIRouter:
-    """`m` : LA mémoire du réseau (partagée avec l'application) ; `avant_lecture` y projette le magasin."""
+                  chemin_journal: str = ":memory:", avant_lecture: Callable[[], None] = lambda: None,
+                  retraits: Callable[[], set[str]] = set) -> APIRouter:
+    """`m` : LA mémoire du réseau (partagée avec l'application) ; `avant_lecture` y projette le magasin ;
+    `retraits` : membres ayant EXPLICITEMENT retiré leur consentement (aucune relance ne les sollicite)."""
     r = APIRouter(prefix="/api/cycle", tags=["cycle"])
     journal = Journal(chemin_journal)
     debut = date.today()  # même origine que le reste du réseau ; ensuite seule l'horloge SIMULÉE avance
@@ -121,12 +123,12 @@ def creer_routeur(profils_effectifs: Callable[[], list[Profil]], tax: Taxonomie,
 
     @r.get("/relances")
     def relances():
-        return cy.relances(m, profils_effectifs(), tax, jour())
+        return cy.relances(m, profils_effectifs(), tax, jour(), retraits=retraits())
 
     @r.post("/relances/{relance_id}")
     def repondre(relance_id: str, rep: Reponse):
         try:
-            return cy.repondre(m, profils_effectifs(), tax, jour(), relance_id, rep.accepte, rep.par)
+            return cy.repondre(m, profils_effectifs(), tax, jour(), relance_id, rep.accepte, rep.par, retraits())
         except cy.ErreurCycle as e:
             erreur(e)
 

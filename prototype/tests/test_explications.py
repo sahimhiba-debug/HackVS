@@ -119,3 +119,20 @@ def test_suivi_par_l_autre_sens_de_la_reciprocite_puis_simulation():
     assert [x["type"] for x in boite_ines] == ["RECIPROCITE_OUVERTE"]
     assert client.get("/api/reseau/boite", headers=N).json()["suivis_proposes"] == []        # le sens déjà servi : rien
     assert date.fromisoformat(MEMOIRE.maintenant(t0).isoformat()) > t0
+
+
+def test_retrait_du_consentement_fait_taire_les_relances_qui_sollicitent_ce_membre():
+    """Red team du sprint : après le retrait de Nadia, Inès recevait encore « Nadia propose ce que vous cherchez »."""
+    client.post("/api/demo/reinitialiser")
+    nid = client.post("/api/demo/rejoindre", json=PROFIL_NADIA).json()["membre"]["id"]
+    N, INES = {"X-Membre": nid}, {"X-Membre": "p26"}
+    b = client.post("/api/analyser", json={"texte": "Nous cherchons un développeur pour créer une boutique en ligne"}).json()["besoin"]
+    bb = client.post("/api/besoins", json={"besoin": b, "publier": True, "anonyme": False}, headers=N).json()
+    r = client.post("/api/relations", json={"besoin_id": bb["id"], "cible_id": "p26", "message": "Bonjour"}, headers=N).json()
+    for action, qui, corps in (("accepter", INES, {}), ("planifier", INES, {"date_rencontre": "2026-10-15"}), ("confirmer_rencontre", N, {})):
+        client.post(f"/api/relations/{r['id']}/{action}", json=corps, headers=qui)
+    assert client.post("/api/moi/consentement", json={"accepte": False}, headers=N).status_code == 200
+    client.post("/api/cycle/avancer", json={"jours": 10})
+    assert client.get("/api/reseau/boite", headers=INES).json()["suivis_proposes"] == []
+    client.post("/api/moi/consentement", json={"accepte": True}, headers=N)
+    assert [x["type"] for x in client.get("/api/reseau/boite", headers=INES).json()["suivis_proposes"]] == ["RECIPROCITE_OUVERTE"]

@@ -800,7 +800,8 @@ if MODE == "demo":  # espace de décision (plateforme + adaptateur Club) : insta
 if MODE == "demo":  # cycle de vie des relations : horloge simulée, membres fictifs
     from .cycle_api import creer_routeur as _routeur_cycle
     app.include_router(_routeur_cycle(profils_effectifs, TAX, MEMOIRE, ":memory:" if CHEMIN_MEMOIRE == ":memory:" else CHEMIN_MEMOIRE + ".runs",
-                                      avant_lecture=projeter_reseau))
+                                      avant_lecture=projeter_reseau,
+                                      retraits=lambda: {pid for pid, ok in MAGASIN.consentements().items() if not ok}))
 
 
 @app.get("/api/reseau/interventions")
@@ -835,7 +836,8 @@ def boite_reseau(x_membre: Optional[str] = Header(None)):
     """Boîte réseau : les prochains mouvements utiles du membre (pas un fil d'actualité)."""
     m = moi(x_membre)
     t = aujourdhui_reseau()
-    rel = cycle_club.relances(MEMOIRE, profils_effectifs(), TAX, t)
+    retraits = {pid for pid, ok in MAGASIN.consentements().items() if not ok}   # choix EXPLICITES
+    rel = cycle_club.relances(MEMOIRE, profils_effectifs(), TAX, t, retraits=retraits)
     return reseau.boite(MEMOIRE, m, profils_effectifs(), MAGASIN.relations(m.id), rel, t)
 
 

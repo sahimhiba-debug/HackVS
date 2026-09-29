@@ -98,7 +98,9 @@ def _traitees(m: Memoire) -> set[str]:
     return {e.donnees["relance_id"] for e in m.evenements("RELANCE_ACCEPTEE", "RELANCE_REFUSEE")}
 
 
-def relances(m: Memoire, profils: list[Profil], tax: Taxonomie, maintenant: date, delai: int = DELAI_RELANCE_JOURS) -> dict:
+def relances(m: Memoire, profils: list[Profil], tax: Taxonomie, maintenant: date, delai: int = DELAI_RELANCE_JOURS,
+             retraits: Optional[set[str]] = None) -> dict:
+    """`retraits` : membres qui ont EXPLICITEMENT retiré leur consentement (aucune relance ne les sollicite)."""
     par_id = {p.id: p for p in profils}
     from .reseau import graphe_actuel
     g = graphe(m, maintenant)
@@ -167,7 +169,12 @@ def relances(m: Memoire, profils: list[Profil], tax: Taxonomie, maintenant: date
                                                 {"statut": "INFERE" if aide["nature_preuve"] != "declare" else "DECLARE",
                                                  "quoi": f"{aide['besoin']}", "extrait": aide["preuve"]}],
                                     "id": _id(x, via, z, "PRESENTATION")})
-        raisons = [r for r in raisons if r["id"] not in deja]
+        # Consentement à DEUX niveaux (classe de défauts trouvée en red team) :
+        # - « invisible par défaut » (jamais activé) : pas de NOUVEAU contact (présentation, vérifiée plus haut), mais le
+        #   suivi d'une relation que le membre a lui-même créée reste permis ;
+        # - RETRAIT explicite (choix enregistré) : plus AUCUNE relance ne sollicite ce membre.
+        raisons = [r for r in raisons if r["id"] not in deja
+                   and not ({r["pour"], r["avec"], r.get("vers")} & (retraits or set()))]
         if raisons:
             propositions.append({"paire": [a, b], "noms": [par_id[a].nom, par_id[b].nom], "derniere_interaction": d["derniere"].isoformat(),
                                  "jours": ecoule, "force_du_lien": force(d["derniere"], maintenant), "statut_du_lien": d["statut"].value,
@@ -212,18 +219,21 @@ def _sens_servis(m: Memoire, maintenant: date) -> dict[str, set[tuple[str, str]]
     return res
 
 
-def trouver_raison(m: Memoire, profils, tax, maintenant: date, relance_id: str) -> tuple[dict, dict]:
-    for p in relances(m, profils, tax, maintenant)["propositions"]:
+def trouver_raison(m: Memoire, profils, tax, maintenant: date, relance_id: str,
+                   retraits: Optional[set[str]] = None) -> tuple[dict, dict]:
+    # mêmes filtres que la liste affichée : une relance masquée (retrait) ne peut pas être acceptée par son identifiant
+    for p in relances(m, profils, tax, maintenant, retraits=retraits)["propositions"]:
         for r in p["raisons"]:
             if r["id"] == relance_id:
                 return p, r
     raise ErreurCycle("relance inconnue, déjà traitée ou plus d'actualité")
 
 
-def repondre(m: Memoire, profils, tax, maintenant: date, relance_id: str, accepte: bool, par: str) -> dict:
+def repondre(m: Memoire, profils, tax, maintenant: date, relance_id: str, accepte: bool, par: str,
+             retraits: Optional[set[str]] = None) -> dict:
     """L'humain décide. Accepter crée un SUIVI (déclaré par le membre) : le lien est ravivé, et s'il y a un tiers,
     l'opportunité de présentation est ouverte pour la prochaine soirée."""
-    p, r = trouver_raison(m, profils, tax, maintenant, relance_id)
+    p, r = trouver_raison(m, profils, tax, maintenant, relance_id, retraits)
     if par not in p["paire"]:
         raise ErreurCycle("seul un des deux membres concernés peut répondre")
     if not accepte:
