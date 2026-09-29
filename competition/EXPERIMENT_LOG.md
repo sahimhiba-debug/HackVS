@@ -197,3 +197,17 @@ Résultat · Cas d'échec · Décision · Preuve. Les hypothèses et baselines s
   reproductible (une sonde ponctuelle antérieure, avec un autre tirage des présents, donnait 9/11 : non retenue). Optimalité vérifiée contre la force
   brute (60 instances) ; capacité, budget, preuve et abstention testés.
 - **Décision.** KEEP, avec une affirmation modeste : optimal par construction ; utile seulement quand les hôtes sont rares.
+
+## EXP-M — « Quelle intervention serait pertinente MAINTENANT ? » (événements temporels → actions prouvées ou silence)
+- **Hypothèse.** Chaque changement observé (relation endormie, membre isolé, pont disparu, nouveau groupe) peut recevoir
+  des actions fondées sur une aide PROUVÉE — ou un silence explicite ; la plupart des changements n'ont PAS de raison
+  prouvée d'agir.
+- **Baseline.** Un CRM : relancer à chaque changement (100 % de sollicitations, sans raison).
+- **Implémentation.** `diagnostic._actions_maintenant` (INVITER un membre isolé s'il a une rencontre prouvée possible ;
+  RAVIVER_AVEC_RAISON une relation endormie seulement si une aide est prouvée ; RECRÉER_UN_PONT parmi les actions
+  proposables entre morceaux) ; consentement vérifié (test).
+- **Résultat (10 réseaux générés de 150 membres, 30 derniers jours).** 254 relations endormies : **16 (6 %) avec une
+  raison prouvée**, silence pour 238. 166 membres devenus isolés : 97 (58 %) invitables avec une rencontre prouvée.
+- **Limite.** « Raison prouvée » = aide dans un sens au moins ; une relation peut avoir d'autres bonnes raisons que le
+  système ignore (dit).
+- **Décision.** KEEP. **Preuve.** `tests/test_diagnostic.py::test_chaque_changement_recoit_une_action_prouvee_ou_le_silence`.

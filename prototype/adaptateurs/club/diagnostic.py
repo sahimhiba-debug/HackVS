@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+import networkx as nx
+
 from app.models import Profil
 from app.soiree import calculer_aides
 from plateforme.memoire import Memoire, graphe
@@ -59,6 +61,9 @@ def diagnostic(m: Memoire, profils: list[Profil], besoins_publies: list, tax, ma
     a_venir["COHESION_ravivements"] = [x.split("|") for x in ex.prevenir(g_act, membres, ech, maintenant, horizon, 3, 2, "COHESION",
                                                                           sollicitables=sollicitables)]
 
+    observer = temporel.depuis(m, membres, debut, maintenant)
+    _actions_maintenant(observer, cands, en_sommeil, actifs, aides_brutes, g_act)
+
     rien = not obs["phenomenes"] and not cands and not a_venir["INCLUSION"]["ravivements"]
     return {
         "le": maintenant.isoformat(),
@@ -67,10 +72,32 @@ def diagnostic(m: Memoire, profils: list[Profil], besoins_publies: list, tax, ma
         "diagnostiquer": obs,
         "voir_venir": a_venir,
         "agir": plans,
-        "observer": temporel.depuis(m, membres, debut, maintenant),
+        "observer": observer,
         "se_souvenir": {"interventions": bi.bilan(m, maintenant), "decisions": boucle.historique(m, maintenant, membres)},
         "principes": ["aucune écriture, aucun envoi : l'humain décide",
                       "projections pessimistes (aucune interaction spontanée) ; simulations supposant les actions acceptées",
                       "aucune relance sans raison prouvée ; sinon invitation à un événement",
                       "comptes plutôt que taux sur de petits nombres ; simulé séparé du réel"],
     }
+
+
+def _actions_maintenant(observer: dict, cands: list, en_sommeil: list[str], actifs: list[str], aides_brutes, g_act) -> None:
+    """Chaque changement observé reçoit des ACTIONS PROUVÉES possibles maintenant — ou le silence, dit comme tel."""
+    aides = {frozenset(x) for x in aides_brutes}
+    for ev in observer["evenements"]:
+        actions: list[dict] = []
+        if ev["type"] == "MEMBRE_ISOLE":
+            for x in ev["membres"]:
+                hotes = sorted(y for y in actifs if frozenset((x, y)) in aides)
+                if hotes and x in en_sommeil:
+                    actions.append({"action": "INVITER", "membre": x, "rencontres_prouvees_possibles": len(hotes)})
+        elif ev["type"] == "RELATION_ENDORMIE":
+            for a, b in ev["paires"]:
+                if frozenset((a, b)) in aides:
+                    actions.append({"action": "RAVIVER_AVEC_RAISON", "paire": [a, b]})
+        elif ev["type"] in ("PONT_DISPARU", "NOUVEAU_GROUPE"):
+            comp = {x: i for i, c in enumerate(nx.connected_components(g_act)) for x in c}
+            ponts = [c for c in cands if comp.get(c.a) != comp.get(c.b)]
+            actions += [{"action": "RECRÉER_UN_PONT", "paire": [c.a, c.b]} for c in ponts[:3]]
+        ev["actions_prouvees"] = actions
+        ev["si_aucune"] = "silence : aucune action fondée sur une preuve n'est possible pour ce changement" if not actions else None

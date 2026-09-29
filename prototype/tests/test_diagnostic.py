@@ -55,3 +55,18 @@ def test_aucun_ravivement_ne_sollicite_un_membre_qui_refuse_les_introductions():
     assert fermes and not [r for r in rav if set(r) & fermes]
     for plan in d["agir"]["front"]:
         assert not [x for x in plan["paires"] if set(x) & fermes]
+
+
+def test_chaque_changement_recoit_une_action_prouvee_ou_le_silence():
+    from adaptateurs.club import cycle as cy
+    from eval.perf_echelle import generer
+    p, m, t = generer(150, 2)
+    d = dg.diagnostic(m, p, cy.besoins_publies(m, t), TAX, t)
+    evs = d["observer"]["evenements"]
+    assert evs
+    fermes = {x.id for x in p if not x.accepte_introductions or not x.disponible}
+    for ev in evs:
+        assert ("actions_prouvees" in ev) and (bool(ev["actions_prouvees"]) != bool(ev["si_aucune"]))
+        for a in ev["actions_prouvees"]:
+            concernes = set(a.get("paire", [])) | ({a["membre"]} if "membre" in a else set())
+            assert not concernes & fermes                                  # consentement, même ici
