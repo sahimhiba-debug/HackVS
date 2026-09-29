@@ -64,3 +64,34 @@ def test_cas_minimaux_sans_plantage():
     g = nx.Graph([("a", "b")])
     assert pa.plus_grand_groupe_robuste(g, ["a", "b"]) == 1
     assert pa.frontiere(g, ["a", "b", "c"], [Candidate("INTRODUCTION", "b", "c", 1, True)], k=3)["front"]
+
+
+def test_invariant_de_classe_aucune_action_du_diagnostic_ne_viole_consentement_ou_refus():
+    """Sur des réseaux générés avec retraits et refus ALÉATOIRES : ni plan du front, ni invitation, ni ravivement ne
+    sollicite un membre fermé ou une paire qui a décliné. (Classe des défauts 26, 35, 36, 37.)"""
+    from adaptateurs.club import cycle as cy
+    from adaptateurs.club import diagnostic as dg
+    from adaptateurs.club import reseau
+    from app.taxonomy import charger_taxonomie
+    from eval.perf_echelle import generer
+    from plateforme.affirmations import Statut
+    from plateforme.memoire import Evt
+    tax = charger_taxonomie()
+    for graine in range(3):
+        rnd = random.Random(graine)
+        profils, m, t = generer(90, 40 + graine)
+        profils = [p.model_copy(update={"accepte_introductions": False}) if rnd.random() < 0.2 else p for p in profils]
+        ids = [p.id for p in profils]
+        for _ in range(15):
+            a, b = rnd.sample(ids, 2)
+            m.ajouter(Evt(type="INTRO_DEMANDEE", le=t - timedelta(days=3), acteurs=[a, b], statut=Statut.OBSERVE, donnees={"g": graine}))
+            m.ajouter(Evt(type="INTRO_DECLINEE", le=t - timedelta(days=2), acteurs=[a, b], statut=Statut.OBSERVE, donnees={"g": graine}))
+        d = dg.diagnostic(m, profils, cy.besoins_publies(m, t), tax, t)
+        fermes = {p.id for p in profils if not p.accepte_introductions or not p.disponible}
+        refus = {frozenset(x) for x in reseau.paires_declinees(m, t)}
+        actions = [x for p in d["agir"]["front"] for x in p["paires"]]
+        actions += [[x, y] for x, y in d["agir"]["invitations"]["affectation"].items()]
+        actions += [r["paire"] for r in d["voir_venir"]["INCLUSION"]["ravivements"]] + d["voir_venir"]["COHESION_ravivements"]
+        assert actions, graine
+        assert not [x for x in actions if set(x) & fermes], graine
+        assert not [x for x in actions if frozenset(x) in refus], graine
