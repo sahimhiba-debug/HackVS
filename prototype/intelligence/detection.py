@@ -47,8 +47,12 @@ def _nom(e: Etat, pid: str) -> str:
 
 
 class Detecteur:
-    def __init__(self, reseau: Reseau, tax: Taxonomie, exclus: Optional[set[str]] = None):
+    def __init__(self, reseau: Reseau, tax: Taxonomie, exclus: Optional[set[str]] = None, souvenirs: Optional[list[dict]] = None):
+        """`souvenirs` : mémoire du Club RÉUTILISABLE PAR TOUS (partagée « club » par chaque participant, confirmée,
+        positive ou mitigée — `memoire_club.reutilisables_par_le_club`). Elle devient une preuve et un « pourquoi
+        maintenant » ; jamais une réputation : elle ne rend éligible personne que les règles dures écartent."""
         self.r, self.tax = reseau, tax
+        self.souvenirs = souvenirs or []
         self.exclus = exclus or set()                 # membres retirés (perturbation, refus d'une activation…)
         self.e: Etat = observer(reseau, tax)
         self.ecartees: Counter = Counter()           # raison → nombre (jamais nominatif)
@@ -90,24 +94,35 @@ class Detecteur:
         self._cache_f[cle] = res
         return list(res)
 
+    def memoire_sur(self, concept: str) -> dict[str, dict]:
+        """Contributeur → la contribution confirmée la plus récente sur cette capacité (mémoire réutilisable par tous)."""
+        res: dict[str, dict] = {}
+        for s in sorted(self.souvenirs, key=lambda x: x["le"]):
+            if concept in s["concepts"]:
+                for c in s["contributeurs"]:
+                    res[c] = s
+        return res
+
     def _meilleur(self, a: Profil, concept: str, texte: str, offres_a: set[str]) -> Optional[dict]:
         """Le meilleur fournisseur ÉLIGIBLE pour un intérêt latent : candidats triés d'abord par des critères bon marché
-        (événement commun, intérêt réciproque, spécificité de l'offre…), règles dures vérifiées paresseusement jusqu'au
-        premier qui passe. Même résultat que « tout filtrer puis prendre le minimum », sans le coût quadratique."""
+        (a déjà aidé sur cette capacité — contribution CONFIRMÉE dans le Club —, événement commun, intérêt réciproque,
+        spécificité de l'offre…), règles dures vérifiées paresseusement jusqu'au premier qui passe. Même résultat que
+        « tout filtrer puis prendre le minimum », sans le coût quadratique."""
         par_id, tax = self.r.par_id(), self.tax
         demande = self._rac(texte)
+        memo = self.memoire_sur(concept)
         cands = []
         for pid, extrait, nature in self.e.offreurs.get(concept, []):
             if pid == a.id or pid in self.exclus:
                 continue
             b = par_id[pid]
             recip = any(rr.concept and any(tax.meme_famille(rr.concept, o) for o in offres_a) for rr in b.recherche)
-            cands.append(((self._fenetre(a.id, [pid]) is None, not recip, -len(demande & self._rac(extrait)), nature != "declare",
-                           bool(b.note_disponibilite), self.e.age_profil(b) or 0, pid), pid, extrait, nature))
+            cands.append(((pid not in memo, self._fenetre(a.id, [pid]) is None, not recip, -len(demande & self._rac(extrait)),
+                           nature != "declare", bool(b.note_disponibilite), self.e.age_profil(b) or 0, pid), pid, extrait, nature))
         for _, pid, extrait, nature in sorted(cands):
             raison = self.e.exclusion(a, par_id[pid], None, introduction=False)
             if raison is None:
-                return {"id": pid, "extrait": extrait, "nature": nature, "dormant": self.e.dormant(pid)}
+                return {"id": pid, "extrait": extrait, "nature": nature, "dormant": self.e.dormant(pid), "memoire": memo.get(pid)}
             if raison not in RAISONS_SILENCIEUSES:
                 self.ecartees[raison] += 1
             self.paires_ecartees.append((a.id, pid, raison))
@@ -432,8 +447,17 @@ class Detecteur:
         recip_utiles = [(b, t) for b, t in reciproques if b.id in contributeurs or self._fenetre(a.id, [b.id])]
         partenaires = contributeurs + [b.id for b, _ in recip_utiles if b.id not in contributeurs]
         fen = next((f_ for f_ in (self._fenetre(a.id, [x]) for x in partenaires) if f_), None)
+        memoires = [(p, x["memoire"]) for _, _, x, p in couverts if x.get("memoire")]
         if not fen and not any(b.id in contributeurs for b, _ in recip_utiles):
-            return None                               # intérêt + capacité, sans « pourquoi maintenant » : on se tait
+            if not memoires:
+                return None                           # intérêt + capacité, sans « pourquoi maintenant » : on se tait
+            # seule la mémoire justifie « maintenant » : l'opportunité se limite aux intérêts qu'ELLE couvre (un autre
+            # intérêt du même membre ne profite pas de cette justification)
+            couverts = [c for c in couverts if c[2].get("memoire")]
+            contributeurs = list(dict.fromkeys(p.id for _, _, _, p in couverts))
+            recip_utiles = [(b, t) for b, t in recip_utiles if b.id in contributeurs]
+            partenaires = list(contributeurs)
+            manque = []
         roles = [Role(membre=a.id, role="bénéficiaire")]
         signaux = [Signal(source="recherche", membre=a.id, extrait=t) for _, t, _, _ in couverts]
         signaux += [Signal(source="recherche", membre=a.id, extrait=m_) for m_ in manque]
@@ -454,6 +478,12 @@ class Detecteur:
         if fen and ev:
             signaux.append(Signal(source="evenement", extrait=fen[1], le=ev.le.isoformat()))
             raisonnement.append(f"Pourquoi maintenant : {fen[1]}.")
+        for p, s in memoires:                         # la boucle : un essai confirmé rend la découverte suivante possible
+            signaux.append(Signal(source="memoire", membre=p.id, extrait=f"contribution confirmée dans le Club : « {s['question']} »",
+                                  le=s["le"]))
+            raisonnement.append(f"{p.nom} a déjà contribué sur ce besoin dans le Club (« {s['question']} ») : résultat jugé "
+                                f"« {s['qualification']} » par la personne aidée et confirmé par {p.nom}, le {s['le']} ; "
+                                f"portée : {s['limites']}.")
         ids_roles = [r_.membre for r_ in roles[1:]]
         suivis = [q for q in ids_roles if frozenset((a.id, q)) in self.e.relies]
         for q in suivis:
@@ -473,7 +503,7 @@ class Detecteur:
         declares = all(x["nature"] == "declare" for _, _, x, _ in couverts)
         confiance = "elevee" if (fen and recip_utiles and declares and not manque) else "moyenne" if declares else "faible"
         raisons = [r for r, ok in (("intérêt réciproque déclaré", recip_utiles), ("événement commun proche", fen),
-                                   ("offres déclarées", declares)) if ok]
+                                   ("offres déclarées", declares), ("contribution confirmée dans le Club", memoires)) if ok]
         raisons += [f"capacité manquante : {m_}" for m_ in manque]
         theme = next((c for c in (ev.themes if ev else ()) if c), None)
         sujet = tax.libelle(theme) if theme else " + ".join(tax.libelle(c) for c, _, _, _ in couverts)
@@ -482,8 +512,10 @@ class Detecteur:
         return Opportunite(
             id="", type="SUIVI" if suivis else "LATENTE", titre=f"{sujet} : {a.nom}" + (f" — {ev.nom}" if ev else ""),
             declencheur=("une rencontre récente prend un sens nouveau" if suivis else
+                         "une contribution confirmée existe dans le Club sur ce besoin" if memoires and not fen and not recip_utiles else
                          "intérêts déclarés dans des profils, sans demande publiée"),
-            pourquoi_maintenant=fen[1] if fen else "intérêt réciproque déclaré",
+            pourquoi_maintenant=(fen[1] if fen else "intérêt réciproque déclaré" if recip_utiles else
+                                 f"une contribution sur ce besoin a été confirmée dans le Club le {memoires[0][1]['le']}"),
             signaux=signaux, roles=roles, capacites=capacites, manque=manque, raisonnement=raisonnement,
             contraintes=[Contrainte(libelle="accord de chacun avant toute présentation", statut="a_verifier")]
                         + [Contrainte(libelle=f"manque : {m_}", statut="bloquante") for m_ in manque],
@@ -493,9 +525,10 @@ class Detecteur:
             consentements=[a.id, *ids_partenaires], confiance=confiance, confiance_raisons=raisons,
             demandes_servies=len(couverts) + len(recip_utiles), personnes_a_solliciter=len(ids_partenaires),
             beneficiaire=a.id, evenement=fen[0] if fen else None,
-            mecanismes=["capacité dormante"] if any(self.e.dormant(x) for x in ids_partenaires) else [])
+            mecanismes=(["capacité dormante"] if any(self.e.dormant(x) for x in ids_partenaires) else [])
+                       + (["mémoire du Club"] if memoires else []))
 
 
-def scanner(reseau: Reseau, tax: Taxonomie, exclus: Optional[set[str]] = None) -> dict:
-    return Detecteur(reseau, tax, exclus).detecter()
+def scanner(reseau: Reseau, tax: Taxonomie, exclus: Optional[set[str]] = None, souvenirs: Optional[list[dict]] = None) -> dict:
+    return Detecteur(reseau, tax, exclus, souvenirs).detecter()
 

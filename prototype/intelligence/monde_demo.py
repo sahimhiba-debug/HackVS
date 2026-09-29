@@ -33,9 +33,17 @@ RECHERCHES_SOPHIE = [Offre(concept="traduction", texte="Traduire nos étiquettes
 BESOIN_ALLEMAGNE = [Offre(concept="export_allemagne", texte="Trouver un distributeur pour entrer sur le marché allemand avec nos tisanes")]
 
 
-def construire(sophie_profilee: bool = True, recherches: list[Offre] | None = None) -> Reseau:
+# la découverte SUIVANTE : Nicolas (distillerie, francophone, absent du salon) déclare le même besoin ; sans mémoire,
+# rien ne justifie de le solliciter maintenant — la détection se tait
+NICOLAS = "s04"
+BESOINS_SUIVANTS = {NICOLAS: [Offre(concept="export_allemagne", texte="Faire connaître nos eaux-de-vie en Allemagne")]}
+
+
+def construire(sophie_profilee: bool = True, recherches: list[Offre] | None = None,
+               recherches_autres: dict[str, list[Offre]] | None = None) -> Reseau:
     """`sophie_profilee=False` : Sophie vient d'activer son compte — ni capacités, ni intérêts, invisible par défaut.
-    `recherches` : ce que Sophie déclare chercher (par défaut, la scène historique des étiquettes)."""
+    `recherches` : ce que Sophie déclare chercher (par défaut, la scène historique des étiquettes) ;
+    `recherches_autres` : intérêts ajoutés à d'autres personnages (scène de la boucle)."""
     d = json.loads((DATA_DIR / "stage_reseau.json").read_text(encoding="utf-8"))
     scene = [Profil(**p) for p in d["profils"]]
     s = d["sophie"]
@@ -54,6 +62,8 @@ def construire(sophie_profilee: bool = True, recherches: list[Offre] | None = No
                  langues=["de", "fr"], zones_service=["Valais"], accepte_introductions=True,
                  creneaux=["jeu-apres-midi", "ven-matin"], maj=(AUJOURD_HUI - timedelta(days=45)).isoformat(),
                  note_disponibilite="disponible à partir du 12 novembre")
+    for pid, extra in (recherches_autres or {}).items():
+        scene = [p.model_copy(update={"recherche": list(p.recherche) + list(extra)}) if p.id == pid else p for p in scene]
     fond, _ = generer(TAILLE - len(scene) - 2, GRAINE)
     profils = fond.profils + scene + [sophie, lea]
     m = fond.memoire
