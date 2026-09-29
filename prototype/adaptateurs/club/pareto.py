@@ -142,7 +142,11 @@ def frontiere(g0: nx.Graph, membres: list[str], cands: list[Candidate], k: int,
     for _origine, plan in generes:
         cle_plan = tuple(sorted((c.a, c.b) for c in plan))
         if cle_plan not in vus:
-            vus[cle_plan] = {"paires": [list(p) for p in cle_plan], "objectifs": evaluer(g0, membres, plan), "origines": 1}
+            par_paire = {(c.a, c.b): c for c in plan}
+            vus[cle_plan] = {"paires": [list(p) for p in cle_plan], "objectifs": evaluer(g0, membres, plan), "origines": 1,
+                             # POURQUOI chaque action : les preuves citées (extraits exacts des profils ou des besoins)
+                             "pourquoi": [{"paire": list(p), "reciproque": par_paire[p].reciproque, "preuves": par_paire[p].preuves}
+                                          for p in cle_plan]}
         else:
             vus[cle_plan]["origines"] += 1
     plans = list(vus.values())

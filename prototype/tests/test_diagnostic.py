@@ -70,3 +70,25 @@ def test_chaque_changement_recoit_une_action_prouvee_ou_le_silence():
         for a in ev["actions_prouvees"]:
             concernes = set(a.get("paire", [])) | ({a["membre"]} if "membre" in a else set())
             assert not concernes & fermes                                  # consentement, même ici
+
+
+def test_chaque_action_proposee_a_une_preuve_verifiable_mot_pour_mot():
+    """Explicabilité vérifiable : l'extrait cité pour chaque action existe tel quel dans le profil de l'aidant."""
+    from adaptateurs.club import cycle as cy
+    from app.matching import preuve_valide
+    from app.models import Preuve
+    from eval.perf_echelle import generer
+    p, m, t = generer(150, 3)
+    par_id = {x.id: x for x in p}
+    d = dg.diagnostic(m, p, cy.besoins_publies(m, t), TAX, t)
+    verifiees = 0
+    for plan in d["agir"]["front"]:
+        assert [x["paire"] for x in plan["pourquoi"]] == plan["paires"]
+        for action in plan["pourquoi"]:
+            assert action["preuves"]
+            for pr in action["preuves"]:
+                assert set((pr["aide"], pr["aide_a"])) == set(action["paire"])
+                assert preuve_valide(par_id[pr["aide"]], Preuve(critere="aide", extrait=pr["preuve"], champ=pr["champ"],
+                                                               nature=pr["nature"])), pr
+                verifiees += 1
+    assert verifiees > 0

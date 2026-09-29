@@ -55,10 +55,11 @@ def candidates(profils: list[Profil], besoins_publies: list, tax, g_actuel: nx.G
             continue
         inverse = aides.get((j, i))
         valeur = aide["valeur"] + (inverse["valeur"] if inverse else 0)
-        preuves = [{"aide": j, "aide_a": i, "besoin": aide["besoin"], "preuve": aide["preuve"], "nature": aide["nature_preuve"]}]
+        preuves = [{"aide": j, "aide_a": i, "besoin": aide["besoin"], "preuve": aide["preuve"], "champ": aide["champ_preuve"],
+                    "nature": aide["nature_preuve"]}]
         if inverse:
             preuves.append({"aide": i, "aide_a": j, "besoin": inverse["besoin"], "preuve": inverse["preuve"],
-                            "nature": inverse["nature_preuve"]})
+                            "champ": inverse["champ_preuve"], "nature": inverse["nature_preuve"]})
         a, b = sorted((i, j))
         res[k] = Candidate(type="RAVIVER" if etat == "A_RAVIVER" else "INTRODUCTION", a=a, b=b, valeur=valeur,
                            reciproque=bool(inverse), preuves=preuves)
