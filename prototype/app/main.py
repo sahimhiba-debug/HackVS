@@ -32,7 +32,7 @@ from .models import Besoin, Profil
 from .store import STATUTS_PUBLICS, ErreurMetier, Interdit, Magasin
 from .taxonomy import DATA_DIR, charger_taxonomie
 from adaptateurs.club import cycle as cycle_club
-from adaptateurs.club import reseau
+from adaptateurs.club import interventions, reseau
 from plateforme.memoire import Memoire
 
 RACINE = Path(__file__).resolve().parent.parent
@@ -800,6 +800,21 @@ if MODE == "demo":  # cycle de vie des relations : horloge simulée, membres fic
     from .cycle_api import creer_routeur as _routeur_cycle
     app.include_router(_routeur_cycle(profils_effectifs, TAX, MEMOIRE, ":memory:" if CHEMIN_MEMOIRE == ":memory:" else CHEMIN_MEMOIRE + ".runs",
                                       avant_lecture=projeter_reseau))
+
+
+@app.get("/api/reseau/interventions")
+def interventions_reseau(k: int = Query(5, ge=1, le=20), plafond: int = Query(1, ge=1, le=3)):
+    """Vue ORGANISATION : les k actions qui changent le plus le réseau ACTUEL (inclusion / cohésion), ou ne rien faire.
+    SIMULATION : rien n'est écrit ni envoyé ; noms seulement (aucune coordonnée)."""
+    if MODE != "demo":
+        raise HTTPException(501, "Vue d'organisation : rôle d'animateur·rice authentifié non implémenté.")
+    projeter_reseau()
+    t, ids = aujourdhui_reseau(), par_id()
+    p = interventions.plan(MEMOIRE, profils_effectifs(), MAGASIN.besoins() + cycle_club.besoins_publies(MEMOIRE, t), TAX, t, k, plafond)
+    for o in p["options"].values():
+        for a in o["actions"]:
+            a["noms"] = [ids[x].nom for x in a["paire"] if x in ids]
+    return p | {"donnees_fictives": True}
 
 
 @app.get("/api/reseau/boite")
