@@ -62,7 +62,11 @@ def test_chaque_opportunite_est_prouvee_consentie_et_unique():
         if benef:
             for r_ in o.roles:
                 if r_.membre != benef.id:
-                    assert d.e.exclusion(benef, par_id[r_.membre], None) in (None,)  # règles dures re-vérifiées
+                    raison = d.e.exclusion(benef, par_id[r_.membre], None)          # règles dures re-vérifiées
+                    if raison == "déjà en relation":                               # permis seulement comme SUITE, preuve à l'appui
+                        assert o.type == "SUIVI" and any(s.source == "relation" and s.membre == r_.membre for s in o.signaux)
+                    else:
+                        assert raison is None
 
 
 def test_ecartees_ne_nomment_personne_et_le_scan_n_ecrit_rien():
@@ -88,7 +92,9 @@ def test_scene_centrale_sophie_marche_allemand():
     r = md.construire()
     res = scanner(r, TAX)
     o = next(o for o in res["opportunites"] if o.beneficiaire == md.SOPHIE)
-    assert o.type == "LATENTE" and _membres(o) == {md.SOPHIE, md.ANNA, md.MARKUS}
+    assert o.type == "SUIVI" and _membres(o) == {md.SOPHIE, md.ANNA, md.MARKUS}
+    assert any(s.source == "relation" and s.membre == md.MARKUS for s in o.signaux)   # rencontrés à la Foire : une suite
+    assert o.risques                                                                  # ce qui peut échouer est dit
     assert o.evenement == md.SALON and o.manque and "conformité" in o.manque[0]
     tous = json.dumps([x.model_dump() for x in res["opportunites"]], ensure_ascii=False)
     assert "Stefan" not in tous and "Claudia" not in tous      # refuse les introductions ; profil de 2024

@@ -26,17 +26,24 @@ TAILLE = 150
 GRAINE = 2026
 
 
-def construire() -> Reseau:
+FOIRE = "Foire du Valais 2026 (fictive)"
+RECHERCHES_SOPHIE = [Offre(concept="traduction", texte="Traduire nos étiquettes en allemand"),
+                     Offre(concept=None, texte="Faire valider la conformité de nos étiquettes pour le marché allemand")]
+
+
+def construire(sophie_profilee: bool = True) -> Reseau:
+    """`sophie_profilee=False` : Sophie vient d'activer son compte — ni capacités, ni intérêts, invisible par défaut."""
     d = json.loads((DATA_DIR / "stage_reseau.json").read_text(encoding="utf-8"))
     scene = [Profil(**p) for p in d["profils"]]
     s = d["sophie"]
     sophie = Profil(
         id=SOPHIE, nom=s["nom"], fonction=s["fonction"], entreprise=s["entreprise"], commune=s["commune"],
         type="membre_club", secteurs=["boissons"], offre=[Offre(**o) for o in s["offre"]],
-        recherche=[Offre(concept="traduction", texte="Traduire nos étiquettes en allemand"),
-                   Offre(concept=None, texte="Faire valider la conformité de nos étiquettes pour le marché allemand")],
-        langues=s["langues"], zones_service=s["zones_service"], creneaux=s["creneaux"], accepte_introductions=True,
+        recherche=list(RECHERCHES_SOPHIE) if sophie_profilee else [],
+        langues=s["langues"], zones_service=s["zones_service"], creneaux=s["creneaux"], accepte_introductions=sophie_profilee,
         maj=d["debut"])
+    if not sophie_profilee:
+        sophie = sophie.model_copy(update={"offre": [], "secteurs": []})
     # une seconde traductrice : l'alternative si Anna décline — éligible, mais disponible seulement la semaine suivante
     lea = Profil(id=LEA, nom="Léa Imhof", fonction="Traductrice indépendante", entreprise="Imhof Übersetzungen (fictive)",
                  commune="Viège", type="membre_club", secteurs=["traduction"],
@@ -50,6 +57,8 @@ def construire() -> Reseau:
     for r in d["rencontres_passees"]:
         m.ajouter(Evt(type="RENCONTRE", le=date.fromisoformat(r["le"]), acteurs=sorted([r["a"], r["b"]]),
                       statut=Statut.SIMULE, donnees={"evenement": r["evenement"], "raisons": []}))
+    m.ajouter(Evt(type="RENCONTRE", le=AUJOURD_HUI - timedelta(days=31), acteurs=sorted([SOPHIE, MARKUS]),
+                  statut=Statut.SIMULE, donnees={"evenement": FOIRE, "raisons": []}))
     salon = Evenement(id=SALON, nom="Salon Bio de Munich (fictif)", le=AUJOURD_HUI + timedelta(days=12),
                       themes=("export_allemagne",), participants=tuple(sorted({SOPHIE, MARKUS, "s02", "s03"})))
     return Reseau(profils=profils, besoins=list(fond.besoins), evenements=[salon, *fond.evenements], memoire=m,

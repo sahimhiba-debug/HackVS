@@ -34,6 +34,7 @@ class Etat:
     relies: set[frozenset] = field(default_factory=set)
     declinees: set[frozenset] = field(default_factory=set)
     derniere_rencontre: dict[str, date] = field(default_factory=dict)
+    relation_info: dict[frozenset, tuple[date, str]] = field(default_factory=dict)   # dernière rencontre de la paire
     evenements_proches: list[Evenement] = field(default_factory=list)
     motifs: list[dict] = field(default_factory=list)
     mesures: dict[str, float] = field(default_factory=dict)
@@ -55,7 +56,8 @@ class Etat:
     def evenement_commun(self, a: str, b: str) -> Optional[Evenement]:
         return next((e for e in self.evenements_proches if a in e.participants and b in e.participants), None)
 
-    def exclusion(self, beneficiaire: Profil, candidat: Profil, besoin: Optional[Besoin] = None) -> Optional[str]:
+    def exclusion(self, beneficiaire: Profil, candidat: Profil, besoin: Optional[Besoin] = None,
+                  introduction: bool = True) -> Optional[str]:
         """Pourquoi `candidat` ne peut pas être proposé à `beneficiaire` (None : il peut l'être). Règles DURES."""
         if besoin is not None:
             r = filtres_durs(besoin, beneficiaire, candidat, self.tax)
@@ -79,7 +81,7 @@ class Etat:
         paire = frozenset((beneficiaire.id, candidat.id))
         if paire in self.declinees:
             return "introduction déjà déclinée"
-        if paire in self.relies:
+        if introduction and paire in self.relies:       # une suite à donner n'est pas une introduction
             return "déjà en relation"
         return None
 
@@ -118,6 +120,8 @@ def observer(reseau: Reseau, tax: Taxonomie) -> Etat:
             continue
         if ev.le >= limite:
             e.relies.add(paire)
+            if paire not in e.relation_info or e.relation_info[paire][0] < ev.le:
+                e.relation_info[paire] = (ev.le, str(ev.donnees.get("evenement") or ev.type.lower()))
         for x in ev.acteurs[:2]:
             if x not in e.derniere_rencontre or e.derniere_rencontre[x] < ev.le:
                 e.derniere_rencontre[x] = ev.le

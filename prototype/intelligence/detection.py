@@ -58,13 +58,13 @@ class Detecteur:
 
     # ------------------------------------------------------------------ fournisseurs éligibles d'une capacité
     def fournisseurs(self, beneficiaire: Profil, concept: str, besoin: Optional[Besoin] = None,
-                     texte: str = "") -> list[dict]:
+                     texte: str = "", introduction: bool = True) -> list[dict]:
         par_id = self.r.par_id()
         res = []
         for pid, extrait, nature in self.e.offreurs.get(concept, []):
             if pid == beneficiaire.id or pid in self.exclus:
                 continue
-            raison = self.e.exclusion(beneficiaire, par_id[pid], besoin)
+            raison = self.e.exclusion(beneficiaire, par_id[pid], besoin, introduction)
             if raison:
                 if raison not in RAISONS_SILENCIEUSES:
                     self.ecartees[raison] += 1
@@ -153,6 +153,8 @@ class Detecteur:
                 hote.mecanismes.append(f"inclut l'intérêt de {_nom(self.e, o.beneficiaire or '')}")
                 hote.demandes_servies = max(hote.demandes_servies, len(hote.roles) - 1)
                 del opps[k]
+        for o in opps.values():
+            o.risques = self._risques(o)
         # rang : ce que l'action débloque (demandes servies), puis la solidité, puis l'urgence, puis le coût en attention
         liste = sorted(opps.values(), key=lambda o: (-o.demandes_servies, ORDRE_CONFIANCE[o.confiance],
                                                      o.evenement is None, o.personnes_a_solliciter, o.id))
@@ -160,6 +162,28 @@ class Detecteur:
         return {"opportunites": liste, "ecartees": dict(sorted(self.ecartees.items())), "bloques": self.bloques,
                 "pouls": pouls(self.e, besoins), "mesures": mesures, "membres": len(self.r.profils),
                 "besoins": len(besoins), "date": self.e.aujourd_hui.isoformat()}
+
+    def _risques(self, o: Opportunite) -> list[str]:
+        """Pourquoi cette opportunité pourrait échouer — calculé, pas imaginé."""
+        par_id = self.r.par_id()
+        res = [f"capacité absente du Club : {m_}" for m_ in o.manque]
+        benef = par_id.get(o.beneficiaire or "")
+        dans = {r.membre for r in o.roles}
+        for r in o.roles:
+            if r.membre == o.beneficiaire or r.role in ("participant", "demandeur bloqué"):
+                continue
+            if self.e.dormant(r.membre):
+                res.append(f"{par_id[r.membre].nom} n'a eu aucune rencontre depuis 6 mois : réponse incertaine")
+            if benef and r.concept and not r.role.startswith("partenaire"):
+                alt = [x for x in self.fournisseurs(benef, r.concept, introduction=False) if x["id"] not in dans]
+                if not alt:
+                    res.append(f"aucune alternative si {par_id[r.membre].nom} refuse")
+        ev = next((e for e in self.r.evenements if e.id == o.evenement), None)
+        if ev and (ev.le - self.e.aujourd_hui).days <= 14:
+            res.append(f"fenêtre courte : {ev.nom} dans {(ev.le - self.e.aujourd_hui).days} jours")
+        if o.confiance == "faible":
+            res.append("une capacité n'est qu'affirmée dans une présentation, pas déclarée")
+        return res
 
     def _ajouter(self, opps: dict[str, Opportunite], o: Optional[Opportunite]) -> None:
         if o is None:
@@ -340,7 +364,7 @@ class Detecteur:
         couverts: list[tuple[str, str, dict, Profil]] = []       # (concept, extrait de l'intérêt, fournisseur, profil)
         manque: list[str] = []
         for r in interets:
-            f = self.fournisseurs(a, r.concept, texte=r.texte) if r.concept else []
+            f = self.fournisseurs(a, r.concept, texte=r.texte, introduction=False) if r.concept else []
             if not f:
                 manque.append(r.texte if not r.concept else tax.libelle(r.concept))
                 continue
@@ -358,7 +382,7 @@ class Detecteur:
         for c in sorted(offres_a):
             for bid, texte in self.e.recherches.get(c, []):
                 b = par_id.get(bid)
-                if b and bid != a.id and bid not in self.exclus and not self.e.exclusion(a, b):
+                if b and bid != a.id and bid not in self.exclus and not self.e.exclusion(a, b, introduction=False):
                     if (b, texte) not in reciproques:
                         reciproques.append((b, texte))
         contributeurs = list(dict.fromkeys(p.id for _, _, _, p in couverts))
@@ -387,7 +411,20 @@ class Detecteur:
         if fen and ev:
             signaux.append(Signal(source="evenement", extrait=fen[1], le=ev.le.isoformat()))
             raisonnement.append(f"Pourquoi maintenant : {fen[1]}.")
-        raisonnement.append("Aucun d'eux n'est déjà en relation avec " + a.nom + " ; aucune règle dure violée.")
+        ids_roles = [r_.membre for r_ in roles[1:]]
+        suivis = [x for x in ids_roles if frozenset((a.id, x)) in self.e.relies]
+        for x in suivis:
+            quand, ou = self.e.relation_info[frozenset((a.id, x))]
+            signaux.append(Signal(source="relation", membre=x, extrait=f"rencontre : {ou}", le=quand.isoformat()))
+            raisonnement.append(f"{a.nom} a déjà rencontré {par_id[x].nom} ({ou}, le {quand.isoformat()}) : "
+                                "c'est une suite à donner, pas une introduction.")
+            for r_ in roles:
+                if r_.membre == x:
+                    r_.role = r_.role.split(" — ")[0] + " — suite d'une rencontre"
+        nouveaux = [x for x in ids_roles if x not in suivis]
+        raisonnement.append(("Aucune autre personne n'est déjà en relation avec " + a.nom if nouveaux and suivis else
+                             "Aucun d'eux n'est déjà en relation avec " + a.nom if nouveaux else "Personne d'autre n'est sollicité")
+                            + " ; aucune règle dure violée.")
         if manque:
             raisonnement.append("Reste bloquant : " + " ; ".join(manque) + " — personne d'éligible dans le Club.")
         declares = all(x["nature"] == "declare" for _, _, x, _ in couverts)
@@ -400,8 +437,9 @@ class Detecteur:
         ids_partenaires = [r_.membre for r_ in roles[1:]]
         capacites = sorted({c for c, _, _, _ in couverts} | ({next(iter(sorted(offres_a)))} if recip_utiles else set()))
         return Opportunite(
-            id="", type="LATENTE", titre=f"{sujet} : {a.nom}" + (f" — {ev.nom}" if ev else "") ,
-            declencheur="intérêts déclarés dans des profils, sans demande publiée",
+            id="", type="SUIVI" if suivis else "LATENTE", titre=f"{sujet} : {a.nom}" + (f" — {ev.nom}" if ev else ""),
+            declencheur=("une rencontre récente prend un sens nouveau" if suivis else
+                         "intérêts déclarés dans des profils, sans demande publiée"),
             pourquoi_maintenant=fen[1] if fen else "intérêt réciproque déclaré",
             signaux=signaux, roles=roles, capacites=capacites, manque=manque, raisonnement=raisonnement,
             contraintes=[Contrainte(libelle="accord de chacun avant toute présentation", statut="a_verifier")]

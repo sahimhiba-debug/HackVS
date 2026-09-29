@@ -18,7 +18,7 @@ from pydantic import BaseModel
 from app.models import Besoin, Profil
 from plateforme.memoire import Memoire
 
-TypeOpportunite = Literal["LATENTE", "COMPOSITION", "COMPLEMENTARITE", "CONVERGENCE", "CAPACITE_DORMANTE", "LACUNE",
+TypeOpportunite = Literal["LATENTE", "SUIVI", "COMPOSITION", "COMPLEMENTARITE", "CONVERGENCE", "CAPACITE_DORMANTE", "LACUNE",
                           "MEMOIRE"]
 
 
@@ -91,6 +91,7 @@ class Opportunite(BaseModel):
     contraintes: list[Contrainte] = []
     action: str
     raisonnement: list[str] = []       # « pourquoi » numéroté, construit UNIQUEMENT à partir des signaux et des règles
+    risques: list[str] = []            # pourquoi cela pourrait échouer (dit avant d'agir)
     consentements: list[str]           # membres dont l'accord est requis AVANT toute exposition
     confiance: Literal["elevee", "moyenne", "faible"]
     confiance_raisons: list[str]
