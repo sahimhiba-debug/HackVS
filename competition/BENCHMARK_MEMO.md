@@ -51,6 +51,10 @@ dit et non inventé, cohérence explication = décision → tous PASS.
 | G Sérendipité | 92 % des paires par similarité sans aide prouvée | hypothèse « la similarité enferme dans le secteur » RÉFUTÉE (86 % inter-secteurs) |
 | J Cohésion robuste | groupe robuste 28,1 contre 6,7 ; ponts fragiles −4,4 contre +15,4 | plus grand groupe 34,6 contre 60,9 (la cohésion simple gagne sur son critère) |
 | K Prévention robuste | — | PERD (2,30 contre 2,75) : DELETE |
+| L Invitation ciblée (flot exact) | petite soirée : gagne 7, égalité 13, perd 0 (9,30 contre 8,65) | grande soirée : égalité 20/20 avec la règle simple |
+| M Actions « maintenant » | 6 % des relations endormies ont une raison prouvée (silence pour 94 %) | « raison » = aide prouvée seulement |
+| N Boucle sur 3 mois | bilan = acceptations EXACTEMENT (après correction d'une double attribution) | politiques de saison : non concluant |
+| O Stabilité | INCLUSION 0,96 ; hystérésis 0,71 → 0,76 à coût borné | ÉQUILIBRE reste le moins stable (instabilité surtout structurelle) |
 
 ## Règles tenues
 Mêmes candidats et même budget pour toutes les méthodes ; défaites publiées ; hypothèse « toutes les actions

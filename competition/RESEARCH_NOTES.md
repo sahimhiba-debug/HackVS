@@ -41,6 +41,14 @@ fondées, optimiseur de soirée, confidentialité par inférence.
 6. *Consentement à deux niveaux* : trois violations trouvées en red team (dont une antérieure au gel), corrigées ;
    invariant de classe testé sur des réseaux générés avec retraits et refus aléatoires.
 
+7. *Chaque changement → une action prouvée, ou le silence* (EXP-M) : 94 % des relations endormies n'ont aucune raison
+   prouvée d'être relancées — un CRM les relancerait toutes.
+8. *Bilan exact* (EXP-N) : la boucle jouée sur trois mois retrouve exactement les acceptations (double attribution
+   trouvée et corrigée) ; *reproductibilité* : tous les benchmarks rejoués en CI, échec si un résultat publié diverge.
+
+**GARDÉS AVEC UNE AFFIRMATION MODESTE.** Invitation ciblée (EXP-L : utile seulement quand les hôtes sont rares) ;
+hystérésis (EXP-O : +0,05 de stabilité).
+
 **REJETS (mesurés).** Sérendipité par diversité sectorielle (EXP-G : hypothèse réfutée) ; robustesse par comptage comme
 axe (colinéaire) ; prévention robuste (EXP-K : perd contre la baseline) ; ML (aucune donnée).
 
