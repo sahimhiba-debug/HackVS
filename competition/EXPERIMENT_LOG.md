@@ -100,3 +100,18 @@ Résultat · Cas d'échec · Décision · Preuve. Les hypothèses et baselines s
   événement, pas de relance (le principe « se taire sans raison » tient).
 - **Cas d'échec / limites.** Projection pessimiste (aucune interaction spontanée) ; la règle des 90 jours n'est pas mesurée.
 - **Décision.** KEEP. **Preuve.** `eval/resultats_benchmark_extinction.md`, `tests/test_extinction.py`.
+
+## EXP-G — Sérendipité structurelle : similarité contre complémentarité prouvée
+- **Hypothèse.** Recommander par SIMILARITÉ de profil (ce que font la plupart des outils de networking) apparie surtout
+  des membres du même secteur ; notre moteur, fondé sur une AIDE PROUVÉE (l'offre de l'un couvre la recherche de
+  l'autre), apparie des secteurs différents — sans aucun objectif de diversité ajouté.
+- **Baseline.** Top-1 par similarité TF-IDF des textes de profil (et top-3).
+- **Mesure.** Part des paires recommandées dont les familles de secteur diffèrent ; part des paires où une aide est prouvée.
+- **Résultat (exécuté, 33 membres, top 3).** SIMILARITÉ : 72 paires, **86 % entre secteurs différents**, 8 % avec aide
+  prouvée, quelqu'un pour 33/33 membres. COMPLÉMENTARITÉ : 25 paires, 100 % entre secteurs différents, 100 % avec aide
+  prouvée, 17/33 membres (abstention pour 16). 5 paires communes.
+- **Hypothèse RÉFUTÉE.** La similarité n'enferme PAS dans le même secteur sur nos profils : l'argument « les autres
+  vous présentent vos semblables » est faux ici et ne doit pas être utilisé. La différence réelle : **92 % des
+  recommandations par similarité n'ont aucune aide prouvée**.
+- **Décision.** DELETE l'idée « sérendipité par diversité sectorielle » (aucun mécanisme à ajouter) ; KEEP le fait mesuré
+  (preuve vs similarité). Limite : 33 profils fictifs, écrits par nous. **Preuve.** `eval/resultats_serendipite.md`.
