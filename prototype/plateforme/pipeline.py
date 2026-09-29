@@ -149,10 +149,20 @@ def delta(parent: ExecutionDecision, enfant: ExecutionDecision) -> dict:
             "hypotheses": ["contre-factuel sur le MODÈLE formel ; ce n'est pas une prédiction du comportement des membres"]}
 
 
+def _parent_avec_spec(journal: Journal, run_id: str) -> ExecutionDecision:
+    """Une branche ou un stress n'ont de sens que sur une exécution qui a compilé une spécification (pas une
+    escalade ni une abstention de compilation) : erreur explicite plutôt qu'un plantage."""
+    from .specification import ErreurSpec
+    parent = journal.lire(run_id)
+    if parent.spec is None:
+        raise ErreurSpec("cette exécution n'a pas de spécification (escalade ou abstention) : rien à brancher")
+    return parent
+
+
 def contrefactuel(ad: Adaptateur, journal: Journal, run_id: str, modif: dict) -> tuple[ExecutionDecision, dict]:
     """« Et si… ? » : même instantané, spécification modifiée (contraintes levées/ajoutées, poids, tours).
     La politique s'applique : une contrainte obligatoire ne peut pas être levée."""
-    parent = journal.lire(run_id)
+    parent = _parent_avec_spec(journal, run_id)
     inst = journal.instantane(parent.instantane_empreinte)
     s = SpecDecision(**parent.spec)
     retirer, ajouter = set(modif.get("retirer_contraintes", [])), modif.get("ajouter_contraintes", [])
@@ -170,7 +180,7 @@ def contrefactuel(ad: Adaptateur, journal: Journal, run_id: str, modif: dict) ->
 def stress(ad: Adaptateur, journal: Journal, run_id: str, n: int, regle: str = "articulation", graine: int = 0) -> tuple[ExecutionDecision, dict]:
     """Retire N participants (règle structurelle ou tirage reproductible), mesure la dégradation, puis RÉPARE :
     le plan est ré-optimisé sur le réseau restant, et on compte les participants orphelins de nouveau servis."""
-    parent = journal.lire(run_id)
+    parent = _parent_avec_spec(journal, run_id)
     inst = journal.instantane(parent.instantane_empreinte)
     s = SpecDecision(**parent.spec)
     pb, _, _ = ad.probleme(inst, s)

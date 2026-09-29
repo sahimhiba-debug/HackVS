@@ -1,0 +1,22 @@
+# Audit technique — cartographie (mémo de travail, mis à jour à chaque cycle)
+
+Règle : chaque ligne cite une preuve exécutable. « Partiel » et « absent » sont des états normaux, pas des fautes à cacher.
+Mesures : 157 tests (pytest), lint vert, 20/20 scénarios de décision, registre des preuves vérifié, CI verte (runs 21–25).
+
+| Composant | Statut | Preuve | Tests | Risques restants | Prochaine action |
+|---|---|---|---|---|---|
+| Analyse du besoin (règles, vocabulaire fermé) | Solide | `app/parser_rules.py`, jeux réservés | `test_parcours.py` (analyse, négation, ambiguïté, critère inventé refusé) | Vocabulaire fermé : un besoin hors catalogue passe en « texte libre », plus prudent | — |
+| LLM (Claude / Apertus) | Option, jamais une dépendance | `app/parser_llm.py`, `plateforme/modeles.py` (aucun modèle VÉRIFIÉ contre une API réelle) | panne, refus, JSON invalide, une seule relance avec l'erreur, repli visible, ne reçoit jamais les profils (`test_parcours.py`) | Non testé contre une vraie API (aucune clé ici) | Déclaré dans 16_LIMITATIONS ; rien à ajouter sans clé |
+| Recherche / matching | Solide | `app/matching.py` (filtres durs partagés Bourse / soirée / cercles / relances) | symétrie Bourse ⟺ correspondances, explication = décision (mutation), même organisation normalisée | TF-IDF reconstruit à chaque appel : 0,9 s à 5000 membres | Index TF-IDF mis en cache si > 1000 membres (DEFER) |
+| Confidentialité par inférence | Solide (cycle 1) | k-anonymat K=3, réponse uniforme, vue membre = SES relations | `test_confidentialite_reseau.py`, `test_scene.py` | Identité de démonstration par en-tête (pas d'authentification réelle : le mode réel refuse, testé) | Hors périmètre avant authentification réelle |
+| Mémoire temporelle (journal) | Solide | `plateforme/memoire.py` append-only, idempotent, cache incrémental exact | cache = relecture face à un 2e écrivain ; événements figés | Décroissance à 30 jours et seuil de 90 jours = HYPOTHÈSES, non mesurées | Paramètres exposés, jamais présentés comme mesurés |
+| État de relation / historique ≠ actuel | Solide (cycle 2) | `reseau._etat` (règle unique), `graphe_actuel`, `etats_par_paire` | propriété sur 100 historiques générés ; refus ancien vs récent | — | — |
+| Relances (« pourquoi reprendre contact ») | Solide | `cycle.relances` : raison NOUVELLE et prouvée, sinon silence compté | frontière 9/10 jours, présentation proposée à l'intermédiaire, lien ancien exclu | — | — |
+| Optimiseur (MILP HiGHS) | Solide | `plateforme/optimisation.py`, frontière de Pareto, sensibilité | 20 scénarios, abstention sur problème vide | Poids par défaut = choix de conception | — |
+| « Valide mais absurde » | Renforcé (cycle 4) | refus = contrainte NON levable (problème + validateur + gardien) ; collègues exclus | `test_humain.py` | Micro-cercle : deux collègues peuvent coexister s'ils aident chacun un tiers | Évaluer (IDEA_BACKLOG I-07) |
+| Moteur de décision (spéc, certificat, rejeu, branche, stress) | Solide | `plateforme/pipeline.py`, `certificat.py` | rejeu identique, branche sans spéc refusée proprement | — | — |
+| API / sécurité | Renforcé (cycle 5) | entrées bornées partout ; test d'introspection | `test_securite_api.py` (tiers × transitions, double soumission, erreurs sans trace) | Plan de soirée et programme .ics lisibles sans rôle en démo (mode réel : 501) | Rôle animateur si déploiement réel |
+| Performance | Mesurée (cycle 3) | `eval/resultats_perf_echelle.md` (50 → 5000, données GÉNÉRÉES) | nombre de lectures mémoire constant | relances 5,3 s à 5000 (tâche de fond, acceptable) ; SQLite mono-processus | — |
+| Scène de démonstration | Solide | `app/stage.py` monde isolé, même moteur | rejeu 3×, précédent = séquentiel, aucun champ privé | Vidéo antérieure aux cycles 1–5 (VIDEO_MEMO) | Réenregistrer au gel |
+| Modèle de données | Partiel | `Profil.entreprise` = chaîne ; types membre / exposant / visiteur | clé d'organisation normalisée | Pas d'entité Organisation, ni de cartes non nominatives, ni de délégué | IDEA_BACKLOG I-05 (DEFER : aucune donnée réelle du Club pour le calibrer) |
+| Benchmark réseau | Honnête | `eval/benchmark_reseau.py` (SYNTHETIC, mêmes candidats) | équité testée | Vérité latente générée par nous (biais possible de conception) | BENCHMARK_MEMO |

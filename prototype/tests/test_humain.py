@@ -108,3 +108,18 @@ def test_paires_declinees_de_la_memoire():
     assert reseau.paires_declinees(m, j) == [("a", "b")]
     m.ajouter(Evt(type="INTRO_ACCEPTEE", le=date(2026, 2, 1), acteurs=["a", "b"], statut=Statut.OBSERVE, donnees={"relation_id": "r2"}))
     assert reseau.paires_declinees(m, j) == []
+
+
+def test_branche_et_stress_sur_une_execution_sans_specification_refuses_proprement():
+    from adaptateurs.club.adaptateur import AdaptateurClub
+    from plateforme import pipeline as pl
+    from plateforme.execution import Journal
+    from plateforme.specification import ErreurSpec
+    j = Journal()
+    ad = AdaptateurClub(lambda: (P, [], [], "demo"), TAX)
+    r = pl.executer(ad, "autoriser les paires, et puis quoi", j, sensibilite=False)
+    assert r.spec is None
+    with pytest.raises(ErreurSpec):
+        pl.contrefactuel(ad, j, r.run_id, {"retirer_contraintes": ["langue_commune"]})
+    with pytest.raises(ErreurSpec):
+        pl.stress(ad, j, r.run_id, 1)

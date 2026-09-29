@@ -1,0 +1,16 @@
+# Idées — protocole IDÉE / PROBLÈME / DIFFÉRENCIATION / MÉCANISME / PREUVE / COÛT / RISQUE / VERDICT
+
+Statuts : EXPLORE · PROTOTYPE · BUILD · TEST · KEEP · DEFER · REJECT. Une idée ne passe KEEP qu'avec une preuve exécutable.
+
+| ID | Idée | Problème | Différenciation | Complexité | Preuve | Statut |
+|---|---|---|---|---|---|---|
+| I-01 | **Moteur d'intervention minimale** : parmi toutes les actions possibles (introduction prouvée, présentation par un intermédiaire ACTUEL, relance d'un lien dormant avec raison nouvelle), choisir les k actions dont l'effet structurel marginal sur le réseau ACTUEL est maximal — ou ne rien faire | Le Club a une attention limitée ; « recommander à tout le monde » sature | Pas une liste de contacts : un plan d'actions minimal, chacune avec preuve, effet simulé et alternative « ne rien faire » | Moyenne (réutilise graphe_actuel, simuler, aides prouvées) | À construire : benchmark contre 3 baselines à budget égal | PROTOTYPE |
+| I-02 | Indicateur d'activation du réseau | Mesurer « le réseau vit » sans score opaque | Indicateurs FACTUELS seulement : part des membres avec ≥ 1 relation actuelle, groupes actuels, isolés actuels, liens dormants ravivables | Faible | Définissable et testable ; un score composite pondéré serait arbitraire | BUILD (factuel) ; score composite REJECT |
+| I-03 | Découverte de ponts structurels | Deux groupes qui ne se parlent plus | Ponts calculés sur le graphe ACTUEL, pas historique | Faible | `simuler` distingue déjà pont / premier lien | Intégré dans I-01 |
+| I-04 | Budget d'attention par membre | Un membre très demandé reçoit trop de sollicitations | Plafond de sollicitations par période ; au-delà, silence | Faible | À tester dans I-01 (saturation) | PROTOTYPE avec I-01 |
+| I-05 | Entité Organisation, cartes non nominatives, délégués | Le Club vend une adhésion d'entreprise avec 2 cartes supplémentaires | Modèle fidèle | Élevée (migration des données) | Aucune donnée réelle du Club pour valider le modèle ; clé d'organisation normalisée déjà en place | DEFER |
+| I-06 | Score de « valeur » d'un membre | — | — | — | Contraire au brief (pas de notation sociale) | REJECT |
+| I-07 | Micro-cercle sans deux collègues | Un cercle de 5 avec 2 personnes de la même entreprise | Diversité réelle | Faible | Non observé sur les données de scène | EXPLORE |
+| I-08 | Index TF-IDF persistant | Recherche 0,9 s à 5000 membres | Performance | Faible | Mesuré (`resultats_perf_echelle.md`) ; inutile à 160 membres | DEFER |
+| I-09 | Agents LLM multiples (planificateur, critique…) | — | Aucun problème identifié qu'un agent résoudrait mieux que le code déterministe testé | — | Les tâches de décision et de politique restent déterministes | REJECT |
+| I-10 | Collision d'événements (deux soirées le même jour) | Seul scénario adversarial non couvert | — | Faible | ADVERSARIAL_MATRIX | EXPLORE |
