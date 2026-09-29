@@ -10,7 +10,7 @@
 - Chaque explication affichée est recalculée indépendamment et vérifiée contre la décision (vérifié par test de mutation).
 - La réciprocité affichée est prouvée : le même moteur en sens inverse, avec l'offre citée mot pour mot.
 - La démonstration est rejouable à l'identique (3 rejeux identiques testés) et la scène complète se calcule en moins d'une seconde.
-- Avant d'agir, on simule : sur la scène, le micro-cercle proposé réunirait les 2 groupes du réseau en 1.
+- Avant d'agir, on simule : sur la scène, avec une seule introduction possible, « réunir les îlots » porte le plus grand groupe de 8 à 15 membres mais laisse le groupe robuste à 4 ; « consolider » le porte à 8 sans rien réunir. Aucun plan ne gagne sur tout.
 - Sur notre benchmark synthétique, l'optimiseur crée plus de ponts entre communautés que les 5 baselines (96 % contre 86 % au mieux), à budget et candidats égaux. *(benchmark SYNTHÉTIQUE)*
 - Sur ce même benchmark, l'optimiseur sert plus de membres (37,4 contre 35,0 au mieux) mais PERD sur la réciprocité face à la baseline qui ne vise qu'elle (16,3 % contre 17,8 %). *(benchmark SYNTHÉTIQUE)*
 - Le front de Pareto n'est pas dégénéré sur le benchmark à conflits (3 à 10 points selon le réseau). *(benchmark SYNTHÉTIQUE)*
@@ -28,4 +28,4 @@ Avec précaution (hypothèse ou non vérifié) :
 - [UNVERIFIED] L'adhésion coûte CHF 500 par an et le réseau compte plus de 160 représentants d'entreprises. — NE PAS citer comme un fait vérifié
 - [INFERRED] Les rencontres oubliées sont une perte de valeur pour les membres du Club. — formuler comme une question, pas comme un chiffre
 
-Chiffres autorisés dans le pitch : 0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 16, 17, 20, 24, 38, 50, 60, 86, 90, 96, 100, 144, 16,3, 17,8, 2026, 35,0, 37,4
+Chiffres autorisés dans le pitch : 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 16, 17, 20, 24, 38, 50, 60, 86, 90, 96, 100, 144, 16,3, 17,8, 2026, 35,0, 37,4
