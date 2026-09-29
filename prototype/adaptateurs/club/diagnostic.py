@@ -48,7 +48,9 @@ def diagnostic(m: Memoire, profils: list[Profil], besoins_publies: list, tax, ma
     ouverts = [p for p in profils if p.type == "membre_club" and p.accepte_introductions and p.disponible]
     aides_brutes = calculer_aides(ouverts, besoins_publies, tax)       # UNE fois (mesure : appelé deux fois auparavant)
     cands = candidates(profils, besoins_publies, tax, g_act, etats_par_paire(m, maintenant), aides_brutes)
-    plans = pareto.frontiere(g_act, membres, cands, k)
+    decisions = m.evenements("DECISION_ORGANISATION", jusqu_au=maintenant)
+    precedent = decisions[-1].donnees["paires"] if decisions else None      # hystérésis (EXP-O) : continuité avec l'humain
+    plans = pareto.frontiere(g_act, membres, cands, k, precedent=precedent)
     ids_ouverts = {p.id for p in ouverts}
     actifs = sorted(x for x in ids_ouverts if g_act.degree(x) > 0)
     en_sommeil = sorted(x for x in ids_ouverts if g_act.degree(x) == 0)

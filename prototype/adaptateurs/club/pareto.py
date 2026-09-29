@@ -127,8 +127,23 @@ def simplexe(pas: int = 4) -> list[tuple[float, ...]]:
     return [tuple(x / pas for x in w) for w in itertools.product(range(pas + 1), repeat=len(AXES)) if sum(w) == pas]
 
 
+def _jaccard(a: list, b: list) -> float:
+    x, y = {tuple(p) for p in a}, {tuple(p) for p in b}
+    return len(x & y) / len(x | y) if x | y else 1.0
+
+
+def _choisir_stable(indices: list[int], front: list[dict], precedent: list | None, cle) -> int:
+    """HYSTÉRÉSIS (EXP-O) : parmi des plans à égalité sur le critère nommé (ou à `tolerance` près du meilleur regret),
+    préférer celui qui ressemble le plus à la DERNIÈRE décision de l'organisation ; sinon départage déterministe.
+    La qualité perdue est bornée par construction (égalité ou tolérance)."""
+    if precedent:
+        return max(indices, key=lambda i: (_jaccard(front[i]["paires"], precedent), tuple(-v for v in cle(i)[:1]), -i))
+    return min(indices, key=cle)
+
+
 def frontiere(g0: nx.Graph, membres: list[str], cands: list[Candidate], k: int,
-              plafond: int = 1, pas: int = 4, plans_supplementaires: list[list[Candidate]] | None = None) -> dict:
+              plafond: int = 1, pas: int = 4, plans_supplementaires: list[list[Candidate]] | None = None,
+              precedent: list | None = None, tolerance: float = 0.1) -> dict:
     """Front des plans NON DOMINÉS parmi tous les plans générés (pondérations + plans heuristiques fournis). C'est une
     APPROXIMATION du vrai front (la recherche exhaustive est combinatoire) : on le dit dans la sortie."""
     if not cands:   # rien de prouvé à proposer : pas de « plan vide idéal » baptisé de quatre noms (défaut trouvé)
@@ -160,8 +175,12 @@ def frontiere(g0: nx.Graph, membres: list[str], cands: list[Candidate], k: int,
     noms: dict[str, int] = {}
     if front:
         for a in AXES:
-            noms[a.upper()] = max(range(len(front)), key=lambda i: (front[i]["objectifs"][a], -regret(front[i])))
-        noms["EQUILIBRE"] = min(range(len(front)), key=lambda i: (regret(front[i]), i))
+            meilleur = max(p["objectifs"][a] for p in front)
+            egaux = [i for i in range(len(front)) if front[i]["objectifs"][a] == meilleur]
+            noms[a.upper()] = _choisir_stable(egaux, front, precedent, lambda i: (regret(front[i]), i))
+        r_min = min(regret(p) for p in front)
+        proches = [i for i in range(len(front)) if regret(front[i]) <= r_min + tolerance]
+        noms["EQUILIBRE"] = _choisir_stable(proches, front, precedent, lambda i: (regret(front[i]), i))
     fusionnes: dict[int, list[str]] = {}
     for nom, i in noms.items():
         fusionnes.setdefault(i, []).append(nom)

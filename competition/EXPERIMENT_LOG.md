@@ -234,3 +234,17 @@ Résultat · Cas d'échec · Décision · Preuve. Les hypothèses et baselines s
   sans interaction spontanée ni soirée, 5 actions par mois ne maintiennent pas un réseau de 120 membres : les
   interventions ciblées sont MARGINALES face aux événements. Comparer des politiques exigerait de simuler aussi les
   soirées (hypothèses empilées) : non fait. Aucune recommandation de politique n'est tirée de cette mesure.
+
+## EXP-O — Stabilité des recommandations (une rencontre de plus ne doit pas tout changer)
+- **Hypothèse.** Une perturbation minimale du réseau (UNE relation actuelle ajoutée, hors des actions proposées) laisse
+  les plans nommés du front largement inchangés (recouvrement de Jaccard élevé) ; une instabilité révélerait un
+  départage arbitraire.
+- **Baseline.** Deux plans tirés au hasard parmi les mêmes candidates (recouvrement attendu par hasard).
+- **Résultat (10 réseaux × 6 perturbations d'UNE relation).** Recouvrement moyen avec le plan d'avant : INCLUSION **0,96**
+  (identique 27/30) ; COHÉSION 0,80 ; RÉCIPROCITÉ 0,76 ; ROBUSTE 0,73 ; ÉQUILIBRE **0,70** (plan changé de plus de
+  moitié dans 11/30) ; hasard 0,00. 54/60 perturbations sont STRUCTURELLES (réseau clairsemé) : l'essentiel de
+  l'instabilité est légitime ; RÉCIPROCITÉ et ÉQUILIBRE changent aussi sans changement de structure (départage arbitraire).
+- **Remède testé : hystérésis** (parmi les plans à égalité ou à ε de regret près, préférer le plus proche de la DERNIÈRE
+  décision). Courbe : ε = 0 → 0,71 ; **ε = 0,1 → 0,76** (regret perdu moyen 0,006, max 0,1) ; ε = 0,3 → 0,77 (0,026).
+- **Décision.** KEEP modeste (ε = 0,1, seulement si une décision précédente existe) ; gain faible, dit comme tel.
+  **Preuve.** `tests/test_observatoire.py::test_hysteresis…`.

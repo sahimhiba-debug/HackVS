@@ -152,3 +152,15 @@ def test_gain_robuste_rapide_egal_force_brute():
             h.add_edge(a, b)
             attendu = max(0, pa.arbre_des_ponts(h)[3] - pa.arbre_des_ponts(g)[3])
             assert pa.gain_robuste(a, b, pa.arbre_des_ponts(g)) == attendu, (s, a, b)
+
+
+def test_hysteresis_prefere_le_plan_proche_de_la_derniere_decision_parmi_les_quasi_egaux():
+    g = nx.Graph([("a1", "a2"), ("b1", "b2")])
+    membres = ["a1", "a2", "b1", "b2", "i1", "i2"]
+    c1 = Candidate("INTRODUCTION", "a1", "i1", 1, False)
+    c2 = Candidate("INTRODUCTION", "b1", "i2", 1, False)               # symétrique de c1 : mêmes objectifs
+    sans = pa.frontiere(g, membres, [c1, c2], k=1)
+    choix_sans = next(p["paires"] for p in sans["plans_nommes"] if "EQUILIBRE" in p["noms"])
+    autre = [["b1", "i2"]] if choix_sans == [["a1", "i1"]] else [["a1", "i1"]]
+    avec = pa.frontiere(g, membres, [c1, c2], k=1, precedent=autre)
+    assert next(p["paires"] for p in avec["plans_nommes"] if "EQUILIBRE" in p["noms"]) == autre
