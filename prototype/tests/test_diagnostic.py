@@ -92,3 +92,20 @@ def test_chaque_action_proposee_a_une_preuve_verifiable_mot_pour_mot():
                                                                nature=pr["nature"])), pr
                 verifiees += 1
     assert verifiees > 0
+
+
+def test_diagnostic_deterministe_et_double_soumission_d_une_decision_sans_doublon():
+    import json as js
+
+    from adaptateurs.club import boucle
+    from adaptateurs.club import cycle as cy
+    from eval.perf_echelle import generer
+    p, m, t = generer(100, 5)
+    b = cy.besoins_publies(m, t)
+    d1, d2 = dg.diagnostic(m, p, b, TAX, t), dg.diagnostic(m, p, b, TAX, t)
+    assert js.dumps(d1, sort_keys=True, default=str) == js.dumps(d2, sort_keys=True, default=str)
+    plan = d1["agir"]["front"][0]
+    membres = sorted(x.id for x in p if x.type == "membre_club")
+    e1 = boucle.enregistrer(m, t, plan, "org", membres)
+    e2 = boucle.enregistrer(m, t, plan, "org", membres)            # double clic : même fait, idempotent
+    assert e1.id == e2.id and len(m.evenements("DECISION_ORGANISATION")) == 1
