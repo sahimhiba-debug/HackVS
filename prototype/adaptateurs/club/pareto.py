@@ -24,7 +24,7 @@ from .interventions import Candidate, _composantes
 AXES = ("inclusion", "cohesion", "reciprocite", "cohesion_robuste")
 
 
-def arbre_des_ponts(g: nx.Graph) -> tuple[dict[str, int], dict[int, int], nx.Graph, int]:
+def arbre_des_ponts(g: nx.Graph) -> tuple:
     """Groupes ROBUSTES (2-arête-connexes : restent reliés si N'IMPORTE QUELLE relation s'éteint) et arbre des ponts.
     Ajouter une relation u–v fusionne tous les groupes robustes du chemin u→v dans cet arbre (théorie des graphes :
     l'arête crée un cycle qui supprime ces ponts) ; entre deux composantes distinctes, elle est elle-même un pont."""
@@ -41,7 +41,10 @@ def arbre_des_ponts(g: nx.Graph) -> tuple[dict[str, int], dict[int, int], nx.Gra
     arbre.add_edges_from((ident[a], ident[b]) for a, b in ponts)
     # enracinement unique de chaque arbre : parent, profondeur, somme des tailles depuis la racine (requêtes de chemin
     # en O(profondeur) au lieu d'un plus court chemin par candidate — mesure : 80 % du temps du diagnostic)
-    racine, parent, prof, pref = {}, {}, {}, {}
+    racine: dict[int, int] = {}
+    parent: dict[int, int | None] = {}
+    prof: dict[int, int] = {}
+    pref: dict[int, int] = {}
     for r in sorted(taille):
         if r in racine:
             continue
@@ -91,14 +94,18 @@ def glouton(g0: nx.Graph, cands: list[Candidate], k: int, poids: tuple[float, ..
             plafond: int = 1, cache: dict | None = None) -> list[Candidate]:
     """`cache` : gains par ÉTAT (ensemble des actions déjà choisies), partagé entre les pondérations d'un même front.
     Les gains ne dépendent que du graphe courant, jamais des poids : résultat identique, calcul fait une fois par état."""
-    g, n, choix, restantes = g0.copy(), {}, [], list(cands)
+    g, restantes = g0.copy(), list(cands)
+    n: dict[str, int] = {}
+    choix: list[Candidate] = []
     cache = {} if cache is None else cache
     while len(choix) < k:
         etat = frozenset((c.a, c.b) for c in choix)
         if etat not in cache:
             possibles = [c for c in restantes if n.get(c.a, 0) < plafond and n.get(c.b, 0) < plafond]
-            comp, ponts = (_composantes(g), arbre_des_ponts(g)) if possibles else (None, None)
-            gains = {id(c): _gains(g, c, comp, ponts) for c in possibles}
+            gains = {}
+            if possibles:
+                comp, ponts = _composantes(g), arbre_des_ponts(g)
+                gains = {id(c): _gains(g, c, comp, ponts) for c in possibles}
             maxi = [max(gains[id(c)][i] for c in possibles) or 1.0 for i in range(len(AXES))] if possibles else []
             cache[etat] = (possibles, gains, maxi)
         possibles, gains, maxi = cache[etat]
@@ -160,7 +167,7 @@ def frontiere(g0: nx.Graph, membres: list[str], cands: list[Candidate], k: int,
     g0.add_nodes_from(membres)
     vus: dict[tuple, dict] = {}
     partage: dict = {}                               # gains par état, communs à toutes les pondérations
-    generes = [(w, glouton(g0, cands, k, w, plafond, partage)) for w in simplexe(pas)]
+    generes: list[tuple[object, list[Candidate]]] = [(w, glouton(g0, cands, k, w, plafond, partage)) for w in simplexe(pas)]
     generes += [("heuristique", p) for p in plans_supplementaires or []]
     for _origine, plan in generes:
         cle_plan = tuple(sorted((c.a, c.b) for c in plan))

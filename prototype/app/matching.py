@@ -224,6 +224,7 @@ def rechercher(
                         message="Précisez la compétence recherchée : aucune n'a été reconnue ou choisie.",
                         duree_ms=round((time.perf_counter() - t0) * 1000, 2))
     principale = next((c for c in expertises if c.obligatoire), expertises[0]) if expertises else libre
+    assert principale is not None   # garanti par le retour anticipé ci-dessus
     tfidf = _Tfidf({p.id: texte_profil(p) for p in profils})
 
     suggestions: list[Suggestion] = []
@@ -265,6 +266,7 @@ def rechercher(
             if pr_princ.nature == "textuel":
                 a_verifier.append("Compétence hors catalogue : correspondance par mots, à confirmer avec la personne")
         else:
+            assert pr_parent is not None           # « pas pertinent » a été écarté plus haut
             preuves.append(pr_parent[0])
             score += 0.5 / pr_parent[1]
         toutes_declarees = pr_princ is not None and pr_princ.nature == "declare"

@@ -31,7 +31,7 @@ vidéo de secours [`competition/video/demo.webm`](competition/video/demo.webm) �
 
 **Simulé / fictif** : tous les profils, rencontres et besoins ; toutes les projections du réseau (étiquetées
 SIMULATION). **Non vérifié** : Claude et Apertus contre leurs API réelles ; utilité auprès de vrais membres. Voir
-[16_LIMITATIONS](competition/16_LIMITATIONS.md) et [FAILURES](competition/FAILURES.md) (47 défauts trouvés en attaquant notre propre système).
+[16_LIMITATIONS](competition/16_LIMITATIONS.md) et [FAILURES](competition/FAILURES.md) (48 défauts trouvés en attaquant notre propre système).
 
 ## Lancer
 ```bash

@@ -147,7 +147,7 @@ class Magasin:
 
     # ------------------------------------------------------------ bas niveau
     def _ecrire(self, table: str, obj: BaseModel) -> None:
-        self._db.execute(f"INSERT OR REPLACE INTO {table} (id, donnees) VALUES (?, ?)", (obj.id, obj.model_dump_json()))
+        self._db.execute(f"INSERT OR REPLACE INTO {table} (id, donnees) VALUES (?, ?)", (obj.id, obj.model_dump_json()))  # type: ignore[attr-defined]
 
     def _journal(self, type_: str, acteur: str, objet_id: str, message: str, concerne: list[str]) -> None:
         self._db.execute("INSERT INTO journal (horodatage, type, acteur, objet_id, message, concerne) VALUES (?,?,?,?,?,?)",
@@ -384,7 +384,7 @@ class Magasin:
                 if resultat not in RESULTATS_RELATION:
                     raise ErreurMetier(f"Résultat attendu parmi : {', '.join(sorted(RESULTATS_RELATION))}.")
                 r.resultat = detail = resultat
-            r.etat, r.libelle_etat = nouvel_etat, LIBELLES_RELATION[nouvel_etat]
+            r.etat, r.libelle_etat = nouvel_etat, LIBELLES_RELATION[nouvel_etat]  # type: ignore[assignment]  # validé par la table des transitions
             r.coordonnees_partagees = nouvel_etat in ETATS_PARTAGE
             r.historique.append(Evenement(horodatage=self._horloge(), action=action, acteur=membre_id, detail=detail))
             self._ecrire("relations", r)
@@ -398,7 +398,7 @@ class Magasin:
             return r
 
     def _fin_systeme(self, r: Relation, etat: str, motif: str) -> None:
-        r.etat, r.libelle_etat, r.motif_fin = etat, LIBELLES_RELATION[etat], motif
+        r.etat, r.libelle_etat, r.motif_fin = etat, LIBELLES_RELATION[etat], motif  # type: ignore[assignment]  # états système connus
         r.coordonnees_partagees = False
         r.historique.append(Evenement(horodatage=self._horloge(), action="annulation_automatique", acteur="systeme", detail=motif))
         self._ecrire("relations", r)

@@ -15,7 +15,7 @@ from __future__ import annotations
 import random
 import time
 from itertools import combinations
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -86,7 +86,7 @@ def valeurs(participants: list[Profil], besoins_publies: list, tax: Taxonomie,
     aides = calculer_aides(participants, besoins_publies, tax)
     aretes = {}
     ordre = {p.id: k for k, p in enumerate(participants)}
-    for a_id, b_id in {tuple(sorted(k, key=ordre.get)) for k in aides}:
+    for a_id, b_id in {tuple(sorted(k, key=lambda x: ordre[x])) for k in aides}:
         a, b = par_id[a_id], par_id[b_id]
         if frozenset((a.id, b.id)) in deja:
             continue
@@ -160,7 +160,9 @@ def optimal(aretes, participants: list[str], tours: int, limite_s: float = 20.0)
         for k, e in enumerate(E):
             c[r * nE + k] = -aretes[e]["valeur"]
     c[nx:] = -LAMBDA_EQUITE
-    lignes, bas, haut = [], [], []
+    lignes: list = []
+    bas: list[float] = []
+    haut: list[float] = []
     # une rencontre au plus par personne et par tour
     for r in range(tours):
         for p in participants:
@@ -183,7 +185,9 @@ def optimal(aretes, participants: list[str], tours: int, limite_s: float = 20.0)
             for k, e in enumerate(E):
                 if p in e:
                     ligne[r * nE + k] = -1
-        lignes.append(ligne); bas.append(-np.inf); haut.append(0)
+        lignes.append(ligne)
+        bas.append(-np.inf)
+        haut.append(0)
     t0 = time.perf_counter()
     res = milp(c, constraints=LinearConstraint(np.array(lignes), bas, haut), integrality=np.ones(n),
                bounds=Bounds(0, 1), options={"time_limit": limite_s})
@@ -196,7 +200,7 @@ def optimal(aretes, participants: list[str], tours: int, limite_s: float = 20.0)
 
 def paires_refusees(relations: list) -> frozenset:
     """Paires dont l'introduction la plus RÉCENTE a été déclinée (un refus suivi d'une relation acceptée ne compte plus)."""
-    derniere: dict[frozenset, object] = {}
+    derniere: dict[frozenset, Any] = {}
     for r in sorted(relations, key=lambda r: r.cree_le):
         derniere[frozenset((r.auteur_id, r.aidant_id))] = r
     return frozenset(k for k, r in derniere.items() if r.etat == "declinee")
@@ -267,7 +271,7 @@ def _ics_texte(v: str) -> str:
 
 def _plier(ligne: str) -> str:
     """RFC 5545 §3.1 : lignes de 75 octets au plus, continuation par une espace."""
-    b, out = ligne.encode("utf-8"), []
+    b, out = ligne.encode("utf-8"), list[str]()
     while len(b) > 75:
         coupe = 75 if not out else 74
         while (b[coupe] & 0xC0) == 0x80:  # ne pas couper un caractère UTF-8

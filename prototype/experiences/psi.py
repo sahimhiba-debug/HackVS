@@ -40,7 +40,7 @@ class Cle:
         if _RISTRETTO:
             b = ctypes.create_string_buffer(32)
             _L.crypto_core_ristretto255_scalar_random(b)
-            self.k = b.raw
+            self.k: bytes | int = b.raw
         else:
             self.k = secrets.randbelow((_P - 1) // 2 - 2) + 2
 
@@ -53,7 +53,7 @@ class Cle:
             if _L.crypto_scalarmult_ristretto255(out, self.k, pt) != 0:
                 raise ValueError("point invalide")
             return out.raw
-        return pow(int.from_bytes(pt, "big"), self.k, _P).to_bytes(256, "big")
+        return pow(int.from_bytes(pt, "big"), int(self.k), _P).to_bytes(256, "big")  # type: ignore[call-overload]
 
 
 def hacher(jeton: str) -> bytes:

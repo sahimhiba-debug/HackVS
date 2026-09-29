@@ -112,29 +112,29 @@ def instantane(profils: list[Profil], besoins_publies: list, tax: Taxonomie, sou
                                 source=f"{src}#consentement", type_source="profil", statut=base))
     aides_brutes = calculer_aides(membres, besoins_publies, tax)
     aides = {}
-    for (i, j), aide in aides_brutes.items():
-        besoin_id = next((a.id for a in reg.chercher(sujet=i, predicat="recherche") if a.extrait and a.extrait in aide["besoin"]), None)
-        if aide.get("champ_preuve") == "offre" and (j, aide["preuve"]) in ids_offre:
-            preuve_id = ids_offre[(j, aide["preuve"])]
+    for (ia, ja), aide in aides_brutes.items():
+        besoin_id = next((a.id for a in reg.chercher(sujet=ia, predicat="recherche") if a.extrait and a.extrait in aide["besoin"]), None)
+        if aide.get("champ_preuve") == "offre" and (ja, aide["preuve"]) in ids_offre:
+            preuve_id = ids_offre[(ja, aide["preuve"])]
         else:  # déduit d'une phrase de présentation, ou autre champ : c'est NOTRE inférence
-            preuve_id = reg.ajouter(Affirmation(sujet=j, predicat="peut_aider_sur", objet=aide["besoin"][:80], extrait=aide["preuve"],
-                                                source=f"moteur:matching({i}→{j})", type_source="deduction", statut=Statut.INFERE))
+            preuve_id = reg.ajouter(Affirmation(sujet=ja, predicat="peut_aider_sur", objet=aide["besoin"][:80], extrait=aide["preuve"],
+                                                source=f"moteur:matching({ia}→{ja})", type_source="deduction", statut=Statut.INFERE))
         if besoin_id is None:  # besoin publié dans l'application (pas dans le profil) ; SIMULE s'il vient d'un scénario
             st = next((getattr(b, "statut_affirmation", None) for b in besoins_publies
-                       if b.auteur_id == i and f"besoin publié : {b.besoin.texte}" == aide["besoin"]), None) or Statut.OBSERVE
-            besoin_id = reg.ajouter(Affirmation(sujet=i, predicat="besoin_publie", objet=aide["besoin"][:80],
-                                                source=f"application:bourse({i})", type_source="application", statut=st))
-        aides[f"{i}→{j}"] = aide | {"affirmations": [besoin_id, preuve_id]}
-    for a, b in relations_observees or []:
-        reg.ajouter(Affirmation(sujet=cle(a, b), predicat="deja_en_relation", objet="true", source="application:relations",
+                       if b.auteur_id == ia and f"besoin publié : {b.besoin.texte}" == aide["besoin"]), None) or Statut.OBSERVE
+            besoin_id = reg.ajouter(Affirmation(sujet=ia, predicat="besoin_publie", objet=aide["besoin"][:80],
+                                                source=f"application:bourse({ia})", type_source="application", statut=st))
+        aides[f"{ia}→{ja}"] = aide | {"affirmations": [besoin_id, preuve_id]}
+    for x, y in relations_observees or []:
+        reg.ajouter(Affirmation(sujet=cle(x, y), predicat="deja_en_relation", objet="true", source="application:relations",
                                 type_source="application", statut=Statut.OBSERVE))
     opps = {}
-    for o in opportunites or []:  # déduites par la mémoire (fermeture de triade) : INFÉRÉES, jamais plus
-        k = cle(o["a"], o["c"])
-        aid = reg.ajouter(Affirmation(sujet=k, predicat="opportunite_ouverte", objet=o["via"], extrait=o.get("raison", ""),
-                                      source=f"memoire:fermeture({o['a']},{o['via']},{o['c']})", type_source="deduction",
+    for opp in opportunites or []:  # déduites par la mémoire (fermeture de triade) : INFÉRÉES, jamais plus
+        k = cle(opp["a"], opp["c"])
+        aid = reg.ajouter(Affirmation(sujet=k, predicat="opportunite_ouverte", objet=opp["via"], extrait=opp.get("raison", ""),
+                                      source=f"memoire:fermeture({opp['a']},{opp['via']},{opp['c']})", type_source="deduction",
                                       statut=Statut.INFERE))
-        opps[k] = {"via": o["via"], "raison": o.get("raison", ""), "affirmation": aid}
+        opps[k] = {"via": opp["via"], "raison": opp.get("raison", ""), "affirmation": aid}
     parts = {p.id: {"secteurs": p.secteurs, "langues": p.langues, "consentement": p.accepte_introductions,
                     "disponible": p.disponible, "nom": p.nom} for p in par_id.values()}
     return Instantane(source=source, participants=parts, affirmations=reg.exporter(), aides=aides,

@@ -26,7 +26,7 @@ import hmac
 import json
 import os
 from pathlib import Path
-from typing import Annotated, Literal, Optional
+from typing import Any, Annotated, Literal, Optional
 
 import httpx
 from mcp.server.auth.middleware.auth_context import get_access_token
@@ -110,7 +110,7 @@ def creer_serveur(http: Optional[httpx.Client] = None, membre: Optional[str] = N
     """`http` injectable (tests : TestClient FastAPI, qui est un httpx.Client). `jetons` : mode HTTP authentifié."""
     client = http or _http()
     defaut = membre or os.environ.get("HACKVS_MCP_MEMBRE", "p00")
-    auth = {}
+    auth: dict[str, Any] = {}
     if jetons is not None:
         auth = {"token_verifier": jetons,
                 "auth": AuthSettings(issuer_url=url_publique, resource_server_url=f"{url_publique}/mcp", required_scopes=["lecture"])}
@@ -120,7 +120,11 @@ def creer_serveur(http: Optional[httpx.Client] = None, membre: Optional[str] = N
         jeton = get_access_token()
         if jetons is not None and jeton is None:
             raise ErreurClub("authentification", "Jeton requis.")  # la couche HTTP a déjà refusé ; défense en profondeur
-        return jeton.subject if jeton else defaut
+        if jeton is None:
+            return defaut
+        if not jeton.subject:   # un jeton sans sujet ne désigne personne : jamais « membre None » (trouvé par mypy)
+            raise ErreurClub("authentification", "Jeton sans sujet.")
+        return jeton.subject
 
     def peut_ecrire() -> None:
         jeton = get_access_token()
@@ -279,7 +283,7 @@ def creer_serveur(http: Optional[httpx.Client] = None, membre: Optional[str] = N
         est utilisé. Confirmation humaine requise.
         """
         mode = verifier(ok)
-        texte = (getattr(ok.data, "message", "") or "").strip() or texte_relation(besoin_id, membre_id, message)
+        texte = (getattr(getattr(ok, "data", None), "message", "") or "").strip() or texte_relation(besoin_id, membre_id, message)
         modifie = texte != texte_relation(besoin_id, membre_id, message)
         r = api("POST", "/api/relations", json={"besoin_id": besoin_id, "cible_id": membre_id, "message": texte})
         return {"relation_id": r["id"], "etat": r["libelle_etat"], "message": texte, "modifie_par_le_membre": modifie,

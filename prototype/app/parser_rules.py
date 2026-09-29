@@ -154,13 +154,13 @@ def analyser(texte: str, tax: Taxonomie) -> Besoin:
     # 3. Langues : obligatoires par défaut, souhaitées si un marqueur souple est dans la clause.
     for code, spec in tax.langues.items():
         for expr in spec["expressions"]:
-            m = next((x for x in motif(normaliser(expr)[0]).finditer(n) if dans_recherche(x.start())), None)
-            if m and not _chevauche(m.start(), m.end(), pris):
-                pris.append((m.start(), m.end()))
-                if not nie(m.start()):
-                    trouves.append((m.start(), Critere(type="langue", valeur=code, libelle=spec["libelle"],
-                                                       obligatoire=force(m.start()) is not False,
-                                                       extrait=extrait(m.start(), m.end()))))
+            trouve = next((x for x in motif(normaliser(expr)[0]).finditer(n) if dans_recherche(x.start())), None)
+            if trouve and not _chevauche(trouve.start(), trouve.end(), pris):
+                pris.append((trouve.start(), trouve.end()))
+                if not nie(trouve.start()):
+                    trouves.append((trouve.start(), Critere(type="langue", valeur=code, libelle=spec["libelle"],
+                                                       obligatoire=force(trouve.start()) is not False,
+                                                       extrait=extrait(trouve.start(), trouve.end()))))
                 break
 
     # 4. Lieux : implantation du prestataire, zone d'intervention, ou localisation du demandeur.
@@ -268,7 +268,11 @@ def extraire_profil(texte: str, tax: Taxonomie) -> dict:
     Chaque offre garde la phrase d'origine comme texte : c'est elle qui servira de preuve, mot pour mot.
     Rien n'est enregistré sans validation du membre.
     """
-    offres, recherches, zones, langues, ignorees = [], [], [], [], []
+    offres: list[dict] = []
+    recherches: list[dict] = []
+    zones: list[str] = []
+    langues: list[str] = []
+    ignorees: list[str] = []
     for m in _PHRASE.finditer(texte):
         phrase = m.group(0).strip().rstrip(".!?").strip()
         if len(phrase) < 4:

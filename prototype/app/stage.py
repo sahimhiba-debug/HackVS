@@ -154,7 +154,8 @@ def _e3_candidats(w: Monde) -> dict:
         cartes.append({"id": sug.profil.id, "nom": sug.profil.nom, "entreprise": sug.profil.entreprise, "niveau": sug.niveau,
                        "preuves": [{"extrait": p.extrait, "nature": p.nature, "champ": p.champ} for p in sug.preuves],
                        "dimensions": d})
-    w.ctx["candidat"] = next((c["id"] for c in cartes if c["dimensions"]["reciprocite"]["etablie"]), cartes[0]["id"] if cartes else None)
+    w.ctx["candidat"] = next((c["id"] for c in cartes if c["dimensions"]["reciprocite"]["etablie"]),   # type: ignore[index]
+                             cartes[0]["id"] if cartes else None)
     return {"titre": "Qui peut l'aider — et pourquoi", "dit": "Pas une liste de noms : une preuve pour chaque proposition.",
             "faits": {"candidats": cartes, "examines": res.nb_profils_examines,
                       "ecartes_par_leur_choix": sum(e.nombre for e in res.ecartes if "sollicités" in e.raison)}}

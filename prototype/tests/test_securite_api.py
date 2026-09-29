@@ -140,3 +140,13 @@ def test_introspection_aucun_champ_texte_d_entree_sans_borne():
                     if not any(getattr(x, "max_length", None) for x in info.metadata) and f"{nom}.{champ}" not in exemptes:
                         manquants.append(f"{mod.__name__}.{nom}.{champ}")
     assert not manquants, manquants
+
+
+def test_demande_sans_cible_repond_422_et_non_404():
+    """Trouvé par le contrôle de types (mypy) : l'auteur qui oublie la cible recevait « 404 Membre inconnu »."""
+    client.post("/api/demo/reinitialiser")
+    H = {"X-Membre": "p00"}
+    b = client.post("/api/analyser", json={"texte": "Je cherche un transporteur frigorifique pour Zurich"}).json()["besoin"]
+    bb = client.post("/api/besoins", json={"besoin": b, "publier": True, "anonyme": False}, headers=H).json()
+    r = client.post("/api/relations", json={"besoin_id": bb["id"], "message": "Bonjour"}, headers=H)
+    assert r.status_code == 422 and "solliciter" in r.json()["detail"]

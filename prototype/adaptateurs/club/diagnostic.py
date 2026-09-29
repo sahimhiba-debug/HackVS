@@ -58,7 +58,7 @@ def diagnostic(m: Memoire, profils: list[Profil], besoins_publies: list, tax, ma
     aides = {cle(i, j) for i, j in aides_brutes}
     ech = {x: d for x, d in ex.echeances(m, maintenant).items() if g_act.has_edge(*x.split("|"))}
     sollicitables = {p.id for p in ouverts}
-    a_venir = {"INCLUSION": ex.echeancier(g_act, membres, ech, maintenant, horizon, k=3, plafond=2, aides=aides,
+    a_venir: dict = {"INCLUSION": ex.echeancier(g_act, membres, ech, maintenant, horizon, k=3, plafond=2, aides=aides,
                                           sollicitables=sollicitables)}
     a_venir["COHESION_ravivements"] = [x.split("|") for x in ex.prevenir(g_act, membres, ech, maintenant, horizon, 3, 2, "COHESION",
                                                                           sollicitables=sollicitables)]

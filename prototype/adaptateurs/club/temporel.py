@@ -24,7 +24,7 @@ def _groupes(g: nx.Graph, membres: list[str], taille_min: int) -> list[frozenset
     return [frozenset(c) for c in nx.connected_components(h) if len(c) >= taille_min]
 
 
-def changements(g0: nx.Graph, g1: nx.Graph, membres: list[str], declinees: set[frozenset] = frozenset(),
+def changements(g0: nx.Graph, g1: nx.Graph, membres: list[str], declinees: set[frozenset] | frozenset = frozenset(),
                 taille_min: int = 3) -> list[dict]:
     ev = []
     endormies = sorted(tuple(sorted(e)) for e in g0.edges() if not g1.has_edge(*e) and frozenset(e) not in declinees

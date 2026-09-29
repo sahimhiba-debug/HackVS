@@ -111,7 +111,7 @@ def moi(x_membre: Optional[str], membre_q: Optional[str] = None) -> Profil:
         raise HTTPException(503, "Mode réel non configuré : aucune source de profils autorisée n'est branchée.")
     if MODE != "demo":
         raise HTTPException(501, "Mode réel : authentification des membres non implémentée. Aucune identité simulée n'est acceptée.")
-    mid = x_membre or membre_q or UTILISATEUR_DEFAUT
+    mid = x_membre or membre_q or UTILISATEUR_DEFAUT or ""   # vide → 404 « Membre inconnu », jamais un membre implicite
     p = profil(mid)
     if p.type == "visiteur":
         raise HTTPException(403, "Les visiteurs n'ont pas accès à l'espace du Club.")
@@ -488,7 +488,7 @@ def brouillon(besoin_id: str, cible_id: Optional[str] = None, x_membre: Optional
     auteur = profil(b.auteur_id)
     if m.id == b.auteur_id and not cible_id:
         raise HTTPException(422, "Indiquez le membre à solliciter.")
-    aidant = profil(cible_id) if m.id == b.auteur_id else m
+    aidant = profil(cible_id) if m.id == b.auteur_id and cible_id else m
     res = rechercher(b.besoin, auteur, [auteur, aidant], TAX, mode=MODE)
     preuve = next((p.extrait for s in res.suggestions for p in s.preuves if p.champ in ("offre", "presentation")), None)
     resume = _resume_besoin(b.besoin)
@@ -538,7 +538,9 @@ def creer_relation(e: EntreeRelation, x_membre: Optional[str] = Header(None)):
     auteur = profil(b.auteur_id)
     # Demande : l'auteur choisit la cible. Offre : la cible est TOUJOURS l'auteur (déterminé ici,
     # l'aidant ne connaît pas forcément son identité si le besoin est anonyme).
-    cible = profil(e.cible_id) if m.id == b.auteur_id else auteur
+    if m.id == b.auteur_id and not e.cible_id:      # trouvé par le contrôle de types : répondait « 404 Membre inconnu »
+        raise HTTPException(422, "Indiquez le membre à solliciter.")
+    cible = profil(e.cible_id) if m.id == b.auteur_id and e.cible_id else auteur
     aidant = cible if m.id == b.auteur_id else m
     res = rechercher(b.besoin, auteur, [auteur, aidant], TAX, mode=MODE)
     # Même réponse que le membre refuse d'être sollicité ou qu'il ne corresponde pas : sinon, en sondant des
@@ -647,7 +649,8 @@ def _plan(donnees: str, tours: int) -> dict:
     if donnees == "synthetique":
         brut = json.loads((DATA_DIR / "profils_synthetiques.json").read_text(encoding="utf-8"))
         participants, besoins = [Profil(**p) for p in brut["profils"]], []
-        deja = refus = frozenset()
+        deja: frozenset = frozenset()
+        refus: frozenset = frozenset()
     else:
         participants, besoins = profils_effectifs(), MAGASIN.besoins()
         deja = frozenset(frozenset((r.auteur_id, r.aidant_id)) for r in MAGASIN.relations()

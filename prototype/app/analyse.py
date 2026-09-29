@@ -29,7 +29,7 @@ def analyser_hybride(texte: str, tax: Taxonomie, semantique_active: bool = True)
     if any(c.type == "expertise" for c in b.criteres) or b.ambiguites:
         return b, info  # les règles ont compris : la sémantique n'intervient pas
     r = semantique.inferer_concept(texte, tax)
-    info = {"semantique": "consultée", **r}
+    info = {"semantique": "consultée", **(r or {})}
     if r is None:
         return b, info
     libre = [c for c in b.criteres if c.type == "texte_libre"]

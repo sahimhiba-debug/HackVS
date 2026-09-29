@@ -24,3 +24,23 @@
 - Authentification réelle : absente (identité de démonstration par en-tête ; le mode réel refuse tout, testé).
 - LLM réel : aucune clé ; seuls des serveurs simulés ont été attaqués (panne, refus, JSON invalide, balises).
 - Rôle « animateur » : les vues d'organisation (plan de soirée, tableau du Club, interventions) sont ouvertes en démo.
+
+## Campagne finale — red team produit (29.09) : chaque attaque, sa preuve exécutable
+| Attaque | Résultat | Preuve |
+|---|---|---|
+| Confidentialité (qui refuse ? qui connaît qui ?) | ni nommé, ni compté (< 3) ; graphe sans drapeau de consentement ; chemin d'un tiers jamais révélé | `test_scene.py::test_le_graphe_ne_trahit_pas…`, `test_securite_api.py`, FAILURES 19–22 |
+| Consentement contourné par un calcul | impossible : `refus_motives` ⇔ `candidates` sur toutes les paires ; refus non levable en soirée | `test_scene.py::test_refus_motives_coherent…`, FAILURES 26, 30, 35–37 |
+| Démarrage à froid | invisible par défaut, trouvable dès son offre validée ; réciprocité dite prouvée ou non | C17, `test_explications.py` |
+| Données périmées | relation > 90 jours = endormie, dessinée comme telle, jamais utilisée comme lien actuel | `test_scene.py::test_le_graphe_ne_contredit_pas_la_carte_isolee` (défaut trouvé à l'écran) |
+| Réciprocité | prouvée par le même moteur en sens inverse, sinon « non établie » | C07 |
+| Logique des ponts | un pont se définit une fois (phénomène = surlignage = contrefactuel) | FAILURES 16, 31, 39, 41 |
+| Abstention | réelle dans le moteur (15 possibles, 0 fondée ; 9 → 1 → 0) | `test_scene.py::test_l_abstention_suit_les_regles_du_moteur`, C23, C24 |
+| Réinitialisation, rejeu | identiques à l'octet (hors identifiants aléatoires) ; 14 clics simultanés → 11 étapes + 409, jamais 500 | `test_scene.py::test_rejeu…`, `::test_clics_simultanes…` |
+| Mobile | 390 px sans défilement horizontal | `test_e2e_scene.py` (CI) |
+| Panne d'API externe | sans objet pour la démo (aucun appel réseau) ; dans l'application, repli visible sur les règles | `parser_llm.analyser_flux` (repli), C14 |
+| Preuve manquante | abstention motivée + ce qui changerait la décision | scène étape 9 |
+| Preuves contradictoires | terme ambigu à indices contradictoires → incertitude affichée ; refus ancien vs relation vivante | `test_compilateur_besoin.py`, `test_adversarial_reseau.py` |
+| Horloge fausse | horloge simulée = donnée ; « +10 jours » vérifié | FAILURES 4, 11 |
+| Benchmark faux | biais initial corrigé ; métrique ambiguë (servis par introduction) corrigée | FAILURES 8, 47 |
+| Explication fausse | explication recalculée et comparée à la décision (mutation) | C06 |
+| Entrées hostiles | bornées ; identifiants inconnus → 404 ; étapes hors bornes → 422 | `test_securite_api.py`, `test_scene.py` |

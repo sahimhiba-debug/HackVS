@@ -169,7 +169,8 @@ def choisir(g_actuel: nx.Graph, cands: list[Candidate], k: int, plafond: int = 1
     groupes ; V1 : ablation (benchmark seulement). Les deux premières sont en CONFLIT mesuré : l'humain choisit."""
     g = g_actuel.copy()
     sollicitations: dict[str, int] = {}
-    choisies, restantes = [], list(cands)
+    choisies: list[dict] = []
+    restantes = list(cands)
     while len(choisies) < k:
         possibles = [c for c in restantes if sollicitations.get(c.a, 0) < plafond and sollicitations.get(c.b, 0) < plafond]
         if not possibles:

@@ -295,7 +295,9 @@ def analyser_flux(texte: str, tax: Taxonomie, client=None, http=None) -> Iterato
     route = modeles.router("extraction_besoin", preference=f)
     tele: dict = {"analyseur": f, "passerelle": {"etat": route.etat if route.choisi == f else "NON_CONFIGUREE", "raison": route.raison}}
     try:
-        tampon, emis, premier_ms, suite, sortie = "", set(), None, (), None
+        tampon, emis, premier_ms = "", set(), None
+        suite: tuple = ()
+        sortie: Optional[SortieLLM] = None
         tele["reessais"] = 0
         for tentative in (1, 2):
             morceaux = (_morceaux_apertus(texte, tax, http, tele, suite) if f == "apertus"
@@ -323,6 +325,7 @@ def analyser_flux(texte: str, tax: Taxonomie, client=None, http=None) -> Iterato
                 suite = ({"role": "assistant", "content": brut[:4000] or "(vide)"},
                          {"role": "user", "content": f"Ta réponse n'est pas un JSON valide conforme au schéma ({resume}). "
                                                      "Renvoie uniquement l'objet JSON corrigé, sans texte autour."})
+        assert sortie is not None                    # la boucle sort par break après validation, sinon lève
         besoin = valider(texte, sortie, tax)
         besoin.analyseur = f
         yield {"type": "final", "besoin": besoin.model_dump(), "telemetrie": {

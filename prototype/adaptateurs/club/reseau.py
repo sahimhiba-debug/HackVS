@@ -105,7 +105,7 @@ def _etat(evs: list[Evt], maintenant: date) -> dict:
         etape = {"OPPORTUNITE_OUVERTE": "RECOMMANDEE", "INTRO_DEMANDEE": "INTRO_DEMANDEE", "INTRO_ACCEPTEE": "INTRO_ACCEPTEE",
                  "RENCONTRE": "RENCONTREE", "RENCONTRE_CONFIRMEE": "RENCONTREE", "SUIVI": "SUIVI"}.get(e.type)
         if e.type == "RESULTAT":
-            etape = {"affaire_en_cours": "OPPORTUNITE", "utile": "RESULTAT_UTILE"}.get(e.donnees.get("resultat"))
+            etape = {"affaire_en_cours": "OPPORTUNITE", "utile": "RESULTAT_UTILE"}.get(str(e.donnees.get("resultat")))
             if e.donnees.get("resultat") == "pas_pertinent":
                 terminal, rang_terminal = "SANS_SUITE", i
         if e.type == "INTRO_DECLINEE":
@@ -187,7 +187,7 @@ def etats_par_paire(m: Memoire, maintenant: date) -> dict[str, str]:
 
 def paires_declinees(m: Memoire, maintenant: date) -> list[tuple[str, str]]:
     """Paires dont le fait le plus récent est un refus d'introduction : jamais placées à la même table."""
-    return [tuple(k.split("|")) for k, e in sorted(etats_par_paire(m, maintenant).items()) if e == "DECLINEE"]
+    return [(k.split("|")[0], k.split("|")[1]) for k, e in sorted(etats_par_paire(m, maintenant).items()) if e == "DECLINEE"]
 
 
 def chemin_chaud(g: nx.Graph, x: str, c: str, par_id: dict[str, Profil]) -> dict:

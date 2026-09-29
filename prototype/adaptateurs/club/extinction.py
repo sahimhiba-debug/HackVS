@@ -78,8 +78,8 @@ def prevenir(g_act: nx.Graph, membres: list[str], echeances: dict[str, date], ma
             break
         comp = _composantes(g)
         ordre = (0, 1, 2) if variante == "INCLUSION" else (1, 2, 0)
-        meilleure = min(possibles, key=lambda x: (tuple(-_gain(g, *x.split("|"), comp)[i] for i in ordre), echeances[x], x))  # noqa: B023
-        if _gain(g, *meilleure.split("|"), comp) == (0, 0, 0):
+        meilleure = min(possibles, key=lambda x: (tuple(-_gain(g, x.split("|")[0], x.split("|")[1], comp)[i] for i in ordre), echeances[x], x))  # noqa: B023
+        if _gain(g, meilleure.split("|")[0], meilleure.split("|")[1], comp) == (0, 0, 0):
             break                                   # rien ne se perd de plus : ne rien raviver de superflu
         g.add_edge(*meilleure.split("|"))
         choisies.append(meilleure)

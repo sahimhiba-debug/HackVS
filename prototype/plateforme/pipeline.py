@@ -34,6 +34,11 @@ class Adaptateur(Protocol):
 AXES_PARETO = ["valeur_aide", "couverture", "diversite", "reciprocite"]
 
 
+def _paire(k: str) -> tuple[str, str]:
+    a, b = k.split("|")
+    return a, b
+
+
 def plan_apercu(spec: SpecDecision) -> tuple[list[str], dict]:
     """Aperçu du plan et stratégie de contexte : on dit aussi ce qui N'est PAS utilisé."""
     plan = ["instantané des affirmations (registre)", "graphe des aides prouvées",
@@ -77,7 +82,7 @@ def executer(ad: Adaptateur, demande: str, journal: Journal, inst: Optional[dict
         pb, ecartes, preuves = ad.probleme(inst, spec)
         r.update(participants=len(pb.participants), aretes=len(pb.aretes), exclues=len(pb.exclues), ecartes=len(ecartes))
     with tr.etape("graphe") as r:
-        g = gr.construire(pb.participants, [tuple(k.split("|")) for k in pb.aretes])
+        g = gr.construire(pb.participants, [_paire(k) for k in pb.aretes])
         run.graphe = gr.metriques(g)
         r.update(run.graphe)
     with tr.etape("optimisation") as r:
@@ -94,7 +99,7 @@ def executer(ad: Adaptateur, demande: str, journal: Journal, inst: Optional[dict
     sens = []
     if sensibilite and retenue.rencontres:
         with tr.etape("sensibilité") as r:
-            principal = max(poids, key=poids.get)
+            principal = max(poids, key=lambda k: poids[k])
             sens = op.sensibilite(pb, poids, principal)
             budget.appels_solveur += 3
             r["variations"] = sens
@@ -164,7 +169,7 @@ def contrefactuel(ad: Adaptateur, journal: Journal, run_id: str, modif: dict) ->
     La politique s'applique : une contrainte obligatoire ne peut pas être levée."""
     parent = _parent_avec_spec(journal, run_id)
     inst = journal.instantane(parent.instantane_empreinte)
-    s = SpecDecision(**parent.spec)
+    s = SpecDecision(**(parent.spec or {}))
     retirer, ajouter = set(modif.get("retirer_contraintes", [])), modif.get("ajouter_contraintes", [])
     s = s.model_copy(update={"contraintes_dures": [c for c in s.contraintes_dures if c not in retirer] + [c for c in ajouter if c not in s.contraintes_dures],
                              "parametres": s.parametres | modif.get("parametres", {})})
@@ -182,9 +187,9 @@ def stress(ad: Adaptateur, journal: Journal, run_id: str, n: int, regle: str = "
     le plan est ré-optimisé sur le réseau restant, et on compte les participants orphelins de nouveau servis."""
     parent = _parent_avec_spec(journal, run_id)
     inst = journal.instantane(parent.instantane_empreinte)
-    s = SpecDecision(**parent.spec)
+    s = SpecDecision(**(parent.spec or {}))
     pb, _, _ = ad.probleme(inst, s)
-    g = gr.construire(pb.participants, [tuple(k.split("|")) for k in pb.aretes])
+    g = gr.construire(pb.participants, [_paire(k) for k in pb.aretes])
     retires = gr.selection_retrait(g, n, regle, graine)
     avant = gr.metriques(g)
     g2 = g.copy()
@@ -194,9 +199,9 @@ def stress(ad: Adaptateur, journal: Journal, run_id: str, n: int, regle: str = "
              "aides": {k: v for k, v in inst["aides"].items() if not set(k.split("→")) & set(retires)}}
     enfant = executer(ad, parent.demande, journal, inst=inst2, spec=s, parent_id=run_id,
                       intervention={"stress": {"retires": retires, "regle": regle}})
-    avant_rdv = {(x, y) for _, x, y in parent.retenue["rencontres"]}
+    avant_rdv = {(x, y) for _, x, y in (parent.retenue or {})["rencontres"]}
     orphelins = sorted({p for x, y in avant_rdv if set((x, y)) & set(retires) for p in (x, y)} - set(retires))
-    servis_apres = {p for _, x, y in enfant.retenue["rencontres"] for p in (x, y)}
+    servis_apres = {p for _, x, y in (enfant.retenue or {})["rencontres"] for p in (x, y)}
     return enfant, {"retires": retires, "graphe_avant": avant, "graphe_apres": apres,
                     "orphelins": len(orphelins), "orphelins_resservis_par_la_reparation": sum(1 for p in orphelins if p in servis_apres),
                     "delta": delta(parent, enfant)}

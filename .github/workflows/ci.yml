@@ -25,6 +25,8 @@ jobs:
         run: pip install -r requirements.txt -r requirements-dev.txt ruff
       - name: Lint
         run: ruff check .
+      - name: Contrôle de types (mypy, plugin Pydantic)
+        run: python -m mypy app adaptateurs plateforme
       - name: Tests (API, garde-fous, planificateur, MCP stdio et HTTP)
         run: python -m pytest -q
       - name: Non-régression des évaluations (aucune violation ajoutée, aucun succès perdu)

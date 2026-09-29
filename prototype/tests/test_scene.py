@@ -156,3 +156,16 @@ def test_le_graphe_ne_contredit_pas_la_carte_isolee():
     seul = v["traces"][8]["faits"]["membre_id"]
     touches = [lien for lien in v["liens"] if seul in (lien["a"], lien["b"])]
     assert touches and not any(lien["actuelle"] for lien in touches)
+
+
+def test_clics_simultanes_ni_etape_sautee_ni_erreur():
+    """Red team : 14 clics simultanés depuis l'étape 0 → exactement toutes les étapes, puis 409 ; jamais de 500."""
+    import threading
+    client.post("/api/stage/reinitialiser")
+    codes: list[int] = []
+    fils = [threading.Thread(target=lambda: codes.append(client.post("/api/stage/suivant").status_code)) for _ in range(14)]
+    [f.start() for f in fils]
+    [f.join() for f in fils]
+    assert sorted(codes) == [200] * len(stage.ETAPES) + [409] * (14 - len(stage.ETAPES))
+    assert client.get("/api/stage").json()["etape"] == len(stage.ETAPES)
+    assert client.get("/api/stage/tour").status_code == 200

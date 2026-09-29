@@ -61,7 +61,7 @@ def _decision_suivante(m: Memoire, decision: Evt, a: str, b: str, maintenant: da
 
 def ecart(m: Memoire, decision: Evt, maintenant: date, membres: list[str]) -> dict:
     d = decision.donnees
-    actions = []
+    actions: list[dict] = []
     for a, b in d["paires"]:
         suivante = _decision_suivante(m, decision, a, b, maintenant)
         suite = _suite(m, a, b, decision.le, maintenant, suivante)
@@ -75,7 +75,7 @@ def ecart(m: Memoire, decision: Evt, maintenant: date, membres: list[str]) -> di
                         "activation_reelle": niv["ACTIVATION"] is True})
     g0 = graphe_actuel(m, decision.le)                    # le réseau tel qu'il était le jour de la décision
     g0.add_nodes_from(membres)
-    realisees = [Candidate("INTRODUCTION", *x["paire"], 0, False) for x in actions if x["issue"] == "REALISEE"]
+    realisees = [Candidate("INTRODUCTION", x["paire"][0], x["paire"][1], 0, False) for x in actions if x["issue"] == "REALISEE"]
     obs = evaluer(g0, membres, realisees)
     prevu = d.get("projection", {})
     return {"decision_le": decision.le.isoformat(), "noms": d.get("noms", []), "actions": actions,

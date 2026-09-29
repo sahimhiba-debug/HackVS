@@ -9,7 +9,7 @@ PROBLÈME → INSIGHT → TENSION → NOUVELLE APPROCHE → PREUVE → DÉMO →
   facile ; savoir *quand* se taire, *qui* peut présenter qui sans rien divulguer, et ce que le réseau entier y gagne, non.
 - **Approche.** Une intelligence relationnelle : chaque rencontre devient un fait daté, chaque relance a une preuve,
   chaque introduction un double accord, et l'on simule le réseau avant d'agir.
-- **Preuve.** Démo en direct, calculée par le moteur ; benchmark synthétique contre cinq méthodes ; 47 défauts trouvés
+- **Preuve.** Démo en direct, calculée par le moteur ; benchmark synthétique contre cinq méthodes ; 48 défauts trouvés
   en attaquant notre propre système.
 - **Impact / vision.** Le Club garde ses moments forts ; nous leur donnons une suite toute l'année.
 
@@ -52,7 +52,7 @@ demander une introduction à Markus, qui peut l'aider et qu'elle peut aider en r
 9. « La Foire crée les rencontres. Nous construisons ce qui leur survit. »
 10. « Un réseau vivant, c'est un réseau qui se souvient. »
 
-**Retenue : 2** — concrète, sans grandiloquence, identique à la fin de la vidéo (cohérence). Variante courte : 3.
+**Retenue (campagne finale)** : « Chaque événement crée des rencontres. Ce système les transforme en réseau vivant. » — une seule idée, la même que la diapositive finale et que la dernière phrase de la vidéo (« Des rencontres ponctuelles, un réseau vivant »).
 
 ## Storyboard (la démo arrive tôt ; les diapositives expliquent ce que le jury vient de voir)
 Deck : `/presentation` (neuf diapositives, notes d'orateur : touche N). Démo : `/demo/stage`.

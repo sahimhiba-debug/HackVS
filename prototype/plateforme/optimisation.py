@@ -60,7 +60,12 @@ def resoudre(pb: Probleme, poids: dict[str, float], couverture_min: int = 0, lim
     for r in range(R):
         c[r * nE:(r + 1) * nE] = -gain
     c[nx:] = -poids.get("couverture", 0.0)
-    lignes, cols, vals, bas, haut, k = [], [], [], [], [], 0
+    lignes: list[int] = []
+    cols: list[int] = []
+    vals: list[int] = []
+    bas: list[float] = []
+    haut: list[float] = []
+    k = 0
     extremites = [tuple(e.split("|")) for e in E]
     for r in range(R):                                     # 1 rencontre / personne / tour
         par_p: dict[str, list[int]] = {}
@@ -69,24 +74,35 @@ def resoudre(pb: Probleme, poids: dict[str, float], couverture_min: int = 0, lim
             par_p.setdefault(b, []).append(r * nE + j)
         for p in pb.participants:
             for v in par_p.get(p, []):
-                lignes.append(k), cols.append(v), vals.append(1)
-            bas.append(0), haut.append(1)
+                lignes.append(k)
+                cols.append(v)
+                vals.append(1)
+            bas.append(0)
+            haut.append(1)
             k += 1
     for j in range(nE):                                    # paire unique
         for r in range(R):
-            lignes.append(k), cols.append(r * nE + j), vals.append(1)
-        bas.append(0), haut.append(1)
+            lignes.append(k)
+            cols.append(r * nE + j)
+            vals.append(1)
+        bas.append(0)
+        haut.append(1)
         k += 1
     incid: dict[str, list[int]] = {}
     for j, (a, b) in enumerate(extremites):
         incid.setdefault(a, []).append(j)
         incid.setdefault(b, []).append(j)
     for p in pb.participants:                              # y_i ≤ Σ x
-        lignes.append(k), cols.append(nx + idx[p]), vals.append(1)
+        lignes.append(k)
+        cols.append(nx + idx[p])
+        vals.append(1)
         for j in incid.get(p, []):
             for r in range(R):
-                lignes.append(k), cols.append(r * nE + j), vals.append(-1)
-        bas.append(-np.inf), haut.append(0)
+                lignes.append(k)
+                cols.append(r * nE + j)
+                vals.append(-1)
+        bas.append(-np.inf)
+        haut.append(0)
         k += 1
     A = coo_matrix((vals, (lignes, cols)), shape=(k, n)).tocsr()
     contraintes = [LinearConstraint(A, bas, haut)]
@@ -100,7 +116,7 @@ def resoudre(pb: Probleme, poids: dict[str, float], couverture_min: int = 0, lim
         return Solution(poids=poids, statut=res.message, optimum_prouve=False, duree_ms=round(duree, 1), rencontres=[],
                         objectifs={})
     x = np.round(res.x[:nx]).astype(int)
-    rencontres = sorted((r + 1, *extremites[j]) for r in range(R) for j in range(nE) if x[r * nE + j])
+    rencontres = sorted((r + 1, extremites[j][0], extremites[j][1]) for r in range(R) for j in range(nE) if x[r * nE + j])
     return Solution(poids=poids, statut="optimal" if res.status == 0 else res.message, optimum_prouve=res.status == 0,
                     duree_ms=round(duree, 1), rencontres=rencontres, objectifs=mesurer(pb, rencontres, termes))
 

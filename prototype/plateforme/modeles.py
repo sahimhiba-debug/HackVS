@@ -65,7 +65,7 @@ TELEMETRIE = Path(__file__).resolve().parent.parent / "eval"
 
 
 def etat(nom: str, env: Optional[dict] = None, dossier: Path = TELEMETRIE) -> tuple[Etat, dict]:
-    env = os.environ if env is None else env
+    env = dict(os.environ) if env is None else env
     manque = [v for v in PROFILS[nom].variables if not any(env.get(x) for x in v.split("|"))]
     tele = dossier / f"telemetrie_{nom}.json"
     if tele.exists():

@@ -13,5 +13,5 @@ Côté organisatrice : trois introductions prouvées, et les deux îlots du Club
 **[la surprise]** Chantal n'a aucune relation. Le système pourrait la présenter à 15 personnes et embellir son propre
 indicateur. Aucune n'a de raison prouvée : il s'abstient. Je pourrais inventer une connexion ; je préfère m'abstenir.
 
-Tout est fictif et calculé en direct ; la valeur réelle se mesurera par un pilote. Ce système transforme des
-rencontres ponctuelles en réseau vivant.
+Tout est fictif et calculé en direct ; la valeur réelle se mesurera par un pilote.
+Chaque événement crée des rencontres. Ce système les transforme en réseau vivant.

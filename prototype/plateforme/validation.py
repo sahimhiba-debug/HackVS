@@ -60,7 +60,9 @@ def l3_preuves(sol: Solution, preuves: dict[str, list[str]], reg: Registre, spec
 
 def l5_structure(pb: Probleme, sol: Solution) -> Verdict:
     """Contraintes structurelles recalculées depuis la solution brute (pas depuis le solveur)."""
-    d, vus_paires, par_tour = [], set(), {}
+    d: list = []
+    vus_paires: set = set()
+    par_tour: dict = {}
     for t, a, b in sol.rencontres:
         k = cle(a, b)
         if k in vus_paires:
