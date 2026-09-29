@@ -80,8 +80,10 @@ Format : **Q** · **Réponse** · *Preuve* · Limite · Relance possible. Règle
     l'avons dit, puis construit un benchmark à conflits contrôlés (3 à 10 points). *C12.*
 
 ## ÉTHIQUE
-31. **Q : Comment évitez-vous les bulles ?** — L'optimiseur valorise les ponts entre communautés ; « ami d'ami » et
-    « similarité » enferment (mesuré, SYNTHÉTIQUE).
+31. **Q : Comment évitez-vous les bulles ?** — L'optimiseur valorise les ponts entre communautés du réseau ; « ami d'ami » et
+    « similarité » créent moins de ponts (mesuré, SYNTHÉTIQUE). Nuance mesurée (EXP-G) : sur nos profils, la similarité ne
+    relie PAS davantage le même secteur (86 % de paires inter-secteurs) ; sa vraie limite est de proposer sans raison
+    (92 % de ses paires sans aide prouvée).
 32. **Q : Ne favorisez-vous pas les membres populaires ?** — Un budget par membre limite la sollicitation ; notre
     benchmark de soirée ne discrimine pas ce biais. Depuis : budget d'attention (3 relances par membre et par jour, le reste
     reporté) testé sur un cas construit ; et sur le benchmark d'intervention, la méthode « relier les plus connectés » garde

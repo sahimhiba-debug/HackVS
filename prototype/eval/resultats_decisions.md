@@ -6,23 +6,23 @@ Données FICTIVES (club de démonstration, club synthétique). Aucun LLM. Attend
 
 | # | Scénario | Résultat | ms | Détail |
 |---|---|---|---|---|
-| S01 | nominal : couverture, 3 tours | OK | 800 | PROPOSER_A_L_HUMAIN |
-| S02 | objectif diversité seul | OK | 1275 | [{'nom': 'diversite', 'sens': 'maximiser', 'poids': 1.0}] |
+| S01 | nominal : couverture, 3 tours | OK | 951 | PROPOSER_A_L_HUMAIN |
+| S02 | objectif diversité seul | OK | 1480 | [{'nom': 'diversite', 'sens': 'maximiser', 'poids': 1.0}] |
 | S03 | demande vague → abstention | OK | 1 | S_ABSTENIR |
 | S04 | lever le consentement → escalade | OK | 0 | ESCALADER_A_L_HUMAIN |
 | S05 | injection dans l'intention → escalade | OK | 0 | ESCALADER_A_L_HUMAIN |
 | S06 | paramètre hors bornes (9 tours) → escalade | OK | 0 | spécification refusée par la politique : tours=9 hors de [1, 6] |
-| S07 | terme du domaine incompris → escalade | OK | 1 | vous mentionnez langue : je n'ai pas compris ce que vous voulez en faire |
-| S08 | un seul participant → abstention | OK | 92 | S_ABSTENIR |
+| S07 | terme du domaine incompris → escalade | OK | 0 | vous mentionnez langue : je n'ai pas compris ce que vous voulez en faire |
+| S08 | un seul participant → abstention | OK | 96 | S_ABSTENIR |
 | S09 | aucun participant → abstention | OK | 2 | S_ABSTENIR |
-| S10 | rejeu identique (démo) | OK | 1500 | 87d534aa7e47 |
-| S11 | rejeu identique (synthétique, 150 membres) | OK | 6483 | 91 rencontres |
-| S12 | branche levant le consentement refusée | OK | 732 | branche refusée par la politique : contraintes imposées par la politique, non re |
-| S13 | contre-factuel sans langue | OK | 1239 | {'rencontres_ajoutees': 2, 'rencontres_retirees': 2} |
-| S14 | stress : 3 nœuds structurels retirés, réparation | OK | 2797 | orphelins 6, re-servis 3 |
-| S15 | stress aléatoire reproductible (graine) | OK | 2024 | ['p12', 'p24', 'p29'] |
-| S16 | preuves vérifiées exigées → blocage | OK | 1505 | BLOQUER |
-| S17 | affirmations périmées → blocage | OK | 690 | BLOQUER |
-| S18 | déjà en relation → paire exclue | OK | 1819 | p00–p02 exclue |
-| S19 | certificat dérivé des enregistrements | OK | 814 | PROPOSER_A_L_HUMAIN |
-| S20 | honnêteté sur données fictives | OK | 781 | ['concentration', 'donnees_fictives', 'non_servis', 'preuves_non_verifiees'] |
+| S10 | rejeu identique (démo) | OK | 1658 | 87d534aa7e47 |
+| S11 | rejeu identique (synthétique, 150 membres) | OK | 7489 | 91 rencontres |
+| S12 | branche levant le consentement refusée | OK | 850 | branche refusée par la politique : contraintes imposées par la politique, non re |
+| S13 | contre-factuel sans langue | OK | 1457 | {'rencontres_ajoutees': 2, 'rencontres_retirees': 2} |
+| S14 | stress : 3 nœuds structurels retirés, réparation | OK | 2907 | orphelins 6, re-servis 3 |
+| S15 | stress aléatoire reproductible (graine) | OK | 2231 | ['p12', 'p24', 'p29'] |
+| S16 | preuves vérifiées exigées → blocage | OK | 1701 | BLOQUER |
+| S17 | affirmations périmées → blocage | OK | 809 | BLOQUER |
+| S18 | déjà en relation → paire exclue | OK | 2106 | p00–p02 exclue |
+| S19 | certificat dérivé des enregistrements | OK | 967 | PROPOSER_A_L_HUMAIN |
+| S20 | honnêteté sur données fictives | OK | 880 | ['concentration', 'donnees_fictives', 'non_servis', 'preuves_non_verifiees'] |
