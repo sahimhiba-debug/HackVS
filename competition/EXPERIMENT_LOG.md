@@ -148,3 +148,19 @@ Résultat · Cas d'échec · Décision · Preuve. Les hypothèses et baselines s
   invalide refusé ; pas de taux sous 10 actions ; rejeu identique ; l'API refuse une action avec un membre fermé.
 - **Limites.** NEEDS DATA : aucune décision réelle ; la réciprocité réalisée n'est pas observable (dite).
 - **Décision.** KEEP (mécanisme). **Preuve.** `tests/test_boucle.py`.
+
+## EXP-J — Cohésion ROBUSTE : le grand réseau « en fil de fer »
+- **Hypothèse 1 (robustesse = fragilités supprimées, comme 4e axe).** Varie entre plans (7 à 10 valeurs) mais
+  colinéaire à l'inclusion (ρ = +0,91) → REJETÉE comme axe.
+- **Découverte (effet de second ordre).** Sur 10 réseaux, un plan COHÉSION de 10 actions construit un plus grand groupe
+  de 60,9 membres mais **crée 15,4 nouveaux ponts fragiles** (6 à 23) : seuls **6,7** membres restent reliés si UNE
+  relation quelconque s'éteint. Maximiser la taille construit un réseau en fil de fer.
+- **Mécanisme.** Cohésion ROBUSTE = taille du plus grand groupe 2-arête-connexe (survit à la perte de n'importe quelle
+  relation). Gain marginal exact et rapide par l'ARBRE DES PONTS (ajouter u–v fusionne les groupes robustes du chemin
+  u→v) ; **0 désaccord avec la force brute** sur 300 graphes aléatoires ; glouton 6,5 s → intégré au front sans surcoût notable.
+- **Résultat.** Variante robuste contre cohésion simple (10 réseaux) : plus grand groupe robuste **28,1 contre 6,7**,
+  ponts fragiles **−4,4 contre +15,4**, inclusion 4,1 contre 0,3 ; plus grand groupe 34,6 contre 60,9 (la cohésion simple
+  gagne sur SON critère). Comme 4e axe du front : indépendant de la cohésion simple (ρ = −0,03), en conflit avec
+  l'inclusion (−0,47) ; front médian 21 plans ; aucun plan idéal (0/20) ; hasard de contrôle dominé 167/200.
+- **Décision.** KEEP : axe COHÉSION_ROBUSTE dans le front. **Preuve.** `tests/test_observatoire.py`
+  (cas construit + égalité rapide/brute), `eval/resultats_benchmark_pareto.md`.

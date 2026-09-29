@@ -103,12 +103,12 @@ def main() -> None:
     base = [nom for nom in noms if not nom.startswith("HASARD")]
     lignes = ["# Frontière de Pareto des interventions — SYNTHETIC", "",
               f"{a.reseaux} réseaux GÉNÉRÉS de {a.membres} membres ; budget {a.budget} actions ; plafond 1 ; "
-              "15 pondérations + 4 plans heuristiques + 30 plans aléatoires d'exploration ; "
+              "35 pondérations + 4 plans heuristiques + 30 plans aléatoires d'exploration ; "
               "contrôle : 10 tirages aléatoires DISTINCTS, hors du vivier.", "",
               f"- Taille du front (plans non dominés) : médiane {statistics.median(r['front'] for r in runs)}, "
               f"min {min(r['front'] for r in runs)}, max {max(r['front'] for r in runs)} ; plans distincts explorés : "
               f"médiane {statistics.median(r['explores'] for r in runs)}.",
-              f"- Un plan atteint l'idéal sur les 3 axes à la fois : {sum(r['ideal'] for r in runs)}/{len(runs)} réseaux.",
+              f"- Un plan atteint l'idéal sur les {len(pa.AXES)} axes à la fois : {sum(r['ideal'] for r in runs)}/{len(runs)} réseaux.",
               f"- Part des actions candidates qui relient deux secteurs différents : "
               f"{statistics.mean(r['part_intersecteur'] for r in runs):.0%} (d'où l'abandon de la diversité sectorielle comme axe) ; "
               f"sans aucun contact commun : {statistics.mean(r['part_non_redondante'] for r in runs):.0%} (non-redondance abandonnée).",

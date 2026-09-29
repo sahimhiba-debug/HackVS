@@ -123,3 +123,32 @@ def test_temporel_donnees_vides_et_membres_inconnus():
 def test_pareto_sans_aucune_action_prouvee_ne_rien_faire():
     f = pa.frontiere(nx.Graph([("a", "b")]), ["a", "b", "c"], [], k=3)
     assert f["decision"] == "NE_RIEN_FAIRE" and f["front"] == [] and not f["un_plan_atteint_l_ideal"]
+
+
+def test_cohesion_robuste_prefere_fermer_un_cycle_a_tirer_un_fil():
+    """Deux relations possibles : un fil vers un grand groupe (cohésion simple) ou fermer un cycle (groupe qui survit à la
+    perte de n'importe quelle relation). Chaque extrême choisit la sienne."""
+    g = nx.Graph([("a1", "a2"), ("a2", "a3"), ("a3", "a4"), ("b1", "b2"), ("b2", "b3"), ("b1", "b3"), ("b3", "b4"), ("b4", "b5")])
+    membres = sorted(g.nodes)
+    fil = Candidate("INTRODUCTION", "a4", "b1", 1, False)          # relie deux groupes par UNE relation
+    cycle = Candidate("INTRODUCTION", "a1", "a4", 1, False)        # ferme a1-a2-a3-a4 : 4 membres robustes
+    f = pa.frontiere(g, membres, [fil, cycle], k=1)
+    noms = {n: p["paires"] for p in f["plans_nommes"] for n in p["noms"]}
+    assert noms["COHESION"] == [["a4", "b1"]] and noms["COHESION_ROBUSTE"] == [["a1", "a4"]]
+    assert pa.plus_grand_groupe_robuste(g, membres) == 3                        # b1-b2-b3 avant
+
+
+def test_gain_robuste_rapide_egal_force_brute():
+    import random
+    for s in range(60):
+        r = random.Random(s)
+        n = r.randint(4, 20)
+        g = nx.relabel_nodes(nx.gnm_random_graph(n, r.randint(0, 2 * n), seed=s), lambda i: f"n{i}")
+        for _ in range(5):
+            a, b = r.sample(sorted(g), 2)
+            if g.has_edge(a, b):
+                continue
+            h = g.copy()
+            h.add_edge(a, b)
+            attendu = max(0, pa.arbre_des_ponts(h)[3] - pa.arbre_des_ponts(g)[3])
+            assert pa.gain_robuste(a, b, pa.arbre_des_ponts(g)) == attendu, (s, a, b)

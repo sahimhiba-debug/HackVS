@@ -21,15 +21,48 @@ import networkx as nx
 
 from .interventions import Candidate, _composantes
 
-AXES = ("inclusion", "cohesion", "reciprocite")
+AXES = ("inclusion", "cohesion", "reciprocite", "cohesion_robuste")
 
 
-def _gains(g: nx.Graph, c: Candidate, comp: tuple) -> tuple[float, ...]:
+def arbre_des_ponts(g: nx.Graph) -> tuple[dict[str, int], dict[int, int], nx.Graph, int]:
+    """Groupes ROBUSTES (2-arête-connexes : restent reliés si N'IMPORTE QUELLE relation s'éteint) et arbre des ponts.
+    Ajouter une relation u–v fusionne tous les groupes robustes du chemin u→v dans cet arbre (théorie des graphes :
+    l'arête crée un cycle qui supprime ces ponts) ; entre deux composantes distinctes, elle est elle-même un pont."""
+    ponts = list(nx.bridges(g))
+    h = g.copy()
+    h.remove_edges_from(ponts)
+    ident, taille = {}, {}
+    for i, comp in enumerate(nx.connected_components(h)):
+        taille[i] = len(comp)
+        for x in comp:
+            ident[x] = i
+    arbre = nx.Graph()
+    arbre.add_nodes_from(taille)
+    arbre.add_edges_from((ident[a], ident[b]) for a, b in ponts)
+    return ident, taille, arbre, max(taille.values(), default=0)
+
+
+def gain_robuste(a: str, b: str, ponts: tuple) -> int:
+    """Accroissement du plus grand groupe robuste si la relation a–b est ajoutée (exact, sans recalcul du graphe)."""
+    ident, taille, arbre, maxi = ponts
+    ia, ib = ident[a], ident[b]
+    if ia == ib or not nx.has_path(arbre, ia, ib):
+        return 0
+    return max(0, sum(taille[x] for x in nx.shortest_path(arbre, ia, ib)) - maxi)
+
+
+def plus_grand_groupe_robuste(g: nx.Graph, membres: list[str]) -> int:
+    h = g.subgraph(membres).copy()
+    h.add_nodes_from(membres)
+    return arbre_des_ponts(h)[3]
+
+
+def _gains(g: nx.Graph, c: Candidate, comp: tuple, ponts: tuple) -> tuple[float, ...]:
     ident, taille, vivant = comp
     isoles = (g.degree(c.a) == 0) + (g.degree(c.b) == 0)
     ca, cb = ident[c.a], ident[c.b]
     croissance = 0 if ca == cb else max(0, taille[ca] + taille[cb] - taille[vivant])
-    return (isoles, croissance, float(c.reciproque))
+    return (isoles, croissance, float(c.reciproque), gain_robuste(c.a, c.b, ponts))
 
 
 def glouton(g0: nx.Graph, cands: list[Candidate], k: int, poids: tuple[float, ...],
@@ -39,8 +72,8 @@ def glouton(g0: nx.Graph, cands: list[Candidate], k: int, poids: tuple[float, ..
         possibles = [c for c in restantes if n.get(c.a, 0) < plafond and n.get(c.b, 0) < plafond]
         if not possibles:
             break
-        comp = _composantes(g)
-        gains = {id(c): _gains(g, c, comp) for c in possibles}
+        comp, ponts = _composantes(g), arbre_des_ponts(g)
+        gains = {id(c): _gains(g, c, comp, ponts) for c in possibles}
         maxi = [max(gains[id(c)][i] for c in possibles) or 1.0 for i in range(len(AXES))]
         meilleure = min(possibles, key=lambda c: (-sum(w * gains[id(c)][i] / maxi[i] for i, w in enumerate(poids)),
                                                   -c.valeur, c.a, c.b))
@@ -60,7 +93,8 @@ def evaluer(g0: nx.Graph, membres: list[str], plan: list[Candidate]) -> dict[str
     isoles_apres = sum(1 for x in membres if apres.degree(x) == 0)
     return {"inclusion": isoles_avant - isoles_apres,
             "cohesion": max(len(c) for c in nx.connected_components(apres.subgraph(membres))),
-            "reciprocite": sum(c.reciproque for c in plan)}
+            "reciprocite": sum(c.reciproque for c in plan),
+            "cohesion_robuste": plus_grand_groupe_robuste(apres, membres)}
 
 
 def domine(u: dict, v: dict) -> bool:
