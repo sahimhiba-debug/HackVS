@@ -159,8 +159,9 @@ def test_hysteresis_prefere_le_plan_proche_de_la_derniere_decision_parmi_les_qua
     membres = ["a1", "a2", "b1", "b2", "i1", "i2"]
     c1 = Candidate("INTRODUCTION", "a1", "i1", 1, False)
     c2 = Candidate("INTRODUCTION", "b1", "i2", 1, False)               # symétrique de c1 : mêmes objectifs
-    sans = pa.frontiere(g, membres, [c1, c2], k=1)
+    sans = pa.frontiere(g, membres, [c1, c2], k=1, plans_supplementaires=[[c1], [c2]])   # les deux plans existent
     choix_sans = next(p["paires"] for p in sans["plans_nommes"] if "EQUILIBRE" in p["noms"])
     autre = [["b1", "i2"]] if choix_sans == [["a1", "i1"]] else [["a1", "i1"]]
-    avec = pa.frontiere(g, membres, [c1, c2], k=1, precedent=autre)
+    assert len(sans["front"]) == 2                                      # égalité parfaite : les deux sont non dominés
+    avec = pa.frontiere(g, membres, [c1, c2], k=1, plans_supplementaires=[[c1], [c2]], precedent=autre)
     assert next(p["paires"] for p in avec["plans_nommes"] if "EQUILIBRE" in p["noms"]) == autre
