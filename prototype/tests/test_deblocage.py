@@ -19,8 +19,8 @@ SOPHIE = Profil(id="n01", nom=S["nom"], fonction=S["fonction"], entreprise=S["en
 PROFILS = [Profil(**p) for p in D["profils"]] + [SOPHIE]
 PAR_ID = {p.id: p for p in PROFILS}
 T0 = date(2026, 11, 3)
-PHRASE = ("Pour le salon de mars à Munich, je dois faire traduire mes étiquettes en allemand et décrocher un premier "
-          "rendez-vous avec un distributeur en Allemagne. Pas un concurrent ; on peut échanger en français.")
+PHRASE = ("Pour le salon de Munich, je dois faire traduire mes étiquettes en allemand et décrocher un rendez-vous avec "
+          "un distributeur en Allemagne, pas un concurrent, qui parle français.")
 
 
 def _plan(texte=PHRASE, demandeur=SOPHIE, occupes=None):
@@ -35,7 +35,7 @@ def _autorises(pl, etape_id):
 
 def _jusqu_a_contribution(m, reutilisation="club", attribution=True):
     b, pl = _plan()
-    did = db.ouvrir(m, T0, "n01", PHRASE, "fiche traduite + un rendez-vous au salon", b, secteur="boissons")
+    did = db.ouvrir(m, T0, SOPHIE, PHRASE, "fiche traduite + un rendez-vous au salon", b)
     trad = next(e for e in pl["etapes"] if e["concept"] == "traduction")
     anna = trad["principal"]["id"]
     db.solliciter(m, T0, did, trad["id"], anna, _autorises(pl, trad["id"]))
@@ -107,10 +107,10 @@ def test_transitions_invalides_refusees():
     m = Memoire()
     b, pl = _plan()
     with pytest.raises(db.ErreurDeblocage):
-        db.ouvrir(m, T0, "n01", PHRASE, "  ", b)                            # pas de prochaine étape = pas de critère d'effet
+        db.ouvrir(m, T0, SOPHIE, PHRASE, "  ", b)                            # pas de prochaine étape = pas de critère d'effet
     with pytest.raises(db.ErreurDeblocage):
-        db.ouvrir(m, T0, "n01", "bonjour", "x", analyser("bonjour", TAX))
-    did = db.ouvrir(m, T0, "n01", PHRASE, "rendez-vous", b)
+        db.ouvrir(m, T0, SOPHIE, "bonjour", "x", analyser("bonjour", TAX))
+    did = db.ouvrir(m, T0, SOPHIE, PHRASE, "rendez-vous", b)
     trad = pl["etapes"][0]
     ok = _autorises(pl, trad["id"])
     for membre in ("s01", "n01"):                                           # sans preuve ; soi-même
@@ -144,9 +144,9 @@ def test_budget_d_attention_empeche_une_troisieme_sollicitation_ouverte():
     exp = next(e for e in pl["etapes"] if e["concept"] == "export_allemagne")
     ok = _autorises(pl, exp["id"])
     for i in range(db.MAX_SOLLICITATIONS_OUVERTES):
-        d = db.ouvrir(m, T0 + timedelta(days=i), "n01", PHRASE, f"rdv {i}", b)
+        d = db.ouvrir(m, T0 + timedelta(days=i), SOPHIE, PHRASE, f"rdv {i}", b)
         db.solliciter(m, T0, d, exp["id"], "s14", ok)
-    d = db.ouvrir(m, T0 + timedelta(days=9), "n01", PHRASE, "rdv x", b)
+    d = db.ouvrir(m, T0 + timedelta(days=9), SOPHIE, PHRASE, "rdv x", b)
     with pytest.raises(db.ErreurDeblocage, match="budget"):
         db.solliciter(m, T0, d, exp["id"], "s14", ok)
     assert db.charge(m)["s14"] == db.MAX_SOLLICITATIONS_OUVERTES
@@ -179,7 +179,7 @@ def test_verdict_non_ne_debloque_pas_et_n_entre_pas_en_memoire():
 def test_sollicite_ne_voit_que_son_etape_et_pas_qui_demande_avant_accord():
     m = Memoire()
     b, pl = _plan()
-    did = db.ouvrir(m, T0, "n01", PHRASE, "rdv", b, anonyme=False, secteur="boissons")
+    did = db.ouvrir(m, T0, SOPHIE, PHRASE, "rdv", b, anonyme=False)
     trad = pl["etapes"][0]
     anna = trad["principal"]["id"]
     db.solliciter(m, T0, did, trad["id"], anna, _autorises(pl, trad["id"]))
@@ -202,7 +202,7 @@ def test_demande_anonyme_reste_anonyme_meme_apres_accord():
 def test_un_refus_n_est_jamais_revele_au_demandeur():
     m = Memoire()
     b, pl = _plan()
-    did = db.ouvrir(m, T0, "n01", PHRASE, "rdv", b)
+    did = db.ouvrir(m, T0, SOPHIE, PHRASE, "rdv", b)
     exp = next(e for e in pl["etapes"] if e["concept"] == "export_allemagne")
     ok = _autorises(pl, exp["id"])
     db.solliciter(m, T0, did, exp["id"], exp["principal"]["id"], ok)
@@ -224,18 +224,18 @@ def test_contribution_confirmee_repond_a_une_demande_semblable_sans_deranger_per
     t2 = T0 + timedelta(days=7)
     pauline = PAR_ID["s01"]
     b2 = analyser("Je dois traduire mes étiquettes de vin en allemand pour un salon à Stuttgart.", TAX)
-    trouve = db.chercher_en_memoire(m, b2, secteur_demandeur="vins")
+    trouve = db.chercher_en_memoire(m, b2, pauline)
     assert [x["contribution_id"] for x in trouve] == [cid] and trouve[0]["auteur"] == anna
     assert trouve[0]["confirmations"][0]["verdict"] == "debloque"
     assert any("à vérifier" in d for d in trouve[0]["differences"])          # contexte d'origine différent : dit
     assert "n01" not in json.dumps(trouve) and "Sophie" not in json.dumps(trouve, ensure_ascii=False)
-    d2 = db.ouvrir(m, t2, pauline.id, "étiquettes de vin", "étiquettes traduites", b2, secteur="vins")
+    d2 = db.ouvrir(m, t2, pauline, "étiquettes de vin", "étiquettes traduites", b2)
     n_sollicitations = len(m.evenements("SOLLICITATION"))
     db.reutiliser(m, t2, d2, cid, pauline.id)
     db.confirmer(m, t2, d2, cid, pauline.id, "partiel")
     assert len(m.evenements("SOLLICITATION")) == n_sollicitations           # personne n'a été redérangé
     e = db.etat(m, d2)
-    assert e["par_memoire"] and e["etapes"][0]["statut"] == "PARTIELLE"
+    assert e["par_memoire"] and [x["statut"] for x in e["etapes"]] == ["PARTIELLE"]   # « vin » : contexte, pas une étape
     assert len(db.memoire_verifiee(m)[0]["confirmations"]) == 2             # la preuve s'accumule
 
 
@@ -245,7 +245,7 @@ def test_memoire_respecte_la_portee_et_l_attribution():
     db.confirmer(m, T0, did, cid, "n01", "debloque")
     assert db.memoire_verifiee(m) == []                                     # réservée au demandeur : jamais réutilisée
     with pytest.raises(db.ErreurDeblocage):
-        d2 = db.ouvrir(m, T0, "s01", "x", "y", analyser(PHRASE, TAX))
+        d2 = db.ouvrir(m, T0, PAR_ID["s01"], "x", "y", analyser(PHRASE, TAX))
         db.reutiliser(m, T0, d2, cid, "s01")
     m2 = Memoire()
     did, *_, cid = _jusqu_a_contribution(m2, attribution=False)
@@ -258,3 +258,20 @@ def test_memoire_ne_repond_pas_a_une_autre_competence():
     did, *_, cid = _jusqu_a_contribution(m)
     db.confirmer(m, T0, did, cid, "n01", "debloque")
     assert db.chercher_en_memoire(m, analyser("Je cherche un emballage", TAX)) == []
+
+
+def test_mot_de_sa_propre_activite_est_du_contexte_pas_une_etape():
+    pauline = PAR_ID["s01"]
+    b = analyser("Je dois faire traduire mes étiquettes de vin en allemand pour un salon à Stuttgart.", TAX)
+    pl = db.plan(b, pauline, PROFILS, TAX)
+    assert [e["concept"] for e in pl["etapes"]] == ["traduction"]
+    assert pl["ecartees"] and "propre activité" in pl["ecartees"][0]["raison"]
+    seul = db.plan(analyser("Je cherche un autre vigneron", TAX), pauline, PROFILS, TAX)
+    assert seul["ecartees"] == [] and len(seul["etapes"]) == 1              # seule chose comprise : gardée
+
+
+def test_un_mot_inconnu_isole_n_est_pas_declare_manque_du_club():
+    _, pl = _plan("bonjour tout le monde")
+    assert pl["etapes"][0]["manque"]["certain"] is False and "précisez" in pl["etapes"][0]["manque"]["raison"]
+    _, pl = _plan("Je cherche un distributeur au Japon pour nos tisanes.")
+    assert pl["etapes"][0]["manque"]["certain"] is True

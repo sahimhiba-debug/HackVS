@@ -42,16 +42,35 @@ def _id(*parts: str) -> str:
 
 
 # ------------------------------------------------------------------ comprendre : étapes et contraintes partagées
-def etapes(besoin: Besoin) -> list[dict]:
-    """Une étape par compétence comprise (dédoublonnée), avec l'extrait de la phrase qui la justifie."""
+def _toutes_etapes(besoin: Besoin) -> list[dict]:
     vues: set[str] = set()
     res: list[dict] = []
     for c in besoin.criteres:
         if c.type in ("expertise", "texte_libre") and c.valeur not in vues:
             vues.add(c.valeur)
             res.append({"id": f"e{len(res) + 1}", "type": c.type, "concept": c.valeur, "libelle": c.libelle,
-                        "extrait": c.extrait})
+                        "extrait": c.extrait or (c.valeur if c.type == "texte_libre" else None)})
     return res
+
+
+def _activite(demandeur: Optional[Profil]) -> set[str]:
+    return ({o.concept for o in demandeur.offre if o.concept} | set(demandeur.secteurs)) if demandeur else set()
+
+
+def etapes(besoin: Besoin, demandeur: Optional[Profil] = None) -> list[dict]:
+    """Une étape par compétence comprise (dédoublonnée), avec l'extrait de la phrase qui la justifie.
+    Un mot qui décrit la PROPRE activité du demandeur (« vin » pour une vigneronne) est du contexte, pas un manque —
+    sauf s'il est la seule chose comprise (chercher un pair de son métier est légitime)."""
+    toutes = _toutes_etapes(besoin)
+    utiles = [e for e in toutes if e["concept"] not in _activite(demandeur)]
+    return utiles or toutes
+
+
+def etapes_ecartees(besoin: Besoin, demandeur: Optional[Profil]) -> list[dict]:
+    garde = {e["concept"] for e in etapes(besoin, demandeur)}
+    return [{"libelle": e["libelle"], "extrait": e["extrait"],
+             "raison": f"« {e['extrait']} » décrit votre propre activité : lu comme du contexte, pas comme un besoin"}
+            for e in _toutes_etapes(besoin) if e["concept"] not in garde]
 
 
 def contraintes(besoin: Besoin) -> list[dict]:
@@ -86,8 +105,14 @@ def levee_minimale(besoin: Besoin, etape: dict, demandeur: Profil, profils: list
         if n:
             levees.append({"sans": c["libelle"], "personnes": n})
     if levees:
-        return {"raison": "une contrainte écarte toutes les personnes qui déclarent cette compétence", "levees": levees}
-    return {"raison": "aucun membre disponible ne déclare cette compétence : c'est un manque du Club", "levees": []}
+        return {"raison": "une contrainte écarte toutes les personnes qui déclarent cette compétence", "levees": levees,
+                "certain": True}
+    if etape["type"] == "texte_libre" and len(etape["concept"].split()) < 2:
+        # un seul mot inconnu (« monde », « sympa ») : trop peu pour affirmer un manque du Club
+        return {"raison": f"« {etape['concept']} » ne correspond à aucune compétence connue : précisez ce que vous cherchez",
+                "levees": [], "certain": False}
+    return {"raison": "aucun membre disponible ne déclare cette compétence : c'est un manque du Club", "levees": [],
+            "certain": True}
 
 
 def question_decisive(besoin: Besoin, demandeur: Profil, profils: list[Profil], tax) -> Optional[dict]:
@@ -123,7 +148,7 @@ def plan(besoin: Besoin, demandeur: Profil, profils: list[Profil], tax, occupes:
     """Le plus petit ensemble de personnes qui couvre les étapes (glouton de couverture, déterministe) ; une réserve
     par étape, contactée seulement si la première personne décline ; budget d'attention respecté."""
     occupes = occupes or {}
-    etps = etapes(besoin)
+    etps = etapes(besoin, demandeur)
     par_etape = {e["id"]: [c for c in candidats(besoin, e, demandeur, profils, tax)
                            if occupes.get(c["id"], 0) < MAX_SOLLICITATIONS_OUVERTES] for e in etps}
     a_couvrir, choix = {e["id"] for e in etps if par_etape[e["id"]]}, {}
@@ -150,7 +175,8 @@ def plan(besoin: Besoin, demandeur: Profil, profils: list[Profil], tax, occupes:
         reserve = next((c for c in cands if c["id"] != principal["id"]), None)
         lignes.append(e | {"principal": principal, "reserve": reserve, "manque": None})
     personnes = sorted({x["principal"]["id"] for x in lignes if x["principal"]})
-    return {"etapes": lignes, "contraintes": contraintes(besoin), "personnes_sollicitees": len(personnes),
+    return {"etapes": lignes, "ecartees": etapes_ecartees(besoin, demandeur), "contraintes": contraintes(besoin),
+            "personnes_sollicitees": len(personnes),
             "personnes": personnes, "membres_non_derange": len([p for p in profils if p.type == "membre_club"
                                                                 and p.id not in personnes and p.id != demandeur.id]),
             "couverture": f"{sum(1 for x in lignes if x['principal'])}/{len(lignes)}"}
@@ -164,15 +190,16 @@ def _dem(m: Memoire, demande_id: str) -> Evt:
     return e
 
 
-def ouvrir(m: Memoire, le: date, demandeur: str, texte: str, prochaine_etape: str, besoin: Besoin,
-           anonyme: bool = True, secteur: Optional[str] = None, statut: Statut = Statut.SIMULE) -> str:
+def ouvrir(m: Memoire, le: date, demandeur: Profil, texte: str, prochaine_etape: str, besoin: Besoin,
+           anonyme: bool = True, statut: Statut = Statut.SIMULE) -> str:
     if not prochaine_etape.strip():
         raise ErreurDeblocage("indiquez la prochaine étape qui dirait « c'est débloqué »")
-    etps = etapes(besoin)
+    etps = etapes(besoin, demandeur)
     if not etps:
         raise ErreurDeblocage("aucune étape comprise : précisez ce qui vous manque")
-    did = "d" + _id(demandeur, texte, le.isoformat(), str(len(m.evenements("DEMANDE_OUVERTE"))))
-    m.ajouter(Evt(type="DEMANDE_OUVERTE", le=le, acteurs=[demandeur], statut=statut,
+    secteur = demandeur.secteurs[0] if demandeur.secteurs else None
+    did = "d" + _id(demandeur.id, texte, le.isoformat(), str(len(m.evenements("DEMANDE_OUVERTE"))))
+    m.ajouter(Evt(type="DEMANDE_OUVERTE", le=le, acteurs=[demandeur.id], statut=statut,
                   donnees={"demande_id": did, "texte": texte, "prochaine_etape": prochaine_etape.strip(),
                            "besoin": besoin.model_dump(), "anonyme": anonyme, "secteur": secteur,
                            "etapes": etps}))
@@ -316,11 +343,12 @@ def memoire_verifiee(m: Memoire) -> list[dict]:
     return res
 
 
-def chercher_en_memoire(m: Memoire, besoin: Besoin, secteur_demandeur: Optional[str] = None) -> list[dict]:
+def chercher_en_memoire(m: Memoire, besoin: Besoin, demandeur: Optional[Profil] = None) -> list[dict]:
     """Pour chaque étape, une contribution vérifiée sur la même compétence — avec ce qui DIFFÈRE du contexte d'origine."""
     memo = memoire_verifiee(m)
+    secteur_demandeur = demandeur.secteurs[0] if demandeur and demandeur.secteurs else None
     res = []
-    for e in etapes(besoin):
+    for e in etapes(besoin, demandeur):
         for x in memo:
             if x["concept"] != e["concept"]:
                 continue

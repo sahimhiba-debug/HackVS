@@ -904,6 +904,15 @@ def page_cycle():
 if MODE == "demo":  # scène de présentation : monde ISOLÉ et déterministe (données de scène fictives)
     from .stage import creer_routeur as _routeur_scene
     app.include_router(_routeur_scene(TAX))
+    from .club_repond import creer_routeur as _routeur_club_repond
+    app.include_router(_routeur_club_repond(TAX))
+
+
+@app.get("/demo/club-repond")
+def page_club_repond():
+    if MODE != "demo":
+        raise HTTPException(501, "Scène réservée au mode démo.")
+    return FileResponse(WEB / "club-repond.html")
 
 
 @app.get("/demo/stage")
