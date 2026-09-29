@@ -44,7 +44,12 @@ def test_histoire_racontee_par_le_moteur():
     assert reunir is not consolider                                   # aucun plan ne gagne sur tout
     assert reunir["plus_grand_groupe"] > consolider["plus_grand_groupe"] and consolider["groupe_robuste"] > reunir["groupe_robuste"]
     assert t[4]["nature"].startswith("SIMULATION")
-    assert t[5]["est_un_pont"] and len(t[5]["coupes_de_leur_groupe"]) >= 3 and t[5]["apres"]["groupes"] > t[5]["avant"]["groupes"]
+    assert t[5]["est_un_pont"] and t[5]["apres"]["groupes"] > t[5]["avant"]["groupes"]
+    # la partie coupée, pas tout le groupe (défaut n° 39 : les 8 membres étaient déclarés coupés)
+    assert t[5]["coupes_de_leur_groupe"] == ["s06", "s07", "s08", "s09"] and t[5]["taille_du_groupe"] == 8
+    # ponts surlignés = ponts FRAGILES du diagnostic, pas les bouts de chaîne (défaut n° 41)
+    fragile = next(p for p in t[3]["phenomenes"] if p["code"] == "PONT_FRAGILE")
+    assert len(t[3]["ponts"]) == int(fragile["observation"].split()[0]) == 2
     # C — silence et refus motivés
     assert [r["type"] for p in t[6]["relances"] for r in p["raisons"]] == ["RECIPROCITE_OUVERTE"]
     assert t[6]["silences"]["rien_de_nouveau"] >= 10

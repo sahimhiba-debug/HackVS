@@ -98,6 +98,10 @@ def enregistrer(url: str, rapide: bool) -> None:
                 actuelle += 1
                 pg.wait_for_function(f"document.querySelector('#horloge').textContent.includes('étape {actuelle}/')", timeout=30000)
             pg.evaluate("window.scrollTo(0, 0)")
+            if plan.get("clic"):                        # clic RÉEL sur une relation du graphe (contrefactuel interactif)
+                pg.locator(f'line.lien-zone[aria-label*="{plan["clic"]}"]').first.dispatch_event("click")
+                pg.wait_for_function("document.querySelector('#carte').innerText.includes('VOTRE SIMULATION') || "
+                                     "document.querySelector('#carte').innerText.includes('Votre simulation')")
             pg.evaluate(CALQUE.replace("TEXTE", json.dumps(plan["texte"])))
             duree = plan["duree"] / (4 if rapide else 1)
             if plan.get("defiler"):
@@ -112,7 +116,8 @@ def enregistrer(url: str, rapide: bool) -> None:
                 pg.wait_for_timeout(int(duree * 1000))
             if not rapide and not plan.get("fin"):
                 pg.evaluate("window.scrollTo(0, 0)")
-                pg.screenshot(path=str(PREUVES / f"scene_{plan['etape']:02d}.png"))
+                nom = f"scene_{plan['etape']:02d}" + ("_clic" if plan.get("clic") else "")
+                pg.screenshot(path=str(PREUVES / f"{nom}.png"))
             journal.append({"etape": plan["etape"], "debut_s": round(time.time() - t0 - duree, 1), "duree_s": duree, "texte": plan["texte"]})
         chemin = pg.video.path()
         ctx.close()

@@ -1,15 +1,20 @@
-# Pitch — 90 secondes (texte exact, rythme propre : une idée, une démo, une preuve)
+# Pitch — 90 secondes (texte exact ; une page, trois scènes)
 
-À la Foire, on échange une carte et on se dit « on se rappelle ». Un mois plus tard, on ne sait plus pourquoi.
-Le Club organise les moments où l'on se rencontre ; ce qui se passe après dépend de la mémoire de chacun. Nous lui donnons une mémoire.
+<!-- Règle : tout chiffre cité ici doit être prouvé (scripts/validate_competition_claims.py le vérifie). -->
 
-**[démo, étapes 4, 7, 9, 12]**
-Sophie vient d'arriver. Elle cherche un partenaire pour l'Allemagne. Pas une liste : deux personnes, avec leurs
-preuves, et ce qui reste inconnu. Aucun numéro : une introduction, que Markus accepte ou non.
-Dix jours après leur rencontre, une seule relance, fondée sur une preuve — et 17 silences, parce qu'il n'y avait
-rien de nouveau à dire. Avant d'agir, on simule : 2 groupes du réseau n'en forment plus qu'un. L'humain décide.
+À la Foire, on échange une carte et on se dit « on se rappelle ». Un mois plus tard, qu'en reste-t-il ? Et que doit
+faire l'organisatrice du Club ce mois-ci ?
 
-Sur un benchmark synthétique, notre optimiseur crée plus de ponts et sert plus de membres que 5 autres méthodes —
-et perd sur la réciprocité, ce que nous montrons.
+**[démo — scène A]** Sophie écrit son besoin avec ses mots : trois besoins, une langue, une exclusion. Nos règles échouent sur
+cette phrase — c'est là, et seulement là, que nous mettons une IA, et chaque critère qu'elle propose doit citer le
+texte. Le moteur répond par une personne dont le profil prouve qu'elle peut aider. Pas un numéro : une introduction,
+qu'il peut refuser.
 
+**[scène B]** L'organisatrice voit que son réseau ne tient qu'à un fil. Une seule introduction possible ce mois-ci :
+réunir les îlots fait passer le plus grand groupe de 8 à 15 membres, mais par un seul fil ; consolider en rend 8
+résistants à une perte, sans rien réunir. Aucun plan ne gagne sur tout : le système montre le prix, elle choisit.
+
+**[scène C]** Dix jours plus tard : une relance, avec sa preuve, et 17 silences. Il sait dire non, et dit pourquoi.
+
+Tout est fictif et calculé en direct ; la valeur réelle se mesurera par un pilote, dont le protocole est écrit.
 Chaque événement crée des rencontres. Nous faisons en sorte qu'elles deviennent quelque chose.

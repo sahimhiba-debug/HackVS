@@ -2,84 +2,72 @@
  {
   "etape": 0,
   "debut_s": 0.1,
-  "duree_s": 7.0,
-  "texte": "La Foire crée les rencontres. Un mois plus tard, que reste-t-il ?"
+  "duree_s": 8.0,
+  "texte": "La Foire crée les rencontres. Un mois plus tard, qu'en reste-t-il ? Et que doit faire l'organisatrice du Club ?"
  },
  {
   "etape": 1,
-  "debut_s": 7.3,
-  "duree_s": 9.0,
-  "texte": "Un réseau fictif de seize membres. Des rencontres ont eu lieu — mais le réseau reste fait d'îlots."
+  "debut_s": 8.5,
+  "duree_s": 18.0,
+  "texte": "Scène A. Sophie écrit son besoin avec ses mots. Nos règles lisent mal cette phrase et s'abstiennent. Ici, aucun modèle d'IA n'est configuré : l'écran le dit, et le produit demande une phrase plus simple. L'IA n'est jamais simulée."
  },
  {
   "etape": 2,
-  "debut_s": 16.5,
+  "debut_s": 26.6,
   "duree_s": 12.0,
-  "texte": "Sophie rejoint le Club. Elle ne connaît personne. Le système propose un profil, elle le corrige. Par défaut, elle est invisible."
+  "texte": "Pas une liste : Markus, dont le profil prouve qu'il peut aider. Et il cherche justement ce que Sophie produit."
  },
  {
   "etape": 3,
-  "debut_s": 28.7,
+  "debut_s": 38.8,
   "duree_s": 9.0,
-  "texte": "Elle cherche un partenaire pour développer son activité en Allemagne. Le besoin est compris localement, sans modèle externe."
+  "texte": "Une introduction, pas un numéro. Il pouvait refuser. Les coordonnées ne circulent qu'après son accord."
  },
  {
   "etape": 4,
-  "debut_s": 38.0,
-  "duree_s": 16.0,
-  "texte": "Pas une liste de noms : deux personnes, avec leurs preuves. Markus peut l'aider — et Sophie peut l'aider en retour. Ce qui reste inconnu est affiché."
+  "debut_s": 48.1,
+  "duree_s": 13.0,
+  "texte": "Scène B. La vue de l'organisatrice : deux parties du Club ne tiennent qu'à une seule relation."
  },
  {
   "etape": 5,
-  "debut_s": 54.1,
-  "duree_s": 11.0,
-  "texte": "Il ne donne pas le numéro de Markus. Et pour le Japon, il s'abstient : plutôt aucune proposition qu'un mauvais contact."
+  "debut_s": 61.2,
+  "duree_s": 17.0,
+  "texte": "Une seule introduction ce mois-ci. Réunir les îlots : huit puis quinze membres reliés, mais par un seul fil. Consolider : huit résistent à une perte, sans rien réunir. Aucun plan ne gagne sur tout. Elle choisit."
  },
  {
   "etape": 6,
-  "debut_s": 65.3,
-  "duree_s": 8.0,
-  "texte": "Sophie demande une introduction. Markus reçoit une demande. Il peut refuser."
+  "debut_s": 78.4,
+  "duree_s": 11.0,
+  "texte": "Et si cette relation s'éteignait ? Quatre membres seraient coupés de leur groupe. Calculé, pas deviné — et affiché comme une simulation."
+ },
+ {
+  "etape": 6,
+  "debut_s": 89.5,
+  "duree_s": 10.0,
+  "texte": "On clique une autre relation : celle-ci est doublée par un autre chemin. Personne n'est perdu."
  },
  {
   "etape": 7,
-  "debut_s": 73.4,
-  "duree_s": 9.0,
-  "texte": "Markus accepte. Les coordonnées sont partagées maintenant — pas avant. Une relation naît dans le graphe."
+  "debut_s": 99.7,
+  "duree_s": 12.0,
+  "texte": "Scène C. Dix jours plus tard : une seule relance, avec sa preuve. Pour les dix-sept autres paires : rien de nouveau, donc silence."
  },
  {
   "etape": 8,
-  "debut_s": 82.6,
-  "duree_s": 8.0,
-  "texte": "Ils se rencontrent. La relation garde son contexte : où, quand, pourquoi."
+  "debut_s": 112.0,
+  "duree_s": 13.0,
+  "texte": "Trois demandes refusées, chacune avec sa raison : aucune preuve pour le Japon, un membre qui a refusé d'être présenté, une introduction sans aide prouvée."
  },
  {
   "etape": 9,
-  "debut_s": 90.9,
-  "duree_s": 14.0,
-  "texte": "Dix jours plus tard : une seule relance, fondée sur une preuve — Markus cherche ce que Sophie produit. Pour les dix-sept autres paires : rien de nouveau, donc silence."
- },
- {
-  "etape": 10,
-  "debut_s": 105.0,
+  "debut_s": 125.1,
   "duree_s": 9.0,
-  "texte": "Markus donne suite. Sophie note une affaire en cours : une opportunité, pas encore un résultat."
+  "texte": "Tout est fictif et calculé en direct. La valeur réelle se mesurera par un pilote."
  },
  {
-  "etape": 11,
-  "debut_s": 114.4,
-  "duree_s": 15.0,
-  "texte": "Le réseau voit ce qu'aucun membre ne voit seul : une présentation, proposée d'abord à Markus. Et un micro-cercle de cinq personnes, avec ses inconnues."
- },
- {
-  "etape": 12,
-  "debut_s": 129.5,
-  "duree_s": 10.0,
-  "texte": "Avant d'agir, on simule : deux groupes n'en forment plus qu'un. L'humain décide."
- },
- {
-  "etape": 12,
-  "debut_s": 139.5,
+  "etape": 9,
+  "debut_s": 134.1,
   "duree_s": 7.0,
   "texte": "Chaque événement crée des rencontres. Nous faisons en sorte qu'elles deviennent quelque chose."
  }

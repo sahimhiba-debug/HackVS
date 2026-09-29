@@ -9,7 +9,7 @@ PROBLÈME → INSIGHT → TENSION → NOUVELLE APPROCHE → PREUVE → DÉMO →
   facile ; savoir *quand* se taire, *qui* peut présenter qui sans rien divulguer, et ce que le réseau entier y gagne, non.
 - **Approche.** Une intelligence relationnelle : chaque rencontre devient un fait daté, chaque relance a une preuve,
   chaque introduction un double accord, et l'on simule le réseau avant d'agir.
-- **Preuve.** Démo en direct, calculée par le moteur ; benchmark synthétique contre cinq méthodes ; 38 défauts trouvés
+- **Preuve.** Démo en direct, calculée par le moteur ; benchmark synthétique contre cinq méthodes ; 41 défauts trouvés
   en attaquant notre propre système.
 - **Impact / vision.** Le Club garde ses moments forts ; nous leur donnons une suite toute l'année.
 
@@ -30,9 +30,10 @@ PROBLÈME → INSIGHT → TENSION → NOUVELLE APPROCHE → PREUVE → DÉMO →
 - Écartées : toute plaisanterie sur les membres, la région, la confidentialité ou un groupe de personnes.
 
 ## Le moment intelligent
-Étape 9 de la scène : dix jours après les rencontres, **une** relance fondée sur une preuve, et **17 silences**.
-Puis l'étape 5 : pour une demande sans preuve (le Japon), le système s'abstient. Phrase : « Nous avons préféré une
-abstention à une hallucination. »
+Scène B, étape 5 : une seule introduction possible ; « réunir les îlots » (8 → 15 membres reliés, mais par un seul fil)
+contre « consolider » (8 membres résistent à une perte, sans rien réunir). Aucun plan ne gagne sur tout : le système
+montre le prix, l'organisatrice choisit. Puis le clic en direct sur une relation (étape 6) : qui serait perdu.
+Scène C, étape 7 : **une** relance fondée et **17 silences**.
 
 ## Le moment humain
 Sophie ne connaît personne. Le système ne lui donne pas une liste : il lui donne **une bonne prochaine action** —
@@ -52,14 +53,21 @@ demander une introduction à Markus, qui peut l'aider et qu'elle peut aider en r
 
 **Retenue : 2** — concrète, sans grandiloquence, identique à la fin de la vidéo (cohérence). Variante courte : 3.
 
-## Storyboard (deck minimal — la démo est le cœur)
-| # | Objectif | Message | Visuel | Parole | Temps | Transition | À retenir |
-|---|---|---|---|---|---|---|---|
-| 1 | Créer l'image | Les rencontres s'oublient | Une phrase sur fond blanc : « on se rappelle » | Ouverture 3 + 4 | 0:00–0:25 | « Voici Sophie. » | Le problème, en une image |
-| 2 | Passer au produit | — | **Démo en direct `/demo/stage`** | voir 09_DEMO_SCRIPT | 0:25–2:05 | fin de l'étape 12 | Une boucle complète, calculée |
-| 3 | Prouver | Nous avons mesuré, pas affirmé | Tableau benchmark (6 méthodes) avec « SYNTHÉTIQUE » | « Plus de ponts, plus de membres servis ; il perd sur la réciprocité, et nous le montrons. » | 2:05–2:30 | — | Méthode honnête |
-| 4 | Rassurer | Déployable, confidentiel | Architecture en 7 blocs | « Tout tourne sans clé d'API. Aucune coordonnée n'est affichée. » | 2:30–2:48 | — | Crédible pour le Club |
-| 5 | Finir | — | Phrase de fin | Fin 2 | 2:48–3:00 | — | La phrase à répéter |
+## Storyboard (la démo est le cœur ; une seule page, `/demo/stage`)
+| # | Objectif | Visuel | Parole | Temps (version 3 min) |
+|---|---|---|---|---|
+| 1 | Poser la question | Écran de départ de la scène (deux îlots) | Ouverture 3 + « que doit faire l'organisatrice ? » | 0:00–0:20 |
+| 2 | Scène A : un membre | Étapes 1–3 | PITCH_3MIN | 0:20–1:05 |
+| 3 | Scène B : l'organisatrice | Étapes 4–6 + un clic | PITCH_3MIN | 1:05–1:55 |
+| 4 | Scène C : le silence | Étapes 7–8 | PITCH_3MIN | 1:55–2:30 |
+| 5 | Prouvé / non prouvé | Étape 9 | « fictif et calculé ; pilote écrit » | 2:30–2:50 |
+| 6 | Finir | Étape 9 | Fin 2 | 2:50–3:00 |
 
-Architecture en 10 secondes (diapositive 4) :
-`MEMBRE → INTELLIGENCE RELATIONNELLE → GRAPHE TEMPOREL + PREUVES → OPTIMISATION → CONSENTEMENT / POLITIQUE → ACTION (simulée) → MÉMOIRE`
+## Adapter au temps officiel (non confirmé : docs/ASSUMPTIONS.md, I4)
+| Temps | Texte | Démo | On coupe |
+|---|---|---|---|
+| 90 s | PITCH_90SEC | étapes 1, 2, 5, 7 | le clic, les refus, l'introduction |
+| 3 min | PITCH_3MIN | les 9 étapes + 1 clic | rien |
+| 5 min | PITCH_3MIN + 2 min | + 1 min d'annexe technique (ANNEXE § 1 et § 3) + 1 min de protocole de pilote (VALEUR_METIER § 6) | — |
+| Démo seule (stand) | 09_DEMO_SCRIPT | libre, avec clics | — |
+| Vidéo seule | `competition/video/demo.webm` | enregistrée | — |

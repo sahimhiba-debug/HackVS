@@ -2,19 +2,17 @@
   "_source_unique": "Ce fichier pilote l'enregistrement (prototype/scripts/enregistrer_video.py) ET la voix off : un changement ici change les deux.",
   "format": {"largeur": 1440, "hauteur": 810},
   "plans": [
-    {"etape": 0, "duree": 7, "texte": "La Foire crée les rencontres. Un mois plus tard, que reste-t-il ?"},
-    {"etape": 1, "duree": 9, "texte": "Un réseau fictif de seize membres. Des rencontres ont eu lieu — mais le réseau reste fait d'îlots."},
-    {"etape": 2, "duree": 12, "texte": "Sophie rejoint le Club. Elle ne connaît personne. Le système propose un profil, elle le corrige. Par défaut, elle est invisible."},
-    {"etape": 3, "duree": 9, "texte": "Elle cherche un partenaire pour développer son activité en Allemagne. Le besoin est compris localement, sans modèle externe."},
-    {"etape": 4, "duree": 16, "texte": "Pas une liste de noms : deux personnes, avec leurs preuves. Markus peut l'aider — et Sophie peut l'aider en retour. Ce qui reste inconnu est affiché.", "defiler": true},
-    {"etape": 5, "duree": 11, "texte": "Il ne donne pas le numéro de Markus. Et pour le Japon, il s'abstient : plutôt aucune proposition qu'un mauvais contact."},
-    {"etape": 6, "duree": 8, "texte": "Sophie demande une introduction. Markus reçoit une demande. Il peut refuser."},
-    {"etape": 7, "duree": 9, "texte": "Markus accepte. Les coordonnées sont partagées maintenant — pas avant. Une relation naît dans le graphe."},
-    {"etape": 8, "duree": 8, "texte": "Ils se rencontrent. La relation garde son contexte : où, quand, pourquoi."},
-    {"etape": 9, "duree": 14, "texte": "Dix jours plus tard : une seule relance, fondée sur une preuve — Markus cherche ce que Sophie produit. Pour les dix-sept autres paires : rien de nouveau, donc silence.", "defiler": true},
-    {"etape": 10, "duree": 9, "texte": "Markus donne suite. Sophie note une affaire en cours : une opportunité, pas encore un résultat."},
-    {"etape": 11, "duree": 15, "texte": "Le réseau voit ce qu'aucun membre ne voit seul : une présentation, proposée d'abord à Markus. Et un micro-cercle de cinq personnes, avec ses inconnues.", "defiler": true},
-    {"etape": 12, "duree": 10, "texte": "Avant d'agir, on simule : deux groupes n'en forment plus qu'un. L'humain décide."},
-    {"etape": 12, "duree": 7, "texte": "Chaque événement crée des rencontres. Nous faisons en sorte qu'elles deviennent quelque chose.", "fin": true}
+    {"etape": 0, "duree": 8, "texte": "La Foire crée les rencontres. Un mois plus tard, qu'en reste-t-il ? Et que doit faire l'organisatrice du Club ?"},
+    {"etape": 1, "duree": 18, "texte": "Scène A. Sophie écrit son besoin avec ses mots. Nos règles lisent mal cette phrase et s'abstiennent. Ici, aucun modèle d'IA n'est configuré : l'écran le dit, et le produit demande une phrase plus simple. L'IA n'est jamais simulée.", "defiler": true},
+    {"etape": 2, "duree": 12, "texte": "Pas une liste : Markus, dont le profil prouve qu'il peut aider. Et il cherche justement ce que Sophie produit."},
+    {"etape": 3, "duree": 9, "texte": "Une introduction, pas un numéro. Il pouvait refuser. Les coordonnées ne circulent qu'après son accord."},
+    {"etape": 4, "duree": 13, "texte": "Scène B. La vue de l'organisatrice : deux parties du Club ne tiennent qu'à une seule relation.", "defiler": true},
+    {"etape": 5, "duree": 17, "texte": "Une seule introduction ce mois-ci. Réunir les îlots : huit puis quinze membres reliés, mais par un seul fil. Consolider : huit résistent à une perte, sans rien réunir. Aucun plan ne gagne sur tout. Elle choisit."},
+    {"etape": 6, "duree": 11, "texte": "Et si cette relation s'éteignait ? Quatre membres seraient coupés de leur groupe. Calculé, pas deviné — et affiché comme une simulation."},
+    {"etape": 6, "duree": 10, "clic": "Élise Tornay", "texte": "On clique une autre relation : celle-ci est doublée par un autre chemin. Personne n'est perdu."},
+    {"etape": 7, "duree": 12, "texte": "Scène C. Dix jours plus tard : une seule relance, avec sa preuve. Pour les dix-sept autres paires : rien de nouveau, donc silence."},
+    {"etape": 8, "duree": 13, "texte": "Trois demandes refusées, chacune avec sa raison : aucune preuve pour le Japon, un membre qui a refusé d'être présenté, une introduction sans aide prouvée.", "defiler": true},
+    {"etape": 9, "duree": 9, "texte": "Tout est fictif et calculé en direct. La valeur réelle se mesurera par un pilote."},
+    {"etape": 9, "duree": 7, "texte": "Chaque événement crée des rencontres. Nous faisons en sorte qu'elles deviennent quelque chose.", "fin": true}
   ]
 }

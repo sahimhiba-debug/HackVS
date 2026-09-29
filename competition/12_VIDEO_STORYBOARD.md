@@ -1,10 +1,12 @@
 # 12 — Storyboard vidéo
 
-Voir `video/VIDEO_SHOTLIST.md` et `video/VIDEO_TIMELINE.md` (générés). Images clés : `evidence/scene_00.png` à
-`evidence/scene_12.png` (capturées pendant l'enregistrement).
+Voir `video/VIDEO_SHOTLIST.md` et `video/VIDEO_TIMELINE.md` (générés depuis `video/captions.json`). Images clés :
+`evidence/scene_00.png` à `evidence/scene_09.png` et `scene_06_clic.png` (capturées pendant l'enregistrement, 139 s).
 
 Test du juge qui découvre le projet (à refaire après chaque réenregistrement) :
-- à 30 s : le problème est-il clair ? → oui : question d'ouverture + réseau en îlots ;
-- à 60 s : ce qui est différent ? → preuves, réciprocité prouvée, inconnues, puis abstention ;
-- à 90 s : quelque chose de rare ? → le consentement et la relation qui naît ; à 100 s, un seul suivi et 17 silences ;
+- à 30 s : le problème est-il clair ? → la question d'ouverture, puis une phrase libre que les règles ne comprennent pas ;
+- à 60 s : où est l'IA ? → à un seul endroit, dite « non configurée » ici, jamais simulée ; puis une proposition prouvée ;
+- à 90 s : quelque chose de rare ? → deux plans pour une seule introduction, aucun ne gagne sur tout ; puis un clic
+  réel sur une relation ;
+- à 120 s : le silence : une relance, 17 silences, trois refus motivés ;
 - à la fin : une phrase ? → « Chaque événement crée des rencontres. Nous faisons en sorte qu'elles deviennent quelque chose. »
