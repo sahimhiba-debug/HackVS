@@ -81,7 +81,8 @@ def controle(nom: str) -> tuple[bool, str]:
         c = max(f["plans"], key=lambda p: p["groupe_robuste"])
         ok = (r is not c and (f["avant"]["plus_grand_groupe"], r["plus_grand_groupe"]) == (8, 15)
               and (f["avant"]["groupe_robuste"], c["groupe_robuste"], r["groupe_robuste"]) == (4, 8, 4))
-        return ok, f"réunir : {f['avant']['plus_grand_groupe']} → {r['plus_grand_groupe']} ; consolider : robuste {f['avant']['groupe_robuste']} → {c['groupe_robuste']}"
+        av = f["avant"]
+        return ok, f"réunir : {av['plus_grand_groupe']} → {r['plus_grand_groupe']} ; consolider : robuste {av['groupe_robuste']} → {c['groupe_robuste']}"
     if nom == "scene_rejeu":
         from app import stage
         from app.taxonomy import charger_taxonomie

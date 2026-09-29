@@ -135,3 +135,19 @@ def test_le_graphe_ne_trahit_pas_qui_refuse_les_introductions():
     assert all(set(n) == {"id", "nom", "x", "y", "present"} for n in v["noeuds"])
     html = (stage.DATA_DIR.parent / "web" / "stage.html").read_text(encoding="utf-8")
     assert ".consent" not in html and ".refus" not in html and '" refus"' not in html
+
+
+def test_scene_a_ia_en_echec_ou_sans_resultat_ne_casse_pas_la_scene():
+    """Red team : (1) modèle en panne → repli visible ; (2) interprétation IA valide mais AUCUN membre prouvé → la scène
+    continue par la reformulation (sinon l'étape d'introduction n'aurait personne à présenter)."""
+    from app.models import Besoin, Critere
+    from app.parser_rules import analyser
+    texte = stage.Monde(TAX).donnees["sophie"]["besoin_complexe"]
+    panne = analyser(texte, TAX), {"analyseur": "regles (repli)", "erreur": "APITimeoutError", "latence_ms": 30000}
+    introuvable = Besoin(texte=texte, criteres=[Critere(type="expertise", valeur="cybersecurite", libelle="Cybersécurité",
+                                                         obligatoire=True, extrait="ventes")]), {"analyseur": "double", "modele": "aucun"}
+    for double, etat in ((panne, "REPLI"), (introuvable, "UTILISEE")):
+        w = stage.rejouer_jusqu_a(TAX, len(stage.ETAPES), interpreter=lambda _t, d=double: d)
+        f = w.traces[0]["faits"]
+        assert f["ia"]["etat"] == etat and f["retenu"] == "REFORMULATION", f
+        assert w.traces[2]["faits"]["coordonnees_apres_accord"] is True

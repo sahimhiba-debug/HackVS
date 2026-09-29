@@ -1,27 +1,32 @@
-# 09 — Script de démonstration (scène `/demo/stage`)
+# 09 — Script de démonstration : une page, trois scènes (`/demo/stage`)
 
-Données : réseau de scène FICTIF (16 membres inventés, `prototype/data/stage_reseau.json`). Horloge simulée et fixe.
-Chaque chiffre affiché est calculé par le moteur réel ; la même scène est rejouée à l'identique (testé 3 fois).
-Commandes : **→ / espace** suivant · **←** précédent · **R** réinitialiser · bouton « Rejouer tout ».
+Données : réseau de scène FICTIF (16 membres inventés + Sophie, `prototype/data/stage_reseau.json`). Horloge simulée.
+Chaque chiffre est calculé en direct par le moteur réel ; la scène se rejoue à l'identique (testé 3 fois).
+Commandes : **→ / espace** suivant · **←** précédent · **R** réinitialiser · clic sur une relation du graphe (scène B).
+Mesures de lisibilité : `competition/rehearsal/MESURES_SCENE.md` (attente après clic < 200 ms ; aucune erreur).
 
-| Étape | Clic | Ce que l'écran montre (calculé) | Ce que l'on dit | Pourquoi ce clic |
+**Durée cible : 2 min 30 s.** Les chiffres entre crochets sont ceux de la scène sans modèle d'IA (vérifiés par
+`validate_competition_claims.py`). Si un modèle est configuré, la scène A change : **rejouer toute la scène avant de
+monter sur scène** et lire les chiffres à l'écran, pas ceux de ce script.
+
+| # | Scène | L'écran montre (calculé) | On dit (≤ 2 phrases) | Durée |
 |---|---|---|---|---|
-| 0 | (ouverture) | « La Foire crée les rencontres. Qu'en reste-t-il un mois plus tard ? » | Ouverture | Poser la question |
-| 1 | → | 16 membres, 2 groupes séparés, rencontres sans suite depuis plus de 90 jours | « Des rencontres ont eu lieu ; le réseau reste fait d'îlots. » | Le problème, visible |
-| 2 | → | Proposition de profil → validation par Sophie ; invisible par défaut | « Le système propose, elle corrige. C'est elle qui choisit d'être recommandée. » | Humain aux commandes, confidentialité par défaut |
-| 3 | → | Besoin compris : « Développement commercial en Allemagne (obligatoire) » | « Compris localement, sans modèle externe. » | Pas de dépendance cachée |
-| 4 | → | 2 candidats : Markus (fort, réciprocité PROUVÉE), Claudia (partielle, preuve déduite, profil ancien) ; qui refuse d'être sollicité n'est ni nommé, ni proposé, ni compté (moins de 3) | « Pas une liste : des preuves. Et ce qui reste inconnu. » | Pourquoi / pourquoi maintenant / comment nous savons / inconnu |
-| 5 | → | Aucune coordonnée ; « distributeur au Japon » → abstention | « Nous avons préféré une abstention à une hallucination. » | **Moment intelligent n° 1** |
-| 6 | → | Demande d'introduction ; boîte de Markus : 1 introduction à répondre ; coordonnées non partagées | « Il peut refuser. » | Consentement |
-| 7 | → | Markus accepte : coordonnées partagées ; un trait plein apparaît dans le graphe | « Maintenant seulement. » | La relation naît |
-| 8 | → | Ligne de temps : introduction demandée → acceptée → rencontre | « La relation garde son contexte. » | Mémoire relationnelle |
-| 9 | → | +10 jours : 1 relance (Markus cherche ce que Sophie produit, preuves citées) ; 17 silences | Réplique d'humour | **Moment intelligent n° 2** |
-| 10 | → | Suivi accepté ; « affaire en cours » = opportunité, pas résultat | « Relation ≠ opportunité ≠ résultat. » | Rigueur du modèle |
-| 11 | → | Présentation Sophie ↔ Anna, proposée d'abord à Markus ; micro-cercle de 5 avec ses inconnues | « Le réseau voit ce qu'aucun membre ne voit seul. » | Valeur collective |
-| 12 | → | Simulation : 2 groupes → 1 ; « proposé à la décision humaine » | « Avant d'agir, on simule. L'humain décide. » | Avant / après |
+| 0 | — | Deux îlots, 16 membres | « La Foire crée les rencontres. Un mois plus tard, qu'en reste-t-il — et que doit faire l'organisatrice ? » | 10 s |
+| 1 | A | La phrase de Sophie ; à gauche les règles (comprennent mal → s'abstiennent) ; à droite l'IA (non configurée ici, ou vérifiée) | « Une vraie phrase : trois besoins, une langue, une exclusion. Nos règles échouent — c'est exactement là que l'IA doit prouver sa valeur, et chaque critère qu'elle propose doit citer le texte. » | 25 s |
+| 2 | A | Markus : preuve citée, réciprocité PROUVÉE, inconnu affiché | « Pas une liste : une personne dont le profil prouve qu'elle peut aider — et qui cherche justement ce que Sophie produit. » | 15 s |
+| 3 | A | Coordonnées : non → oui après son accord ; ligne de temps | « Une introduction, pas un numéro. Il pouvait refuser. » | 10 s |
+| 4 | B | 4 phénomènes ; 2 ponts fragiles en orange | « Vue de l'organisatrice : deux parties du Club ne tiennent qu'à un fil. » | 15 s |
+| 5 | B | Plan vert « Consolider » [robuste 4 → 8] vs rouge « Réunir les îlots » [reliés 8 → 15, robuste reste 4] | « Une seule introduction ce mois-ci. Réunir les îlots, ou consolider ? Aucun plan ne gagne sur tout : le système montre le prix, elle choisit. » | 25 s |
+| 6 | B | Relation Jérôme – Thomas : [4 membres coupés de leur groupe de 8] ; **cliquer une autre relation** en direct | « Et si cette relation s'éteint ? Voici qui le Club perd. » (clic) « Celle-ci, en revanche, est doublée : personne n'est coupé. » | 20 s |
+| 7 | C | [1 relance, avec sa preuve ; 17 silences] | « Dix jours plus tard : une seule raison nouvelle de se reparler. Le reste : silence. » | 15 s |
+| 8 | C | 3 demandes refusées : Japon (abstention), membre qui a refusé, introduction sans aide prouvée | « Il sait dire non — et dit pourquoi. » | 10 s |
+| 9 | C | Ce qui est fait / observé / simulé / non mesuré | « Tout ceci est fictif et calculé. La valeur réelle se mesure par un pilote — voici comment. » | 5 s |
 
-Autres écrans disponibles pour les questions : `/decision` (moteur de décision, certificat, rejeu), `/cycle`
-(cycle des soirées), `/` (espace membre : boîte réseau dans « Suivi »).
-
-**Plan B.** Si le réseau de la salle tombe : tout tourne en local (`uvicorn app.main:app`), aucune dépendance externe.
-Si le navigateur plante : la vidéo `competition/video/demo.webm` (144 s) montre exactement la même scène.
+## Plans B
+- **Pas de réseau dans la salle** : tout tourne en local (`uvicorn app.main:app`), sans aucune dépendance externe.
+- **Modèle d'IA absent, lent ou en panne** : la scène A le dit elle-même et continue par la reformulation (testé :
+  panne → repli visible ; interprétation sans personne de prouvé → reformulation). Ne jamais dire « l'IA a compris »
+  si l'écran indique « non configurée ».
+- **Navigateur planté** : la vidéo de secours (`competition/video/`) — à régénérer sur cette scène en trois actes
+  (`scripts/enregistrer_video.py`).
+- **Question hors scène** : `/decision`, `/cycle`, `/` restent disponibles, mais ne sont pas montrés spontanément.

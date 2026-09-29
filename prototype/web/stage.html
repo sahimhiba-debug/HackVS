@@ -32,11 +32,13 @@
     .deux { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .col { border: 1.5px solid var(--ligne); border-radius: var(--rayon); padding: 10px 12px; }
     .col h3 { margin: 0 0 6px; font-size: 15px; }
+    details.bloc summary { cursor: pointer; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--encre-2); font-weight: 700; }
     .col li, .col p { font-size: 14px; }
     .col.retenu { border: 2px solid var(--vert); }
     .plan { border: 2px solid var(--ligne); border-radius: var(--rayon); padding: 10px 12px; }
     .plan.A { border-color: var(--vert); } .plan.B { border-color: var(--rouge); }
-    .chiffre { font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .chiffre { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .plan h3 { font-size: 17px; margin: 0 0 4px; } .plan p { margin: 2px 0; }
     @media (max-width: 900px) { .deux { grid-template-columns: 1fr; } }
     @keyframes trace { to { stroke-dashoffset: 0; } }
     .noeud circle { fill: var(--surface); stroke: var(--encre-2); stroke-width: 2; transition: r .3s; }
@@ -186,6 +188,7 @@
     const tuile = (lib, val, sous) => h("div", { class: "tuile" }, h("div", { class: "lib" }, lib), h("div", { class: "val" }, String(val)), sous ? h("div", { class: "sous" }, sous) : null);
     const puce = (txt, cls = "") => h("span", { class: `puce ${cls}` }, txt);
     const frise = (types) => h("div", { class: "frise" }, types.map((t, i) => h("span", { class: i === types.length - 1 ? "der" : "" }, LIB_TYPES[t] || t)));
+    const details = (titre, ...enfants) => h("details", { class: "bloc" }, h("summary", {}, titre), ...enfants);
     const compris = (liste) => h("ul", {}, liste.map((c) => h("li", {}, c.quoi, c.extrait ? [" ← ", h("q", {}, c.extrait)] : " (aucun extrait)")));
 
     function candidat(c, i) {
@@ -219,19 +222,22 @@
             f.ia.etat === "NON_CONFIGUREE" ? [puce("non configurée"), h("p", { class: "note" }, f.ia.message)]
               : [compris(f.ia.compris), h("p", {}, puce(f.ia.etat === "UTILISEE" ? "vérifiée par le code" : "échec → règles", f.ia.etat === "UTILISEE" ? "ok" : "non"),
                   ` ${f.ia.modele || ""} · ${f.ia.latence_ms ?? "?"} ms`), f.ia.avertissements.length ? h("p", { class: "note" }, f.ia.avertissements.join(" ")) : null,
-                h("p", { class: "note" }, "Contrôle : ", f.ia.controle)])),
+                f.ia.sans_proposition ? h("p", {}, puce(f.ia.sans_proposition, "non")) : null,
+                details("Contrôle", h("p", { class: "note" }, f.ia.controle))])),
         f.retenu === "REFORMULATION" ? bloc("Alors le produit demande une phrase plus simple", h("p", {}, h("q", {}, f.reformulation)), compris(f.reformulation_comprise),
-          h("p", { class: "note" }, "Sans IA, la phrase libre ne suffit pas : c'est exactement la valeur que l'IA doit démontrer — et que nous mesurons (banc G1)."))
+          details("Pourquoi c'est important", h("p", { class: "note" }, "Sans IA, la phrase libre ne suffit pas : c'est exactement la valeur que l'IA doit démontrer — et que nous mesurons (banc G1).")))
           : bloc("Retenu", h("p", {}, f.retenu === "INTERPRETATION_IA_VERIFIEE" ? "L'interprétation de l'IA, parce que chaque critère appartient au vocabulaire du Club et cite le texte." : "L'interprétation par règles."))],
       1: (f) => [h("p", {}, `${f.examines} profils examinés → ${f.candidats.length} personne(s) proposée(s).`),
-        ...f.candidats.map(candidat),
-        bloc("Ce qui n'est pas montré", h("p", {}, "Aucune coordonnée : ", f.coordonnees, ". Ceux qui refusent d'être sollicités ne sont ni nommés, ni proposés, ni comptés."))],
+        ...f.candidats.slice(0, 1).map(candidat),
+        f.candidats.length > 1 ? details(`${f.candidats.length - 1} autre(s) proposition(s), plus faible(s)`, ...f.candidats.slice(1).map((c, i) => candidat(c, i + 1))) : null,
+        h("p", { class: "note" }, "Aucune coordonnée affichée. Qui refuse d'être sollicité n'est ni nommé, ni proposé, ni compté.")],
       2: (f) => [h("dl", { class: "grille-kv" },
           h("dt", {}, "Sa boîte"), h("dd", {}, `${f.introductions_a_repondre_pour_lui} introduction à laquelle répondre — il peut refuser`),
           h("dt", {}, "Coordonnées"), h("dd", {}, puce("non partagées avant son accord", "non"), " → ", puce("partagées après", "ok"))),
         bloc("Ligne de temps de la relation", frise(f.ligne_de_temps), h("p", { class: "note" }, `Rencontre enregistrée le ${f.quand}. Chaque étape est un fait daté.`))],
       3: (f) => [h("div", { class: "tuiles" }, tuile("membres (fictifs)", f.etat.membres), tuile("groupes séparés", f.etat.groupes_actuels), tuile("sans relation actuelle", f.etat.sans_relation_actuelle)),
-        ...f.phenomenes.map((p) => bloc(p.observation, h("p", {}, p.lecture, "."), h("p", { class: "note" }, "Action possible : ", p.action_possible))),
+        ...f.phenomenes.map((p) => h("p", {}, h("strong", {}, p.observation), " — ", p.lecture, ".")),
+        details("Actions possibles", h("ul", {}, f.phenomenes.map((p) => h("li", {}, p.action_possible)))),
         h("p", { class: "note" }, puce("OBSERVATION"), " ", f.nature, ". En orange sur le graphe : les ponts fragiles, seule relation entre deux groupes.")],
       4: (f) => f.un_seul_plan ? [bloc("Un seul plan", h("p", {}, "Aucun dilemme sur ce réseau."))] : [
         h("p", {}, `Aujourd'hui : plus grand groupe ${f.avant.plus_grand_groupe}, groupe robuste ${f.avant.groupe_robuste}.`),
@@ -239,13 +245,14 @@
           h("h3", {}, `${i === 0 ? "Plan vert" : "Plan rouge"} · ${p.libelle}`),
           h("p", {}, h("span", { class: "chiffre" }, p.plus_grand_groupe), " membres reliés ensemble"),
           h("p", {}, h("span", { class: "chiffre" }, p.groupe_robuste), " résistent à la perte d'une relation"),
-          ...p.pourquoi.map((q) => h("p", { class: "note" }, q.qui.join(" – "), " : ", q.preuve.join(" ; ")))))),
-        bloc("Lecture", h("p", {}, "Réunir les îlots par un seul fil agrandit le réseau… mais ce fil est fragile. Consolider renforce ce qui existe, sans rien réunir. Aucun des deux n'est « le bon » : c'est une décision de l'organisatrice.")),
+          h("p", { class: "note" }, "Introduire : ", p.pourquoi.map((q) => q.qui.join(" – ")).join(", "))))),
+        h("p", {}, h("strong", {}, "Un seul fil agrandit le réseau, mais il est fragile. "), "L'organisatrice choisit."),
+        details("Preuves de chaque introduction", ...f.plans.slice(0, 2).flatMap((p) => p.pourquoi.map((q) => h("p", { class: "note" }, q.qui.join(" – "), " : ", q.preuve.join(" ; "))))),
         h("p", { class: "note" }, puce("SIMULATION"), " ", f.nature, ". « Robuste » : ", f.lexique.groupe_robuste, ".")],
       5: (f) => [perte(f, "Relation la plus critique"), h("p", { class: "note" }, "👉 ", f.interactif, ".")],
       6: (f) => [...f.relances.map((p) => bloc(`Une relance, et sa raison — ${p.paire.join(" ↔ ")}`,
           ...p.raisons.map((r) => h("div", {}, h("p", {}, h("strong", {}, `Pour ${r.pour} : `), r.message),
-            h("ul", {}, r.preuves.map((x) => h("li", {}, puce(x.statut, x.statut === "DECLARE" ? "ok" : ""), ` ${x.quoi} : `, h("q", {}, x.extrait)))))))),
+            details("Preuves", h("ul", {}, r.preuves.map((x) => h("li", {}, puce(x.statut, x.statut === "DECLARE" ? "ok" : ""), ` ${x.quoi} : `, h("q", {}, x.extrait))))))))),
         bloc("Et les autres ?", h("p", {}, h("strong", {}, `${f.silences.rien_de_nouveau} paires : rien de nouveau depuis leur rencontre → silence.`), " ", f.principe, "."))],
       7: (f) => f.tentatives.map((t) => bloc(`${t.qui} demande`, h("p", {}, h("q", {}, t.demande)),
         h("div", { class: "abst" }, h("strong", {}, t.decision === "S_ABSTENIR" ? "Abstention. " : t.decision === "REFUSER" ? "Refusé. " : "Proposé. "), t.raisons.join(" ; ")))),

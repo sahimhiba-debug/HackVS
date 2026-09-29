@@ -156,6 +156,9 @@ def _a1_besoin_libre(w: Monde) -> dict:
         faits["ia"] = {"etat": "UTILISEE" if ia_ok else "REPLI", "analyseur": tele.get("analyseur"), "modele": tele.get("modele"),
                        "latence_ms": tele.get("latence_ms"), "compris": _compris(b), "avertissements": b.avertissements,
                        "controle": "catégories du vocabulaire fermé seulement ; chaque extrait doit figurer dans le texte"}
+    if ia_ok and rechercher(ia[0], moi, w.profils(), w.tax).abstention:
+        ia_ok = False                                      # compris, mais personne de prouvé : on ne présente personne au hasard
+        faits["ia"]["sans_proposition"] = "interprétation valide, mais aucun membre ne la satisfait avec une preuve"
     if ia_ok:
         besoin, faits["retenu"] = ia[0], "INTERPRETATION_IA_VERIFIEE"
     elif not r_regles.abstention:
@@ -166,7 +169,7 @@ def _a1_besoin_libre(w: Monde) -> dict:
         faits["reformulation_comprise"] = _compris(besoin)
     w.ctx["besoin_id"] = w.magasin.creer_besoin(SOPHIE, besoin, publier=True, anonyme=False).id
     return {"scene": "A", "titre": "Sophie écrit son besoin, avec ses mots",
-            "dit": "Une phrase réelle : plusieurs besoins, une langue, une exclusion. Qui la comprend, et comment le vérifie-t-on ?",
+            "dit": "Plusieurs besoins, une langue, une exclusion : qui comprend cette phrase ?",
             "faits": faits}
 
 
@@ -184,7 +187,7 @@ def _a2_proposition(w: Monde) -> dict:
                        "a_verifier": s.a_verifier, "dimensions": d})
     w.ctx["candidat"] = next((c["id"] for c in cartes if c["dimensions"]["reciprocite"]["etablie"]), cartes[0]["id"] if cartes else None)
     return {"scene": "A", "titre": "Une proposition vérifiable",
-            "dit": "Pas une liste de noms : seulement des personnes dont le profil PROUVE qu'elles peuvent aider — et ce qui reste inconnu.",
+            "dit": "Seulement des personnes dont le profil PROUVE qu'elles peuvent aider.",
             "faits": {"candidats": cartes, "examines": res.nb_profils_examines,
                       "ecartes_par_leur_choix": sum(e.nombre for e in res.ecartes if "sollicités" in e.raison),
                       "ecartes_autres": [{"raison": e.raison, "nombre": e.nombre} for e in res.ecartes if "sollicités" not in e.raison],
@@ -204,7 +207,7 @@ def _a3_introduction(w: Monde) -> dict:
     w.magasin.transition(w.ctx["relation"], "confirmer_rencontre", SOPHIE)
     m = reseau.memoire_relation(w.memoire, SOPHIE, c, w.synchroniser())
     return {"scene": "A", "titre": f"{_nom(w, c).split(' ')[0]} accepte ; ils se rencontrent",
-            "dit": "Une introduction, pas un numéro. Il pouvait refuser. Les coordonnées ne circulent qu'après son accord.",
+            "dit": "Une introduction, pas un numéro : il pouvait refuser.",
             "faits": {"introductions_a_repondre_pour_lui": len(boite["introductions_a_repondre"]),
                       "coordonnees_avant_accord": avant, "coordonnees_apres_accord": r.coordonnees_partagees,
                       "ligne_de_temps": m["ensuite"], "quand": m["quand"], "etat_relation": m["etat"]}}
@@ -227,7 +230,7 @@ def _b1_diagnostic(w: Monde) -> dict:
     ponts = [r["paire"] for r in (sante.sans_relation(act, membres, *e) for e in sorted(tuple(sorted(e)) for e in nx.bridges(act.subgraph(membres))))
              if min(len(r["coupes_de_leur_groupe"]), r["taille_du_groupe"] - len(r["coupes_de_leur_groupe"])) >= sante.SEUILS["groupe_min"]]
     return {"scene": "B", "titre": "La vue de l'organisatrice",
-            "dit": "Le même réseau, vu d'en haut : ce qu'aucun membre ne voit seul. Des faits, puis leur lecture.",
+            "dit": "Le même réseau, vu d'en haut : ce qu'aucun membre ne voit seul.",
             "faits": {"etat": d["comprendre"]["etat"],
                       "phenomenes": [{"code": p["phenomene"], "observation": _lisible(p["observation"]), "lecture": p["interpretation"],
                                       "action_possible": p["intervention_possible"]} for p in d["diagnostiquer"]["phenomenes"]],
@@ -253,7 +256,7 @@ def _b2_deux_plans(w: Monde) -> dict:
     avant = {"plus_grand_groupe": max(len(c) for c in nx.connected_components(act.subgraph(_membres(w)))),
              "groupe_robuste": pareto.plus_grand_groupe_robuste(act, _membres(w))}
     return {"scene": "B", "titre": "Une seule introduction ce mois-ci : laquelle ?",
-            "dit": "Deux plans défendables. Aucun ne gagne sur tout. Le système montre le prix de chacun ; l'humain choisit.",
+            "dit": "Deux plans défendables ; aucun ne gagne sur tout.",
             "faits": {"budget": 1, "avant": avant, "plans": [rendu(p) for p in plans], "un_seul_plan": len(plans) < 2,
                       "nature": "SIMULATION : chaque introduction est supposée acceptée ; rien n'est envoyé",
                       "lexique": {"plus_grand_groupe": "membres reliés entre eux, directement ou non",
@@ -268,7 +271,7 @@ def _b3_disparition(w: Monde) -> dict:
         r["noms"] = [_nom(w, x) for x in r["paire"]]
         r["coupes_noms"] = [_nom(w, x) for x in r["coupes_de_leur_groupe"]]
     return {"scene": "B", "titre": "Et si une relation s'éteignait ?",
-            "dit": "Une seule relation tient deux parties du réseau. Si elle s'endort, voici ce que le Club perd — calculé, pas deviné.",
+            "dit": "Si cette relation s'endort, voici ce que le Club perd.",
             "faits": r | {"interactif": "cliquer sur n'importe quelle relation du graphe pour simuler sa disparition"}}
 
 
@@ -280,7 +283,7 @@ def _c1_silence(w: Monde) -> dict:
     props = [{"paire": p["noms"], "raisons": [{"type": r["type"], "pour": ids[r["pour"]].nom, "message": r["message"],
                                                "preuves": r["preuves"]} for r in p["raisons"]]} for p in rel["propositions"]]
     return {"scene": "C", "titre": "Dix jours plus tard : parler, ou se taire ?",
-            "dit": "Une relance seulement s'il existe une raison NOUVELLE et prouvée. « Restez en contact » n'en est pas une.",
+            "dit": "Une relance seulement s'il existe une raison NOUVELLE et prouvée.",
             "faits": {"relances": props, "silences": rel["abstentions"], "principe": rel["principe"]}}
 
 
@@ -310,14 +313,14 @@ def _c2_refus(w: Monde) -> dict:
          "raisons": raisons(seul, autre)},
     ]
     return {"scene": "C", "titre": "Ce que le système refuse de faire",
-            "dit": "Plutôt aucune proposition qu'une mauvaise. Chaque refus a une raison que l'on peut vérifier.",
+            "dit": "Chaque refus a une raison vérifiable.",
             "faits": {"tentatives": tentatives}}
 
 
 def _c3_bilan(w: Monde) -> dict:
     t = w.synchroniser()
     return {"scene": "C", "titre": "Ce que vous venez de voir",
-            "dit": "Trois rôles, un seul réseau, les mêmes règles. Et une frontière nette entre ce qui est observé et ce qui est simulé.",
+            "dit": "Ce qui est un fait, ce qui est simulé, ce qui reste à prouver.",
             "faits": {"faits_enregistres": sum(1 for e in w.memoire.evenements() if e.type != "HORLOGE"), "le": t.isoformat(),
                       "natures": [
                           {"quoi": "rencontres passées, introduction, accord, rencontre, relance", "nature": "FAIT enregistré (réseau FICTIF)"},
