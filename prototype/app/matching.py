@@ -149,14 +149,30 @@ class _Tfidf:
         return num / (nq * nd) if nq and nd else 0.0
 
 
+_FORMES_JURIDIQUES = {"sarl", "sa", "ag", "gmbh", "sas", "sasu", "eurl", "sagl", "ltd", "inc", "cie", "et", "&"}
+
+
+def organisation(p: Profil) -> str:
+    """Clé d'organisation : casse, accents, ponctuation et forme juridique ignorés (« Vergers du Rhône Sàrl » =
+    « VERGERS DU RHONE SARL »). Vide si l'entreprise n'est pas renseignée : deux inconnues ne sont pas « la même »."""
+    mots = re.sub(r"[^a-z0-9&]+", " ", norm(p.entreprise or "")).split()
+    return " ".join(m for m in mots if m not in _FORMES_JURIDIQUES)
+
+
+def meme_organisation(a: Profil, b: Profil) -> bool:
+    return bool(organisation(a)) and organisation(a) == organisation(b)
+
+
 def filtres_durs(besoin: Besoin, demandeur: Profil, p: Profil, tax: Taxonomie) -> Optional[str]:
     """Raison d'exclusion, ou None si le profil est éligible.
 
     Partagé avec la référence « mots-clés » et avec la Bourse : les trois vues appliquent
     exactement les mêmes règles.
     """
-    if p.id == demandeur.id or p.entreprise == demandeur.entreprise:
+    if p.id == demandeur.id:
         return "vous-même"
+    if meme_organisation(p, demandeur):   # un collègue n'est pas une mise en relation
+        return "même organisation"
     if p.type == "visiteur":
         return "hors communauté (visiteur)"
     if p.type == "exposant" and not besoin.inclure_exposants:
@@ -190,7 +206,7 @@ def filtres_durs(besoin: Besoin, demandeur: Profil, p: Profil, tax: Taxonomie) -
 
 
 # Raisons non affichées au demandeur (pas utiles, ou risque de révéler un refus nominatif).
-_RAISONS_SILENCIEUSES = {"vous-même", "hors communauté (visiteur)"}
+_RAISONS_SILENCIEUSES = {"vous-même", "même organisation", "hors communauté (visiteur)"}
 
 
 def rechercher(

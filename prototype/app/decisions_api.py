@@ -16,6 +16,7 @@ from plateforme.execution import Journal
 from plateforme.specification import ErreurSpec
 
 from .models import Profil
+from .soiree import paires_refusees
 from .taxonomy import DATA_DIR, Taxonomie
 
 ETATS_RELATION = ("acceptee", "rencontre_planifiee", "rencontre_faite", "cloturee")
@@ -44,7 +45,8 @@ def creer_routeur(profils_effectifs: Callable[[], list[Profil]], magasin, tax: T
 
     def club():
         rel = [(x.auteur_id, x.aidant_id) for x in magasin.relations() if x.etat in ETATS_RELATION]
-        return profils_effectifs(), magasin.besoins(), rel, "demo"
+        refus = [tuple(sorted(k)) for k in paires_refusees(magasin.relations())]
+        return profils_effectifs(), magasin.besoins(), rel, "demo", None, refus
 
     def synthetique():
         brut = json.loads((DATA_DIR / "profils_synthetiques.json").read_text(encoding="utf-8"))

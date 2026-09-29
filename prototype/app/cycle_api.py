@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from adaptateurs.club import cycle as cy
+from adaptateurs.club import reseau
 from adaptateurs.club.adaptateur import AdaptateurClub
 from plateforme import action as ac
 from plateforme import memoire as me
@@ -63,7 +64,8 @@ def creer_routeur(profils_effectifs: Callable[[], list[Profil]], tax: Taxonomie,
 
     def fournisseur():
         t = jour()
-        return profils_effectifs(), cy.besoins_publies(m, t), cy.relations(m, t), "demo", cy.opportunites(m, profils_effectifs(), tax, t)
+        return (profils_effectifs(), cy.besoins_publies(m, t), cy.relations(m, t), "demo", cy.opportunites(m, profils_effectifs(), tax, t),
+                reseau.paires_declinees(m, t))
 
     ad = AdaptateurClub(fournisseur, tax)
 

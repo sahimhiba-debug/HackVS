@@ -79,6 +79,7 @@ class Instantane(BaseModel):
     aides: dict[str, dict]            # « i→j » → aide prouvée que j apporte à i (+ ids d'affirmations)
     deja_en_relation: list[str]       # clés « a|b »
     opportunites: dict[str, dict] = {}  # « a|c » → {via, raison, affirmation} (mémoire du réseau)
+    refus: list[str] = []             # clés « a|b » : introduction déclinée (le plus récent des faits) — jamais à la même table
 
     def empreinte(self) -> str:
         return hashlib.sha256(json.dumps(self.model_dump(), sort_keys=True, ensure_ascii=False).encode()).hexdigest()
@@ -90,7 +91,7 @@ def _statut_source(source: str) -> Statut:
 
 def instantane(profils: list[Profil], besoins_publies: list, tax: Taxonomie, source: str,
                relations_observees: Optional[list[tuple[str, str]]] = None,
-               opportunites: Optional[list[dict]] = None) -> Instantane:
+               opportunites: Optional[list[dict]] = None, refus: Optional[list[tuple[str, str]]] = None) -> Instantane:
     base = _statut_source(source)
     reg = Registre()
     membres = [p for p in profils if p.type == "membre_club"]
@@ -137,7 +138,8 @@ def instantane(profils: list[Profil], besoins_publies: list, tax: Taxonomie, sou
     parts = {p.id: {"secteurs": p.secteurs, "langues": p.langues, "consentement": p.accepte_introductions,
                     "disponible": p.disponible, "nom": p.nom} for p in par_id.values()}
     return Instantane(source=source, participants=parts, affirmations=reg.exporter(), aides=aides,
-                      deja_en_relation=sorted({cle(a, b) for a, b in relations_observees or []}), opportunites=opps)
+                      deja_en_relation=sorted({cle(a, b) for a, b in relations_observees or []}), opportunites=opps,
+                      refus=sorted({cle(a, b) for a, b in refus or []}))
 
 
 def probleme(inst: Instantane, spec: SpecDecision, tax: Taxonomie) -> tuple[Probleme, dict[str, str], dict[str, list[str]]]:
@@ -158,6 +160,9 @@ def probleme(inst: Instantane, spec: SpecDecision, tax: Taxonomie) -> tuple[Prob
         if a not in eligibles or b not in eligibles:
             continue
         pa, pb = inst.participants[a], inst.participants[b]
+        if k in inst.refus:   # NON levable : un refus d'introduction n'est pas une préférence de l'organisateur
+            exclues[k] = "introduction déclinée : jamais à la même table"
+            continue
         if "langue_commune" in cd and not set(pa["langues"]) & set(pb["langues"]):
             exclues[k] = "aucune langue commune déclarée"
             continue
@@ -205,7 +210,12 @@ def validateurs(inst: dict, spec: SpecDecision) -> list[Callable[[Solution], Ver
         d = [f"{cle(a, b)} déjà en relation" for _, a, b in sol.rencontres if cle(a, b) in deja]
         return Verdict(niveau="L5", nom="pas déjà en relation (recalculé)", etat="FAIL" if d else "PASS", details=d)
 
-    return [consentement, langue, disponibilite, relations]
+    def refus(sol: Solution) -> Verdict:   # toujours vérifié : aucune spécification ne le lève
+        refuses = set(inst.get("refus", []))
+        d = [f"{cle(a, b)} (tour {t}) : introduction déclinée" for t, a, b in sol.rencontres if cle(a, b) in refuses]
+        return Verdict(niveau="L5", nom="refus d'introduction respecté (recalculé)", etat="FAIL" if d else "PASS", details=d)
+
+    return [consentement, langue, disponibilite, relations, refus]
 
 
 def regles_gardien(inst: dict, spec: SpecDecision) -> list[Callable[[Solution], list[Objection]]]:
@@ -226,7 +236,12 @@ def regles_gardien(inst: dict, spec: SpecDecision) -> list[Callable[[Solution], 
                               message=f"données « {inst['source']} » : personnes et besoins FICTIFS, aucune action réelle possible")]
         return []
 
-    return [jamais_sans_consentement, consentement_non_levable, donnees_fictives]
+    def jamais_apres_un_refus(sol: Solution) -> list[Objection]:
+        refuses = set(inst.get("refus", []))
+        return [Objection(code="refus", gravite="bloquante", message=f"{cle(a, b)} : introduction déclinée, pas de table commune")
+                for _, a, b in sol.rencontres if cle(a, b) in refuses]
+
+    return [jamais_sans_consentement, jamais_apres_un_refus, consentement_non_levable, donnees_fictives]
 
 
 class AdaptateurClub:
@@ -236,12 +251,13 @@ class AdaptateurClub:
     grammaire = GRAMMAIRE
 
     def __init__(self, fournisseur: Callable[[], tuple], tax: Taxonomie):
-        """fournisseur() → (profils, besoins, relations, source) ou (…, source, opportunites)."""
+        """fournisseur() → (profils, besoins, relations, source[, opportunites[, refus]])."""
         self.fournisseur, self.tax = fournisseur, tax
 
     def instantane_courant(self) -> dict:
         profils, besoins, relations, source, *reste = self.fournisseur()
-        return instantane(profils, besoins, self.tax, source, relations, reste[0] if reste else None).model_dump()
+        opps, refus = (list(reste) + [None, None])[:2]
+        return instantane(profils, besoins, self.tax, source, relations, opps, refus).model_dump()
 
     def probleme(self, inst: dict, spec: SpecDecision):
         return probleme(Instantane(**inst), spec, self.tax)

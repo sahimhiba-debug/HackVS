@@ -164,15 +164,25 @@ def graphe_actuel(m: Memoire, maintenant: date, g: Optional[nx.Graph] = None) ->
     sans suite (état calculé par la MÊME règle que etat_relation). Sert à tout ce qui s'appuie sur un lien pour agir
     (présentation par un intermédiaire, opportunités) ; le graphe historique reste la mémoire (« à raviver »)."""
     g = (g if g is not None else graphe_de_confiance(m, maintenant)).copy()
-    par_paire: dict[tuple, list[Evt]] = {}
-    for e in m.evenements(jusqu_au=maintenant):          # une seule passe sur les faits
-        if len(e.acteurs) >= 2:
-            par_paire.setdefault(cle(*e.acteurs[:2]), []).append(e)
+    etats = etats_par_paire(m, maintenant)
     for a, b in list(g.edges()):
-        evs = sorted(par_paire.get(cle(a, b), []), key=lambda e: (e.le, e.seq))
-        if _etat(evs, maintenant)["etat"] in ETATS_NON_ACTUELS:
+        if etats.get(cle(a, b), "AUCUNE") in ETATS_NON_ACTUELS:
             g.remove_edge(a, b)
     return g
+
+
+def etats_par_paire(m: Memoire, maintenant: date) -> dict[str, str]:
+    """État de CHAQUE paire ayant des faits, en une seule passe (même règle que etat_relation)."""
+    par_paire: dict[str, list[Evt]] = {}
+    for e in m.evenements(jusqu_au=maintenant):
+        if len(e.acteurs) >= 2:
+            par_paire.setdefault(cle(*e.acteurs[:2]), []).append(e)
+    return {k: _etat(sorted(evs, key=lambda e: (e.le, e.seq)), maintenant)["etat"] for k, evs in par_paire.items()}
+
+
+def paires_declinees(m: Memoire, maintenant: date) -> list[tuple[str, str]]:
+    """Paires dont le fait le plus récent est un refus d'introduction : jamais placées à la même table."""
+    return [tuple(k.split("|")) for k, e in sorted(etats_par_paire(m, maintenant).items()) if e == "DECLINEE"]
 
 
 def chemin_chaud(g: nx.Graph, x: str, c: str, par_id: dict[str, Profil]) -> dict:

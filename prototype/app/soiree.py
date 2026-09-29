@@ -194,12 +194,20 @@ def optimal(aretes, participants: list[str], tours: int, limite_s: float = 20.0)
     return plan, info
 
 
+def paires_refusees(relations: list) -> frozenset:
+    """Paires dont l'introduction la plus RÉCENTE a été déclinée (un refus suivi d'une relation acceptée ne compte plus)."""
+    derniere: dict[frozenset, object] = {}
+    for r in sorted(relations, key=lambda r: r.cree_le):
+        derniere[frozenset((r.auteur_id, r.aidant_id))] = r
+    return frozenset(k for k, r in derniere.items() if r.etat == "declinee")
+
+
 def planifier(participants: list[Profil], besoins_publies: list, tax: Taxonomie, tours: int = 3,
-              deja_en_relation: frozenset = frozenset()) -> dict:
+              deja_en_relation: frozenset = frozenset(), refus: frozenset = frozenset()) -> dict:
     t0 = time.perf_counter()
     eligibles = [p for p in participants if p.type == "membre_club" and p.accepte_introductions and p.disponible]
     sans_langue: dict = {}
-    aretes = valeurs(eligibles, besoins_publies, tax, sans_langue, deja_en_relation)
+    aretes = valeurs(eligibles, besoins_publies, tax, sans_langue, deja_en_relation | refus)   # refus : NON levable
     ids = [p.id for p in eligibles]
     t_val = round((time.perf_counter() - t0) * 1000)
     plan_opt, info = optimal(aretes, ids, tours) if aretes else ([[] for _ in range(tours)], {"optimal_prouve": True})
@@ -234,7 +242,8 @@ def planifier(participants: list[Profil], besoins_publies: list, tax: Taxonomie,
         "paires_deja_en_relation": len(deja_en_relation),
         "contraintes": ["au plus une rencontre par personne et par tour", "jamais deux fois la même paire",
                         "langue commune déclarée obligatoire", "membres disponibles et acceptant les introductions",
-                        "pas de table pour deux membres déjà en relation"],
+                        "pas de table pour deux membres déjà en relation",
+                        "jamais de table pour deux membres dont l'introduction a été déclinée"],
     }
 
 

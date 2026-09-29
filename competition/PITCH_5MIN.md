@@ -16,7 +16,7 @@ nous avons même injecté de fausses explications pour vérifier que les tests l
 Sur un benchmark synthétique, à budget égal et avec les mêmes candidats pour tous, notre optimiseur crée plus de ponts
 et sert plus de membres que 5 autres méthodes ; il perd sur la réciprocité face à la méthode qui ne vise qu'elle.
 Nous avions d'abord publié un écart plus flatteur ; en attaquant notre propre benchmark, nous avons trouvé le biais
-et corrigé le chiffre. Au total, 24 défauts réels trouvés et corrigés, chacun avec son test.
+et corrigé le chiffre. Au total, 26 défauts réels trouvés et corrigés, chacun avec son test.
 
 **[4:05 — déploiement]** Tout tourne sur une seule machine, sans clé d'API ; une IA externe est une option, jamais une
 dépendance. Consentement, confidentialité et autorisations sont du code testé. Le Club pourrait commencer par une
