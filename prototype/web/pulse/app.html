@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#121212">
   <title>Club Pulse</title>
-  <meta name="description" content="Club Pulse — le Club des Affaires, vivant sur votre téléphone : ce que votre réseau peut faire maintenant.">
+  <meta name="description" content="Club Pulse — essayer quelque chose ensemble, à vos conditions, et garder un résultat qui dit ses limites.">
   <link rel="manifest" href="/app/manifest.webmanifest">
   <link rel="icon" href="/static/pulse/icone.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/static/pulse/icone.svg">
@@ -17,27 +17,20 @@
       padding: calc(12px + env(safe-area-inset-top)) 0 12px; border-bottom: 1px solid var(--ligne); }
     header.haut .qui { margin-left: auto; font-size: 13px; color: var(--encre-2); text-align: right; }
     main { padding-top: 18px; }
-    .grand { font-size: clamp(26px, 7vw, 34px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; }
-    .item, .carte.cliquable.item { display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: start; }
-    .item .ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 19px; background: var(--surface-2); border: 1px solid var(--ligne); }
-    .item.opportunite .ic { background: var(--rouge-pale); border-color: transparent; }
-    .item h3 { font-size: 16px; }
-    .item p { font-size: 14px; color: var(--encre-2); margin-top: 3px; }
+    .grand { font-size: clamp(24px, 6.5vw, 32px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; }
     nav.onglets { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--ligne); z-index: 6;
-      display: grid; grid-template-columns: repeat(5, 1fr); padding-bottom: env(safe-area-inset-bottom); }
-    nav.onglets a { text-decoration: none; font-size: 11px; font-weight: 600; color: var(--encre-3); display: grid; justify-items: center; gap: 2px; padding: 9px 2px 10px; min-height: 56px; }
+      display: grid; grid-template-columns: repeat(3, 1fr); padding-bottom: env(safe-area-inset-bottom); }
+    nav.onglets a { text-decoration: none; font-size: 12px; font-weight: 600; color: var(--encre-3); display: grid; justify-items: center; gap: 2px; padding: 9px 2px 10px; min-height: 56px; }
     nav.onglets a span { font-size: 19px; line-height: 1; }
     nav.onglets a[aria-current="page"] { color: var(--encre); }
-    nav.onglets a[aria-current="page"] span { filter: none; }
-    .rapide { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
-    .rapide button { text-align: left; }
-    .graphe svg { width: 100%; height: auto; display: block; }
-    .graphe .l-avant { stroke: var(--ligne-forte); stroke-width: 2; }
-    .graphe .l-nouveau { stroke: var(--rouge); stroke-width: 3.5; }
-    .graphe circle { fill: var(--surface); stroke: var(--encre-2); stroke-width: 2; }
-    .graphe circle.benef { fill: var(--rouge); stroke: var(--rouge); }
-    .graphe text { font-size: 12px; fill: var(--encre); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; }
-    @media (max-width: 380px) { .faits { grid-template-columns: 1fr 1fr; } .rapide { grid-template-columns: 1fr; } }
+    .ligne { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+    .geste { border-left: 3px solid var(--ligne-forte); padding: 6px 0 6px 10px; margin-top: 10px; }
+    .geste.vous { border-left-color: var(--rouge); }
+    .alt { width: 100%; text-align: left; margin-top: 8px; }
+    fieldset { border: 0; padding: 0; margin: 0; }
+    .radios label { display: inline-flex; gap: 6px; align-items: center; margin: 6px 12px 0 0; font-size: 15px; }
+    input[type="number"] { width: 90px; }
+    details summary { cursor: pointer; font-weight: 600; margin-top: 12px; }
   </style>
 </head>
 <body>
@@ -50,11 +43,9 @@
     <main id="ecran" aria-live="polite"></main>
   </div>
   <nav class="onglets" id="onglets" aria-label="Navigation" hidden>
-    <a href="#pouls" data-o="pouls"><span aria-hidden="true">◉</span>Pouls</a>
-    <a href="#activations" data-o="activations"><span aria-hidden="true">⇄</span>Activations</a>
-    <a href="#evenements" data-o="evenements"><span aria-hidden="true">▦</span>Événements</a>
-    <a href="#memoire" data-o="memoire"><span aria-hidden="true">◈</span>Mémoire</a>
-    <a href="#profil" data-o="profil"><span aria-hidden="true">◐</span>Profil</a>
+    <a href="#actions" data-o="actions"><span aria-hidden="true">◉</span>Mes actions</a>
+    <a href="#nouveau" data-o="nouveau"><span aria-hidden="true">＋</span>Proposer un essai</a>
+    <a href="#souvenirs" data-o="souvenirs"><span aria-hidden="true">◈</span>Souvenirs et accords</a>
   </nav>
   <div id="toasts" aria-live="assertive"></div>
   <script type="module">
@@ -78,9 +69,9 @@
       params.delete("session"); params.delete("t");
       history.replaceState(null, "", location.pathname + (params.toString() ? "?" + params : "") + location.hash);
     }
-    function toast(msg, genre = "") { const t = h("div", { class: "toast " + genre }, msg); $("#toasts").append(t); setTimeout(() => t.remove(), 3800); }
+    function toast(msg, genre = "") { const t = h("div", { class: "toast " + genre }, msg); $("#toasts").append(t); setTimeout(() => t.remove(), 4200); }
     // Chaque navigation ouvre une GÉNÉRATION : une réponse arrivée après qu'on a changé d'écran est périmée et n'est jamais
-    // affichée (sinon un écran lent pourrait recouvrir l'écran demandé ensuite). Les lectures en cours sont annulées.
+    // affichée. Les lectures en cours sont annulées.
     let generation = 0, lectures = new AbortController();
     class Perime extends Error {}
     const DELAI_MS = 15000;
@@ -101,287 +92,258 @@
       }
       const d = await r.json().catch(() => ({}));
       if (r.status === 401) { ecrire("pulse-session", null); session = null; if (location.hash !== "#acces") location.hash = "#acces"; throw new Error("Session expirée : entrez à nouveau votre code."); }
-      if (lecture && g !== generation) throw new Perime();          // réponse d'un écran quitté entre-temps
+      if (lecture && g !== generation) throw new Perime();
       if (r.status >= 500) throw new Error(`Erreur du serveur${d.requete ? " (référence " + d.requete + ")" : ""} : réessayez.`);
       if (!r.ok) throw new Error(MESSAGES[r.status] || (typeof d.detail === "string" ? d.detail : "Données invalides."));
       return d;
     }
-    const ICONES = { opportunite: "⚡", contribution: "🤝", accord: "🤝", activation: "⇄", evenement: "📅", memoire: "🧠" };
-    const CONF = { elevee: "élevée", moyenne: "moyenne", faible: "faible" };
-    const iaLabel = (ia) => ia && ia.fournisseur === "apertus" && !ia.repli ? `Apertus · ${ia.modele || ""}` : "règles locales (aucun modèle génératif)";
     const section = (titre, ...enfants) => h("div", { class: "bloc" }, h("span", { class: "surtitre" }, titre), ...enfants);
     const afficher = (...enfants) => $("#ecran").replaceChildren(...enfants.flat().filter(Boolean));
+    const vide = (texte) => h("p", { class: "note" }, texte);
+    const agir = (fn, message) => async () => { try { await fn(); if (message) toast(message); route(true); } catch (e) { toast(e.message, "erreur"); } };
+    const modeIA = (ia) => ia && ia.fournisseur === "apertus" && !ia.repli ? `Préparé par Apertus · ${ia.modele || ""} — à vérifier`
+      : "Formulaire : aucun modèle utilisé. Règles simples seulement (texte recopié, objet reconnu dans une courte liste) ; le reste est à compléter par vous.";
 
-    // ------------------------------------------------------------------ accès (QR → code) et accueil
+    // ------------------------------------------------------------------ accès
     function ecranAcces() {
-      $("#onglets").hidden = true;
       const code = h("input", { id: "code", inputmode: "text", autocomplete: "one-time-code", maxlength: 12, value: params.get("code") || "" });
-      afficher(h("p", { class: "surtitre" }, "Club des Affaires"),
-        h("h1", { class: "grand" }, "Activez votre compte du Club"),
-        h("p", { class: "note", style: "margin-top:8px" }, "Vous êtes déjà membre : pas d'inscription. Le code figure sur l'invitation du Club (QR)."),
+      afficher(h("p", { class: "surtitre" }, "Club des Affaires"), h("h1", { class: "grand" }, "Activez votre compte du Club"),
+        h("p", { class: "note", style: "margin-top:8px" }, "Vous êtes déjà membre : pas d'inscription. Le code figure sur l'invitation du Club."),
         h("div", { class: "champ" }, h("label", { for: "code" }, "Code d'invitation"), code),
         h("div", { class: "actions", style: "margin-top:14px" }, h("button", { class: "btn plein", onclick: async () => {
           try { const r = await api("/api/pulse/acces", { corps: { code: code.value.trim() } }); session = r.session; ecrire("pulse-session", session);
-            location.hash = r.profil_complet ? "#pouls" : "#accueil"; } catch (e) { toast(e.message, "erreur"); } } }, "Continuer")),
-        h("p", { class: "note", style: "margin-top:18px" }, "Démonstration : membres fictifs ; les codes de démo sont dans la console du Club."));
-    }
-    async function ecranAccueil() {
-      $("#onglets").hidden = true;
-      const p = await api("/api/pulse/moi/profil");
-      const choisis = { aide: [], cherche: [] };
-      const zone = (sens, titre, ex) => {
-        const ta = h("textarea", { rows: 2, placeholder: ex, id: "t-" + sens });
-        const props = h("div", { class: "choix" });
-        return h("div", { class: "bloc" }, h("span", { class: "surtitre" }, titre),
-          h("div", { class: "champ" }, h("label", { for: "t-" + sens }, "En une phrase"), ta),
-          h("button", { class: "btn discret petit", style: "margin-top:8px", onclick: async () => {
-            try { const r = await api("/api/pulse/moi/profil/proposer", { corps: { texte: ta.value, sens } });
-              props.replaceChildren(h("p", { class: "note", style: "width:100%" }, "Choisissez ce qui est juste (vous pouvez corriger) :"),
-                ...r.map((x) => h("button", { "aria-pressed": "false", onclick: (ev) => {
-                  [...props.querySelectorAll("button")].forEach((b) => b.setAttribute("aria-pressed", "false"));
-                  ev.currentTarget.setAttribute("aria-pressed", "true"); choisis[sens] = [{ texte: x.texte, concept: x.concept }]; } }, x.libelle)));
-            } catch (e) { toast(e.message, "erreur"); } } }, "Proposer"), props);
-      };
-      const visible = h("input", { type: "checkbox", id: "visible" });
-      afficher(h("p", { class: "surtitre" }, "Bienvenue"), h("h1", { class: "grand" }, `Bonjour ${(p.nom || "").split(" ")[0]}`),
-        h("div", { class: "carte", style: "margin-top:14px" }, h("span", { class: "surtitre" }, "1 · Identité (importée de votre adhésion)"),
-          h("p", {}, h("b", {}, p.nom), " · ", p.organisation), h("p", { class: "note" }, `Adhésion ${p.adhesion} · rôle : ${p.role}`)),
-        zone("aide", "2 · Je peux aider avec…", "ex. tisanes de plantes alpines bio"),
-        zone("cherche", "3 · Je cherche en ce moment…", "ex. faire valider nos étiquettes pour l'Allemagne"),
-        h("div", { class: "bloc" }, h("span", { class: "surtitre" }, "4 · Visibilité"),
-          h("label", { class: "bascule", for: "visible" }, visible, h("span", {}, "Le Club peut me solliciter en privé quand ma capacité est utile. ",
-            h("span", { class: "note" }, "Mon nom reste caché jusqu'à mon accord ; mes notes restent privées.")))),
-        h("div", { class: "actions", style: "margin-top:18px" }, h("button", { class: "btn plein", onclick: async () => {
-          try { await api("/api/pulse/moi/accueil", { corps: { aide: choisis.aide, cherche: choisis.cherche, visible: visible.checked } }); location.hash = "#pouls"; }
-          catch (e) { toast(e.message, "erreur"); } } }, "Terminer")));
+            ecrire("pulse-nom", r.nom); location.hash = "#actions"; } catch (e) { toast(e.message, "erreur"); } } }, "Continuer")),
+        h("p", { class: "note", style: "margin-top:18px" }, "Démonstration : membres et entreprises fictifs."));
     }
 
-    // ------------------------------------------------------------------ pouls
-    async function ecranPouls() {
-      const p = await api("/api/pulse/moi/pouls");
-      $("#qui").textContent = `${p.bonjour} · ${p.date}`;
-      const demande = h("textarea", { rows: 2, placeholder: "Décrivez ce dont vous avez besoin…", id: "demande" });
-      afficher(h("p", { class: "surtitre" }, `Bonjour ${p.bonjour}`),
-        h("h1", { class: "grand" }, "Ce que votre réseau peut faire maintenant"),
-        h("p", { class: "note", style: "margin-top:6px" }, p.items.length ? `${p.items.length} chose(s) à regarder` : "Rien de nouveau : le Club se tait quand il n'a rien d'utile à dire."),
-        h("div", { style: "margin-top:14px" }, p.items.map((x) => h("button", { class: `carte cliquable item ${x.type} apparait`, onclick: () => ouvrir(x) },
-          h("div", { class: "ic", "aria-hidden": "true" }, ICONES[x.type] || "•"),
-          h("div", {}, x.etiquette ? h("span", { class: "puce rouge" }, x.etiquette) : null, h("h3", { style: "margin-top:4px" }, x.titre), h("p", {}, x.detail))))),
-        h("div", { class: "bloc" }, h("span", { class: "surtitre" }, "Demander au Club"),
-          h("div", { class: "champ" }, h("label", { for: "demande", class: "sr" }, "Votre demande"), demande),
-          h("div", { class: "actions", style: "margin-top:8px" }, h("button", { class: "btn plein petit", onclick: async () => {
-            try { const r = await api("/api/pulse/moi/demandes", { corps: { texte: demande.value } }); montrerDemande(r); } catch (e) { toast(e.message, "erreur"); } } }, "Que peut faire le Club ?"),
-            h("a", { class: "btn discret petit", href: "#memoire" }, "Noter une rencontre"))),
-        h("div", { id: "resultat-demande" }),
-        h("p", { class: "ia", style: "margin-top:18px" }, "Compréhension du langage : ", p.ia.configure ? `Apertus configuré (${p.ia.modele})` : "règles locales — Apertus non configuré sur ce serveur"));
-    }
-    function ouvrir(x) {
-      if (x.type === "opportunite") location.hash = `#opp/${x.cible}`;
-      else if (x.type === "contribution" || x.type === "accord") location.hash = `#demande/${x.cible}`;
-      else if (x.type === "activation") location.hash = `#act/${x.cible}`;
-      else if (x.type === "evenement") location.hash = "#evenements";
-      else location.hash = "#memoire";
-    }
-    function montrerDemande(r) {
-      $("#resultat-demande").replaceChildren(h("div", { class: "carte apparait", style: "margin-top:12px" },
-        h("span", { class: "surtitre" }, "Compris"), h("ul", {}, r.compris.map((c) => h("li", {}, c.libelle, c.extrait ? h("span", { class: "note" }, ` ← « ${c.extrait} »`) : ""))),
-        r.incertain.length ? h("p", { class: "encadre", style: "margin-top:8px" }, r.incertain.join(" · ")) : null,
-        r.opportunites.map((o) => h("button", { class: "carte cliquable", style: "margin-top:10px", onclick: () => { location.hash = `#opp/${o.id}`; } },
-          h("span", { class: "puce rouge" }, o.type_libelle), h("h3", { style: "margin-top:6px" }, o.titre), h("p", { class: "note" }, o.action))),
-        r.sans_solution.map((b) => h("div", { class: "encadre", style: "margin-top:10px" }, h("b", {}, "Pas de solution vérifiée dans le Club · ", b.capacite),
-          h("p", {}, b.pourquoi), h("p", { class: "note" }, "Prochaine action : ", b.prochaine_action))),
-        !r.opportunites.length && !r.sans_solution.length ? h("p", { class: "note" }, "Rien à proposer pour l'instant : précisez votre demande.") : null,
-        h("p", { class: "ia", style: "margin-top:8px" }, "Compréhension : ", iaLabel(r.ia), r.ia.repli ? " (repli après indisponibilité)" : "")));
+    // ------------------------------------------------------------------ A. mes actions
+    const carte = (x, extra) => h("a", { class: "carte cliquable", href: `#essai/${x.id}`, style: "display:block;text-decoration:none;color:inherit" },
+      h("span", { class: "surtitre" }, x.etat), h("h3", { style: "margin-top:4px" }, x.question),
+      h("p", { class: "note" }, `Porteur : ${x.porteur}`), extra ? h("p", { style: "margin-top:6px" }, extra) : null);
+    async function ecranActions() {
+      const a = await api("/api/pulse/moi/actions");
+      afficher(h("h1", { class: "grand" }, "Mes actions"),
+        section("Attend votre choix", a.a_choisir.length ? a.a_choisir.map((x) => carte(x, x.attend)) : vide("Rien n'attend votre choix.")),
+        section("Mes contributions en cours", a.contributions.length ? a.contributions.map((x) => carte(x)) : vide("Aucune.")),
+        section("Mes essais", a.mes_essais.length ? a.mes_essais.map((x) => carte(x)) : vide("Aucun essai en cours. Onglet « Proposer un essai » pour en préparer un.")),
+        section("Résultats récents", a.recents.length ? a.recents.map((x) => carte(x, x.qualification ? `Observation : ${x.qualification}` : null)) : vide("Aucun.")));
     }
 
-    // ------------------------------------------------------------------ opportunité
-    async function ecranOpportunite(id) {
-      const o = await api(`/api/pulse/moi/opportunites/${id}`);
-      const expl = h("div", { class: "carte", style: "margin-top:12px" }, h("span", { class: "surtitre" }, "En clair"), h("p", { class: "note" }, "…"));
-      afficher(h("p", { class: "surtitre" }, "Opportunité détectée"), h("span", { class: "puce rouge" }, o.type_libelle),
-        h("h1", { class: "grand", style: "margin-top:8px" }, o.titre),
-        h("div", { class: "faits" }, h("div", { class: "fait" }, h("b", {}, CONF[o.confiance]), h("span", {}, "confiance")),
-          h("div", { class: "fait" }, h("b", {}, o.personnes_a_solliciter), h("span", {}, "personne(s) à solliciter")),
-          h("div", { class: "fait" }, h("b", {}, o.capacites.length), h("span", {}, "capacité(s)")),
-          h("div", { class: "fait" }, h("b", {}, o.manque.length), h("span", {}, "manque(s)"))),
-        section("Pourquoi maintenant", h("p", {}, o.pourquoi_maintenant)),
-        section("Pourquoi", h("ol", { class: "liste-num" }, o.pourquoi.map((x) => h("li", {}, x)))),
-        expl,
-        o.manque.length ? section("Ce qui manque", h("p", { class: "encadre" }, o.manque.join(" · "))) : null,
-        o.risques.length ? section("Ce qui peut échouer", h("ul", {}, o.risques.map((x) => h("li", {}, x)))) : null,
-        section("Prochaine action", h("p", {}, o.action)),
-        section("Ce qui sera partagé", h("p", { class: "note" }, o.partage)),
-        o.activation ? h("p", { class: "encadre", style: "margin-top:14px" }, "Déjà activée. ", h("a", { href: `#act/${o.activation}` }, "Voir l'activation"))
-        : o.activable ? h("div", { class: "actions", style: "margin-top:18px" },
-          h("button", { class: "btn rouge", onclick: () => activer(id, false) }, "Activer"),
-          h("button", { class: "btn discret", onclick: () => activer(id, true) }, "Activer sans révéler mon nom"),
-          h("a", { class: "btn discret", href: "#pouls" }, "Pas maintenant")) : h("p", { class: "encadre", style: "margin-top:14px" }, "Signalé à l'animatrice du Club."));
-      try { const x = await api(`/api/pulse/moi/opportunites/${id}/pourquoi`);
-        if (x.ia.fournisseur !== "apertus" || x.ia.repli) { expl.replaceChildren(h("p", { class: "ia" }, "Explication : ", x.source, " — le « pourquoi » ci-dessus vient directement des règles.")); expl.className = "bloc"; return; }
-        expl.replaceChildren(h("span", { class: "surtitre" }, "En clair"), h("p", {}, x.texte), h("p", { class: "ia", style: "margin-top:6px" }, "Source : ", x.source)); }
-      catch { expl.remove(); }
+    // ------------------------------------------------------------------ B1. préparer un essai (formulation → brouillon)
+    const TEMPLATES = [["temps", "Regarder l'objet quelques secondes et dire ce que vous avez compris", 10],
+                       ["lieu", "Présenter l'objet dans un lieu réel (stand, vitrine)", 15],
+                       ["objet", "Prêter un objet pour l'essai", 15], ["competence", "Donner un avis de professionnel", 15]];
+    async function ecranNouveau() {
+      const t = h("textarea", { rows: 4, id: "formulation", maxlength: 600, placeholder: "Ex. : Notre nouvelle étiquette est-elle comprise en 10 secondes à 1 mètre par quelqu'un qui ne connaît pas la marque ?" });
+      const zone = h("div");
+      afficher(h("h1", { class: "grand" }, "Proposer un essai"),
+        h("p", { class: "note", style: "margin-top:6px" }, "Une question concrète sur un objet, un support ou un usage. D'autres membres pourront vous aider à l'essayer, à LEURS conditions."),
+        h("div", { class: "champ" }, h("label", { for: "formulation" }, "Votre question, avec vos mots"), t),
+        h("div", { class: "actions", style: "margin-top:8px" }, h("button", { class: "btn plein", id: "preparer", onclick: async () => {
+          try { const p = await api("/api/pulse/moi/essais/preparer", { corps: { texte: t.value } }); zone.replaceChildren(formulaire(p)); }
+          catch (e) { toast(e.message, "erreur"); } } }, "Préparer la proposition")), zone);
     }
-    async function activer(id, anonyme) {
-      try { const r = await api(`/api/pulse/moi/opportunites/${id}/activer`, { corps: { anonyme } }); location.hash = `#act/${r.activation}`; }
-      catch (e) { toast(e.message, "erreur"); }
-    }
-
-    // ------------------------------------------------------------------ sollicitation reçue
-    async function ecranDemande(aid) {
-      const liste = await api("/api/pulse/moi/sollicitations");
-      const d = liste.find((x) => x.activation === aid);
-      if (!d) { location.hash = `#act/${aid}`; return; }
-      afficher(h("p", { class: "surtitre" }, d.pour_vous ? "Pour vous" : "Demande privée"), h("h1", { class: "grand" }, d.titre),
-        d.pourquoi_vous ? section("Pourquoi vous", h("p", {}, d.pourquoi_vous)) : null,
-        d.qui_demande ? section("Qui demande", h("p", {}, d.qui_demande)) : null,
-        section("Ce qui est demandé", h("ul", {}, d.votre_part.map((x) => h("li", {}, h("b", {}, x.libelle), " — ", x.demande)))),
-        d.ce_qui_serait_fait ? section("Ce que le Club ferait", h("ul", {}, d.ce_qui_serait_fait.map((x) => h("li", {}, x)))) : null,
-        d.message ? h("div", { class: "carte", style: "margin-top:14px" }, h("p", {}, d.message.texte), h("p", { class: "ia", style: "margin-top:6px" }, "Rédaction : ", iaLabel(d.message.ia))) : null,
-        section("Visibilité", h("p", { class: "note" }, d.visibilite)),
-        h("div", { class: "actions", style: "margin-top:18px" },
-          h("button", { class: "btn plein", onclick: () => repondre(aid, true) }, "Accepter"),
-          h("button", { class: "btn discret", onclick: () => repondre(aid, false) }, "Décliner")));
-    }
-    async function repondre(aid, accepte) {
-      try { await api(`/api/pulse/moi/sollicitations/${aid}`, { corps: { accepte } }); toast(accepte ? "Merci : vous êtes engagé·e." : "C'est noté. Personne ne le saura.");
-        location.hash = accepte ? `#act/${aid}` : "#pouls"; } catch (e) { toast(e.message, "erreur"); }
+    function formulaire(p) {
+      const champ = (id, label, valeur, rows) => h("div", { class: "champ" }, h("label", { for: id }, label),
+        rows ? h("textarea", { id, rows, maxlength: 300, value: valeur || "" }) : h("input", { id, maxlength: 300, value: valeur || "" }));
+      const gestes = h("div", { id: "gestes" });
+      const ajouter = (nature, geste, duree) => gestes.append(h("div", { class: "geste", "data-nature": nature },
+        h("p", { class: "note" }, `Geste demandé · ${nature}`), h("input", { class: "g-texte", maxlength: 200, value: geste, "aria-label": "Geste" }),
+        h("div", { class: "ligne", style: "margin-top:6px" }, h("input", { class: "g-duree", type: "number", min: 1, max: 120, value: duree, "aria-label": "Durée en minutes" }),
+          h("span", { class: "note" }, "minutes"), h("button", { class: "btn discret petit", onclick: (e) => e.currentTarget.closest(".geste").remove() }, "Retirer"))));
+      (p.etapes || []).forEach((e) => ajouter(e.nature, e.geste, e.duree_min));
+      return h("div", { class: "carte", style: "margin-top:14px" }, h("p", { class: "ia" }, modeIA(p.ia)),
+        champ("f-question", "Ce que nous essayons de savoir", p.question, 2), champ("f-objet", "L'objet, le support ou l'usage", p.objet),
+        champ("f-critere", "Critère d'observation : comment lirez-vous le résultat ?", p.critere, 2),
+        champ("f-pourquoi", "Pourquoi (contexte, facultatif)", p.pourquoi || "", 2),
+        h("div", { class: "champ" }, h("label", { for: "f-echeance" }, "Échéance"), h("input", { id: "f-echeance", type: "date", value: p.echeance })),
+        section("Gestes demandés à d'autres membres", gestes,
+          h("div", { class: "ligne" }, TEMPLATES.map(([n, g, d]) => h("button", { class: "btn discret petit", style: "margin-top:8px", onclick: () => ajouter(n, g, d) }, `+ ${n}`)))),
+        h("div", { class: "actions", style: "margin-top:14px" }, h("button", { class: "btn plein", id: "enregistrer", onclick: async () => {
+          const corps = { question: $("#f-question").value, objet: $("#f-objet").value, critere: $("#f-critere").value, pourquoi: $("#f-pourquoi").value,
+            echeance: $("#f-echeance").value, etapes: [...gestes.children].map((g) => ({ nature: g.dataset.nature, geste: g.querySelector(".g-texte").value,
+              duree_min: Number(g.querySelector(".g-duree").value) })) };
+          try { const e = p.id ? await api(`/api/pulse/moi/essais/${p.id}/brouillon?version=${p.version}`, { methode: "PUT", corps })
+                            : await api("/api/pulse/moi/essais", { corps });
+            location.hash = `#essai/${e.id}`; } catch (e) { toast(e.message, "erreur"); } } }, p.id ? "Enregistrer le brouillon corrigé" : "Enregistrer le brouillon")),
+        h("p", { class: "note", style: "margin-top:8px" }, "Rien n'est envoyé à personne tant que vous n'avez pas publié la proposition."));
     }
 
-    // ------------------------------------------------------------------ activation
-    function graphe(ev) {
-      if (!ev) return null;
-      const W = 320, H = 190, n = ev.noeuds.length, P = {};
-      ev.noeuds.forEach((x, i) => { const a = -Math.PI / 2 + (2 * Math.PI * i) / n; P[x.cle] = [W / 2 + 110 * Math.cos(a), H / 2 + 70 * Math.sin(a)]; });
-      const ns = "http://www.w3.org/2000/svg", el = (t, a) => { const e = document.createElementNS(ns, t); for (const [k, v] of Object.entries(a)) e.setAttribute(k, v); return e; };
-      const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": ev.phrase });
-      ev.liens_avant.forEach(([a, b]) => svg.append(el("line", { x1: P[a][0], y1: P[a][1], x2: P[b][0], y2: P[b][1], class: "l-avant" })));
-      ev.liens_nouveaux.forEach(([a, b]) => svg.append(el("line", { x1: P[a][0], y1: P[a][1], x2: P[b][0], y2: P[b][1], class: "l-nouveau" })));
-      ev.noeuds.forEach((x) => { const [cx, cy] = P[x.cle]; svg.append(el("circle", { cx, cy, r: 9, class: x.beneficiaire ? "benef" : "" }));
-        const t = el("text", { x: cx, y: cy + 24, "text-anchor": "middle" }); t.textContent = x.nom.length > 26 ? x.nom.slice(0, 25) + "…" : x.nom; svg.append(t); });
-      return h("div", { class: "carte graphe", style: "margin-top:12px" }, h("span", { class: "surtitre" }, "Ce qui a changé dans le réseau"), svg,
-        h("p", { class: "note" }, ev.phrase, ` Relations actives : ${ev.relations_beneficiaire.avant} → ${ev.relations_beneficiaire.apres}. Réseau atteignable : ${ev.reseau_atteignable.avant} → ${ev.reseau_atteignable.apres} membres.`));
+    // ------------------------------------------------------------------ B2. une proposition / un essai
+    async function ecranEssai(id) {
+      const e = await api(`/api/pulse/moi/essais/${id}`);
+      if (e.role === "ancien") {
+        afficher(h("h1", { class: "grand" }, e.question), h("p", { class: "encadre", style: "margin-top:12px" }, e.etat),
+          h("p", { class: "note" }, `Votre décision : ${e.votre_decision}. Rien ne vous sera redemandé pour cet essai.`)); return;
+      }
+      const post = (chemin, corps, message) => agir(() => api(`/api/pulse/moi/essais/${id}/${chemin}`, { corps: corps ?? {} }), message);
+      const A = new Set(e.actions);
+      const gestes = e.etapes.map((g) => h("div", { class: "geste" + (g.vous ? " vous" : "") },
+        h("div", { class: "ligne" }, h("b", {}, g.geste), h("span", { class: "puce" }, `${g.duree_min} min`)),
+        h("p", { class: "note" }, `${g.nature} · ${g.vous ? "vous" : g.qui} · ${g.statut}`),
+        g.offre ? h("p", { class: "note" }, `Offre : « ${g.offre.quoi} »${g.offre.duree_max_min ? ` · ${g.offre.duree_max_min} min au plus` : ""}${g.offre.conditions ? " · " + g.offre.conditions : ""} · jusqu'au ${g.offre.jusqu_au}`) : null,
+        g.offres_admissibles ? (g.offres_admissibles.length ? h("fieldset", { class: "radios" }, h("legend", { class: "note" }, "Offres admissibles (vous choisissez) :"),
+          g.offres_admissibles.map((o, i) => h("label", { style: "display:flex" }, h("input", { type: "radio", name: `choix-${g.id}`, value: o.id, checked: i === 0 }),
+            `« ${o.quoi} »${o.duree_max_min ? ` · ${o.duree_max_min} min au plus` : ""}${o.conditions ? " · " + o.conditions : ""}`)))
+          : h("p", { class: "encadre" }, "Personne n'offre ce geste aujourd'hui : modifiez-le ou retirez-le.")) : null,
+        e.role === "porteur" && A.has("constater") && g.statut !== "contribution reçue" ? h("button", { class: "btn discret petit", style: "margin-top:6px",
+          onclick: post(`contributions/${g.id}`, {}, "Contribution constatée (ce n'est pas un résultat).") }, "Contribution reçue") : null));
+      const blocs = [
+        h("p", { class: "surtitre" }, `Essai · version ${e.version} · ${e.mode}`), h("h1", { class: "grand" }, e.question),
+        h("p", { style: "margin-top:8px" }, h("span", { class: "puce" + (e.etat === "A_ADAPTER" || e.etat === "IMPOSSIBLE" ? " rouge" : "") }, e.etat_libelle)),
+        h("p", { class: "note", style: "margin-top:6px" }, `Porteur : ${e.porteur}${e.objet ? " · objet : " + e.objet : ""} · échéance : ${e.echeance}`),
+        section("Prochaine décision", h("p", { class: "encadre" }, e.prochaine)),
+        e.pourquoi ? section("Pourquoi", h("p", {}, e.pourquoi)) : null,
+        section("Critère d'observation", h("p", {}, e.critere || "—")),
+        section("Qui fait quoi", gestes),
+        e.manque.length ? section("Ce qui manque", h("ul", {}, e.manque.map((x) => h("li", {}, x)))) : null,
+        section("Ce qui sera partagé", h("p", { class: "note" }, e.partage))];
+      if (e.adaptation) {
+        const ad = e.adaptation;
+        blocs.push(section("Une condition a changé", h("p", {}, ad.cause),
+          ad.ne_couvre_plus.length ? h("p", { class: "encadre" }, "Ne couvre plus : " + ad.ne_couvre_plus.join(" · ")) : null,
+          ad.reste_valable.length ? h("p", { class: "note" }, "Reste valable (rien à redonner) : " + ad.reste_valable.join(", ")) : null,
+          ad.alternatives.map((x) => h("button", { class: "btn discret alt", onclick: post("adapter", { version: e.version, alternative: x.id }, "Nouvelle version : les personnes concernées choisissent.") }, x.texte)),
+          e.role === "porteur" ? h("p", { class: "note" }, "Le système ne remplace personne et ne change pas votre objectif sans votre choix.") : null));
+      }
+      const acts = [];
+      if (A.has("publier")) acts.push(h("button", { class: "btn plein", id: "publier", onclick: () => post("publier", { version: e.version,
+        choix: Object.fromEntries([...document.querySelectorAll("input[type=radio][name^=choix-]:checked")].map((x) => [x.name.slice(6), x.value])) },
+        "Proposition publiée : chaque personne choisit sa part.")() }, "Publier la proposition"));
+      if (A.has("corriger")) acts.push(h("button", { class: "btn discret", onclick: () => { location.hash = `#nouveau/${e.id}`; } }, "Corriger le brouillon"));
+      if (A.has("accepter")) acts.push(h("button", { class: "btn plein", id: "accepter", onclick: post("decision", { version: e.version, accepte: true }, "Accord donné pour cette version.") }, "Accepter ma part"),
+        h("button", { class: "btn discret", id: "decliner", onclick: post("decision", { version: e.version, accepte: false }, "Vous avez décliné. Personne ne le verra nommément.") }, "Décliner"));
+      if (A.has("lancer")) acts.push(h("button", { class: "btn rouge", id: "lancer", onclick: post("lancer", { version: e.version }, "Essai lancé.") }, "Lancer l'essai"));
+      if (A.has("modifier")) {
+        const c = h("input", { id: "nouveau-critere", maxlength: 300, placeholder: "Nouveau critère" });
+        acts.push(h("details", {}, h("summary", {}, "Modifier le critère"), h("div", { class: "champ" }, c),
+          h("button", { class: "btn discret petit", onclick: post("modifier", { version: e.version, get critere() { return c.value; } }, "Nouvelle version.") }, "Enregistrer (les personnes concernées devront choisir à nouveau)")));
+      }
+      if (A.has("observer") || A.has("corriger_observation")) acts.push(formObservation(id));
+      if (A.has("confirmer")) {
+        const r = h("input", { id: "raison", maxlength: 300, placeholder: "Ce que vous contestez (obligatoire pour contester)" });
+        acts.push(h("div", { class: "carte" }, h("span", { class: "surtitre" }, "Votre avis sur l'observation"), h("div", { class: "champ" }, r),
+          h("div", { class: "actions" }, h("button", { class: "btn discret petit", onclick: post("avis", { revision: e.observation.revision, avis: "confirme" }, "Confirmé.") }, "Je confirme"),
+            h("button", { class: "btn discret petit", onclick: () => post("avis", { revision: e.observation.revision, avis: "conteste", raison: r.value }, "Contestation enregistrée.")() }, "Je conteste"))));
+      }
+      if (A.has("reutilisation")) acts.push(formReutilisation(id, e.reutilisation));
+      if (e.votre_part && !e.final) acts.push(formMonOffre(e));
+      if (A.has("retirer")) acts.push(h("button", { class: "btn discret petit", onclick: post("retirer", {}, "Participation retirée.") }, "Retirer ma participation"));
+      if (A.has("annuler")) acts.push(h("button", { class: "btn discret petit", onclick: post("annuler", { raison: "annulé par le porteur" }, "Essai annulé.") }, "Annuler l'essai"));
+      if (acts.length) blocs.push(section("Vos actions", h("div", { class: "actions", style: "flex-direction:column;align-items:stretch" }, acts)));
+      if (e.observation) blocs.push(carteObservation(e.observation, e.reutilisation));
+      blocs.push(h("details", {}, h("summary", {}, "Historique"), h("ol", { class: "chrono" }, e.historique.map((x) => h("li", {}, h("span", { class: "note" }, x.le + " · "), x.quoi)))));
+      afficher(blocs);
     }
-    async function ecranActivation(aid) {
-      const a = await api(`/api/pulse/moi/activations/${aid}`);
-      const fin = ["RESULTAT_CONFIRME", "RESULTAT_PARTIEL"].includes(a.etat);
-      const pourquoi = h("input", { id: "pq", placeholder: "Pourquoi ? (facultatif)", maxlength: 300 });
-      const contrib = a.peut_contribuer ? formContribution(aid) : null;
-      afficher(h("p", { class: "surtitre" }, `Activation n°${a.numero}`), h("h1", { class: "grand" }, a.objectif),
-        h("p", { style: "margin-top:8px" }, h("span", { class: `puce ${fin ? "vert" : a.etat.includes("BLOQ") || a.etat.includes("ALTERN") ? "ambre" : ""}` }, a.etat_libelle),
-          a.anonyme ? h("span", { class: "puce", style: "margin-left:6px" }, "demande anonyme") : null),
-        section("Étapes", h("ul", { class: "etapes-act" }, a.etapes.map((e) => h("li", {}, h("span", {}, e.etape), h("span", { class: "note" }, e.statut))))),
-        a.contributions.length ? section("Contributions reçues", a.contributions.map((c) => h("div", { class: "carte" }, h("b", {}, c.titre), h("p", { class: "note" }, `${c.qui} · ${c.nature}`),
-          c.contenu ? h("p", { style: "white-space:pre-line;margin-top:6px;font-size:14px" }, c.contenu) : null))) : null,
-        a.contacts && a.contacts.length ? section("Contacts (après accord mutuel)", h("ul", {}, a.contacts.map((c) => h("li", {}, `${c.qui} — ${c.contact}`)))) : null,
-        contrib,
-        a.reutilisation ? h("div", { class: "actions", style: "margin-top:14px" }, h("button", { class: "btn plein", onclick: async () => {
-          try { await api(`/api/pulse/moi/activations/${aid}/reutiliser`, { corps: {} }); route(); } catch (e) { toast(e.message, "erreur"); } } }, "Recevoir la ressource vérifiée")) : null,
-        a.a_confirmer ? h("div", { class: "carte", style: "margin-top:14px" }, h("h3", {}, "Cela a-t-il débloqué votre prochaine étape ?"),
-          h("div", { class: "champ" }, h("label", { for: "pq", class: "sr" }, "Pourquoi"), pourquoi),
-          h("div", { class: "actions", style: "margin-top:10px" }, ...[["debloque", "Oui"], ["partiel", "Partiellement"], ["non", "Non"]].map(([v, l]) =>
-            h("button", { class: v === "debloque" ? "btn plein" : "btn discret", onclick: async () => {
-              try { await api(`/api/pulse/moi/activations/${aid}/confirmer`, { corps: { verdict: v, etape_suivante: v !== "non", pourquoi: pourquoi.value } }); route(); }
-              catch (e) { toast(e.message, "erreur"); } } }, l)))) : null,
-        fin ? h("div", { class: "encadre vert", style: "margin-top:14px" }, h("b", {}, a.resultat.statut), h("p", {}, "Confirmé par la personne aidée. Ce résultat rejoint la mémoire vérifiée du Club — anonymisée.")) : null,
-        graphe(a.evolution),
-        section("Chronologie", h("ol", { class: "chrono" }, a.chronologie.map((c) => h("li", { class: c.etat.startsWith("RESULTAT_CONF") ? "ok" : ["BLOQUEE", "ALTERNATIVE_PROPOSEE"].includes(c.etat) ? "fort" : "" },
-          h("div", {}, h("b", {}, c.libelle), h("span", { class: "note" }, ` · ${c.le} · ${c.agent}`), h("p", { class: "note" }, c.raison)))))));
+    function formMonOffre(e) {
+      const g = e.votre_part.gestes.find((x) => x.offre_id);
+      if (!g) return null;
+      const d = h("input", { id: "ma-duree", type: "number", min: 1, max: 240, value: g.offre.duree_max_min || "" });
+      return h("details", {}, h("summary", {}, "Mes conditions ont changé"),
+        h("p", { class: "note" }, `Votre offre : « ${g.offre.quoi} »`), h("div", { class: "ligne" }, h("label", { for: "ma-duree" }, "Je peux donner au plus"), d, h("span", {}, "minutes")),
+        h("button", { class: "btn discret petit", id: "changer-duree", onclick: agir(() => api(`/api/pulse/moi/offres/${g.offre_id}`, {
+          methode: "PATCH", corps: { duree_max_min: Number(d.value) } }), "Conditions mises à jour : les essais concernés sont réévalués.") }, "Mettre à jour mon offre"));
     }
-    function formContribution(aid) {
-      const nature = h("select", { id: "nature" }, ...["ressource", "conseil", "validation", "rencontre", "introduction", "document"].map((x) => h("option", { value: x }, x)));
-      const titre = h("input", { id: "titre", maxlength: 120 }), contenu = h("textarea", { id: "contenu", rows: 4 });
-      const club = h("input", { type: "checkbox", id: "club" }), nom = h("input", { type: "checkbox", id: "nom" });
-      return h("div", { class: "carte", style: "margin-top:14px" }, h("h3", {}, "Votre contribution"),
-        h("div", { class: "champ" }, h("label", { for: "nature" }, "Nature"), nature), h("div", { class: "champ" }, h("label", { for: "titre" }, "Titre"), titre),
-        h("div", { class: "champ" }, h("label", { for: "contenu" }, "Contenu"), contenu),
-        h("label", { class: "bascule", for: "club" }, club, h("span", {}, "Réutilisable par d'autres membres si l'effet est confirmé")),
-        h("label", { class: "bascule", for: "nom" }, nom, h("span", {}, "Avec mon nom")),
-        h("div", { class: "actions", style: "margin-top:12px" }, h("button", { class: "btn plein", onclick: async () => {
-          try { await api(`/api/pulse/moi/activations/${aid}/contribuer`, { corps: { nature: nature.value, titre: titre.value, contenu: contenu.value, reutilisable: club.checked, attribution: nom.checked } });
-            toast("Contribution envoyée."); route(); } catch (e) { toast(e.message, "erreur"); } } }, "Envoyer")));
+    function formObservation(id) {
+      const t = h("textarea", { id: "obs-texte", rows: 3, maxlength: 1000, placeholder: "Ce que vous avez observé, sans l'arranger" });
+      const l = h("input", { id: "obs-limites", maxlength: 300, placeholder: "Portée : combien de personnes, quelles conditions" });
+      const q = h("div", { class: "radios" }, [["positif", "positif"], ["negatif", "négatif"], ["mitige", "mitigé"], ["non_concluant", "non concluant"]].map(([v, lib]) =>
+        h("label", {}, h("input", { type: "radio", name: "qualif", value: v }), lib)));
+      return h("div", { class: "carte" }, h("span", { class: "surtitre" }, "Déclarer l'observation"),
+        h("p", { class: "note" }, "C'est votre déclaration : le système ne l'a pas vérifiée et le dira. Un résultat négatif est un résultat."),
+        h("div", { class: "champ" }, t), q, h("div", { class: "champ" }, l),
+        h("button", { class: "btn plein", id: "observer", style: "margin-top:8px", onclick: agir(() => api(`/api/pulse/moi/essais/${id}/observation`, { corps: {
+          texte: t.value, limites: l.value, qualification: (document.querySelector("input[name=qualif]:checked") || {}).value } }), "Observation enregistrée.") }, "Enregistrer l'observation"));
     }
-    async function ecranActivations() {
-      const [dem, acts] = await Promise.all([api("/api/pulse/moi/sollicitations"), api("/api/pulse/moi/activations")]);
-      afficher(h("h1", { class: "grand" }, "Activations"),
-        section("Demandes pour vous", dem.length ? dem.map((d) => h("button", { class: "carte cliquable", onclick: () => { location.hash = `#demande/${d.activation}`; } }, h("h3", {}, d.titre), h("p", { class: "note" }, d.pourquoi_vous || "")))
-          : h("p", { class: "note" }, "Aucune demande en attente.")),
-        section("En cours et terminées", acts.length ? acts.map((a) => h("button", { class: "carte cliquable", onclick: () => { location.hash = `#act/${a.id}`; } },
-          h("span", { class: "puce" }, a.etat_libelle), h("h3", { style: "margin-top:6px" }, a.objectif))) : h("p", { class: "note" }, "Aucune activation.")));
+    function formReutilisation(id, r) {
+      const choix = h("div", { class: "radios" }, [["moi", "moi seul·e"], ["participants", "les participants"], ["club", "les membres du Club"]].map(([v, lib]) =>
+        h("label", {}, h("input", { type: "radio", name: "niveau", value: v, checked: r && r.vous && r.vous.niveau === v }), lib)));
+      const nom = h("label", { class: "bascule" }, h("input", { type: "checkbox", id: "mention-nom", checked: r && r.vous && r.vous.mention === "nom" }), h("span", {}, "Mon nom peut être cité"));
+      return h("div", { class: "carte" }, h("span", { class: "surtitre" }, "Qui peut réutiliser ce résultat ?"),
+        h("p", { class: "note" }, `Niveau effectif aujourd'hui : ${r ? r.niveau_effectif : "participants"} (le plus restrictif de tous les participants l'emporte).`), choix, nom,
+        h("button", { class: "btn discret petit", style: "margin-top:8px", onclick: agir(() => api(`/api/pulse/moi/essais/${id}/reutilisation`, { corps: {
+          niveau: (document.querySelector("input[name=niveau]:checked") || {}).value || "participants", mention: $("#mention-nom").checked ? "nom" : "anonyme" } }), "Choix enregistré.") }, "Enregistrer mon choix"));
+    }
+    function carteObservation(o, r) {
+      return section("Observation", h("div", { class: "carte" }, h("p", { class: "note" }, `${o.nature} · auteur : ${o.auteur}${o.tardive ? " · déclarée après l'échéance" : ""}${o.revisions > 1 ? ` · ${o.revisions} versions` : ""}`),
+        h("p", { style: "margin-top:6px" }, h("span", { class: "puce" }, o.qualification), " ", o.texte),
+        h("p", { class: "note", style: "margin-top:6px" }, `Portée : ${o.limites}`),
+        h("p", { class: "note" }, `${o.confirmations} confirmation(s)`),
+        o.contestations.map((c) => h("p", { class: "encadre" }, `Contestée par ${c.par} : ${c.raison}`)),
+        r ? h("p", { class: "note" }, `Visible aujourd'hui par : ${r.niveau_effectif}`) : null));
+    }
+    async function ecranCorriger(id) {
+      const e = await api(`/api/pulse/moi/essais/${id}`);
+      afficher(h("h1", { class: "grand" }, "Corriger le brouillon"), formulaire({ id: e.id, version: e.version, question: e.question, objet: e.objet, critere: e.critere,
+        pourquoi: e.pourquoi, echeance: e.echeance, etapes: e.etapes.map((g) => ({ nature: Object.entries({ temps: "quelques minutes", lieu: "un lieu", objet: "un objet", competence: "une compétence" }).find(([, v]) => v === g.nature)[0], geste: g.geste, duree_min: g.duree_min })),
+        ia: null }));
     }
 
-    // ------------------------------------------------------------------ événements, mémoire, profil
-    async function ecranEvenements() {
-      const evs = await api("/api/pulse/moi/evenements");
-      afficher(h("h1", { class: "grand" }, "Événements"), evs.map((e) => h("div", { class: "carte", style: "margin-top:12px" },
-        h("span", { class: "puce" }, e.inscrit ? "inscrit·e" : "non inscrit·e"), h("h3", { style: "margin-top:6px" }, e.nom), h("p", { class: "note" }, `${e.le} · dans ${e.dans_jours} jours`),
-        e.inscrit ? [section("Avant", e.avant.length ? e.avant.map((o) => h("button", { class: "btn discret petit", onclick: () => { location.hash = `#opp/${o.id}`; } }, o.titre)) : h("p", { class: "note" }, "Rien à préparer.")),
-          section("Pendant", h("p", { class: "note" }, e.pendant), h("a", { class: "btn discret petit", href: "#memoire" }, "Noter une rencontre")), section("Après", h("p", { class: "note" }, e.apres))] : null)));
-    }
-    async function ecranMemoire() {
-      const [notes, club] = await Promise.all([api("/api/pulse/moi/notes"), api("/api/pulse/memoire")]);
-      const t = h("textarea", { rows: 4, id: "note", placeholder: "Qui avez-vous rencontré ? Que cherche cette personne ? Que cherchez-vous ? (la dictée de votre clavier fonctionne)" });
-      afficher(h("h1", { class: "grand" }, "Mémoire"),
-        h("div", { class: "carte", style: "margin-top:14px" }, h("span", { class: "surtitre" }, "Noter une rencontre · privé"),
-          h("div", { class: "champ" }, h("label", { for: "note", class: "sr" }, "Note"), t),
-          h("div", { class: "actions", style: "margin-top:8px" }, h("button", { class: "btn plein petit", onclick: async () => {
-            try { await api("/api/pulse/moi/notes", { corps: { texte: t.value } }); route(); } catch (e) { toast(e.message, "erreur"); } } }, "Garder cette note"))),
-        section("Mes notes privées", notes.length ? notes.slice().reverse().map((n) => h("div", { class: "carte" },
-          h("p", { class: "note" }, `${n.le}${n.avec_nom ? " · avec " + n.avec_nom : ""} · visible par vous seul·e`), h("p", { style: "margin-top:4px" }, n.texte),
-          n.capture.incertitudes.length ? h("p", { class: "encadre", style: "margin-top:8px;font-size:14px" }, n.capture.incertitudes.join(" · ")) : null,
-          n.propositions.map((p, i) => h("div", { class: "actions", style: "margin-top:8px" }, n.partagee.includes(i) ? h("span", { class: "puce vert" }, "partagé : " + p.libelle)
-            : h("button", { class: "btn discret petit", onclick: async () => { try { await api(`/api/pulse/moi/notes/${n.id}/partager/${i}`, { corps: {} }); toast("Ajouté à votre profil."); route(); } catch (e) { toast(e.message, "erreur"); } } }, p.libelle))),
-          h("p", { class: "ia", style: "margin-top:6px" }, "Extraction : ", iaLabel(n.ia)))) : h("p", { class: "note" }, "Aucune note.")),
-        section("Mémoire vérifiée du Club", club.length ? club.map((m) => h("div", { class: "carte" }, h("span", { class: "puce vert" }, m.resultat === "debloque" ? "débloqué" : "partiel"),
-          h("h3", { style: "margin-top:6px" }, m.capacites.join(" + ")), h("p", { class: "note" }, `${m.confirmations} confirmation(s) · il y a ${m.age_jours} jours${m.secteur ? " · secteur : " + m.secteur : ""} · ${m.statut === "SYNTHETIQUE" ? "historique synthétique" : "démonstration"}`),
-          m.ressources.map((r) => h("p", { style: "margin-top:6px" }, h("a", { href: r.telecharger, download: "" }, r.titre), h("span", { class: "note" }, ` · ${r.auteur}`))),
-          h("p", { class: "note", style: "margin-top:4px" }, m.visibilite))) : h("p", { class: "note" }, "Encore vide.")));
-    }
-    async function ecranProfil() {
-      const p = await api("/api/pulse/moi/profil");
-      const ajout = h("input", { id: "ajout", placeholder: "Ajouter à « je cherche »", maxlength: 200 });
-      const maj = async (corps) => { try { await api("/api/pulse/moi/profil", { methode: "PATCH", corps }); route(); } catch (e) { toast(e.message, "erreur"); } };
-      afficher(h("h1", { class: "grand" }, p.nom), h("p", { class: "note", style: "margin-top:4px" }, `${p.organisation} · adhésion ${p.adhesion}`),
-        section("Je peux aider avec", p.je_peux_aider.length ? p.je_peux_aider.map((x) => h("div", { class: "carte" }, h("b", {}, x.libelle), h("p", { class: "note" }, x.texte),
-          x.concept ? h("button", { class: "btn discret petit", style: "margin-top:8px", onclick: () => maj({ retirer_capacite: x.concept }) }, "Retirer cette capacité") : null)) : h("p", { class: "note" }, "Rien pour l'instant.")),
-        section("Je cherche", p.je_cherche.map((x) => h("p", {}, "· ", x.texte, h("span", { class: "note" }, ` (${x.libelle})`))),
-          h("div", { class: "champ" }, h("label", { for: "ajout", class: "sr" }, "Ajouter"), ajout), h("button", { class: "btn discret petit", style: "margin-top:8px", onclick: () => maj({ ajouter_recherche: ajout.value }) }, "Ajouter")),
-        section("Disponibilité et visibilité",
-          h("label", { class: "bascule" }, h("input", { type: "checkbox", checked: p.disponible, onchange: (e) => maj({ disponible: e.target.checked }) }), h("span", {}, "Disponible pour des demandes")),
-          h("label", { class: "bascule" }, h("input", { type: "checkbox", checked: p.sollicitable, onchange: (e) => maj({ sollicitable: e.target.checked }) }), h("span", {}, "Le Club peut me solliciter en privé")),
-          h("label", { class: "bascule" }, h("input", { type: "checkbox", checked: p.visibilite.nom === "PUBLIC", onchange: (e) => maj({ visibilite: { nom: e.target.checked ? "PUBLIC" : "SUR_CONSENTEMENT" } }) }),
-            h("span", {}, "Mon nom est visible de tous les membres ", h("span", { class: "note" }, "(sinon : seulement après mon accord)")))),
-        section("Langues", h("p", {}, p.langues.join(" · "))), h("p", { class: "note", style: "margin-top:14px" }, p.note),
+    // ------------------------------------------------------------------ C. souvenirs et accords
+    async function ecranSouvenirs() {
+      const s = await api("/api/pulse/moi/souvenirs");
+      const note = h("textarea", { id: "note", rows: 3, maxlength: 2000, placeholder: "Une rencontre, une idée — visible par vous seul·e" });
+      const nouvelle = offreForm();
+      afficher(h("h1", { class: "grand" }, "Souvenirs et accords"), h("p", { class: "note", style: "margin-top:6px" }, s.rappel),
+        section("Notes privées · vous seul·e", h("div", { class: "champ" }, note), h("button", { class: "btn discret petit", onclick: agir(() => api("/api/pulse/moi/notes", { corps: { texte: note.value } }), "Note gardée, privée.") }, "Garder cette note"),
+          s.notes_privees.length ? s.notes_privees.slice().reverse().map((n) => h("div", { class: "carte" }, h("p", { class: "note" }, `${n.le} · ${n.visibilite}`), h("p", {}, n.texte))) : vide("Aucune note.")),
+        section("Mes offres volontaires", s.offres.length ? s.offres.map((o) => h("div", { class: "carte" }, h("div", { class: "ligne" }, h("b", {}, o.quoi), h("span", { class: "puce" }, o.etat)),
+          h("p", { class: "note" }, `${o.nature}${o.duree_max_min ? ` · ${o.duree_max_min} min au plus` : ""} · ${o.reservees}/${o.capacite} utilisée(s) · du ${o.du} au ${o.au}${o.conditions ? " · " + o.conditions : ""}`),
+          o.etat === "active" ? h("button", { class: "btn discret petit", onclick: agir(() => api(`/api/pulse/moi/offres/${o.id}/retirer`, { corps: {} }), "Offre retirée : les essais concernés sont réévalués.") }, "Retirer cette offre") : null))
+          : vide("Aucune offre. Une compétence passée n'est pas une disponibilité : publiez seulement ce que vous acceptez de donner."), nouvelle),
+        section("Mes accords", s.accords.length ? s.accords.map((a) => h("div", { class: "carte" }, h("div", { class: "ligne" }, h("b", {}, a.statut), h("span", { class: "puce" + (a.encore_valable ? " vert" : "") }, a.encore_valable ? "encore valable" : "ne vaut plus pour la version actuelle")),
+          h("p", { class: "note" }, `${a.le} · version ${a.version ?? "—"} · « ${a.question} »`), a.portee ? h("p", { class: "note" }, a.portee) : null)) : vide("Aucun accord.")),
+        section("Contributions passées", s.contributions.length ? s.contributions.map((c) => h("p", {}, `${c.le} · « ${c.question} » · constatée par ${c.constatee_par}`)) : vide("Aucune.")),
+        section("Observations", s.observations.length ? s.observations.map((o) => h("a", { class: "carte cliquable", href: `#essai/${o.essai}`, style: "display:block;text-decoration:none;color:inherit" },
+          h("p", {}, h("span", { class: "puce" }, o.qualification), " « ", o.question, " »"), h("p", { class: "note" }, `${o.nature} · portée : ${o.limites} · visible par : ${o.niveau_effectif}`))) : vide("Aucune.")),
+        section("Réutilisable par le Club", s.reutilisables.length ? s.reutilisables.map((o) => h("p", {}, `« ${o.question} » — ${o.qualification}`)) : vide("Rien : chaque participant doit l'autoriser explicitement.")),
         h("div", { class: "actions", style: "margin-top:18px" }, h("button", { class: "btn discret petit", onclick: () => { ecrire("pulse-session", null); session = null; location.hash = "#acces"; } }, "Se déconnecter")));
+    }
+    function offreForm() {
+      const q = h("input", { id: "o-quoi", maxlength: 200, placeholder: "Ce que vous acceptez de donner" });
+      const n = h("select", { id: "o-nature" }, ["temps", "lieu", "objet", "competence"].map((x) => h("option", { value: x }, x)));
+      const d = h("input", { id: "o-duree", type: "number", min: 1, max: 240, value: 15 });
+      const au = h("input", { id: "o-au", type: "date" });
+      return h("details", {}, h("summary", {}, "Publier une offre"), h("div", { class: "champ" }, q), h("div", { class: "ligne" }, n, d, h("span", {}, "min au plus · jusqu'au"), au),
+        h("button", { class: "btn discret petit", style: "margin-top:8px", onclick: agir(() => api("/api/pulse/moi/offres", { corps: { nature: n.value, quoi: q.value, duree_max_min: Number(d.value),
+          capacite: 1, du: new Date().toISOString().slice(0, 10), au: au.value } }), "Offre publiée.") }, "Publier"));
     }
 
     // ------------------------------------------------------------------ routeur
-    async function route() {
+    async function route(silencieux = false) {
       const g = ++generation;
       lectures.abort(); lectures = new AbortController();
-      const [nom, id] = (location.hash.slice(1) || "pouls").split("/");
+      const [nom, id] = (location.hash.slice(1) || "actions").split("/");
       if (!session && nom !== "acces") { location.hash = "#acces"; return; }
-      $("#onglets").hidden = nom === "acces" || nom === "accueil";
-      document.querySelectorAll("#onglets a").forEach((a) => a.setAttribute("aria-current", a.dataset.o === nom ? "page" : "false"));
+      $("#onglets").hidden = nom === "acces";
+      $("#qui").textContent = session ? (lire("pulse-nom") || "") : "";
+      document.querySelectorAll("#onglets a").forEach((a) => a.setAttribute("aria-current", a.dataset.o === nom || (nom === "essai" && a.dataset.o === "actions") ? "page" : "false"));
       const ecran = $("#ecran");
       ecran.setAttribute("aria-busy", "true");
-      const attente = setTimeout(() => { if (g === generation) ecran.replaceChildren(h("p", { class: "note chargement", role: "status" }, "Chargement…")); }, 250);
+      const attente = silencieux ? null : setTimeout(() => { if (g === generation) ecran.replaceChildren(h("p", { class: "note", role: "status" }, "Chargement…")); }, 250);
       try {
-        await ({ acces: ecranAcces, accueil: ecranAccueil, pouls: ecranPouls, opp: () => ecranOpportunite(id), demande: () => ecranDemande(id), act: () => ecranActivation(id),
-          activations: ecranActivations, evenements: ecranEvenements, memoire: ecranMemoire, profil: ecranProfil }[nom] || ecranPouls)();
+        await ({ acces: ecranAcces, actions: ecranActions, nouveau: () => (id ? ecranCorriger(id) : ecranNouveau()), essai: () => ecranEssai(id),
+          souvenirs: ecranSouvenirs }[nom] || ecranActions)();
       } catch (e) {
-        if (e instanceof Perime || g !== generation) return;          // un écran plus récent a pris la place : rien à dire
+        if (e instanceof Perime || g !== generation) return;
         ecran.replaceChildren(h("div", { class: "carte", role: "alert" }, h("span", { class: "surtitre" }, "Impossible d'afficher cet écran"),
-          h("p", { style: "margin-top:6px" }, e.message), h("div", { class: "actions", style: "margin-top:10px" }, h("button", { class: "btn plein petit", onclick: route }, "Réessayer"))));
+          h("p", { style: "margin-top:6px" }, e.message), h("div", { class: "actions", style: "margin-top:10px" }, h("button", { class: "btn plein petit", onclick: () => route() }, "Réessayer"))));
       } finally {
         clearTimeout(attente);
         if (g === generation) ecran.removeAttribute("aria-busy");
       }
-      if (g === generation) window.scrollTo(0, 0);
+      if (g === generation && !silencieux) window.scrollTo(0, 0);
     }
+    // les autres participants agissent depuis LEUR téléphone : on relit discrètement l'écran courant, sans toucher un champ en cours
+    setInterval(() => {
+      const nom = (location.hash.slice(1) || "actions").split("/")[0];
+      const saisie = document.activeElement && document.activeElement.matches("input, textarea, select");
+      const ouvert = document.querySelector("details[open]");
+      if (session && document.visibilityState === "visible" && !saisie && !ouvert && ["actions", "essai"].includes(nom)) route(true);
+    }, 4000);
+    window.addEventListener("hashchange", () => route());
     window.addEventListener("online", () => toast("De retour en ligne."));
     window.addEventListener("offline", () => toast("Hors ligne : les actions attendront le réseau.", "erreur"));
-    window.addEventListener("hashchange", route);
-    window.addEventListener("message", (ev) => { if (ev.origin === location.origin && ev.data === "rafraichir") route(); });
     if (params.get("code") && !session) location.hash = "#acces";
     route();
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/app/sw.js", { scope: "/app" }).catch(() => {});

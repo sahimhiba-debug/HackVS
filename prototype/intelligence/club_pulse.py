@@ -22,19 +22,21 @@ from app.models import Offre, Profil
 from app.parser_rules import extraire_profil
 from app.taxonomy import Taxonomie
 from plateforme.affirmations import Statut
-from plateforme.memoire import Evt
+from plateforme.memoire import Evt, Memoire
 
 from . import monde_demo as md
 from .acces import Sessions
 from .activation import ErreurActivation, Moteur
 from .detection import Detecteur
 from .erreurs import Conflit, ErreurMetier, Interdit, Introuvable, Invalide, NonAuthentifie
+from .essai import Banc, Etape, Protocole
 from .ia import AppelIA, Intelligence, besoin_de
-from .identite import AdhesionsSynthetiques, Coffre
+from .identite import AdhesionsSynthetiques, Coffre, nettoyer
 from .modele import BesoinActif, Opportunite
 from .politique import MODIFIABLES, Contexte, Rendu, Spectateur, descripteur
 from .reglages import Reglages
 from .vues import Vues
+from .vues_essai import VuesEssai
 
 ErreurPulse = ErreurMetier             # nom historique : tout refus du service (sous-classes typées)
 
@@ -56,6 +58,10 @@ class ClubPulse:
                                                           notes_privees_autorisees=self.reglages.notes_privees_vers_ia)
         self.ia.journal = self._tracer_ia
         self.vues = Vues(self)
+        # banc d'essai partagé (la tranche du pivot) : son propre journal — fichier si HACKVS_ESSAIS_DB (survit au
+        # redémarrage), sinon en mémoire
+        self.banc = Banc(Memoire(self.reglages.essais_db), lambda: self.jour, self.organisation_de)
+        self.vues_essai = VuesEssai(self)
         self.notes: dict[str, list[dict]] = {}
         self.preferences: dict[str, dict] = {}
         self.ecartees: set[str] = set()
@@ -72,6 +78,10 @@ class ClubPulse:
     @property
     def jour(self) -> date:
         return self.r.aujourd_hui
+
+    def organisation_de(self, pid: str) -> str:
+        o = self.coffre.organisation_de(pid)
+        return o.id if o else f"org-{pid}"
 
     def _tracer_ia(self, a: AppelIA) -> None:
         # la latence reste dans `ia.appels` (mesure) ; le journal garde un contenu déterministe, donc rejouable à l'octet
@@ -421,7 +431,35 @@ class ClubPulse:
         self.r.aujourd_hui = self.jour + timedelta(days=jours)
         self.r.memoire.ajouter(Evt(type="HORLOGE", le=self.jour, statut=Statut.SIMULE, donnees={"avance_jours": jours}))
         self._scan = None
-        return self.moteur.echeances(self.jour)
+        return self.moteur.echeances(self.jour) + self.banc.echeances()
+
+    # ------------------------------------------------------------------ banc d'essai : ce qui passe par l'IA
+    def preparer_essai(self, pid: str, texte: str) -> dict:
+        """Formulation du porteur → brouillon à corriger. Le texte est SA proposition (pas une note privée) ; les noms,
+        courriels et téléphones des membres connus en sont retirés avant tout envoi (défense complémentaire)."""
+        if not 3 <= len(texte.strip()) <= 600:
+            raise Invalide("formulation vide ou trop longue")
+        noms = [per.nom for per in self.coffre._personnes.values()] + [o.nom for o in self.coffre.orgs.values()]
+        propre = nettoyer(texte, noms)
+        rep = self.ia.structurer_essai(propre)
+        return rep.sortie | {"echeance": (self.jour + timedelta(days=10)).isoformat(),
+                             "ia": {"fournisseur": rep.appel.fournisseur, "modele": rep.appel.modele, "statut": rep.appel.statut,
+                                    "repli": rep.appel.repli, "mode": rep.sortie.get("mode")}}
+
+    def _protocole(self, champs: dict) -> Protocole:
+        etapes = [Etape(id=f"e{i + 1}", nature=e["nature"], geste=e["geste"], duree_min=e["duree_min"])
+                  for i, e in enumerate(champs.get("etapes", []))]
+        p = Protocole(question=champs["question"], objet=champs.get("objet", ""), pourquoi=champs.get("pourquoi", ""),
+                      critere=champs.get("critere", ""), echeance=date.fromisoformat(champs["echeance"]), etapes=etapes)
+        if p.echeance < self.jour:
+            raise Invalide("échéance passée")
+        return p
+
+    def creer_essai(self, pid: str, champs: dict) -> str:
+        return self.banc.brouillon(pid, self._protocole(champs))
+
+    def corriger_essai(self, pid: str, eid: str, version: int, champs: dict) -> int:
+        return self.banc.modifier_brouillon(pid, eid, version, self._protocole(champs))
 
 
 __all__ = ["ClubPulse", "ErreurPulse", "ErreurActivation", "descripteur"]

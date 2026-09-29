@@ -34,6 +34,8 @@ class Demo:
 
     def reinitialiser(self) -> None:
         self.club = ClubPulse(self.tax, ia=Intelligence(self.tax, self._ia.f if self._ia else None) if self._ia else None)
+        self.club.banc.m.vider()                         # nouvelle démonstration : aucun essai d'une démonstration précédente
+        semer_offres(self.club)
         self.etape = 0
         self.ctx: dict = {}
         self.traces: list[dict] = []
@@ -152,3 +154,21 @@ class Demo:
                         "session": c.session(p) if p in c.coffre.actives else None,
                         "capacite": next((self.tax.libelle(o.concept) for o in c.profil(p).offre if o.concept), None)})
         return res
+
+
+OFFRES_PREPAREES = [   # DONNÉES PRÉPARÉES pour la démonstration (fictives) : ce que chacun a publié AVANT la scène
+    (md.MARKUS, "temps", "Regard neuf de distributeur sur un emballage ou une étiquette", 15, 2, 0, 20, "pendant la Foire, sur un stand"),
+    (md.LEA, "temps", "Quelques minutes de regard neuf sur un support imprimé (français ou allemand)", 15, 2, 0, 20, "à distance ou sur place"),
+    (md.PAULINE, "lieu", "Un présentoir éclairé sur mon stand pendant la Foire", 20, 1, 0, 10, "hors heures d'affluence"),
+    ("s12", "competence", "Photographier un produit sur fond neutre", 30, 1, -60, -5, "offre ancienne"),   # expirée : visible en console
+]
+
+
+def semer_offres(club: ClubPulse) -> None:
+    """Offres volontaires DÉCLARÉES par des membres fictifs (données préparées, étiquetées comme telles). Aucune n'est
+    déduite d'un profil : une compétence passée n'est pas une disponibilité présente."""
+    from datetime import timedelta
+    j = club.jour
+    for auteur, nature, quoi, duree, capacite, du, au, conditions in OFFRES_PREPAREES:
+        club.banc.publier_offre(auteur, nature, quoi, capacite, j + timedelta(days=du), j + timedelta(days=au),
+                                duree_max_min=duree, conditions=conditions)

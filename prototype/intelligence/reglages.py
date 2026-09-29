@@ -19,6 +19,7 @@ class Reglages:
     console_jeton: Optional[str]       # si défini, exigé par la console du Club (en-tête X-Pulse-Console)
     notes_privees_vers_ia: bool        # une note PRIVÉE peut-elle partir vers un fournisseur externe ? (non par défaut)
     duree_session_s: int = 12 * 3600
+    essais_db: str = ":memory:"        # journal du banc d'essai (HACKVS_ESSAIS_DB : fichier → survit au redémarrage)
 
     @classmethod
     def depuis_env(cls, env: Optional[Mapping[str, str]] = None) -> "Reglages":
@@ -28,4 +29,5 @@ class Reglages:
             raise ValueError("HACKVS_SECRET doit compter au moins 32 caractères")
         return cls(secret=brut.encode() if brut else secrets.token_bytes(32), secret_fourni=bool(brut),
                    console_jeton=e.get("HACKVS_CONSOLE_JETON") or None,
-                   notes_privees_vers_ia=e.get("APERTUS_NOTES_PRIVEES", "") == "1")
+                   notes_privees_vers_ia=e.get("APERTUS_NOTES_PRIVEES", "") == "1",
+                   essais_db=e.get("HACKVS_ESSAIS_DB") or ":memory:")

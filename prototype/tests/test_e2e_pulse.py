@@ -1,156 +1,222 @@
-"""Club Pulse dans un VRAI navigateur : la console (démonstration guidée, téléphone intégré) puis l'application du membre
-sur des écrans de téléphone. Ignoré seulement si aucun Chromium n'est disponible ; obligatoire en CI."""
+"""Banc d'essai partagé dans un VRAI navigateur, avec DEUX sessions indépendantes (deux contextes = deux téléphones) :
+Sophie propose, Markus accepte, Markus réduit sa disponibilité (perturbation), Sophie choisit une adaptation, Markus
+réaccepte, l'essai a lieu, Sophie déclare une observation NÉGATIVE, Markus la conteste, chacun choisit la réutilisation.
+Seul geste joué : l'accord de Pauline (absente de la scène), par l'API de la console, marqué comme tel.
+Ignoré seulement si aucun Chromium n'est disponible ; obligatoire en CI."""
 import json
 import os
 import urllib.request
 
 import pytest
 
-from tests.test_e2e_scene import INTERDITS, _chromium, url  # noqa: F401  (serveur démo isolé partagé)
+from tests.test_e2e_scene import _chromium, url  # noqa: F401  (serveur démo isolé partagé)
 
 CAPTURES = os.environ.get("HACKVS_CAPTURES")
+CONSOLE = {"Content-Type": "application/json", "X-Pulse-Console": "1"}
+QUESTION = "Notre nouvelle étiquette de tisane est-elle comprise en 10 secondes à 1 mètre par quelqu'un qui ne connaît pas la marque ?"
+
+
+def _api(base, chemin, corps=None):
+    req = urllib.request.Request(base + chemin, data=json.dumps(corps).encode() if corps is not None else None, headers=CONSOLE)
+    return json.loads(urllib.request.urlopen(req).read())
 
 
 def _sans_debordement(pg):
     return pg.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1")
 
 
-def test_console_demo_guidee_complete(url):  # noqa: F811
-    pw = pytest.importorskip("playwright.sync_api")
-    with pw.sync_playwright() as p:
-        b = _chromium(p)
-        pg = b.new_page(viewport={"width": 1440, "height": 900})
-        pg.set_default_timeout(90_000)
-        erreurs: list[str] = []
-        pg.on("pageerror", lambda e: erreurs.append(str(e)))
-        pg.on("console", lambda m: erreurs.append(m.text) if m.type == "error" else None)
-        pg.on("response", lambda r: erreurs.append(f"{r.status} {r.request.method} {r.url}") if r.status >= 400 else None)
-        pg.goto(url + "/console")
-        pg.click("#reinit")
-        pg.wait_for_function("() => document.querySelector('#etape').textContent.includes('Étape 0/10')")
-        for i in range(1, 11):
-            pg.click("#suivant")
-            try:
-                pg.wait_for_function(f"() => document.querySelector('#etape').textContent.includes('Étape {i}/10')")
-            except Exception as e:                                          # message utile en cas d'échec
-                raise AssertionError((i, pg.inner_text("#etape"), pg.inner_text("#toasts"), erreurs,
-                                      pg.evaluate("document.querySelector('#suivant').disabled"))) from e
-            texte = pg.inner_text("main") + pg.inner_text("#legende")
-            assert not any(x in texte for x in INTERDITS), (i, texte[:400])
-            if i == 3:
-                pg.wait_for_selector("#phases li")                           # phases RÉELLES du scan affichées
-            if i == 5:                                                       # le téléphone montre Anna : demande anonyme
-                tel = pg.frame_locator("#tel")
-                tel.locator("text=Un membre du Club a une demande").first.wait_for()
-                assert "Sophie" not in tel.locator("main").inner_text()
-            if CAPTURES:
-                pg.screenshot(path=f"{CAPTURES}/console-{i}.png")
-        assert "demandes débloquées" in pg.inner_text("#situation")
-        pg.locator("#activations button").first.click()
-        pg.wait_for_selector("#detail .chrono li")
-        assert "Anna" not in pg.inner_text("#detail")                        # même le Club ne voit pas qui a décliné
-        assert _sans_debordement(pg)
-        b.close()
-    assert erreurs == []
+def _telephone(b, base, code, taille, erreurs):
+    ctx = b.new_context(viewport={"width": taille[0], "height": taille[1]})
+    pg = ctx.new_page()
+    pg.set_default_timeout(30_000)
+    pg.on("pageerror", lambda e: erreurs.append(str(e)))
+    pg.on("console", lambda m: erreurs.append(m.text) if m.type == "error" else None)
+    pg.on("response", lambda r: erreurs.append(f"{r.status} {r.request.method} {r.url}") if r.status >= 500 else None)
+    pg.goto(base + f"/app?code={code}#acces")
+    pg.click("text=Continuer")
+    pg.wait_for_selector("h1:has-text('Mes actions')")
+    return ctx, pg
 
 
-@pytest.mark.parametrize("taille", [(390, 844), (412, 915)])                 # iPhone / Android
-def test_application_membre_de_l_invitation_au_pouls(url, taille):  # noqa: F811
+def test_banc_d_essai_deux_telephones_perturbation_et_resultat_negatif(url):  # noqa: F811
     pw = pytest.importorskip("playwright.sync_api")
-    console = {"Content-Type": "application/json", "X-Pulse-Console": "1"}
-    urllib.request.urlopen(urllib.request.Request(url + "/api/pulse/demo/reinitialiser", data=b"{}", headers=console))
-    personas = urllib.request.urlopen(urllib.request.Request(url + "/api/pulse/console/personas", headers=console)).read()
-    code = next(x["code"] for x in json.loads(personas) if x["id"] == "n01")
+    _api(url, "/api/pulse/demo/reinitialiser", {})
+    codes = {p["id"]: p["code"] for p in _api(url, "/api/pulse/console/personas")}
+    erreurs: list[str] = []
     with pw.sync_playwright() as p:
         b = _chromium(p)
-        pg = b.new_page(viewport={"width": taille[0], "height": taille[1]})
-        pg.set_default_timeout(90_000)
-        erreurs: list[str] = []
-        pg.on("pageerror", lambda e: erreurs.append(str(e)))
-        pg.on("console", lambda m: erreurs.append(m.text) if m.type == "error" else None)
-        pg.goto(url + f"/app?code={code}#acces")
-        pg.click("text=Continuer")
-        pg.wait_for_selector("text=Identité (importée de votre adhésion)")
-        pg.fill("#t-aide", "tisanes de plantes alpines bio")
-        pg.locator("button:has-text('Proposer')").first.click()
-        pg.locator("button:has-text('Production de boissons')").first.click()
-        pg.fill("#t-cherche", "faire valider la conformité de nos étiquettes pour le marché allemand")
-        pg.locator("button:has-text('Proposer')").nth(1).click()
-        pg.wait_for_selector("button:has-text('Emballage et étiquetage')")  # le moteur propose « emballage »…
-        pg.locator("button:has-text('garder tel quel')").last.click()       # …le membre corrige
-        pg.check("#visible")
-        pg.click("text=Terminer")
-        pg.wait_for_selector("text=Ce que votre réseau peut faire maintenant")
-        pg.click("nav.onglets >> text=Mémoire")
-        pg.fill("#note", "Rencontré Markus à la Foire du Valais : il représente des marques bio en Allemagne et cherche des "
-                         "producteurs de boissons. Je dois aussi faire traduire mes étiquettes.")
-        pg.click("text=Garder cette note")
-        pg.wait_for_selector("text=visible par vous seul·e")
-        pg.locator("button:has-text('Traduction')").first.click()
-        pg.wait_for_selector("text=partagé")
-        pg.click("nav.onglets >> text=Pouls")
-        pg.wait_for_selector(".item.opportunite")
-        pg.locator(".item.opportunite").first.click()
-        pg.wait_for_selector("text=Opportunité détectée")
-        texte = pg.inner_text("main")
-        assert "Anna" not in texte and "une personne du Club" in texte       # identité cachée avant accord
-        assert not any(x in texte for x in INTERDITS) and _sans_debordement(pg)
+        _, s = _telephone(b, url, codes["n01"], (390, 844), erreurs)          # téléphone 1 : Sophie, porteuse
+        _, m = _telephone(b, url, codes["s14"], (412, 915), erreurs)          # téléphone 2 : Markus, contributeur
+        assert "Rien n'attend votre choix" in m.inner_text("main")            # liste vide : rien n'est fabriqué
+
+        # 1-3. Sophie formule, le système prépare (mode formulaire, dit comme tel), elle complète et choisit l'offre
+        s.click("nav.onglets >> text=Proposer un essai")
+        s.fill("#formulation", QUESTION)
+        s.click("#preparer")
+        s.wait_for_selector("#f-critere")
+        assert "aucun modèle utilisé" in s.inner_text(".ia")                 # jamais « Apertus » sans appel réel
+        s.fill("#f-critere", "Sur 3 personnes, combien nomment le produit après 10 s à 1 m ?")
+        s.click("button:has-text('+ temps')")
+        s.click("button:has-text('+ lieu')")
+        s.click("#enregistrer")
+        s.wait_for_selector("#publier")
+        s.click("label:has-text('Regard neuf de distributeur')")
+        s.click("#publier")
+        s.wait_for_selector("text=proposé : en attente de choix")
+        eid = s.url.split("#essai/")[1]
+        texte = s.inner_text("main")
+        assert "Markus" not in texte and "une personne du Club" in texte     # personne n'est nommé avant son accord
         if CAPTURES:
-            pg.screenshot(path=f"{CAPTURES}/app-{taille[0]}-opportunite.png", full_page=True)
-        pg.click("nav.onglets >> text=Profil")
-        pg.wait_for_selector("text=Je peux aider avec")
-        assert _sans_debordement(pg)
+            s.screenshot(path=f"{CAPTURES}/essai-1-propose.png", full_page=True)
+
+        # Pauline (absente de la scène) : geste JOUÉ par la console
+        v = _api(url, f"/api/pulse/console/essais/{eid}")["version"]
+        _api(url, f"/api/pulse/console/essais/{eid}/geste", {"membre": "s01", "version": v, "accepte": True})
+
+        # 4. Markus reçoit la proposition sur SON téléphone et accepte sa part
+        m.wait_for_selector(f"a[href='#essai/{eid}']", timeout=15_000)
+        m.click(f"a[href='#essai/{eid}']")
+        m.wait_for_selector("#accepter")
+        assert "Sophie Carron" in m.inner_text("main") and "10 min" in m.inner_text("main")
+        m.click("#accepter")
+        s.wait_for_selector("text=autorisé : tous les accords", timeout=15_000)
+        assert "Markus Heinzmann" in s.inner_text("main")                   # nommé APRÈS son accord
+
+        # 5. perturbation : Markus n'a plus que 5 minutes
+        m.click("summary:has-text('Mes conditions ont changé')")
+        m.fill("#ma-duree", "5")
+        m.click("#changer-duree")
+        s.wait_for_selector("text=Une condition a changé", timeout=15_000)
+        texte = s.inner_text("main")
+        assert "demande 10 min, l'offre en accepte 5" in texte and "Reste valable (rien à redonner) : Pauline Darbellay" in texte
+        assert s.locator("#lancer").count() == 0                             # rien ne se lance sur un accord qui ne couvre plus
+        if CAPTURES:
+            s.screenshot(path=f"{CAPTURES}/essai-2-adaptation.png", full_page=True)
+
+        # 6. Sophie choisit : même personne, geste raccourci (l'objectif reste le sien) ; Markus doit réaccepter
+        s.click("button:has-text('raccourcir ce geste de 10 à 5 min')")
+        s.wait_for_selector("text=proposé : en attente de choix", timeout=15_000)
+        m.wait_for_selector("#accepter", timeout=15_000)                     # la NOUVELLE version, relue sur son téléphone
+        assert "votre part a changé depuis votre accord" in m.inner_text("main")   # 5 min : sa part a changé, il redonne son accord
+        m.click("#accepter")
+        s.wait_for_selector("#lancer", timeout=15_000)
+
+        # 7. l'essai a lieu : contributions CONSTATÉES (ce n'est pas un résultat)
+        s.click("#lancer")
+        s.wait_for_selector("button:has-text('Contribution reçue')")
+        s.click("button:has-text('Contribution reçue') >> nth=0")
+        s.wait_for_function("() => [...document.querySelectorAll('button')].filter((x) => x.textContent === 'Contribution reçue').length === 1")
+        s.click("button:has-text('Contribution reçue')")
+        s.wait_for_selector("#observer")
+        assert "Aucun résultat n'en découle" in s.inner_text("main")
+
+        # 8. observation NÉGATIVE, avec sa portée, déclarée par Sophie
+        s.fill("#obs-texte", "1 personne sur 3 a nommé le produit ; la marque n'a été lue par personne.")
+        s.check("input[name=qualif][value=negatif]")
+        s.fill("#obs-limites", "3 personnes, stand éclairé, une seule étiquette, conditions de salon")
+        s.click("#observer")
+        s.wait_for_selector("text=observation déclarée")
+        assert "non vérifiée par le système" in s.inner_text("main") and "négatif" in s.inner_text("main")
+
+        # Markus conteste (la contestation reste visible)
+        m.wait_for_selector("#raison", timeout=15_000)
+        m.fill("#raison", "J'étais à 2 mètres, pas à 1 mètre.")
+        m.click("button:has-text('Je conteste')")
+        s.wait_for_selector("text=Contestée par Markus Heinzmann", timeout=15_000)
+
+        # 9. droits de réutilisation : Sophie « club », Markus « participants » → le plus restrictif l'emporte
+        s.check("input[name=niveau][value=club]")
+        s.click("button:has-text('Enregistrer mon choix')")
+        m.check("input[name=niveau][value=participants]")
+        m.click("button:has-text('Enregistrer mon choix')")
+        m.wait_for_timeout(800)
+        s.click("nav.onglets >> text=Souvenirs et accords")
+        s.wait_for_selector("text=Mes accords")
+        texte = s.inner_text("main")
+        assert "visible par : participants" in texte and "Rien : chaque participant doit l'autoriser" in texte
+        assert _sans_debordement(s) and _sans_debordement(m)
+        if CAPTURES:
+            s.screenshot(path=f"{CAPTURES}/essai-3-souvenirs.png", full_page=True)
         b.close()
-    assert erreurs == []
+    assert erreurs == [], erreurs
+
+
+def test_refus_sans_alternative_arret_honnete(url):  # noqa: F811
+    """Markus décline ; Léa a retiré son offre : le système ne sollicite personne d'autre, ne redemande rien à Markus,
+    et dit que l'essai est impossible en l'état."""
+    pw = pytest.importorskip("playwright.sync_api")
+    _api(url, "/api/pulse/demo/reinitialiser", {})
+    codes = {p["id"]: p["code"] for p in _api(url, "/api/pulse/console/personas")}
+    erreurs: list[str] = []
+    with pw.sync_playwright() as p:
+        b = _chromium(p)
+        _, s = _telephone(b, url, codes["n01"], (390, 844), erreurs)
+        _, m = _telephone(b, url, codes["s14"], (390, 844), erreurs)
+        _, lea = _telephone(b, url, codes["d01"], (390, 844), erreurs)
+        lea.click("nav.onglets >> text=Souvenirs et accords")
+        lea.click("button:has-text('Retirer cette offre')")
+        lea.wait_for_selector("text=retiree")
+        s.click("nav.onglets >> text=Proposer un essai")
+        s.fill("#formulation", QUESTION)
+        s.click("#preparer")
+        s.fill("#f-critere", "Sur 3 personnes, combien nomment le produit ?")
+        s.click("button:has-text('+ temps')")
+        s.click("#enregistrer")
+        s.click("#publier")
+        s.wait_for_selector("text=proposé : en attente de choix")
+        eid = s.url.split("#essai/")[1]
+        m.goto(url + f"/app#essai/{eid}")
+        m.click("#decliner")
+        s.wait_for_selector("text=impossible en l'état", timeout=15_000)
+        assert "Markus" not in s.inner_text("main")                         # qui a décliné n'est jamais nommé
+        m.reload()
+        m.wait_for_selector("text=vous avez décliné", timeout=15_000)
+        assert m.locator("#accepter").count() == 0                            # rien ne lui est redemandé
+        b.close()
+    assert erreurs == [], erreurs
 
 
 def test_application_face_aux_pannes_reseau(url):  # noqa: F811
     """Réponse lente d'un écran quitté (jamais affichée par-dessus le nouvel écran), panne serveur (écran d'erreur avec
-    « Réessayer » et référence de requête), hors ligne (message explicite), session invalide (retour à l'accès)."""
+    « Réessayer » et référence), hors ligne (message explicite), session falsifiée (retour à l'accès)."""
     pw = pytest.importorskip("playwright.sync_api")
-    console = {"Content-Type": "application/json", "X-Pulse-Console": "1"}
-    urllib.request.urlopen(urllib.request.Request(url + "/api/pulse/demo/aller/10", data=b"{}", headers=console))
-    personas = json.loads(urllib.request.urlopen(urllib.request.Request(url + "/api/pulse/console/personas", headers=console)).read())
-    session = next(x["session"] for x in personas if x["id"] == "n01")
+    _api(url, "/api/pulse/demo/reinitialiser", {})
+    session = next(x["session"] for x in _api(url, "/api/pulse/console/personas") if x["id"] == "s14")
     with pw.sync_playwright() as p:
         b = _chromium(p)
         ctx = b.new_context(viewport={"width": 390, "height": 844})
         pg = ctx.new_page()
-        pg.set_default_timeout(60_000)
-        pg.goto(url + f"/app?session={session}#profil")
-        pg.wait_for_selector("text=Je peux aider avec")
+        pg.set_default_timeout(30_000)
+        pg.goto(url + f"/app?session={session}#souvenirs")
+        pg.wait_for_selector("text=Mes offres volontaires")
         assert "session=" not in pg.url                                      # le jeton ne reste pas dans l'adresse
 
-        # 1. réponse périmée : le Pouls répond lentement, le membre est déjà passé au Profil
         def lent(route):
             pg.wait_for_timeout(1500)
             route.continue_()
-        pg.route("**/api/pulse/moi/pouls", lent)
-        pg.evaluate("location.hash = '#pouls'")
-        pg.evaluate("location.hash = '#profil'")
-        pg.wait_for_selector("text=Je peux aider avec")
-        pg.wait_for_timeout(2500)                                            # la réponse lente est arrivée entre-temps
-        texte = pg.inner_text("main")
-        assert "Se déconnecter" in texte and "Ce que votre réseau" not in texte   # le Profil est resté affiché
-        pg.unroute("**/api/pulse/moi/pouls")
+        pg.route("**/api/pulse/moi/actions", lent)
+        pg.evaluate("location.hash = '#actions'")
+        pg.evaluate("location.hash = '#souvenirs'")
+        pg.wait_for_selector("text=Mes offres volontaires")
+        pg.wait_for_timeout(2500)
+        texte = pg.inner_text("main").lower()                                 # les titres sont en capitales (CSS)
+        assert "mes offres volontaires" in texte and "attend votre choix" not in texte
+        pg.unroute("**/api/pulse/moi/actions")
 
-        # 2. panne serveur : écran d'erreur, référence, puis « Réessayer » rétablit
-        pg.route("**/api/pulse/moi/activations", lambda r: r.fulfill(status=500, content_type="application/json",
-                                                                     body='{"detail": "x", "requete": "ref123456789"}'))
-        pg.evaluate("location.hash = '#activations'")
+        pg.route("**/api/pulse/moi/actions", lambda r: r.fulfill(status=500, content_type="application/json",
+                                                                 body='{"detail": "x", "requete": "ref123456789"}'))
+        pg.evaluate("location.hash = '#actions'")
         pg.wait_for_selector("text=Impossible d'afficher cet écran")
         assert "ref123456789" in pg.inner_text("main")
-        pg.unroute("**/api/pulse/moi/activations")
+        pg.unroute("**/api/pulse/moi/actions")
         pg.click("text=Réessayer")
-        pg.wait_for_selector("text=Impossible d'afficher cet écran", state="detached")
+        pg.wait_for_selector("h1:has-text('Mes actions')")
 
-        # 3. hors ligne : message explicite, pas d'écran figé
         ctx.set_offline(True)
-        pg.evaluate("location.hash = '#memoire'")
+        pg.evaluate("location.hash = '#souvenirs'")
         pg.wait_for_selector("text=Hors ligne")
         ctx.set_offline(False)
 
-        # 4. session invalide : retour à l'écran d'accès
-        pg.evaluate("sessionStorage.setItem('pulse-session', 'n01.1.faux'); location.hash = '#pouls'; location.reload()")
+        pg.evaluate("sessionStorage.setItem('pulse-session', 's14.1.faux'); location.hash = '#actions'; location.reload()")
         pg.wait_for_selector("text=Activez votre compte du Club")
         b.close()

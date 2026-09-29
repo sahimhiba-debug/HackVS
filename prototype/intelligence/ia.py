@@ -193,6 +193,12 @@ SCHEMA_CAPTURE = {"type": "object", "additionalProperties": False,
                                  "besoin_de_l_autre": _schema_extrait(), "capacite_de_l_autre": _schema_extrait(),
                                  "besoin_du_membre": _schema_extrait(), "suite_proposee": {"type": ["string", "null"]},
                                  "incertitudes": {"type": "array", "items": {"type": "string"}}}}
+SCHEMA_ESSAI = {"type": "object", "additionalProperties": False, "required": ["question", "objet", "critere", "etapes"],
+                "properties": {"question": {"type": "string"}, "objet": {"type": "string"}, "critere": {"type": "string"},
+                               "etapes": {"type": "array", "maxItems": 3, "items": {
+                                   "type": "object", "additionalProperties": False, "required": ["nature", "geste", "duree_min"],
+                                   "properties": {"nature": {"type": "string", "enum": ["temps", "lieu", "objet", "competence"]},
+                                                  "geste": {"type": "string"}, "duree_min": {"type": "integer"}}}}}}
 SCHEMA_TEXTE = {"explication": {"type": "object", "additionalProperties": False, "required": ["explication"],
                                 "properties": {"explication": {"type": "string"}}},
                 "message": {"type": "object", "additionalProperties": False, "required": ["message"],
@@ -309,6 +315,41 @@ class Intelligence:
             return {"besoin": b.model_dump()}, {"avertissements": b.avertissements}
         return self._executer("comprendre_demande", None, texte, SCHEMA_BESOIN, valide,
                               lambda: {"besoin": analyser_regles(texte, self.tax).model_dump()})
+
+    OBJETS_CONNUS = ("étiquette", "emballage", "flacon", "bouteille", "présentoir", "stand", "affiche", "flyer", "brochure",
+                     "carte de visite", "site web", "menu", "logo", "boîte", "sachet", "vitrine")
+
+    def structurer_essai(self, texte: str) -> Reponse:
+        """Formulation d'un membre → BROUILLON d'essai (question, objet, critère, gestes) qu'il corrige. Ce n'est jamais
+        une décision : aucun nom, aucune disponibilité, aucun accord ne peut en sortir (le schéma ne les contient pas).
+        Secours : FORMULAIRE pré-rempli par des règles simples (texte recopié, objet reconnu dans une liste courte) —
+        il ne prétend pas comprendre le texte libre ; le reste est à compléter par le membre."""
+        def valide(brut: str) -> tuple[dict, Optional[dict]]:
+            d = json.loads(_json_de(brut))
+            etapes = d.get("etapes") or []
+            if not isinstance(etapes, list) or len(etapes) > 3:
+                raise ValueError("gestes absents ou trop nombreux")
+            propres = []
+            for e in etapes:
+                if e.get("nature") not in ("temps", "lieu", "objet", "competence"):
+                    raise ValueError("nature de geste inconnue")
+                duree = int(e.get("duree_min", 0))
+                if not 1 <= duree <= 60 or not 3 <= len(str(e.get("geste", ""))) <= 200:
+                    raise ValueError("geste ou durée hors bornes")
+                propres.append({"nature": e["nature"], "geste": str(e["geste"]).strip(), "duree_min": duree})
+            champs = {k: str(d.get(k) or "").strip() for k in ("question", "objet", "critere")}
+            if not 3 <= len(champs["question"]) <= 300 or len(champs["objet"]) > 120 or len(champs["critere"]) > 300:
+                raise ValueError("champ vide ou trop long")
+            if "MEMBRE-" in brut:
+                raise ValueError("la sortie cite un identifiant de membre")
+            return champs | {"etapes": propres, "mode": "apertus"}, None
+
+        def repli() -> dict:
+            t = " ".join(texte.split())
+            n = t.lower()
+            objet = next((o for o in self.OBJETS_CONNUS if o in n), "")
+            return {"question": t[:300], "objet": objet, "critere": "", "etapes": [], "mode": "formulaire"}
+        return self._executer("structurer_essai", "structurer_essai", texte, SCHEMA_ESSAI, valide, repli)
 
     def capturer_rencontre(self, note: str) -> Reponse:
         concepts = "\n".join(f"- {c.id} : {c.libelle}" for c in self.tax.concepts.values())
