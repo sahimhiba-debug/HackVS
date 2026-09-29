@@ -19,7 +19,7 @@ from plateforme.optimisation import cle
 from . import bilan as bi
 from . import boucle
 from . import extinction as ex
-from . import impact, pareto, sante, temporel
+from . import impact, invitations, pareto, sante, temporel
 from .interventions import candidates, indicateurs_actuels
 from .reseau import etats_par_paire, graphe_actuel
 
@@ -47,6 +47,10 @@ def diagnostic(m: Memoire, profils: list[Profil], besoins_publies: list, tax, ma
     aides_brutes = calculer_aides(ouverts, besoins_publies, tax)       # UNE fois (mesure : appelé deux fois auparavant)
     cands = candidates(profils, besoins_publies, tax, g_act, etats_par_paire(m, maintenant), aides_brutes)
     plans = pareto.frontiere(g_act, membres, cands, k)
+    ids_ouverts = {p.id for p in ouverts}
+    actifs = sorted(x for x in ids_ouverts if g_act.degree(x) > 0)
+    en_sommeil = sorted(x for x in ids_ouverts if g_act.degree(x) == 0)
+    plans["invitations"] = invitations.choisir(en_sommeil, actifs, {frozenset(x) for x in aides_brutes}, budget=k, capacite=1)
     aides = {cle(i, j) for i, j in aides_brutes}
     ech = {x: d for x, d in ex.echeances(m, maintenant).items() if g_act.has_edge(*x.split("|"))}
     sollicitables = {p.id for p in ouverts}

@@ -181,3 +181,18 @@ Résultat · Cas d'échec · Décision · Preuve. Les hypothèses et baselines s
 - **Attaque.** 9 réseaux pathologiques + sain, candidates aléatoires : déterminisme, front non dominé, aucune action
   inventée, plafond respecté même pour un hub ; prévention : seulement des relations menacées, plafond ; cas vides.
 - **Résultat.** 20 tests verts — **aucun défaut trouvé** (résultat négatif consigné). Preuve : `tests/test_adversarial_sprint.py`.
+
+## EXP-L — Invitation ciblée : qui inviter personnellement à la prochaine soirée ?
+- **Hypothèse.** Parmi les membres dormants/isolés (qui acceptent les introductions), choisir B invités par un couplage
+  EXACT (flot maximal : chaque invité doit avoir une aide prouvée avec un présent ; chaque présent accueille au plus c
+  rencontres) garantit plus d'invités effectivement « servis » que des règles simples, à budget égal.
+- **Baselines.** Hasard (30 tirages) ; « le plus d'aides possibles d'abord » ; « inactif le plus récemment d'abord ».
+- **Hypothèse déclarée.** Les membres ACTIFS (au moins une relation actuelle) sont supposés présents.
+- **Implémentation.** `adaptateurs/club/invitations.py` (b-couplage biparti par flot maximal à coût minimal, budget
+  plafonné), intégré à la section « agir » du diagnostic ; `eval/benchmark_invitations.py` (juge commun : le même flot sur
+  les invités choisis par chaque méthode).
+- **Résultat.** Grande soirée (tous les actifs présents) : **égalité 20/20** avec « le plus d'aides d'abord » — la
+  sophistication n'apporte RIEN quand les hôtes abondent. Petite soirée (15 présents, capacité 1, 15 invitations) :
+  **gagne 9, égalité 11, perd 0** ; 8,85 invités servis contre 8,20 (hasard 5,54). Optimalité vérifiée contre la force
+  brute (60 instances) ; capacité, budget, preuve et abstention testés.
+- **Décision.** KEEP, avec une affirmation modeste : optimal par construction ; utile seulement quand les hôtes sont rares.
