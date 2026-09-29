@@ -33,6 +33,15 @@ Lecture honnête :
 ## 3. Montée en charge (`eval/perf_echelle.py`) — voir `eval/resultats_perf_echelle.md`
 Relances à 500 membres : 20,8 s → 0,49 s après correction (FAILURES n° 24). 5000 membres : 5,3 s (tâche de fond).
 
+## 4. Matching par catégorie (`eval/benchmark_categories.py`) — 112 cas, 6 jeux écrits avant exécution
+Moteur contre « mots-clés + mêmes filtres » : **43 WIN, 6 LOSS**, 47 égalités justes, 16 égalités fausses ; abstention
+juste quand il le fallait 25/26. Le moteur échoue sur 22 cas, presque tous des PARAPHRASES (« ordis lents »,
+« emprunt ») et des besoins rédigés en allemand ou en anglais libre (jeux réservés 3 et 4). Limite connue de l'analyse
+par règles à vocabulaire fermé ; la couche sémantique optionnelle a ses propres résultats (`resultats_*_semantique.md`).
+Les 6 défaites sont publiées ; les jeux réservés ne servent pas à régler.
+Comportements (tests exécutés par le benchmark) : démarrage à froid, saturation, contradiction, échec de réciprocité
+dit et non inventé, cohérence explication = décision → tous PASS.
+
 ## Règles tenues
 Mêmes candidats et même budget pour toutes les méthodes ; défaites publiées ; hypothèse « toutes les actions
 acceptées » écrite dans chaque sortie ; jeux réservés jamais réutilisés pour régler.

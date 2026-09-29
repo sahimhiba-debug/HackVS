@@ -1,13 +1,13 @@
 # Audit technique — cartographie (mémo de travail, mis à jour à chaque cycle)
 
 Règle : chaque ligne cite une preuve exécutable. « Partiel » et « absent » sont des états normaux, pas des fautes à cacher.
-Mesures : 157 tests (pytest), lint vert, 20/20 scénarios de décision, registre des preuves vérifié, CI verte (runs 21–25).
+Mesures : 167 tests (pytest), lint vert, 20/20 scénarios de décision, registre des preuves vérifié, CI verte (runs 21–25).
 
 | Composant | Statut | Preuve | Tests | Risques restants | Prochaine action |
 |---|---|---|---|---|---|
 | Analyse du besoin (règles, vocabulaire fermé) | Solide | `app/parser_rules.py`, jeux réservés | `test_parcours.py` (analyse, négation, ambiguïté, critère inventé refusé) | Vocabulaire fermé : un besoin hors catalogue passe en « texte libre », plus prudent | — |
 | LLM (Claude / Apertus) | Option, jamais une dépendance | `app/parser_llm.py`, `plateforme/modeles.py` (aucun modèle VÉRIFIÉ contre une API réelle) | panne, refus, JSON invalide, une seule relance avec l'erreur, repli visible, ne reçoit jamais les profils (`test_parcours.py`) | Non testé contre une vraie API (aucune clé ici) | Déclaré dans 16_LIMITATIONS ; rien à ajouter sans clé |
-| Recherche / matching | Solide | `app/matching.py` (filtres durs partagés Bourse / soirée / cercles / relances) | symétrie Bourse ⟺ correspondances, explication = décision (mutation), même organisation normalisée | TF-IDF reconstruit à chaque appel : 0,9 s à 5000 membres | Index TF-IDF mis en cache si > 1000 membres (DEFER) |
+| Recherche / matching | Solide | `app/matching.py` (filtres durs partagés Bourse / soirée / cercles / relances) | symétrie Bourse ⟺ correspondances, explication = décision (mutation), même organisation normalisée | Paraphrases et besoins en allemand / anglais libres : 22 échecs sur 112 cas, 6 défaites contre la référence (`resultats_benchmark_categories.md`) ; TF-IDF 0,9 s à 5000 membres | Ne pas régler sur les jeux réservés ; un nouveau jeu frais serait nécessaire pour mesurer une amélioration |
 | Confidentialité par inférence | Solide (cycle 1) | k-anonymat K=3, réponse uniforme, vue membre = SES relations | `test_confidentialite_reseau.py`, `test_scene.py` | Identité de démonstration par en-tête (pas d'authentification réelle : le mode réel refuse, testé) | Hors périmètre avant authentification réelle |
 | Mémoire temporelle (journal) | Solide | `plateforme/memoire.py` append-only, idempotent, cache incrémental exact | cache = relecture face à un 2e écrivain ; événements figés | Décroissance à 30 jours et seuil de 90 jours = HYPOTHÈSES, non mesurées | Paramètres exposés, jamais présentés comme mesurés |
 | État de relation / historique ≠ actuel | Solide (cycle 2) | `reseau._etat` (règle unique), `graphe_actuel`, `etats_par_paire` | propriété sur 100 historiques générés ; refus ancien vs récent | — | — |
