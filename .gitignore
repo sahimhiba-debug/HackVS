@@ -5,3 +5,5 @@ prototype/var/
 .env
 .venv/
 competition/video/_brut/
+.coverage
+htmlcov/
