@@ -1,6 +1,6 @@
 # Gel technique — preuves par critère
 
-**Statut : GEL PROPOSÉ au commit `7cfd076`**, sous réserve de la CI verte sur ce commit. Après le gel, seuls sont
+**Statut : GEL CONFIRMÉ au commit `7cfd076`** (CI verte : run 33 ; document : run 34). Après le gel, seuls sont
 permis : corrections de défauts critiques (avec test rouge d'abord), réenregistrement de la vidéo, mise à jour du pitch
 à partir des chiffres PROUVÉS (le validateur des affirmations reste en CI).
 
@@ -23,7 +23,7 @@ permis : corrections de défauts critiques (avec test rouge d'abord), réenregis
 | 15 | Benchmarks attaqués | biais d'équité corrigé (FAILURES 8) ; ablation montrant un effet de second ordre ; défaites publiées (`BENCHMARK_MEMO.md`) | ✓ |
 | 16 | Idées explorées | `IDEA_BACKLOG.md` : 10 idées, verdicts KEEP / DEFER / REJECT argumentés | ✓ |
 | 17 | Documentation synchronisée | `16_LIMITATIONS`, `13_QA_JURY`, `ADVERSARIAL_MATRIX`, mémos ; registre des preuves vérifié (`validate_competition_claims.py`, en CI) | ✓ |
-| 18 | CI verte | runs 21–29 verts ; `6c07098` rouge (lint : ligne trop longue, poussée par erreur) corrigé par `e676ce2` ; run de `7cfd076` : à confirmer | en attente |
+| 18 | CI verte | runs 21–29 verts ; `6c07098` rouge (lint : ligne trop longue, poussée par erreur) corrigé par `e676ce2` ; run 33 (`7cfd076`) et 34 (`b96a59d`) verts | ✓ |
 | 19 | Aucune faiblesse critique connue | 30 défauts réels trouvés et corrigés, chacun avec son test (`FAILURES.md`) ; limites restantes déclarées ci-dessous | ✓ |
 
 ## Limites connues, acceptées pour le gel (non critiques pour une démonstration FICTIVE)
