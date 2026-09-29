@@ -29,17 +29,20 @@ GRAINE = 2026
 FOIRE = "Foire du Valais 2026 (fictive)"
 RECHERCHES_SOPHIE = [Offre(concept="traduction", texte="Traduire nos étiquettes en allemand"),
                      Offre(concept=None, texte="Faire valider la conformité de nos étiquettes pour le marché allemand")]
+# scène de la boucle complète : UN besoin, déclaré dans le profil de Sophie (fictif)
+BESOIN_ALLEMAGNE = [Offre(concept="export_allemagne", texte="Trouver un distributeur pour entrer sur le marché allemand avec nos tisanes")]
 
 
-def construire(sophie_profilee: bool = True) -> Reseau:
-    """`sophie_profilee=False` : Sophie vient d'activer son compte — ni capacités, ni intérêts, invisible par défaut."""
+def construire(sophie_profilee: bool = True, recherches: list[Offre] | None = None) -> Reseau:
+    """`sophie_profilee=False` : Sophie vient d'activer son compte — ni capacités, ni intérêts, invisible par défaut.
+    `recherches` : ce que Sophie déclare chercher (par défaut, la scène historique des étiquettes)."""
     d = json.loads((DATA_DIR / "stage_reseau.json").read_text(encoding="utf-8"))
     scene = [Profil(**p) for p in d["profils"]]
     s = d["sophie"]
     sophie = Profil(
         id=SOPHIE, nom=s["nom"], fonction=s["fonction"], entreprise=s["entreprise"], commune=s["commune"],
         type="membre_club", secteurs=["boissons"], offre=[Offre(**o) for o in s["offre"]],
-        recherche=list(RECHERCHES_SOPHIE) if sophie_profilee else [],
+        recherche=list(recherches if recherches is not None else RECHERCHES_SOPHIE) if sophie_profilee else [],
         langues=s["langues"], zones_service=s["zones_service"], creneaux=s["creneaux"], accepte_introductions=sophie_profilee,
         maj=d["debut"])
     if not sophie_profilee:
