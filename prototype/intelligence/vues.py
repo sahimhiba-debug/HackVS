@@ -108,13 +108,18 @@ class Vues:
         benef = self.c.r.par_id().get(opp.beneficiaire or "")
         capa = next((o.texte for o in self.c.profil(pid).offre if o.concept == etape.get("concept")), None)
         message = None
-        if not est_benef and benef:
+        cle = (aid, etape["id"], pid)
+        if not est_benef and benef and cle not in self.c.messages:
+            # rédigé UNE fois par sollicitation puis mémorisé : relire la page ne rappelle pas le modèle (coût, latence)
+            # et n'ajoute rien au journal (une lecture répétée reste sans effet)
             per = self.c.coffre.identite(benef.id)
             faits = {"capacite_declaree": capa or etape["libelle"], "demande": etape["demande"],
                      "secteur_demandeur": self.c.tax.libelle(benef.secteurs[0]) if benef.secteurs else "non précisé",
                      "partage": "votre nom et votre courriel à cette personne seulement si vous acceptez ; rien si vous refusez"}
             r_ = self.c.ia.rediger_sollicitation(faits, [per.nom if per else "", self.c.coffre.pseudonyme(benef.id)])
-            message = {"texte": r_.sortie["message"], "ia": r_.appel.model_dump(include={"fournisseur", "modele", "statut", "repli"})}
+            self.c.messages[cle] = {"texte": r_.sortie["message"], "ia": r_.appel.model_dump(include={"fournisseur", "modele", "statut", "repli"})}
+        if not est_benef and benef:
+            message = self.c.messages[cle]
         return {"activation": aid, "etat": self.c.moteur.etat(aid), "pour_vous": est_benef,
                 "titre": ("Le Club a repéré une occasion pour vous" if est_benef else "Un membre du Club a une demande qui correspond à votre capacité"),
                 "pourquoi_vous": (None if est_benef else f"Votre capacité déclarée : « {capa or etape['libelle']} »"),

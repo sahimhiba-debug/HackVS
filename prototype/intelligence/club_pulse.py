@@ -60,6 +60,7 @@ class ClubPulse:
         self.preferences: dict[str, dict] = {}
         self.ecartees: set[str] = set()
         self.explications: dict[tuple[str, str], dict] = {}
+        self.messages: dict[tuple[str, str, str], dict] = {}   # (activation, étape, membre) → message de sollicitation rédigé
         self._scan: Optional[dict] = None
         self._version_scan: tuple = ()
         self._revision_profils = 0            # incrémentée à chaque modification de profil (invalide l'analyse)
