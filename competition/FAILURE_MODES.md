@@ -17,3 +17,8 @@
 | Double clic sur « suivant » de la scène | verrou + 409 en fin | une étape | démo stable | `test_scene.py`, navigateur |
 | Mode réel sans source autorisée | configuration | 503 / 501, rien de simulé | aucune fausse donnée | `test_mode_reel_ne_simule_rien` |
 | Deux soirées le même jour / plan devenu faux après approbation | contrôle à l'enregistrement | refus explicite (409) : « collision » ou « plan périmé : relancez » | aucune rencontre impossible ni refus contourné | `test_collisions.py` |
+| Aucune action prouvée possible | front vide / candidates vides | NE_RIEN_FAIRE explicite | pas de « plan vide idéal » | `test_pareto_sans_aucune_action_prouvee_ne_rien_faire` |
+| Relation avec un non-membre dans le réseau | filtre membres à la source | ignorée | pas de plantage | `test_une_relation_avec_un_non_membre…` |
+| Décision contenant une action non proposable | contrôle à l'enregistrement | 409 | aucune décision contournant le consentement | `test_api_decision_n_accepte_que…` |
+| Même paire décidée deux fois | fenêtre fermée par la décision suivante | issue « remplacée » | bilan exact | `test_un_resultat_n_est_attribue_qu_a…` |
+| Changement observé sans raison prouvée | aucune aide prouvée | silence explicite | pas de relance de politesse | `test_chaque_changement_recoit_une_action…` |
