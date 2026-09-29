@@ -63,20 +63,25 @@ def controle(nom: str) -> tuple[bool, str]:
         return _pytest(nom[5:])
     s = _scene() if nom.startswith("scene") else None
     if nom == "scene_abstention":
-        return s[4]["decision"] == "S_ABSTENIR", s[4]["message"]
+        t = s[7]["tentatives"][0]
+        return t["decision"] == "S_ABSTENIR", t["raisons"][0]
     if nom == "scene_double_accord":
-        return s[5]["coordonnees_partagees"] is False and s[6]["coordonnees_partagees"] is True, "avant : non ; après accord : oui"
+        return s[2]["coordonnees_avant_accord"] is False and s[2]["coordonnees_apres_accord"] is True, "avant : non ; après accord : oui"
     if nom == "scene_refus_non_nomme":
-        return s[3]["ecartes_par_leur_choix"] == 0 and "Kalbermatten" not in json.dumps(s, ensure_ascii=False), "jamais nommé, non compté (k < 3)"
+        return s[1]["ecartes_par_leur_choix"] == 0 and "Kalbermatten" not in json.dumps(s, ensure_ascii=False), "jamais nommé, non compté (k < 3)"
     if nom == "scene_relances":
-        n = sum(len(p["raisons"]) for p in s[8]["relances"])
-        return n == 1 and s[8]["silences"]["rien_de_nouveau"] == 17, f"{n} relance, {s[8]['silences']['rien_de_nouveau']} silences"
+        n = sum(len(p["raisons"]) for p in s[6]["relances"])
+        return n == 1 and s[6]["silences"]["rien_de_nouveau"] == 17, f"{n} relance, {s[6]['silences']['rien_de_nouveau']} silences"
     if nom == "scene_reciprocite":
-        c = s[3]["candidats"][0]
+        c = s[1]["candidats"][0]
         return c["nom"] == "Markus Heinzmann" and c["dimensions"]["reciprocite"]["etablie"], c["dimensions"]["reciprocite"].get("votre_offre", "")
     if nom == "scene_simulation":
-        f = s[11]
-        return f["maintenant"]["composantes"] == 2 and f["si_le_cercle_a_lieu"]["composantes"] == 1, "2 → 1 groupe (simulation)"
+        f = s[4]
+        r = max(f["plans"], key=lambda p: p["plus_grand_groupe"])
+        c = max(f["plans"], key=lambda p: p["groupe_robuste"])
+        ok = (r is not c and (f["avant"]["plus_grand_groupe"], r["plus_grand_groupe"]) == (8, 15)
+              and (f["avant"]["groupe_robuste"], c["groupe_robuste"], r["groupe_robuste"]) == (4, 8, 4))
+        return ok, f"réunir : {f['avant']['plus_grand_groupe']} → {r['plus_grand_groupe']} ; consolider : robuste {f['avant']['groupe_robuste']} → {c['groupe_robuste']}"
     if nom == "scene_rejeu":
         from app import stage
         from app.taxonomy import charger_taxonomie

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Réseau vivant · scène</title>
-  <meta name="description" content="Une nouvelle membre, un besoin, une introduction consentie, un suivi fondé, une opportunité, un réseau qui change — démonstration sur un réseau fictif.">
+  <meta name="description" content="Trois scènes sur un même réseau fictif : un besoin libre devenu proposition vérifiable ; l'organisatrice face à deux plans et à la fragilité du réseau ; les refus et le silence expliqués.">
   <link rel="icon" href="/favicon.ico" type="image/svg+xml">
   <link rel="stylesheet" href="/static/app.css">
   <style>
@@ -20,6 +20,24 @@
     .lien.nouveau { stroke-dasharray: 400; stroke-dashoffset: 400; animation: trace 1.1s ease-out forwards; }
     .lien.simule { stroke: var(--rouge); stroke-width: 2.2; stroke-dasharray: 6 5; opacity: .9; }
     .lien.candidat { stroke: var(--encre-2); stroke-width: 2; stroke-dasharray: 2 5; }
+    .lien.pont { stroke: var(--ambre); stroke-width: 4; opacity: 1; }
+    .lien.planA { stroke: var(--vert); stroke-width: 3; stroke-dasharray: 7 5; opacity: 1; }
+    .lien.planB { stroke: var(--rouge); stroke-width: 3; stroke-dasharray: 7 5; opacity: 1; }
+    .lien.retire { stroke: var(--rouge-fonce); stroke-width: 3; stroke-dasharray: 2 6; opacity: 1; }
+    .lien.cliquable { cursor: pointer; }
+    .lien-zone { stroke: transparent; stroke-width: 16; cursor: pointer; }
+    .noeud.coupe circle { fill: var(--rouge-pale); stroke: var(--rouge-fonce); stroke-dasharray: 3 3; }
+    .acte { display: inline-flex; gap: 8px; align-items: center; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .acte b { background: var(--rouge); color: #fff; border-radius: 6px; padding: 2px 8px; }
+    .deux { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .col { border: 1.5px solid var(--ligne); border-radius: var(--rayon); padding: 10px 12px; }
+    .col h3 { margin: 0 0 6px; font-size: 15px; }
+    .col li, .col p { font-size: 14px; }
+    .col.retenu { border: 2px solid var(--vert); }
+    .plan { border: 2px solid var(--ligne); border-radius: var(--rayon); padding: 10px 12px; }
+    .plan.A { border-color: var(--vert); } .plan.B { border-color: var(--rouge); }
+    .chiffre { font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    @media (max-width: 900px) { .deux { grid-template-columns: 1fr; } }
     @keyframes trace { to { stroke-dashoffset: 0; } }
     .noeud circle { fill: var(--surface); stroke: var(--encre-2); stroke-width: 2; transition: r .3s; }
     .noeud.sophie circle { fill: var(--rouge); stroke: var(--rouge-fonce); }
@@ -66,7 +84,9 @@
       .graphe { position: static; }
       .tuiles { grid-template-columns: 1fr 1fr; }
       .grille-kv { grid-template-columns: 1fr; }
-      .commandes { padding: 8px 16px; }
+      .commandes { padding: 8px 16px; gap: 6px; }
+      .commandes .btn { width: auto; flex: 1 1 0; padding: 8px 6px; font-size: 14px; }
+      .horloge { width: 100%; font-size: 12px; }
     }
     @media (prefers-reduced-motion: reduce) { .lien.nouveau { animation: none; stroke-dashoffset: 0; } }
   </style>
@@ -79,7 +99,8 @@
       <div class="legende" aria-hidden="true">
         <span><svg viewBox="0 0 28 10"><line x1="0" y1="5" x2="28" y2="5" class="lien"/></svg>rencontre passée</span>
         <span><svg viewBox="0 0 28 10"><line x1="0" y1="5" x2="28" y2="5" class="lien intro"/></svg>relation née d'une introduction</span>
-        <span><svg viewBox="0 0 28 10"><line x1="0" y1="5" x2="28" y2="5" class="lien simule"/></svg>simulation (rien n'est écrit)</span>
+        <span><svg viewBox="0 0 28 10"><line x1="0" y1="5" x2="28" y2="5" class="lien pont"/></svg>pont fragile : seule relation entre deux groupes</span>
+        <span><svg viewBox="0 0 28 10"><line x1="0" y1="5" x2="28" y2="5" class="lien planB"/></svg>simulation (rien n'est écrit)</span>
       </div>
       <p class="note" style="padding:0 8px 6px">Réseau de scène FICTIF. Vue de démonstration : en production, un membre ne voit que ses propres relations.</p>
     </section>
@@ -99,8 +120,10 @@
     const SOPHIE = "n01";
     const LIB_TYPES = { INTRO_DEMANDEE: "introduction demandée", INTRO_ACCEPTEE: "acceptée", RENCONTRE: "rencontre", RELANCE_ACCEPTEE: "relance acceptée",
       SUIVI: "suivi", RESULTAT: "affaire en cours" };
+    const ACTES = { A: "Scène A · Un membre", B: "Scène B · L'organisatrice", C: "Scène C · Le silence" };
     const trace = (n) => vue.traces.find((t) => t.etape === n);
     const court = (nom) => { const [p, n] = (nom || "").split(" "); return n ? `${p} ${n[0]}.` : p; };
+    let contrefactuel = null;                              // résultat d'un clic sur une relation (scène B et après)
 
     function graphe() {
       const svg = $("#svg"), W = 1000, H = 720, M = 60;
@@ -112,37 +135,58 @@
       const el = (t, a) => { const e = document.createElementNS(ns, t); for (const [k, v] of Object.entries(a)) e.setAttribute(k, v); return e; };
       const avant = new Set([...svg.querySelectorAll("line[data-k]")].map((l) => l.dataset.k));
       [...svg.querySelectorAll("g, line")].forEach((x) => x.remove());
-      const gl = el("g", {}), gn = el("g", {});
-      const ligne = (a, b, cls) => {
+      const gl = el("g", {}), gn = el("g", {}), gz = el("g", {});
+      const e = vue.etape - 1, focus = new Set(), coupes = new Set();
+      const cle = (a, b) => [a, b].sort().join("|");
+      const ponts = new Set(e === 3 ? (trace(3)?.faits.ponts || []).map(([a, b]) => cle(a, b)) : []);
+      let retire = e === 5 && trace(5)?.faits.existe ? cle(...trace(5).faits.paire) : null;
+      if (e === 5 && trace(5)?.faits.existe) trace(5).faits.coupes_de_leur_groupe.forEach((x) => coupes.add(x));
+      if (contrefactuel) { retire = cle(...contrefactuel.paire); coupes.clear(); contrefactuel.coupes_de_leur_groupe.forEach((x) => coupes.add(x)); }
+      const cliquable = e >= 3;
+      const ligne = (a, b, cls, reel = false) => {
         if (!P[a] || !P[b]) return;
-        const k = [a, b].sort().join("|");
-        gl.append(el("line", { x1: P[a][0], y1: P[a][1], x2: P[b][0], y2: P[b][1], class: `lien ${cls}${avant.has(k) || !cls.includes("intro") ? "" : " nouveau"}`, "data-k": k }));
+        const k = cle(a, b);
+        const c = `lien ${cls}${ponts.has(k) ? " pont" : ""}${retire === k ? " retire" : ""}${avant.has(k) || !cls.includes("intro") ? "" : " nouveau"}`;
+        gl.append(el("line", { x1: P[a][0], y1: P[a][1], x2: P[b][0], y2: P[b][1], class: c, "data-k": k }));
+        if (reel && cliquable) {                          // zone de clic large : simuler la disparition de CETTE relation
+          const z = el("line", { x1: P[a][0], y1: P[a][1], x2: P[b][0], y2: P[b][1], class: "lien-zone", tabindex: "0", role: "button",
+            "aria-label": `Simuler la disparition de la relation ${noms[a]} – ${noms[b]}` });
+          z.addEventListener("click", () => simulerPerte(a, b));
+          z.addEventListener("keydown", (ev) => { if (ev.key === "Enter") simulerPerte(a, b); });
+          gz.append(z);
+        }
       };
-      for (const l of vue.liens) ligne(l.a, l.b, l.types.includes("INTRO_ACCEPTEE") || l.types.includes("RENCONTRE") && (l.a === SOPHIE || l.b === SOPHIE) ? "intro" : "");
-      const e = vue.etape - 1, focus = new Set();
-      if (e === 3) (trace(3)?.faits.candidats || []).forEach((c) => { ligne(SOPHIE, c.id, "candidat"); focus.add(c.id); });
-      if (e >= 10) {
-        const c = trace(10)?.faits.micro_cercle;
-        (c?.nouveaux_liens || []).forEach(([a, b]) => ligne(a, b, "simule"));
-        (c?.membres || []).forEach((m) => focus.add(m));
-      }
-      if ([5, 6, 7, 8, 9].includes(e) && trace(3)) focus.add(trace(3).faits.candidats[0].id);
+      for (const l of vue.liens) ligne(l.a, l.b, l.types.includes("INTRO_ACCEPTEE") || l.types.includes("RENCONTRE") && (l.a === SOPHIE || l.b === SOPHIE) ? "intro" : "", true);
+      if (e === 1) (trace(1)?.faits.candidats || []).forEach((c) => { ligne(SOPHIE, c.id, "candidat"); focus.add(c.id); });
+      if (e === 2 && trace(1)) focus.add(trace(1).faits.candidats[0]?.id);
+      if (e === 4) (trace(4)?.faits.plans || []).slice(0, 2).forEach((p, i) => p.paires.forEach(([a, b]) => { ligne(a, b, i === 0 ? "planA" : "planB"); focus.add(a); focus.add(b); }));
+      if (e === 6) (trace(6)?.faits.relances || []).forEach(() => { focus.add(SOPHIE); if (trace(1)) focus.add(trace(1).faits.candidats[0]?.id); });
       for (const n of vue.noeuds) {
         if (!n.present) continue;
         const [x, y] = P[n.id];
-        const g = el("g", { class: `noeud${n.id === SOPHIE ? " sophie" : ""}${focus.has(n.id) ? " focus" : ""}` });
+        const g = el("g", { class: `noeud${n.id === SOPHIE ? " sophie" : ""}${focus.has(n.id) ? " focus" : ""}${coupes.has(n.id) ? " coupe" : ""}` });
         g.append(el("circle", { cx: x, cy: y, r: n.id === SOPHIE ? 13 : focus.has(n.id) ? 11 : 8 }));
-        const droite = x > W * 0.72;                          // étiquette côté intérieur : jamais coupée au bord
-        const t = el("text", { x: droite ? x - 14 : x + 14, y: y + 4, "text-anchor": droite ? "end" : "start" }); t.textContent = court(noms[n.id]); g.append(t);
+        // étiquette côté intérieur (jamais coupée au bord), ou à gauche si un voisin proche l'occuperait à droite
+        const proche = (sens) => vue.noeuds.some((m) => m.present && m.id !== n.id && Math.abs(P[m.id][1] - y) < 16
+          && sens * (P[m.id][0] - x) > 0 && sens * (P[m.id][0] - x) < 170);
+        const gauche = x > W * 0.72 || proche(1), dessous = gauche && proche(-1);
+        const t = el("text", dessous ? { x, y: y + 26, "text-anchor": "middle" } : { x: gauche ? x - 14 : x + 14, y: y + 4, "text-anchor": gauche ? "end" : "start" });
+        t.textContent = court(noms[n.id]); g.append(t);
         gn.append(g);
       }
-      svg.append(gl, gn);
+      svg.append(gl, gz, gn);
+    }
+
+    async function simulerPerte(a, b) {
+      try { contrefactuel = await api(`/api/stage/sans_relation?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`); rendre(); }
+      catch (err) { toast(err.message, "erreur"); }
     }
 
     const bloc = (titre, ...enfants) => h("div", { class: "bloc" }, h("h2", {}, titre), ...enfants);
     const tuile = (lib, val, sous) => h("div", { class: "tuile" }, h("div", { class: "lib" }, lib), h("div", { class: "val" }, String(val)), sous ? h("div", { class: "sous" }, sous) : null);
     const puce = (txt, cls = "") => h("span", { class: `puce ${cls}` }, txt);
     const frise = (types) => h("div", { class: "frise" }, types.map((t, i) => h("span", { class: i === types.length - 1 ? "der" : "" }, LIB_TYPES[t] || t)));
+    const compris = (liste) => h("ul", {}, liste.map((c) => h("li", {}, c.quoi, c.extrait ? [" ← ", h("q", {}, c.extrait)] : " (aucun extrait)")));
 
     function candidat(c, i) {
       const d = c.dimensions;
@@ -152,50 +196,61 @@
         h("dl", { class: "grille-kv" },
           h("dt", {}, "Pourquoi elle / lui"), h("dd", {}, c.preuves.map((p) => h("div", {}, h("q", {}, p.extrait), " ", puce(p.nature === "declare" ? "déclaré" : "déduit", p.nature === "declare" ? "ok" : "")))),
           h("dt", {}, "Réciprocité"), h("dd", {}, d.reciprocite.etablie ? [puce("prouvée", "ok"), ` il cherche « ${d.reciprocite.son_besoin.split(" : ").pop()} » — vous offrez « ${d.reciprocite.votre_offre} »`] : puce("non établie")),
-          h("dt", {}, "Pourquoi maintenant"), h("dd", {}, d.pourquoi_maintenant.join(" · ")),
-          h("dt", {}, "Inconnu"), h("dd", {}, d.inconnu.join(" · ")),
-          h("dt", {}, "Relation"), h("dd", {}, d.reseau.message)));
+          h("dt", {}, "Inconnu"), h("dd", {}, d.inconnu.join(" · "))));
+    }
+
+    function perte(f, source) {
+      if (!f.existe) return bloc("Disparition d'une relation", h("p", {}, f.raison || "Aucune relation critique."));
+      return bloc(`${source} : si la relation ${f.noms.join(" – ")} disparaît`,
+        h("div", { class: "tuiles" },
+          tuile("groupes", f.apres.groupes, `avant ${f.avant.groupes}`),
+          tuile("plus grand groupe", f.apres.plus_grand_groupe, `avant ${f.avant.plus_grand_groupe}`),
+          tuile("coupés de leur groupe", f.coupes_de_leur_groupe.length, `sur ${f.taille_du_groupe}`)),
+        f.coupes_noms.length ? h("p", {}, h("strong", {}, "Coupés : "), f.coupes_noms.join(", "), ".") : h("p", {}, "Personne n'est coupé : cette relation est doublée par un autre chemin."),
+        h("p", { class: "note" }, puce("SIMULATION"), " calcul sur le graphe actuel ; rien n'est écrit. Cliquez une autre relation pour comparer."));
     }
 
     const RENDUS = {
-      0: (f) => [h("div", { class: "tuiles" }, tuile("membres (fictifs)", f.membres), tuile("liens", f.liens), tuile("groupes séparés", f.groupes_separes)),
-        bloc("Constat", h("p", {}, `${f.rencontres_sans_suite_depuis_90_jours} rencontres datent de plus de 90 jours sans aucune suite enregistrée.`))],
-      1: (f) => [bloc("Sa description", h("p", {}, h("q", {}, f.description))),
-        bloc("Le système propose", h("ul", {}, f.propose.map((x) => h("li", {}, x)))),
-        bloc("Sophie valide et corrige", h("ul", {}, f.valide.map((x) => h("li", {}, x))), h("p", { class: "note" }, f.corrections_de_sophie)),
-        bloc("Confidentialité", h("p", {}, puce("invisible par défaut", "ok"), ` puis ${f.puis} · coordonnées enregistrées : ${f.coordonnees_enregistrees}`))],
-      2: (f) => [bloc("Compris", h("ul", {}, f.compris.map((x) => h("li", {}, x)))), h("p", { class: "note" }, f.analyse)],
-      3: (f) => [h("p", {}, `${f.examines} profils examinés → ${f.candidats.length} personnes proposées.`),
+      0: (f) => [bloc("Ce qu'elle écrit", h("p", {}, h("q", {}, f.texte))),
+        h("div", { class: "deux" },
+          h("div", { class: `col${f.retenu === "INTERPRETATION_IA_VERIFIEE" ? "" : ""}` }, h("h3", {}, "Règles locales"), compris(f.regles.compris),
+            h("p", {}, f.regles.decision === "S_ABSTENIR" ? puce("ne comprend pas assez → s'abstient", "non") : puce(`${f.regles.propositions} proposition(s)`, "ok"))),
+          h("div", { class: `col${f.retenu === "INTERPRETATION_IA_VERIFIEE" ? " retenu" : ""}` }, h("h3", {}, "IA générative"),
+            f.ia.etat === "NON_CONFIGUREE" ? [puce("non configurée"), h("p", { class: "note" }, f.ia.message)]
+              : [compris(f.ia.compris), h("p", {}, puce(f.ia.etat === "UTILISEE" ? "vérifiée par le code" : "échec → règles", f.ia.etat === "UTILISEE" ? "ok" : "non"),
+                  ` ${f.ia.modele || ""} · ${f.ia.latence_ms ?? "?"} ms`), f.ia.avertissements.length ? h("p", { class: "note" }, f.ia.avertissements.join(" ")) : null,
+                h("p", { class: "note" }, "Contrôle : ", f.ia.controle)])),
+        f.retenu === "REFORMULATION" ? bloc("Alors le produit demande une phrase plus simple", h("p", {}, h("q", {}, f.reformulation)), compris(f.reformulation_comprise),
+          h("p", { class: "note" }, "Sans IA, la phrase libre ne suffit pas : c'est exactement la valeur que l'IA doit démontrer — et que nous mesurons (banc G1)."))
+          : bloc("Retenu", h("p", {}, f.retenu === "INTERPRETATION_IA_VERIFIEE" ? "L'interprétation de l'IA, parce que chaque critère appartient au vocabulaire du Club et cite le texte." : "L'interprétation par règles."))],
+      1: (f) => [h("p", {}, `${f.examines} profils examinés → ${f.candidats.length} personne(s) proposée(s).`),
         ...f.candidats.map(candidat),
-        bloc("Et ceux qui ne veulent pas être sollicités ?", h("p", {}, f.ecartes_par_leur_choix
-          ? `${f.ecartes_par_leur_choix} membres indisponibles ou ne souhaitant pas être sollicités : ni nommés, ni proposés.`
-          : "Ils ne sont ni nommés, ni proposés — ni même comptés tant qu'ils sont moins de 3 : sinon, on pourrait deviner qui."))],
-      4: (f) => [bloc("Contact privé", h("p", {}, "Aucun numéro, aucune adresse. ", f.coordonnees, ".")),
-        bloc("Et quand il ne sait pas ?", h("p", {}, h("q", {}, f.autre_demande)),
-          h("div", { class: "abst" }, h("strong", {}, f.decision === "S_ABSTENIR" ? "Abstention. " : ""), f.message, " Plutôt aucune proposition qu'un mauvais contact."))],
-      5: (f) => [h("dl", { class: "grille-kv" }, h("dt", {}, "État"), h("dd", {}, f.etat), h("dt", {}, "Coordonnées"), h("dd", {}, puce(f.coordonnees_partagees ? "partagées" : "non partagées", f.coordonnees_partagees ? "ok" : "non")),
-        h("dt", {}, "Boîte de Markus"), h("dd", {}, `${f.boite_de_markus.introductions_a_repondre} introduction à laquelle répondre`))],
-      6: (f) => [h("dl", { class: "grille-kv" }, h("dt", {}, "Coordonnées"), h("dd", {}, puce("partagées", "ok")), h("dt", {}, "Relation"), h("dd", {}, f.libelle))],
-      7: (f) => [bloc("Ligne de temps de la relation", frise(f.ensuite)), h("p", {}, `Rencontre enregistrée le ${f.quand} (${f.ou}).`)],
-      8: (f) => [...f.relances.map((p) => bloc(`Pourquoi reprendre contact ? — ${p.paire.join(" ↔ ")}`,
+        bloc("Ce qui n'est pas montré", h("p", {}, "Aucune coordonnée : ", f.coordonnees, ". Ceux qui refusent d'être sollicités ne sont ni nommés, ni proposés, ni comptés."))],
+      2: (f) => [h("dl", { class: "grille-kv" },
+          h("dt", {}, "Sa boîte"), h("dd", {}, `${f.introductions_a_repondre_pour_lui} introduction à laquelle répondre — il peut refuser`),
+          h("dt", {}, "Coordonnées"), h("dd", {}, puce("non partagées avant son accord", "non"), " → ", puce("partagées après", "ok"))),
+        bloc("Ligne de temps de la relation", frise(f.ligne_de_temps), h("p", { class: "note" }, `Rencontre enregistrée le ${f.quand}. Chaque étape est un fait daté.`))],
+      3: (f) => [h("div", { class: "tuiles" }, tuile("membres (fictifs)", f.etat.membres), tuile("groupes séparés", f.etat.groupes_actuels), tuile("sans relation actuelle", f.etat.sans_relation_actuelle)),
+        ...f.phenomenes.map((p) => bloc(p.observation, h("p", {}, p.lecture, "."), h("p", { class: "note" }, "Action possible : ", p.action_possible))),
+        h("p", { class: "note" }, puce("OBSERVATION"), " ", f.nature, ". En orange sur le graphe : les ponts fragiles, seule relation entre deux groupes.")],
+      4: (f) => f.un_seul_plan ? [bloc("Un seul plan", h("p", {}, "Aucun dilemme sur ce réseau."))] : [
+        h("p", {}, `Aujourd'hui : plus grand groupe ${f.avant.plus_grand_groupe}, groupe robuste ${f.avant.groupe_robuste}.`),
+        h("div", { class: "deux" }, f.plans.slice(0, 2).map((p, i) => h("div", { class: `plan ${i === 0 ? "A" : "B"}` },
+          h("h3", {}, `${i === 0 ? "Plan vert" : "Plan rouge"} · ${p.libelle}`),
+          h("p", {}, h("span", { class: "chiffre" }, p.plus_grand_groupe), " membres reliés ensemble"),
+          h("p", {}, h("span", { class: "chiffre" }, p.groupe_robuste), " résistent à la perte d'une relation"),
+          ...p.pourquoi.map((q) => h("p", { class: "note" }, q.qui.join(" – "), " : ", q.preuve.join(" ; ")))))),
+        bloc("Lecture", h("p", {}, "Réunir les îlots par un seul fil agrandit le réseau… mais ce fil est fragile. Consolider renforce ce qui existe, sans rien réunir. Aucun des deux n'est « le bon » : c'est une décision de l'organisatrice.")),
+        h("p", { class: "note" }, puce("SIMULATION"), " ", f.nature, ". « Robuste » : ", f.lexique.groupe_robuste, ".")],
+      5: (f) => [perte(f, "Relation la plus critique"), h("p", { class: "note" }, "👉 ", f.interactif, ".")],
+      6: (f) => [...f.relances.map((p) => bloc(`Une relance, et sa raison — ${p.paire.join(" ↔ ")}`,
           ...p.raisons.map((r) => h("div", {}, h("p", {}, h("strong", {}, `Pour ${r.pour} : `), r.message),
             h("ul", {}, r.preuves.map((x) => h("li", {}, puce(x.statut, x.statut === "DECLARE" ? "ok" : ""), ` ${x.quoi} : `, h("q", {}, x.extrait)))))))),
-        bloc("Et les autres ?", h("p", {}, h("strong", {}, `${f.silences.rien_de_nouveau} paires : rien de nouveau depuis leur rencontre → aucune relance.`), " « Restez en contact » n'est pas une raison."))],
-      9: (f) => [bloc("Ligne de temps", frise(f.ligne_de_temps)), h("p", {}, "État : ", h("strong", {}, f.libelle), "."),
-        h("p", { class: "note" }, "Relation ≠ opportunité ≠ résultat : chaque étape est un fait enregistré, jamais une supposition.")],
-      10: (f) => {
-        const c = f.micro_cercle;
-        return [...f.presentations_possibles.map((p) => bloc("Une présentation possible", h("p", {}, `${p.c} peut aider ${p.a}. ${p.via} les connaît tous deux.`), h("p", { class: "note" }, p.confidentialite + " : Sophie n'en saura rien s'il refuse."))),
-          c.decision === "PROPOSER_A_L_HUMAIN" ? bloc(`Micro-cercle proposé : « ${c.theme} »`, h("p", {}, c.noms.join(" · ")),
-            h("ul", {}, c.aides.map((a) => h("li", {}, `${a.aide} → ${a.aide_a} : `, h("q", {}, a.preuve), " ", puce(a.nature === "declare" ? "déclaré" : "déduit", a.nature === "declare" ? "ok" : "")))),
-            h("p", {}, h("strong", {}, "Inconnu : "), c.inconnu.join(" · ")), h("p", {}, puce(c.statut), " chaque membre doit accepter")) : bloc("Micro-cercle", h("p", {}, c.raison))];
-      },
-      11: (f) => [h("p", {}, h("strong", {}, "Si le micro-cercle a lieu"), " (simulation) :"), h("div", { class: "tuiles" },
-          tuile("groupes séparés", f.si_le_cercle_a_lieu.composantes, `départ ${f.depart.composantes} · aujourd'hui ${f.maintenant.composantes}`),
-          tuile("plus grand groupe", f.si_le_cercle_a_lieu.plus_grande_composante, `départ ${f.depart.plus_grande_composante} · aujourd'hui ${f.maintenant.plus_grande_composante}`),
-          tuile("à 2 poignées de main", f.si_le_cercle_a_lieu.portee_moyenne_2_sauts, `départ ${f.depart.portee_moyenne_2_sauts} · aujourd'hui ${f.maintenant.portee_moyenne_2_sauts}`)),
-        bloc("Nature", h("p", {}, puce("SIMULATION"), ` ${f.hypothese}. ${f.nouveaux_ponts} nouveau(x) pont(s) entre groupes.`)),
-        bloc("Décision", h("p", {}, h("strong", {}, f.decision)))],
+        bloc("Et les autres ?", h("p", {}, h("strong", {}, `${f.silences.rien_de_nouveau} paires : rien de nouveau depuis leur rencontre → silence.`), " ", f.principe, "."))],
+      7: (f) => f.tentatives.map((t) => bloc(`${t.qui} demande`, h("p", {}, h("q", {}, t.demande)),
+        h("div", { class: "abst" }, h("strong", {}, t.decision === "S_ABSTENIR" ? "Abstention. " : t.decision === "REFUSER" ? "Refusé. " : "Proposé. "), t.raisons.join(" ; ")))),
+      8: (f) => [h("dl", { class: "grille-kv" }, ...f.natures.flatMap((n) => [h("dt", {}, n.nature), h("dd", {}, n.quoi)])),
+        h("p", { class: "note" }, `${f.faits_enregistres} faits enregistrés dans ce réseau fictif au ${f.le}.`)],
     };
 
     function carte() {
@@ -206,19 +261,21 @@
       if (e < 0) {
         $("#carte").replaceChildren(h("p", { class: "num" }, "Réseau vivant · démonstration"),
           h("h1", {}, "La Foire crée les rencontres. Qu'en reste-t-il un mois plus tard ?"),
-          h("p", { class: "dit" }, "Un réseau fictif de 16 membres. Une nouvelle membre, Sophie. Tout ce qui suit est calculé en direct par le moteur."),
+          h("p", { class: "dit" }, "Un réseau fictif de 16 membres, deux îlots. Trois scènes : un membre, l'organisatrice, le silence. Tout est calculé en direct par le moteur."),
           h("p", { class: "note" }, vue.avertissement));
         return;
       }
       const t = trace(e);
-      $("#carte").replaceChildren(h("p", { class: "num" }, `Étape ${e + 1} · ${t.le}`), h("h1", {}, t.titre), h("p", { class: "dit" }, t.dit), ...(RENDUS[e]?.(t.faits) || []));
+      const extra = contrefactuel && e >= 3 ? [perte(contrefactuel, "Votre simulation")] : [];
+      $("#carte").replaceChildren(h("p", { class: "acte" }, h("b", {}, t.scene), ACTES[t.scene], ` · étape ${e + 1} · ${t.le}`),
+        h("h1", {}, t.titre), h("p", { class: "dit" }, t.dit), ...extra, ...(RENDUS[e]?.(t.faits) || []));
     }
 
     function rendre() { graphe(); carte(); }
     async function appel(chemin) {
       if (occupe) return;                                   // double clic : une seule action en vol
       occupe = true;
-      try { vue = await api(chemin, { methode: "POST" }); rendre(); }
+      try { vue = await api(chemin, { methode: "POST" }); contrefactuel = null; rendre(); }
       catch (e) { toast(e.message, "erreur"); }
       finally { occupe = false; }
     }

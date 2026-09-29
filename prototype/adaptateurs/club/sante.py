@@ -123,3 +123,37 @@ def phenomenes(g_hist: nx.Graph, g_act: nx.Graph, membres: list[str], secteurs: 
 
     return {"membres": n, "relations_actuelles": e, "phenomenes": res, "seuils": s,
             "nature": "OBSERVATION (faits du graphe) ; interprétations et seuils = hypothèses de produit"}
+
+
+def sans_relation(g_act: nx.Graph, membres: list[str], a: str, b: str) -> dict:
+    """CONTREFACTUEL : que devient le réseau actuel si la relation a–b disparaît (s'endort, se brouille) ?
+    Calcul pur sur le graphe (rien n'est écrit). Les membres coupés de leur groupe sont listés : vue ORGANISATION."""
+    from .pareto import plus_grand_groupe_robuste
+    act = g_act.subgraph(membres).copy()
+    act.add_nodes_from(membres)
+    if not act.has_edge(a, b):
+        return {"existe": False, "raison": "aucune relation actuelle entre ces deux membres"}
+
+    def mesure(h: nx.Graph) -> dict:
+        comps = sorted(nx.connected_components(h), key=lambda c: (-len(c), min(c)))
+        return {"groupes": sum(1 for c in comps if len(c) > 1), "plus_grand_groupe": len(comps[0]) if comps else 0,
+                "sans_relation": sum(1 for x in h if h.degree(x) == 0), "groupe_robuste": plus_grand_groupe_robuste(h, membres)}
+
+    h = act.copy()
+    h.remove_edge(a, b)
+    groupe = nx.node_connected_component(act, a)                  # le groupe qui contient cette relation
+    morceaux = sorted((c & groupe for c in nx.connected_components(h) if c & groupe), key=lambda c: (-len(c), min(c)))
+    coupes = sorted(groupe - morceaux[0])                         # ceux qui se retrouvent hors de la plus grande partie
+    return {"existe": True, "nature": "SIMULATION (contrefactuel sur le graphe actuel)", "paire": sorted((a, b)),
+            "est_un_pont": len(morceaux) > 1,
+            "avant": mesure(act), "apres": mesure(h), "coupes_de_leur_groupe": coupes, "taille_du_groupe": len(groupe)}
+
+
+def relation_la_plus_critique(g_act: nx.Graph, membres: list[str]) -> Optional[tuple[str, str]]:
+    """La relation actuelle dont la disparition coupe le plus de membres de leur groupe (égalité : identifiants)."""
+    act = g_act.subgraph(membres).copy()
+    act.add_nodes_from(membres)
+    ponts = sorted(tuple(sorted(e)) for e in nx.bridges(act))
+    if not ponts:
+        return None
+    return max(ponts, key=lambda e: len(sans_relation(act, membres, *e)["coupes_de_leur_groupe"]))   # max : 1re ex aequo

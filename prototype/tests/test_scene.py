@@ -23,24 +23,79 @@ def test_rejeu_identique_trois_fois():
 
 def test_histoire_racontee_par_le_moteur():
     t = {x["etape"]: x["faits"] for x in stage.rejouer_jusqu_a(TAX, len(stage.ETAPES)).traces}
-    assert t[1]["invisible_par_defaut"] is True and t[1]["coordonnees_enregistrees"] == "aucune"
-    assert t[2]["compris"] == ["Développement commercial en Allemagne (obligatoire)"]
-    cand = t[3]["candidats"]
+    # A — sans modèle : les règles comprennent mal la phrase libre et s'abstiennent ; rien n'est simulé à la place de l'IA
+    assert t[0]["regles"]["decision"] == "S_ABSTENIR" and t[0]["ia"]["etat"] == "NON_CONFIGUREE"
+    assert t[0]["retenu"] == "REFORMULATION"
+    assert t[0]["reformulation_comprise"][0]["quoi"] == "Développement commercial en Allemagne (obligatoire)"
+    cand = t[1]["candidats"]
     assert cand[0]["nom"] == "Markus Heinzmann" and cand[0]["niveau"] == "forte"
     assert cand[0]["dimensions"]["reciprocite"]["etablie"] is True
-    assert t[3]["ecartes_par_leur_choix"] == 0                       # Stefan refuse : ni nommé, ni compté (k < 3)
+    assert t[1]["ecartes_par_leur_choix"] == 0                       # Stefan refuse : ni nommé, ni compté (k < 3)
     assert "Kalbermatten" not in json.dumps(t, ensure_ascii=False)
-    assert t[4]["decision"] == "S_ABSTENIR"                           # Japon : le système s'abstient
-    assert t[5]["coordonnees_partagees"] is False and t[6]["coordonnees_partagees"] is True
-    assert t[7]["etat_relation"] == "RENCONTREE" and t[9]["etat_relation"] == "OPPORTUNITE"
-    assert [r["type"] for p in t[8]["relances"] for r in p["raisons"]] == ["RECIPROCITE_OUVERTE"]
-    assert t[8]["silences"]["rien_de_nouveau"] >= 10                  # pas de relance sans raison
-    cercle = t[10]["micro_cercle"]
-    assert cercle["decision"] == "PROPOSER_A_L_HUMAIN" and 3 <= len(cercle["membres"]) <= 5
-    assert any("non mis à jour" in u for u in cercle["inconnu"])      # la preuve ancienne est signalée
-    fin = t[11]
-    assert fin["nature"] == "SIMULATION" and fin["si_le_cercle_a_lieu"]["composantes"] < fin["maintenant"]["composantes"]
-    assert "liens_actifs" not in fin["maintenant"]                   # pas de métrique dépendant d'une hypothèse
+    assert t[2]["coordonnees_avant_accord"] is False and t[2]["coordonnees_apres_accord"] is True
+    assert t[2]["etat_relation"] == "RENCONTREE"
+    # B — diagnostic, deux plans en conflit, contrefactuel
+    assert {"ISOLEMENT", "PONT_FRAGILE", "FRAGMENTATION"} <= {p["code"] for p in t[3]["phenomenes"]}
+    assert all("[[" not in p["observation"] for p in t[3]["phenomenes"])
+    plans = t[4]["plans"]
+    assert len(plans) == 2 and t[4]["budget"] == 1
+    reunir = max(plans, key=lambda p: p["plus_grand_groupe"])
+    consolider = max(plans, key=lambda p: p["groupe_robuste"])
+    assert reunir is not consolider                                   # aucun plan ne gagne sur tout
+    assert reunir["plus_grand_groupe"] > consolider["plus_grand_groupe"] and consolider["groupe_robuste"] > reunir["groupe_robuste"]
+    assert t[4]["nature"].startswith("SIMULATION")
+    assert t[5]["est_un_pont"] and len(t[5]["coupes_de_leur_groupe"]) >= 3 and t[5]["apres"]["groupes"] > t[5]["avant"]["groupes"]
+    # C — silence et refus motivés
+    assert [r["type"] for p in t[6]["relances"] for r in p["raisons"]] == ["RECIPROCITE_OUVERTE"]
+    assert t[6]["silences"]["rien_de_nouveau"] >= 10
+    dec = [x["decision"] for x in t[7]["tentatives"]]
+    assert dec == ["S_ABSTENIR", "REFUSER", "REFUSER"] and all(x["raisons"] for x in t[7]["tentatives"])
+    assert "consentement" in t[7]["tentatives"][1]["raisons"][0] and "aucune aide" in t[7]["tentatives"][2]["raisons"][0]
+    assert any("NON MESURÉE" in n["nature"] for n in t[8]["natures"])
+
+
+def test_scene_a_avec_une_ia_verifiee_n_utilise_que_des_criteres_valides():
+    """Chemin IA exercé avec un DOUBLE (aucun modèle réel) : sortie passée par `parser_llm.valider`, extrait inventé retiré."""
+    from app.parser_llm import SortieLLM, valider
+    texte = stage.Monde(TAX).donnees["sophie"]["besoin_complexe"]
+    sortie = SortieLLM.model_validate({"competences": [{"valeur": "export_allemagne", "obligatoire": True, "extrait": "développe déjà des ventes"},
+                                                       {"valeur": "traduction", "obligatoire": False, "extrait": "étiquettes doivent être traduites"}],
+                                       "langues": [{"valeur": "de", "obligatoire": True, "extrait": "parle allemand"}],
+                                       "zones": [], "implantations": [], "exclusions": [], "exclure_concurrents": True,
+                                       "termes_hors_catalogue": [], "contexte": ["avant le salon de mars"]})
+    double = valider(texte, sortie, TAX), {"analyseur": "double de test", "modele": "aucun", "latence_ms": 0}
+    w = stage.rejouer_jusqu_a(TAX, 2, interpreter=lambda _t: double)
+    f = w.traces[0]["faits"]
+    assert f["retenu"] == "INTERPRETATION_IA_VERIFIEE" and f["ia"]["etat"] == "UTILISEE" and "reformulation" not in f
+    assert w.traces[1]["faits"]["candidats"][0]["nom"] == "Markus Heinzmann"
+
+
+def test_refus_motives_coherent_avec_les_candidates_sur_toutes_les_paires():
+    """Une paire est proposable SI ET SEULEMENT SI aucune raison de refus n'est donnée (mêmes règles, jamais divergentes)."""
+    from adaptateurs.club import cycle as cy
+    from adaptateurs.club import interventions as iv
+    from adaptateurs.club import reseau
+    for n in (0, 3, len(stage.ETAPES)):
+        w = stage.rejouer_jusqu_a(TAX, n)
+        t = w.synchroniser()
+        membres = sorted(p.id for p in w.profils() if p.type == "membre_club")
+        g = reseau.graphe_actuel(w.memoire, t)
+        g.add_nodes_from(membres)
+        bes, et = w.magasin.besoins() + cy.besoins_publies(w.memoire, t), reseau.etats_par_paire(w.memoire, t)
+        prop = {frozenset((c.a, c.b)) for c in iv.candidates(w.profils(), bes, TAX, g, et)}
+        for i, a in enumerate(membres):
+            for b in membres[i + 1:]:
+                assert (not iv.refus_motives(a, b, w.profils(), bes, TAX, g, et)) == (frozenset((a, b)) in prop), (n, a, b)
+
+
+def test_contrefactuel_a_la_demande_n_ecrit_rien():
+    client.post("/api/stage/aller/6")
+    avant = client.get("/api/stage").json()
+    r = client.get("/api/stage/sans_relation", params={"a": "s02", "b": "s06"}).json()
+    assert r["nature"].startswith("SIMULATION") and r["coupes_noms"] and r["est_un_pont"]
+    assert client.get("/api/stage").json() == avant                      # aucun effet de bord
+    assert client.get("/api/stage/sans_relation", params={"a": "s02", "b": "s15"}).status_code == 404
+    assert client.get("/api/stage/sans_relation", params={"a": "x" * 65, "b": "s06"}).status_code == 422
 
 
 def test_api_scene_suivant_precedent_fin_reinitialisation():

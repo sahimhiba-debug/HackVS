@@ -66,6 +66,34 @@ def candidates(profils: list[Profil], besoins_publies: list, tax, g_actuel: nx.G
     return sorted(res.values(), key=lambda c: (c.a, c.b))
 
 
+def refus_motives(a: str, b: str, profils: list[Profil], besoins_publies: list, tax, g_actuel: nx.Graph,
+                  etats: dict[str, str], aides: Optional[dict] = None) -> list[str]:
+    """Pourquoi l'introduction a–b N'EST PAS proposable (liste vide = proposable). Mêmes règles que `candidates`,
+    dans le même ordre ; la cohérence des deux est vérifiée par un test sur toutes les paires. Vue ORGANISATION :
+    la raison de consentement ne dit pas lequel des deux a refusé."""
+    par_id = {p.id: p for p in profils}
+    if a == b:
+        return ["une personne ne peut pas être présentée à elle-même"]
+    pa, pb = par_id.get(a), par_id.get(b)
+    if pa is None or pb is None or pa.type != "membre_club" or pb.type != "membre_club":
+        return ["seuls des membres du Club peuvent être présentés l'un à l'autre"]
+    raisons = []
+    if not (pa.accepte_introductions and pa.disponible and pb.accepte_introductions and pb.disponible):
+        raisons.append("consentement absent : l'un des deux ne souhaite pas être présenté (ou est indisponible)")
+    if meme_organisation(pa, pb):
+        raisons.append("même organisation : une introduction interne n'apporte rien au réseau")
+    if g_actuel.has_edge(a, b):
+        raisons.append("déjà en relation actuelle : rien à introduire")
+    if etats.get(cle(a, b)) == "DECLINEE":
+        raisons.append("introduction déjà refusée : un refus n'est jamais contourné")
+    if not raisons:
+        membres = [p for p in profils if p.type == "membre_club" and p.accepte_introductions and p.disponible]
+        aides = aides if aides is not None else calculer_aides(membres, besoins_publies, tax)
+        if (a, b) not in aides and (b, a) not in aides:
+            raisons.append("aucune aide prouvée : aucun besoin publié de l'un ne correspond à une offre déclarée de l'autre")
+    return raisons
+
+
 def _composantes(g: nx.Graph) -> tuple[dict[str, int], dict[int, int], int]:
     ident, taille = {}, {}
     for n, comp in enumerate(sorted(nx.connected_components(g), key=lambda c: (-len(c), min(c)))):
