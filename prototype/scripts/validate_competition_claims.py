@@ -2,6 +2,7 @@
 
     python scripts/validate_competition_claims.py            # contrôles rapides (≈ 1 min, benchmark compris)
     python scripts/validate_competition_claims.py --sans-benchmark
+    python scripts/validate_competition_claims.py --sans-benchmark --verifier   # CI : contrôle sans réécrire les registres
 
 Produit competition/14_PROOF_LEDGER.md et competition/15_CLAIMS.md. Code de sortie ≠ 0 si :
 - une affirmation REAL ou SYNTHETIC échoue à son contrôle ;
@@ -116,7 +117,8 @@ def controle(nom: str) -> tuple[bool, str]:
             p = _bench()["pareto"]
             return min(p) >= 2, f"{min(p)} à {max(p)} points"
     if nom == "eval_decisions":
-        r = subprocess.run([sys.executable, "-m", "eval.eval_decisions"], cwd=PROTO, capture_output=True, text=True, env=os.environ)
+        cmd = [sys.executable, "-m", "eval.eval_decisions", *(["--verifier"] if "--verifier" in sys.argv else [])]
+        r = subprocess.run(cmd, cwd=PROTO, capture_output=True, text=True, env=os.environ)
         return r.returncode == 0, r.stdout.strip().splitlines()[-1]
     if nom == "modeles_non_verifies":
         from plateforme import modeles
@@ -140,6 +142,7 @@ def chiffres(texte: str) -> set[str]:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sans-benchmark", action="store_true")
+    ap.add_argument("--verifier", action="store_true", help="contrôler sans réécrire les registres publiés")
     a = ap.parse_args()
     reg = json.loads((COMP / "claims.json").read_text(encoding="utf-8"))
     lignes, echecs, autorises = [], [], set(reg["chiffres_autorises_hors_affirmations"])
@@ -167,7 +170,8 @@ def main() -> None:
               f"Généré le {jour} par `prototype/scripts/validate_competition_claims.py` à partir de `competition/claims.json`.",
               "Statuts : REAL (vrai du prototype, contrôlé), SYNTHETIC (données générées), INFERRED (hypothèse), UNVERIFIED (non vérifié par nous).", "",
               "| ID | Affirmation | Type | Contrôle (date : " + jour + ") | Preuve | Peut-on le dire ? | Où le montrer |", "|---|---|---|---|---|---|---|"]
-    (COMP / "14_PROOF_LEDGER.md").write_text("\n".join(entete + lignes) + "\n", encoding="utf-8")
+    if not a.verifier:
+        (COMP / "14_PROOF_LEDGER.md").write_text("\n".join(entete + lignes) + "\n", encoding="utf-8")
     # chiffres des textes de pitch
     deck = PROTO / "web" / "presentation.html"                          # le deck projeté : même exigence que le pitch
     for f in sorted(COMP.glob("PITCH_*.md")) + [COMP / "10_PITCH.md", COMP / "video" / "VOICEOVER.md", deck]:
@@ -215,7 +219,8 @@ def main() -> None:
     resume += ["", "Avec précaution (hypothèse ou non vérifié) :", ""]
     resume += [f"- [{c['type']}] {c['texte']} — {c['demo']}" for c in reg["affirmations"] if c["type"] in ("INFERRED", "UNVERIFIED")]
     resume += ["", "Chiffres autorisés dans le pitch : " + ", ".join(sorted(autorises, key=lambda x: (len(x), x))), ""]
-    (COMP / "15_CLAIMS.md").write_text("\n".join(resume), encoding="utf-8")
+    if not a.verifier:
+        (COMP / "15_CLAIMS.md").write_text("\n".join(resume), encoding="utf-8")
     print("\n".join(echecs) if echecs else "Toutes les affirmations contrôlables sont vérifiées ; aucun chiffre non prouvé dans le pitch.")
     sys.exit(1 if echecs else 0)
 

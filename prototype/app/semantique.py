@@ -13,6 +13,7 @@ de fausses acceptations sur des besoins hors catalogue.
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import os
 import time
@@ -65,7 +66,9 @@ class Encodeur:
 
 
 def disponible() -> bool:
-    return (DOSSIER_MODELE / "model.onnx").exists() and os.environ.get("HACKVS_SEMANTIQUE", "1") != "0"
+    """Modèle téléchargé, dépendances facultatives installées, et non désactivé : sinon, repli sur les règles."""
+    return (os.environ.get("HACKVS_SEMANTIQUE", "1") != "0" and (DOSSIER_MODELE / "model.onnx").exists()
+            and all(importlib.util.find_spec(m) is not None for m in ("onnxruntime", "tokenizers")))
 
 
 @lru_cache(maxsize=1)

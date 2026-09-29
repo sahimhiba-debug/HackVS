@@ -21,20 +21,38 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - name: Dépendances
-        run: pip install -r requirements.txt -r requirements-dev.txt ruff
+      - name: Dépendances (versions exactes de constraints.txt)
+        run: pip install -r requirements-dev.txt -c constraints.txt
+      - name: Aucun secret dans le dépôt
+        run: python scripts/verifier_secrets.py
       - name: Lint
         run: ruff check .
-      - name: Contrôle de types (mypy, plugin Pydantic)
-        run: python -m mypy app adaptateurs plateforme
-      - name: Tests (API, garde-fous, planificateur, MCP stdio et HTTP)
+      - name: Contrôle de types (mypy, plugin Pydantic) — toutes les couches
+        run: python -m mypy app adaptateurs plateforme intelligence
+      - name: Tests (domaine, API, sécurité, concurrence, frontière IA, invariants, observabilité)
         run: python -m pytest -q
       - name: Non-régression des évaluations (aucune violation ajoutée, aucun succès perdu)
         run: python -m eval.run_eval --verifier
       - name: Plateforme de décision (20 scénarios, attendus fixés avant exécution)
-        run: python -m eval.eval_decisions
+        run: python -m eval.eval_decisions --verifier
       - name: Cohérence pitch ↔ code (registre des preuves, chiffres du pitch, routes de la démo)
-        run: python scripts/validate_competition_claims.py --sans-benchmark
+        run: python scripts/validate_competition_claims.py --sans-benchmark --verifier
+
+  dependances:
+    # Vulnérabilités connues des dépendances (base publique PyPA / OSV).
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prototype
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install pip-audit
+      - name: Aucune vulnérabilité connue (exécution + facultatives, versions exactes)
+        run: pip-audit -r constraints.txt --progress-spinner off
 
   reproductibilite:
     # Rejoue tous les benchmarks du sprint : un chiffre publié ne peut pas diverger silencieusement du code.
@@ -51,13 +69,13 @@ jobs:
           python-version: "3.11"
           cache: pip
       - name: Dépendances
-        run: pip install -r requirements.txt -r requirements-dev.txt
+        run: pip install -r requirements-dev.txt -c constraints.txt
       - name: Navigateur pour les tests de bout en bout
         run: python -m playwright install --with-deps chromium
-      - name: Bout en bout dans un vrai navigateur (scène complète, clic, tour de contrôle, mobile)
+      - name: Bout en bout dans un vrai navigateur (scène, console Club Pulse, application mobile, pannes réseau, CSP)
         env:
           HACKVS_E2E_OBLIGATOIRE: "1"
-        run: python -m pytest -q tests/test_e2e_scene.py
+        run: python -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py
       - name: Rejouer les benchmarks du sprint
         run: python scripts/reproduire_sprint.py
       - name: Les résultats publiés sont identiques à l'octet

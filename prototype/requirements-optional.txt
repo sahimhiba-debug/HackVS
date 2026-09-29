@@ -1,0 +1,5 @@
+# Facultatif — chaque module est importé seulement quand sa fonction est activée ; le produit fonctionne sans.
+anthropic>=1.0        # analyse du besoin par Claude (HACKVS_LLM=claude), ancien prototype
+onnxruntime>=1.17     # IA locale (suggestions sémantiques). Modèle : python scripts/telecharger_modele.py
+tokenizers>=0.15
+mcp>=2.2              # serveur MCP du Club (python -m app.mcp_serveur)

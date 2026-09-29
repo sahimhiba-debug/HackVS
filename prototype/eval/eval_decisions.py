@@ -7,6 +7,7 @@ rejeu), pas une qualité de rencontre : celle-ci ne peut pas être mesurée sans
 from __future__ import annotations
 
 import json
+import sys
 import time
 from datetime import date, timedelta
 from pathlib import Path
@@ -206,7 +207,8 @@ def main() -> None:
           "Données FICTIVES (club de démonstration, club synthétique). Aucun LLM. Attendus fixés avant exécution.", "",
           f"**{ok_total}/{len(SCENARIOS)} scénarios conformes.**", "",
           "| # | Scénario | Résultat | ms | Détail |", "|---|---|---|---|---|", *lignes, ""]
-    (ICI / "resultats_decisions.md").write_text("\n".join(md), encoding="utf-8")
+    if "--verifier" not in sys.argv:              # --verifier (CI, make) : contrôle seul, le résultat publié n'est pas réécrit
+        (ICI / "resultats_decisions.md").write_text("\n".join(md), encoding="utf-8")
     print(f"{ok_total}/{len(SCENARIOS)}")
     raise SystemExit(0 if ok_total == len(SCENARIOS) else 1)
 
