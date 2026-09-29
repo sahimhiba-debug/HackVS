@@ -33,3 +33,24 @@ jobs:
         run: python -m eval.eval_decisions
       - name: Cohérence pitch ↔ code (registre des preuves, chiffres du pitch, routes de la démo)
         run: python scripts/validate_competition_claims.py --sans-benchmark
+
+  reproductibilite:
+    # Rejoue tous les benchmarks du sprint : un chiffre publié ne peut pas diverger silencieusement du code.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prototype
+    env:
+      HACKVS_SEMANTIQUE: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Dépendances
+        run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: Rejouer les benchmarks du sprint
+        run: python scripts/reproduire_sprint.py
+      - name: Les résultats publiés sont identiques à l'octet
+        run: git diff --exit-code -- eval/
