@@ -196,10 +196,12 @@ class Vues:
 
     def evolution(self, aid: str, sp: Spectateur) -> dict:
         opp = self.c.moteur.opportunite(aid)
-        noeuds = [r.membre for r in opp.roles]
-        for e in self.c.moteur.plan(aid)["etapes"]:
-            if e.get("membre") and e["membre"] not in noeuds:
-                noeuds.append(e["membre"])
+        # Seules figurent les personnes ENGAGÉES (bénéficiaire, et qui a accepté). Lister tous les rôles de l'opportunité
+        # révélait qui avait été sollicité — donc, par différence, qui avait décliné (défaut trouvé par le banc).
+        engages = {k[1] for k, v in self.c.moteur._reponses(aid).items() if v.donnees["accepte"]}
+        noeuds = [x for x in dict.fromkeys([opp.beneficiaire or "", *(r.membre for r in opp.roles),
+                                            *(e["membre"] for e in self.c.moteur.plan(aid)["etapes"] if e.get("membre"))])
+                  if x and (x == opp.beneficiaire or x in engages)]
         limite = self.c.jour - timedelta(days=365)
         g_avant, g_apres = nx.Graph(), nx.Graph()
         for ev in self.c.r.memoire.evenements("RENCONTRE", "COLLABORATION"):
@@ -211,8 +213,7 @@ class Vues:
         b = opp.beneficiaire
         rendu = self.c.rendu()
         nouveaux = [(ev.acteurs[0], ev.acteurs[1]) for ev in self.c.r.memoire.evenements("COLLABORATION") if ev.donnees.get("aid") == aid]
-        return {"noeuds": [{"cle": f"n{i}", "nom": rendu.nom(sp, x) if sp.role == "animatrice" or x == sp.id or x == b else
-                            rendu.nom(sp, x), "beneficiaire": x == b} for i, x in enumerate(noeuds)],
+        return {"noeuds": [{"cle": f"n{i}", "nom": rendu.nom(sp, x), "beneficiaire": x == b} for i, x in enumerate(noeuds)],
                 "liens_avant": [[f"n{noeuds.index(a)}", f"n{noeuds.index(c)}"] for a, c in g_avant.subgraph(noeuds).edges()],
                 "liens_nouveaux": [[f"n{noeuds.index(a)}", f"n{noeuds.index(c)}"] for a, c in nouveaux if a in noeuds and c in noeuds],
                 "relations_beneficiaire": {"avant": g_avant.degree(b) if b in g_avant else 0, "apres": g_apres.degree(b) if b in g_apres else 0},

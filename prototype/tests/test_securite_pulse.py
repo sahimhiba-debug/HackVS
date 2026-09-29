@@ -13,11 +13,13 @@ from intelligence.acces import Sessions
 from intelligence.club_pulse import ClubPulse
 from intelligence.demo import Demo
 from intelligence.erreurs import Limite, NonAuthentifie
+from intelligence.politique import Spectateur
 from intelligence.reglages import Reglages
 
 client = TestClient(app)
 CONSOLE = {"X-Pulse-Console": "1"}
 S, A, L, M, P = md.SOPHIE, md.ANNA, md.LEA, md.MARKUS, md.PAULINE
+ANIMATRICE_ = Spectateur("animatrice")
 
 
 def _aller(n):
@@ -185,3 +187,20 @@ def test_le_moteur_ne_voit_aucune_identite():
     for per in c.coffre._personnes.values():
         assert per.nom not in brut and per.courriel not in brut
     assert "@" not in brut
+
+
+def test_qui_a_decline_n_apparait_dans_aucun_graphe_d_evolution():
+    """Régression (trouvée par eval/benchmark_pulse.py) : le graphe « avant / après » d'une activation listait tous les
+    rôles de l'opportunité, donc la personne qui avait DÉCLINÉ — visible par les autres participants et par la console."""
+    d = Demo(TAX)
+    d.rejouer(len(Demo.ETAPES))
+    c = d.club
+    refus = [(e.donnees["aid"], e.acteurs[0]) for e in c.r.memoire.evenements("REPONSE") if not e.donnees["accepte"]]
+    assert refus                                                           # la démonstration comporte bien un refus
+    for aid, qui in refus:
+        nom = c.coffre.identite(qui).nom
+        for sp in [ANIMATRICE_] + [Spectateur("membre", p) for p in c.coffre._personnes if p != qui]:
+            noeuds = c.vues.evolution(aid, sp)["noeuds"]
+            assert all(n["nom"] != nom for n in noeuds), (sp, nom)
+            benef = c.moteur.opportunite(aid).beneficiaire
+            assert len(noeuds) == 1 + len({k[1] for k, v in c.moteur._reponses(aid).items() if v.donnees["accepte"] and k[1] != benef})
