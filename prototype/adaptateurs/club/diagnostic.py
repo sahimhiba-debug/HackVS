@@ -17,6 +17,7 @@ from plateforme.memoire import Memoire, graphe
 from plateforme.optimisation import cle
 
 from . import bilan as bi
+from . import boucle
 from . import extinction as ex
 from . import impact, pareto, sante, temporel
 from .interventions import candidates, indicateurs_actuels
@@ -63,7 +64,7 @@ def diagnostic(m: Memoire, profils: list[Profil], besoins_publies: list, tax, ma
         "voir_venir": a_venir,
         "agir": plans,
         "observer": temporel.depuis(m, membres, debut, maintenant),
-        "se_souvenir": bi.bilan(m, maintenant),
+        "se_souvenir": {"interventions": bi.bilan(m, maintenant), "decisions": boucle.historique(m, maintenant, membres)},
         "principes": ["aucune écriture, aucun envoi : l'humain décide",
                       "projections pessimistes (aucune interaction spontanée) ; simulations supposant les actions acceptées",
                       "aucune relance sans raison prouvée ; sinon invitation à un événement",

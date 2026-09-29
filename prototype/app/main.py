@@ -32,6 +32,7 @@ from .models import Besoin, Profil
 from .store import STATUTS_PUBLICS, ErreurMetier, Interdit, Magasin
 from .taxonomy import DATA_DIR, charger_taxonomie
 from adaptateurs.club import cycle as cycle_club
+from adaptateurs.club import boucle as boucle_reseau
 from adaptateurs.club import diagnostic as diag_reseau
 from adaptateurs.club import interventions, reseau
 from plateforme.memoire import Memoire
@@ -829,6 +830,46 @@ def diagnostic_reseau(k: int = Query(5, ge=1, le=20), horizon: int = Query(30, g
     t = aujourdhui_reseau()
     d = diag_reseau.diagnostic(MEMOIRE, profils_effectifs(), MAGASIN.besoins() + cycle_club.besoins_publies(MEMOIRE, t), TAX, t, k, horizon)
     return d | {"donnees_fictives": True}
+
+
+class EntreeDecision(BaseModel):
+    paires: list[list[str]] = Field(max_length=LISTE_MAX)
+    noms: list[str] = Field([], max_length=5)
+    objectifs: dict[str, int] = Field({}, max_length=5)
+    par: str = Field("organisation", max_length=80)
+
+
+@app.post("/api/reseau/decision")
+def decision_reseau(e: EntreeDecision):
+    """Vue ORGANISATION : l'humain choisit un plan ; il devient un fait, confronté plus tard à la réalité.
+    Seules des actions ACTUELLEMENT proposables (aide prouvée, consentement, pas de refus) sont acceptées."""
+    if MODE != "demo":
+        raise HTTPException(501, "Vue d'organisation : rôle d'animateur·rice authentifié non implémenté.")
+    projeter_reseau()
+    t = aujourdhui_reseau()
+    profils = profils_effectifs()
+    membres = sorted(p.id for p in profils if p.type == "membre_club")
+    g = reseau.graphe_actuel(MEMOIRE, t)
+    g.add_nodes_from(membres)
+    proposables = {frozenset((c.a, c.b)) for c in interventions.candidates(
+        profils, MAGASIN.besoins() + cycle_club.besoins_publies(MEMOIRE, t), TAX, g, reseau.etats_par_paire(MEMOIRE, t))}
+    if any(len(p) != 2 or frozenset(p) not in proposables for p in e.paires):
+        raise HTTPException(409, "Une action ne fait pas partie des actions proposables aujourd'hui (preuve, consentement, refus).")
+    try:
+        d = boucle_reseau.enregistrer(MEMOIRE, t, e.model_dump(), e.par, membres)
+    except boucle_reseau.ErreurDecision as x:
+        raise HTTPException(422, str(x)) from None
+    return {"enregistree_le": d.le.isoformat(), "actions": len(d.donnees["paires"])}
+
+
+@app.get("/api/reseau/decisions")
+def decisions_reseau():
+    """Prévu contre réalisé pour chaque décision d'organisation (faits réels seulement)."""
+    if MODE != "demo":
+        raise HTTPException(501, "Vue d'organisation : rôle d'animateur·rice authentifié non implémenté.")
+    projeter_reseau()
+    membres = sorted(p.id for p in profils_effectifs() if p.type == "membre_club")
+    return boucle_reseau.historique(MEMOIRE, aujourdhui_reseau(), membres) | {"donnees_fictives": True}
 
 
 @app.get("/api/reseau/boite")

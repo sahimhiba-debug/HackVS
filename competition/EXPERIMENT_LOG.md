@@ -130,3 +130,21 @@ Résultat · Cas d'échec · Décision · Preuve. Les hypothèses et baselines s
   plan non dominé (pas de conflit sur ce petit réseau : dit, pas inventé). Non-régression : 201 tests, 20/20, benchmark
   de matching par catégorie IDENTIQUE à l'octet près.
 - **Décision.** KEEP. **Preuve.** `tests/test_diagnostic.py`, `tests/test_extinction.py`.
+
+## EXP-I — Boucle fermée : prévu contre réalisé (simulation auditée par les faits)
+- **Hypothèse.** Parce que la mémoire est un journal rejouable, on peut enregistrer une décision d'organisation (plan
+  choisi + projection supposant 100 % d'acceptation), puis reconstruire le réseau À LA DATE de la décision et mesurer,
+  action par action et sur des faits RÉELS seulement, ce qui s'est produit — et donc l'écart entre projection et
+  réalité. Les comptes observés tempèrent les projections suivantes, sans modèle statistique.
+- **Baseline.** Aujourd'hui (et dans les outils usuels) : projection jamais confrontée à la réalité.
+- **Critères.** Aucun résultat attribué sans fait réel postérieur à la décision ; refus comptés à part ; rejeu identique ;
+  pas de taux sous 10 actions.
+- **Implémentation.** `adaptateurs/club/boucle.py` ; routes `/api/reseau/decision` (n'accepte que des actions
+  ACTUELLEMENT proposables : preuve, consentement, pas de refus — sinon 409) et `/api/reseau/decisions` ; historique
+  intégré à « se souvenir » du diagnostic.
+- **Résultat (exécuté).** 6 tests : réseau reconstruit à la date de la décision ; issue de chaque action (réalisée sur
+  fait RÉEL, refusée, simulée seulement, sans suite) ; prévu inclusion 3 contre réalisé 1 sur le cas construit ; un fait
+  antérieur n'est pas un résultat ; le fait le plus récent gouverne (refus puis connexion = réalisée) ; plan vide ou
+  invalide refusé ; pas de taux sous 10 actions ; rejeu identique ; l'API refuse une action avec un membre fermé.
+- **Limites.** NEEDS DATA : aucune décision réelle ; la réciprocité réalisée n'est pas observable (dite).
+- **Décision.** KEEP (mécanisme). **Preuve.** `tests/test_boucle.py`.
