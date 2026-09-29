@@ -60,13 +60,14 @@ def _gain(g: nx.Graph, a: str, b: str, comp: tuple) -> tuple[int, int, int]:
 
 
 def prevenir(g_act: nx.Graph, membres: list[str], echeances: dict[str, date], maintenant: date, horizon: int,
-             k: int, plafond: int = 1, variante: str = "INCLUSION") -> list[str]:
+             k: int, plafond: int = 1, variante: str = "INCLUSION", sollicitables: Optional[set[str]] = None) -> list[str]:
     """Glouton : à chaque pas, la relation menacée dont le ravivement évite le plus de perte sur le réseau projeté.
     INCLUSION : éviter d'abord que des membres perdent toute relation ; COHESION : préserver d'abord le plus grand groupe.
     Les deux sont en conflit mesuré (EXP-C, EXP-F) : l'humain choisit."""
     g, _ = projeter(g_act, membres, echeances, maintenant, horizon)
     fin = maintenant + timedelta(days=horizon)
-    dans = set(membres)   # une relation avec un non-membre (exposant, visiteur) n'est pas ravivable par le Club
+    # ravivable seulement entre deux MEMBRES qui acceptent d'être sollicités (consentement : défaut trouvé en red team)
+    dans = set(membres) & (sollicitables if sollicitables is not None else set(membres))
     menacees = sorted(k_ for k_, d in echeances.items() if maintenant < d <= fin and g_act.has_edge(*k_.split("|"))
                       and set(k_.split("|")) <= dans)
     choisies: list[str] = []
@@ -88,9 +89,9 @@ def prevenir(g_act: nx.Graph, membres: list[str], echeances: dict[str, date], ma
 
 
 def echeancier(g_act: nx.Graph, membres: list[str], echeances: dict[str, date], maintenant: date, horizon: int = 90,
-               k: int = 3, plafond: int = 1, aides: Optional[set[str]] = None) -> dict:
+               k: int = 3, plafond: int = 1, aides: Optional[set[str]] = None, sollicitables: Optional[set[str]] = None) -> dict:
     sans, chrono = projeter(g_act, membres, echeances, maintenant, horizon)
-    choix = prevenir(g_act, membres, echeances, maintenant, horizon, k, plafond)
+    choix = prevenir(g_act, membres, echeances, maintenant, horizon, k, plafond, sollicitables=sollicitables)
     avec, chrono_avec = projeter(g_act, membres, echeances, maintenant, horizon, frozenset(choix))
     premiere_coupure = next((c["le"] for c in chrono if any(e["type"] in ("PONT_DISPARU", "MEMBRE_ISOLE") for e in c["evenements"])), None)
     return {

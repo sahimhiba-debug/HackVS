@@ -42,3 +42,16 @@ def test_phenomenes_tries_par_priorite():
     ph = sante.phenomenes(r["g_hist"], r["g_act"], r["membres"], r["secteurs"], r["sollicitations"])["phenomenes"]
     ordre = sorted((p["phenomene"] for p in ph), key=dg.PRIORITE.index)
     assert ordre[0] == "ISOLEMENT" and ordre[-1] == "VIEILLISSEMENT"
+
+
+def test_aucun_ravivement_ne_sollicite_un_membre_qui_refuse_les_introductions():
+    """Défaut trouvé en red team : le diagnostic proposait de raviver la relation d'un membre fermé aux introductions."""
+    from adaptateurs.club import cycle as cy
+    from eval.perf_echelle import generer
+    p, m, t = generer(150, 1)
+    d = dg.diagnostic(m, p, cy.besoins_publies(m, t), TAX, t)
+    fermes = {x.id for x in p if not x.accepte_introductions or not x.disponible}
+    rav = [r["paire"] for r in d["voir_venir"]["INCLUSION"]["ravivements"]] + d["voir_venir"]["COHESION_ravivements"]
+    assert fermes and not [r for r in rav if set(r) & fermes]
+    for plan in d["agir"]["front"]:
+        assert not [x for x in plan["paires"] if set(x) & fermes]

@@ -148,6 +148,10 @@ def relances(m: Memoire, profils: list[Profil], tax: Taxonomie, maintenant: date
         for x, via in ((a, b), (b, a)):  # ami d'un ami : via a eu un suivi avec x, et connaît z qui peut aider x
             if cle(x, via) not in suivis or not actuel.has_edge(x, via):
                 continue
+            # une présentation SOLLICITE l'intermédiaire et CRÉE un contact pour x : tous deux doivent l'accepter
+            # (défaut trouvé en red team du sprint : présent depuis la première version)
+            if not (par_id[via].accepte_introductions and par_id[x].accepte_introductions):
+                continue
             for z in sorted(actuel.neighbors(via)):   # lien via–z ACTUEL : pas une rencontre d'il y a deux ans
                 if z in (x, via) or g.has_edge(x, z) or z not in par_id:
                     continue
@@ -251,6 +255,8 @@ def opportunites(m: Memoire, profils: list[Profil], tax: Taxonomie, maintenant: 
         k = cle(a, c)
         if g.has_edge(a, c) or k in res or a not in par_id or c not in par_id or not ({cle(a, via), cle(via, c)} & suivis):
             continue
+        if not all(par_id[x].accepte_introductions for x in (a, c, via) if x in par_id):
+            continue                                    # consentement des trois personnes (défaut trouvé en red team)
         aides = calculer_aides([par_id[a], par_id[c]], besoins, tax)
         if aides:
             (i, j), aide = sorted(aides.items())[0]

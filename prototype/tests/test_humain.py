@@ -148,3 +148,23 @@ def test_budget_d_attention_un_membre_ne_recoit_pas_huit_relances_le_meme_jour()
             vues.append(r["avec"])
             cy.repondre(m, [SOPHIE] + clones, TAX, j + timedelta(days=11), r["id"], False, "p00")
     assert sorted(vues) == sorted(c.id for c in clones)     # chacune proposée une fois, au fil des réponses
+
+
+def test_presentation_et_opportunite_exigent_le_consentement_des_trois():
+    """Défaut trouvé en red team (antérieur au gel) : un intermédiaire ou un membre fermé aux introductions était sollicité."""
+    from datetime import date, timedelta
+
+    from adaptateurs.club import cycle as cy
+    from plateforme.affirmations import Statut
+    from plateforme.memoire import Evt, Memoire
+    j0 = date(2026, 10, 3)
+    for ferme in ("p32", "p00", "p06"):
+        pm = [p.model_copy(update={"accepte_introductions": False}) if p.id == ferme else p for p in P]
+        m = Memoire()
+        cy.publier_besoin(m, "p00", BESOIN.texte, j0 - timedelta(days=1), TAX, Statut.SIMULE)
+        for a, b, j, typ in (("p00", "p32", 0, "RENCONTRE"), ("p00", "p32", 12, "SUIVI"), ("p32", "p06", 0, "RENCONTRE")):
+            m.ajouter(Evt(type=typ, le=j0 + timedelta(days=j), acteurs=sorted([a, b]), statut=Statut.DECLARE))
+        t = j0 + timedelta(days=30)
+        rel = cy.relances(m, pm, TAX, t)
+        assert not [r for p in rel["propositions"] for r in p["raisons"] if r["type"] == "PRESENTATION"], ferme
+        assert cy.opportunites(m, pm, TAX, t) == [], ferme

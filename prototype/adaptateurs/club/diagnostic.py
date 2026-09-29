@@ -48,9 +48,11 @@ def diagnostic(m: Memoire, profils: list[Profil], besoins_publies: list, tax, ma
     plans = pareto.frontiere(g_act, membres, cands, k)
     aides = {cle(i, j) for i, j in aides_brutes}
     ech = {x: d for x, d in ex.echeances(m, maintenant).items() if g_act.has_edge(*x.split("|"))}
-    a_venir = {v: ex.echeancier(g_act, membres, ech, maintenant, horizon, k=3, plafond=2, aides=aides)
-               for v in ("INCLUSION",)}
-    a_venir["COHESION_ravivements"] = [x.split("|") for x in ex.prevenir(g_act, membres, ech, maintenant, horizon, 3, 2, "COHESION")]
+    sollicitables = {p.id for p in ouverts}
+    a_venir = {"INCLUSION": ex.echeancier(g_act, membres, ech, maintenant, horizon, k=3, plafond=2, aides=aides,
+                                          sollicitables=sollicitables)}
+    a_venir["COHESION_ravivements"] = [x.split("|") for x in ex.prevenir(g_act, membres, ech, maintenant, horizon, 3, 2, "COHESION",
+                                                                          sollicitables=sollicitables)]
 
     rien = not obs["phenomenes"] and not cands and not a_venir["INCLUSION"]["ravivements"]
     return {
