@@ -13,4 +13,4 @@ Statuts : EXPLORE · PROTOTYPE · BUILD · TEST · KEEP · DEFER · REJECT. Une 
 | I-07 | Micro-cercle sans deux collègues | Un cercle de 5 avec 2 personnes de la même entreprise | Diversité réelle | Faible | Non observé sur les données de scène | EXPLORE |
 | I-08 | Index TF-IDF persistant | Recherche 0,9 s à 5000 membres | Performance | Faible | Mesuré (`resultats_perf_echelle.md`) ; inutile à 160 membres | DEFER |
 | I-09 | Agents LLM multiples (planificateur, critique…) | — | Aucun problème identifié qu'un agent résoudrait mieux que le code déterministe testé | — | Les tâches de décision et de politique restent déterministes | REJECT |
-| I-10 | Collision d'événements (deux soirées le même jour) | Seul scénario adversarial non couvert | — | Faible | ADVERSARIAL_MATRIX | EXPLORE |
+| I-10 | Collision d'événements (deux soirées le même jour) | Seul scénario adversarial non couvert | — | Faible | `test_collisions.py` (+ plan périmé) | KEEP |

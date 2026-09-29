@@ -47,6 +47,16 @@ def enregistrer_soiree(m: Memoire, journal: Journal, run_id: str, nom: str, le: 
         raise ErreurCycle("seul un plan approuvé par un humain peut devenir une soirée")
     if any(e.donnees.get("run_id") == run_id for e in m.evenements("EVENEMENT_TENU")):
         raise ErreurCycle("cette soirée est déjà enregistrée")
+    # Collision : personne n'est à deux tables le même soir (deux plans approuvés enregistrés le même jour).
+    places = {x for _, a, b in run.retenue["rencontres"] for x in (a, b)}
+    deja = {x for e in m.evenements("RENCONTRE") if e.le == le and e.donnees.get("run_id") != run_id for x in e.acteurs}
+    if places & deja:
+        raise ErreurCycle(f"collision : {len(places & deja)} membre(s) déjà placé(s) à une autre soirée le même jour")
+    # Plan devenu faux entre l'approbation et l'enregistrement : un refus d'introduction postérieur l'emporte.
+    from .reseau import paires_declinees
+    refus = {frozenset(p) for p in paires_declinees(m, le)}
+    if any(frozenset((a, b)) in refus for _, a, b in run.retenue["rencontres"]):
+        raise ErreurCycle("plan périmé : une introduction a été déclinée depuis l'approbation ; relancez le calcul")
     inst = journal.instantane(run.instantane_empreinte)
     st = Statut.SIMULE if demo else Statut.DECLARE
     m.ajouter(Evt(type="EVENEMENT_TENU", le=le, donnees={"nom": nom, "run_id": run_id, "rencontres": len(run.retenue["rencontres"])}, statut=st))

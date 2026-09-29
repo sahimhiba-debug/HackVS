@@ -16,4 +16,4 @@
 | Réinitialisation de la démo | vidage magasin + mémoire | état cohérent | aucun fait orphelin | `test_reinitialisation_ne_laisse_aucun_fait_orphelin` |
 | Double clic sur « suivant » de la scène | verrou + 409 en fin | une étape | démo stable | `test_scene.py`, navigateur |
 | Mode réel sans source autorisée | configuration | 503 / 501, rien de simulé | aucune fausse donnée | `test_mode_reel_ne_simule_rien` |
-| Collision d'événements (même soirée, deux horloges) | — | — | NON COUVERT (déclaré dans ADVERSARIAL_MATRIX) | — |
+| Deux soirées le même jour / plan devenu faux après approbation | contrôle à l'enregistrement | refus explicite (409) : « collision » ou « plan périmé : relancez » | aucune rencontre impossible ni refus contourné | `test_collisions.py` |

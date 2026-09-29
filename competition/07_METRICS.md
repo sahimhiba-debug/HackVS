@@ -10,7 +10,7 @@
 | Simulation du micro-cercle (scène) | 2 groupes → 1 | REAL (données fictives) | C09 |
 | Ponts entre communautés | voir C10 | SYNTHETIC_BENCHMARK | benchmark_reseau |
 | Membres servis / réciprocité | voir C11 | SYNTHETIC_BENCHMARK | benchmark_reseau |
-| Défauts réels trouvés et corrigés | 28 | REAL | FAILURES.md (C16) |
+| Défauts réels trouvés et corrigés | 30 | REAL | FAILURES.md (C16) |
 
 **Aucune métrique business du Club** : nous n'avons aucune donnée réelle. Non mesurés : acceptation réelle des
 introductions, conversion en opportunités, fatigue réelle, coût d'une IA externe.

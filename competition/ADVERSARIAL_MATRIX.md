@@ -17,7 +17,7 @@
 | 13 | Opportunité par un lien faible | oui | présentation via un contact suivi (`test_cycle.py`, scène étape 11) |
 | 14 | Pont | oui | simulation : pont = relie deux groupes existants (`test_scene.py`) |
 | 15 | Capacité | oui | une rencontre par tour, budget par membre ; validateur L5 indépendant |
-| 16 | Collision d'événements | **non** | pas de calendrier multi-événements dans le prototype |
+| 16 | Collision d'événements | oui | personne à deux soirées le même jour ; plan revérifié à l'enregistrement (refus postérieur) — `test_collisions.py` |
 | 17 | Aucun candidat | oui | S08, S09 ; « Japon » (scène étape 5) |
 | 18 | Faux candidat très confiant | oui | preuve déduite → « partielle, à vérifier » (Claudia) ; profil ancien signalé |
 | 19 | Rejet humain | oui | introduction déclinée, relance refusée (`test_reseau.py`, `test_cycle.py`) |
@@ -33,4 +33,4 @@
 | 29 | Preuve périmée | oui | S17 (blocage) |
 | 30 | Historique contradictoire | oui | `test_adversarial_reseau.py` (refus ancien vs relation vivante) — défaut trouvé et corrigé (FAILURES #20) |
 
-Couverts : 27 · partiels : 2 (8, 27) · non couverts : 1 (16).
+Couverts : 28 · partiels : 2 (8, 27) · non couverts : 0.
