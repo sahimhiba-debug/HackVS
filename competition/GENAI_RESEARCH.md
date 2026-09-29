@@ -64,7 +64,11 @@ déclarée : il contrôle des faits et des négations simples, pas toutes les co
 **Mécanique des bancs** vérifiée avec un double de test (aucun chiffre publié).
 
 ## Pour exécuter les bras IA
-Configurer dans l'environnement `ANTHROPIC_API_KEY` et `HACKVS_LLM=claude` (jamais dans le chat), puis :
+Configurer dans l'environnement (jamais dans le chat) SOIT `ANTHROPIC_API_KEY` et `HACKVS_LLM=claude`, SOIT
+`HACKVS_LLM=apertus`, `APERTUS_API_KEY`, `APERTUS_BASE_URL`, `APERTUS_MODEL` (Apertus : les quatre bras de G1 et les
+trois bras de G2 passent par son API compatible OpenAI ; l'hôte doit être autorisé par la politique réseau de
+l'environnement — refusé au 29.09 : `api.publicai.co`, `api.swisscom.com`). Le rapport indique le modèle utilisé ; les
+résultats d'Apertus et de Claude sont des lignes distinctes, jamais fusionnées. Puis :
 `python -m eval.benchmark_ia --sortie eval/resultats_benchmark_ia.md` et
 `python -m eval.benchmark_synthese --sortie eval/resultats_benchmark_synthese.md`. Coût estimé : ~112 + 37 + 112 appels
 pour G1, 10 appels pour G2.

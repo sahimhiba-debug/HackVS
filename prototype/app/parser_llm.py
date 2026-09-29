@@ -254,6 +254,30 @@ def _morceaux_apertus(texte: str, tax: Taxonomie, http, tele: dict, suite: tuple
             return
 
 
+def completer_apertus(systeme_txt: str, message: str, schema: Optional[dict] = None, http=None,
+                      max_tokens: int = 1200) -> str:
+    """Appel simple (sans flux) à l'API compatible OpenAI d'Apertus, pour les bancs d'évaluation.
+    Sortie JSON contrainte si `schema` est donné et que le serveur la prend en charge ; sinon consigne seule."""
+    import httpx
+    base = os.environ["APERTUS_BASE_URL"].rstrip("/")
+    entetes = {"Authorization": f"Bearer {os.environ['APERTUS_API_KEY']}", "Content-Type": "application/json"}
+    if schema is not None:
+        systeme_txt += ("\nRéponds UNIQUEMENT par un objet JSON valide conforme à ce schéma, sans texte autour :\n"
+                        + json.dumps(schema, ensure_ascii=False))
+    corps = {"model": os.environ["APERTUS_MODEL"], "temperature": 0, "max_tokens": max_tokens,
+             "messages": [{"role": "system", "content": systeme_txt}, {"role": "user", "content": message}]}
+    if schema is not None:
+        corps["response_format"] = {"type": "json_schema", "json_schema": {"name": "sortie", "schema": schema, "strict": True}}
+    client = http or httpx.Client(timeout=httpx.Timeout(120.0, connect=10.0))
+    rep = client.post(f"{base}/chat/completions", headers=entetes, json=corps)
+    if rep.status_code in (400, 422) and "response_format" in corps:
+        corps.pop("response_format")          # serveur sans sortie contrainte : on garde la consigne
+        rep = client.post(f"{base}/chat/completions", headers=entetes, json=corps)
+    rep.raise_for_status()
+    texte = rep.json()["choices"][0]["message"]["content"] or ""
+    return _json_de(texte) if schema is not None else texte
+
+
 def _json_de(texte: str) -> str:
     """Retire d'éventuelles balises ```json autour de la réponse."""
     t = texte.strip()

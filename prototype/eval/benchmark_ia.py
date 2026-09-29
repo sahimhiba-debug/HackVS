@@ -40,17 +40,20 @@ def _profil_public(p) -> dict:
             "presentation": p.presentation, "accepte_introductions": p.accepte_introductions}
 
 
-def ia_seule_client(profils, moi, client=None) -> Callable[[str], dict]:
-    """Le LLM choisit lui-même, sans vocabulaire fermé ni filtre du moteur. `client` : SDK Anthropic (ou double de test)."""
-    if client is None:
-        import anthropic
-        client = anthropic.Anthropic()
-    modele = os.environ.get("HACKVS_CLAUDE_MODEL", parser_llm.MODELE_PAR_DEFAUT)
+def ia_seule_client(profils, moi, client=None, apertus_http=None) -> Callable[[str], dict]:
+    """Le LLM choisit lui-même, sans vocabulaire fermé ni filtre du moteur. `client` : SDK Anthropic (ou double de test) ;
+    avec HACKVS_LLM=apertus, l'API compatible OpenAI d'Apertus (`apertus_http` : double de test httpx)."""
     annuaire = json.dumps([_profil_public(p) for p in profils if p.id != moi.id], ensure_ascii=False)
     systeme = ("Tu recommandes, parmi les membres d'un club d'affaires, au plus 3 personnes capables de répondre au "
                "besoin. Respecte les contraintes exprimées (langue, zone, exclusions). Ne propose jamais un visiteur ni "
                "un membre qui n'accepte pas les introductions. Si personne ne convient, abstiens-toi. "
                "Réponds avec les identifiants exacts de l'annuaire.\n\nAnnuaire (JSON) :\n" + annuaire)
+    if client is None and parser_llm.fournisseur() == "apertus":
+        return lambda texte: json.loads(parser_llm.completer_apertus(systeme, texte, SCHEMA_IA_SEULE, apertus_http, 800))
+    if client is None:
+        import anthropic
+        client = anthropic.Anthropic()
+    modele = os.environ.get("HACKVS_CLAUDE_MODEL", parser_llm.MODELE_PAR_DEFAUT)
 
     def choisir(texte: str) -> dict:
         r = client.messages.create(model=modele, max_tokens=800, system=systeme,
@@ -100,6 +103,12 @@ def evaluer_bras(bras: str, cas: list[dict], profils, par_id, moi, llm: Optional
             "latence_mediane_ms": round(sorted(latences)[len(latences) // 2], 1) if latences else None, "detail": lignes}
 
 
+def _nom_modele() -> str:
+    if parser_llm.fournisseur() == "apertus":
+        return f"Apertus ({os.environ.get('APERTUS_MODEL')})"
+    return f"Claude ({os.environ.get('HACKVS_CLAUDE_MODEL', parser_llm.MODELE_PAR_DEFAUT)})"
+
+
 def modele_disponible() -> bool:
     return parser_llm.llm_configure()
 
@@ -116,10 +125,9 @@ def main() -> None:
     if dispo:
         resultats.append(evaluer_bras("HYBRIDE", cas, profils, par_id, moi))
         resultats.append(evaluer_bras("HYBRIDE_REPLI", cas, profils, par_id, moi))
-        if parser_llm.fournisseur() == "claude":
-            resultats.append(evaluer_bras("IA_SEULE", cas, profils, par_id, moi, llm=ia_seule_client(profils, moi)))
+        resultats.append(evaluer_bras("IA_SEULE", cas, profils, par_id, moi, llm=ia_seule_client(profils, moi)))
     lignes = ["# G1 — Comprendre un besoin : moteur seul, IA seule, hybride", "",
-              f"{len(cas)} cas ({a.jeux}) écrits avant exécution ; notation identique à eval/run_eval.py.", "",
+              f"Modèle : {_nom_modele() if dispo else 'aucun'}. {len(cas)} cas ({a.jeux}) écrits avant exécution ; notation identique à eval/run_eval.py.", "",
               "| Bras | succès@3 | Violations | Abstention correcte | Identifiants inventés | Appels au modèle | Latence médiane |",
               "|---|---|---|---|---|---|---|"]
     for r in resultats:

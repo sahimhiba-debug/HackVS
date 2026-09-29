@@ -38,3 +38,36 @@ def test_bras_moteur_sans_appel_au_modele():
     profils, par_id, moi = charger()
     r = evaluer_bras("MOTEUR", CAS, profils, par_id, moi)
     assert r["appels_llm"] == 0 and r["inventes"] == 0
+
+
+def _faux_apertus(monkeypatch, reponses, premier_statut=200):
+    """Double du serveur Apertus (API compatible OpenAI) : enregistre les requêtes, renvoie des réponses construites."""
+    import httpx
+    monkeypatch.setenv("HACKVS_LLM", "apertus")
+    for k, v in {"APERTUS_API_KEY": "factice", "APERTUS_BASE_URL": "https://apertus.test/v1", "APERTUS_MODEL": "m"}.items():
+        monkeypatch.setenv(k, v)
+    requetes, file = [], list(reponses)
+
+    def gerer(req):
+        requetes.append(json.loads(req.content))
+        if premier_statut != 200 and len(requetes) == 1:
+            return httpx.Response(premier_statut, json={"error": "response_format non pris en charge"})
+        return httpx.Response(200, json={"choices": [{"message": {"content": file.pop(0)}}]})
+    return httpx.Client(transport=httpx.MockTransport(gerer)), requetes
+
+
+def test_ia_seule_via_apertus_et_repli_sans_sortie_contrainte(monkeypatch):
+    profils, par_id, moi = charger()
+    http, requetes = _faux_apertus(monkeypatch, ['```json\n{"ids": ["p01"], "abstention": false, "justification": "x"}\n```',
+                                                 '{"ids": [], "abstention": true, "justification": "personne"}'], 400)
+    r = evaluer_bras("IA_SEULE", CAS, profils, par_id, moi, llm=ia_seule_client(profils, moi, apertus_http=http))
+    assert r["succes@3"] == 1 and r["abstention_ok"] == 2 and r["appels_llm"] == 2
+    assert "response_format" in requetes[0] and "response_format" not in requetes[1]   # repli : consigne seule
+    assert requetes[1]["model"] == "m" and requetes[1]["temperature"] == 0
+
+
+def test_synthese_via_apertus(monkeypatch):
+    from eval.benchmark_synthese import _llm
+    http, requetes = _faux_apertus(monkeypatch, ["Le réseau compte 120 membres."])
+    assert _llm(apertus_http=http)({"membres": 120}) == "Le réseau compte 120 membres."
+    assert "response_format" not in requetes[0] and "120" in requetes[0]["messages"][1]["content"]

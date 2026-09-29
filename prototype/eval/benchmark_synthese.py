@@ -31,7 +31,10 @@ CONSIGNE = ("Tu écris pour l'animateur d'un club d'affaires un diagnostic de so
             "données fournies. Termine par les actions possibles, et dis clairement si aucune action n'est fondée.")
 
 
-def _llm(client=None):
+def _llm(client=None, apertus_http=None):
+    if client is None and parser_llm.fournisseur() == "apertus":
+        return lambda donnees: parser_llm.completer_apertus(
+            CONSIGNE, json.dumps(donnees, ensure_ascii=False, default=str), None, apertus_http)
     if client is None:
         import anthropic
         client = anthropic.Anthropic()
@@ -56,7 +59,7 @@ def main() -> None:
     ap.add_argument("--reseaux", type=int, default=5)
     ap.add_argument("--sortie", default="")
     a = ap.parse_args()
-    dispo = parser_llm.llm_configure() and parser_llm.fournisseur() == "claude"
+    dispo = parser_llm.llm_configure()
     ecrire = _llm() if dispo else None
     mesures: dict[str, list] = {"GABARIT": [], "IA_SEULE": [], "HYBRIDE": []}
     for s in range(a.reseaux):
