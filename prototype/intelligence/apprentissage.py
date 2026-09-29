@@ -67,10 +67,12 @@ def motifs(m: Memoire, aujourd_hui: date) -> list[dict]:
     return res
 
 
-def chercher(m: Memoire, concepts: set[str], aujourd_hui: date, secteur: Optional[str] = None) -> list[dict]:
-    """Motifs frais qui couvrent au moins une des capacités demandées, avec les différences de contexte."""
+def chercher(m: Memoire, concepts: set[str], aujourd_hui: date, secteur: Optional[str] = None,
+             connus: Optional[list[dict]] = None) -> list[dict]:
+    """Motifs frais qui couvrent au moins une des capacités demandées, avec les différences de contexte.
+    `connus` : motifs déjà calculés pour CETTE analyse (même mémoire, même date) — évite de relire le journal par demande."""
     res = []
-    for x in motifs(m, aujourd_hui):
+    for x in (motifs(m, aujourd_hui) if connus is None else connus):
         communs = concepts & set(x["concepts"])
         if not communs or not x["frais"] or x["echecs"] >= x["confirmations"]:
             continue

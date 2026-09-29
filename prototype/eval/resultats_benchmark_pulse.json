@@ -1,0 +1,137 @@
+{
+ "configuration": {
+  "tailles": [
+   150,
+   500
+  ],
+  "graines": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10
+  ],
+  "clubs": 20,
+  "activations_par_club": 12
+ },
+ "detection": {
+  "par_type": {
+   "COMPLEMENTARITE": {
+    "trouvees": 40,
+    "plantees": 40
+   },
+   "COMPOSITION": {
+    "trouvees": 20,
+    "plantees": 20
+   },
+   "CONVERGENCE": {
+    "trouvees": 20,
+    "plantees": 20
+   },
+   "LACUNE": {
+    "trouvees": 20,
+    "plantees": 20
+   },
+   "LATENTE": {
+    "trouvees": 40,
+    "plantees": 40
+   },
+   "MEMOIRE": {
+    "trouvees": 20,
+    "plantees": 20
+   }
+  },
+  "pieges": {
+   "AUCUNE_LANGUE_COMMUNE": {
+    "total": 20,
+    "moteur": 0,
+    "appariement par capacité": 20,
+    "ressemblance de profils": 0
+   },
+   "CONCURRENT": {
+    "total": 20,
+    "moteur": 0,
+    "appariement par capacité": 20,
+    "ressemblance de profils": 0
+   },
+   "DEJA_EN_RELATION": {
+    "total": 20,
+    "moteur": 0,
+    "appariement par capacité": 20,
+    "ressemblance de profils": 0
+   },
+   "INDISPONIBLE": {
+    "total": 20,
+    "moteur": 0,
+    "appariement par capacité": 20,
+    "ressemblance de profils": 0
+   },
+   "INTRODUCTION_DECLINEE": {
+    "total": 20,
+    "moteur": 0,
+    "appariement par capacité": 20,
+    "ressemblance de profils": 0
+   },
+   "MEME_ORGANISATION": {
+    "total": 20,
+    "moteur": 0,
+    "appariement par capacité": 20,
+    "ressemblance de profils": 0
+   },
+   "PROFIL_OBSOLETE": {
+    "total": 20,
+    "moteur": 0,
+    "appariement par capacité": 20,
+    "ressemblance de profils": 0
+   },
+   "REFUS_INTRODUCTIONS": {
+    "total": 20,
+    "moteur": 0,
+    "appariement par capacité": 20,
+    "ressemblance de profils": 0
+   },
+   "RESSEMBLANCE": {
+    "total": 20,
+    "moteur": 0,
+    "appariement par capacité": 0,
+    "ressemblance de profils": 10
+   }
+  },
+  "opportunites_par_club_moyenne": 57.5
+ },
+ "replanification": {
+  "refus_provoques": 240,
+  "avec_alternative_selon_oracle": 198,
+  "alternative_proposee_quand_il_en_existe": 198,
+  "alternatives_eligibles": 198,
+  "alternatives_proposees": 198,
+  "sans_alternative_selon_oracle": 42,
+  "abandon_propre_quand_il_n_en_existe_pas": 42,
+  "refus_relances": 0
+ },
+ "confidentialite": {
+  "moteur": [
+   {
+    "profils": 150,
+    "identites_verifiees": 450,
+    "fuites": 0
+   },
+   {
+    "profils": 500,
+    "identites_verifiees": 1500,
+    "fuites": 0
+   }
+  ],
+  "ecrans": {
+   "membres": 150,
+   "ecrans": 754,
+   "refus_dans_la_demo": 1,
+   "fuites": []
+  }
+ }
+}

@@ -55,6 +55,7 @@ class Detecteur:
         self.paires_ecartees: list[tuple[str, str, str]] = []   # INTERNE (banc, audit) : jamais exposé à l'interface
         self.bloques: list[dict] = []
         self._cache_f: dict[tuple, list[dict]] = {}
+        self._motifs: Optional[list[dict]] = None     # motifs de la mémoire, lus une fois par analyse (instance = une analyse)
         self._racines: dict[str, frozenset] = {}
 
     def _rac(self, texte: str) -> frozenset:
@@ -147,7 +148,10 @@ class Detecteur:
                 f = self.fournisseurs(auteur, c, b.besoin)
                 couverts[c] = f
                 par_concept.setdefault(c, []).append((b, f))
-            memo = apprentissage.chercher(self.r.memoire, set(etapes), self.e.aujourd_hui, auteur.secteurs[0] if auteur.secteurs else None)
+            if self._motifs is None:                  # une lecture du journal par analyse, pas une par demande
+                self._motifs = apprentissage.motifs(self.r.memoire, self.e.aujourd_hui)
+            memo = apprentissage.chercher(self.r.memoire, set(etapes), self.e.aujourd_hui, auteur.secteurs[0] if auteur.secteurs else None,
+                                          connus=self._motifs)
             if memo and set(etapes) <= set(memo[0]["couvre"]):
                 self._ajouter(opps, self._memoire(b, auteur, etapes, memo[0]))
                 continue
