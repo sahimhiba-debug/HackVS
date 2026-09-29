@@ -1,4 +1,4 @@
-# Mémo red team (travail) — attaques menées pendant les cycles techniques 1 à 7
+# Mémo red team (travail) — attaques menées pendant les cycles techniques 1 à 8 et le sprint d'innovation
 
 | Cycle | Attaque | Résultat | Preuve |
 |---|---|---|---|
@@ -15,6 +15,10 @@
 | 6 | Optimiser l'activation du réseau « naïvement » (isolés d'abord) | Effet de second ordre : îlots de deux | BENCHMARK_MEMO §2 |
 | 8 | Deux soirées le même jour ; refus postérieur à l'approbation d'un plan | Collisions réelles → refus explicites | FAILURES 29–30 |
 | 7 | Un membre rencontre 8 personnes qui peuvent l'aider, puis publie un besoin | Saturation réelle (8 relances le même jour) → budget d'attention | FAILURES 28 |
+| Sprint | Membre fermé aux introductions dans un ravivement, une présentation, une opportunité, une relance après retrait | **3 violations de consentement** (dont une antérieure au gel) → modèle à deux niveaux (invisible par défaut / retrait explicite) | FAILURES 35–37 |
+| Sprint | Enregistrer une « décision » avec une paire arbitraire (membre fermé) | Refusé (409) : seules les actions proposables | `test_boucle.py` |
+| Sprint | Deux groupes reliés par UNE personne | Angle mort de l'observatoire → PASSAGE_UNIQUE | FAILURES 31 |
+| Sprint | Aucune action possible ; non-membre dans les relations ; 500–1000 membres | Plan vide « idéal » ; KeyError ; lenteur → corrigés | FAILURES 32–34 |
 
 ## Surfaces NON attaquées (déclarées)
 - Authentification réelle : absente (identité de démonstration par en-tête ; le mode réel refuse tout, testé).

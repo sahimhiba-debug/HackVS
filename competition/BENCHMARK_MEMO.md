@@ -42,6 +42,16 @@ Les 6 défaites sont publiées ; les jeux réservés ne servent pas à régler.
 Comportements (tests exécutés par le benchmark) : démarrage à froid, saturation, contradiction, échec de réciprocité
 dit et non inventé, cohérence explication = décision → tous PASS.
 
+## 5. Sprint d'innovation (détail : EXPERIMENT_LOG.md)
+| Expérience | Résultat principal | Défaite / limite publiée |
+|---|---|---|
+| B Observatoire (10 cas × 20 graines) | rappel complet ; 0 fausse alerte sur réseau sain | baseline KPI : signale un changement mais ne nomme rien ; vieillissement non détecté à 21 % d'extinction |
+| C/J Pareto 4 axes (20 réseaux) | aucun plan idéal (0/20) ; inclusion × cohésion ρ −0,72 ; cohésion robuste indépendante (−0,03) | diversité sectorielle et non-redondance abandonnées (constantes) ; front approché (167/200 plans aléatoires de contrôle dominés) |
+| F Échéancier (20 réseaux, 30 j) | INCLUSION gagne 20/20 ; COHÉSION 18/20 (+2 égalités) | chacune perd sur le critère de l'autre ; 1re conception (90 j) dégénérée |
+| G Sérendipité | 92 % des paires par similarité sans aide prouvée | hypothèse « la similarité enferme dans le secteur » RÉFUTÉE (86 % inter-secteurs) |
+| J Cohésion robuste | groupe robuste 28,1 contre 6,7 ; ponts fragiles −4,4 contre +15,4 | plus grand groupe 34,6 contre 60,9 (la cohésion simple gagne sur son critère) |
+| K Prévention robuste | — | PERD (2,30 contre 2,75) : DELETE |
+
 ## Règles tenues
 Mêmes candidats et même budget pour toutes les méthodes ; défaites publiées ; hypothèse « toutes les actions
 acceptées » écrite dans chaque sortie ; jeux réservés jamais réutilisés pour régler.

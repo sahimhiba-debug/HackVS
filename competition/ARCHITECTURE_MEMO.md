@@ -17,3 +17,13 @@
    décision PROPOSER_A_L_HUMAIN ou NE_RIEN_FAIRE, rien n'est écrit ni envoyé.
 8. **Pas d'agent, pas de microservice.** Aucun problème rencontré n'aurait été mieux résolu par un agent LLM ; tout
    tient dans un processus FastAPI + SQLite, mesuré jusqu'à 5000 membres générés.
+9. **Boucle d'organisation.** `diagnostic.py` compose des modules indépendants et testés séparément : impact
+   (échelle sur les faits), sante (phénomènes), extinction (projection), pareto (4 axes), temporel (différences),
+   bilan et boucle (prévu / réalisé). Chaque module prend des graphes ou la mémoire en entrée, sans état caché.
+10. **Consentement à deux niveaux.** « Invisible par défaut » interdit les NOUVEAUX contacts ; un RETRAIT explicite
+   (enregistré par le magasin) fait taire toute sollicitation. Toute action d'organisation enregistrée doit faire partie
+   des actions proposables au moment de la décision.
+11. **Journal rejouable = audit.** Une décision est confrontée au réseau reconstruit À SA DATE : la simulation est
+   comparée aux faits par construction, sans modèle statistique.
+12. **Algorithmes exacts vérifiés contre la force brute** quand on optimise (gain robuste par l'arbre des ponts) ; test
+   d'égalité permanent.

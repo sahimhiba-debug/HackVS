@@ -14,3 +14,10 @@ Statuts : EXPLORE · PROTOTYPE · BUILD · TEST · KEEP · DEFER · REJECT. Une 
 | I-08 | Index TF-IDF persistant | Recherche 0,9 s à 5000 membres | Performance | Faible | Mesuré (`resultats_perf_echelle.md`) ; inutile à 160 membres | DEFER |
 | I-09 | Agents LLM multiples (planificateur, critique…) | — | Aucun problème identifié qu'un agent résoudrait mieux que le code déterministe testé | — | Les tâches de décision et de politique restent déterministes | REJECT |
 | I-10 | Collision d'événements (deux soirées le même jour) | Seul scénario adversarial non couvert | — | Faible | `test_collisions.py` (+ plan périmé) | KEEP |
+| I-11 | Échelle d'impact (contact → persistance) | Le Club ne sait pas ce que ses soirées produisent | Faits seulement, simulé séparé | Faible | EXP-A | KEEP |
+| I-12 | Observatoire des phénomènes + générateur pathologique | 30 KPI ne disent pas quoi faire | Phénomène → intervention ; baseline KPI battue sur le nommage | Moyenne | EXP-B | KEEP |
+| I-13 | Échéancier d'extinction et prévention | Le réseau s'éteint sans qu'on le voie venir | Date de la première perte ; raviver ce qui compte | Moyenne | EXP-F | KEEP (INCLUSION, COHÉSION) ; ROBUSTE DELETE (EXP-K) |
+| I-14 | Boucle prévu / réalisé | Les simulations ne sont jamais confrontées aux faits | Réseau reconstruit à la date de décision | Moyenne | EXP-I | KEEP (NEEDS DATA pour conclure) |
+| I-15 | Cohésion robuste (2-arête-connexe) | Un grand réseau peut tenir par des fils | Arbre des ponts, exact | Moyenne | EXP-J | KEEP |
+| I-16 | Sérendipité par diversité sectorielle | — | — | — | EXP-C, EXP-G : ne discrimine rien | DELETE |
+| I-17 | Gain par PAIRES de ravivements (prévention robuste) | Glouton myope | — | Élevée (quadratique) | EXP-K | DEFER |
