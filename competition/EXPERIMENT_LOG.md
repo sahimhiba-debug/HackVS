@@ -75,3 +75,28 @@ Résultat · Cas d'échec · Décision · Preuve. Les hypothèses et baselines s
   « réciprocité ouverte », chacune jusqu'à l'activation ; aucune table de soirée (rencontres passées sans plan d'origine).
 - **Limite.** NEEDS DATA pour toute conclusion : sur des données de démo, les comptes sont de 1.
 - **Décision.** KEEP (mécanisme), NEEDS DATA (enseignements). **Preuve.** `tests/test_bilan.py`.
+
+## EXP-F — Échéancier d'extinction et prévention (contre-factuel temporel « si le Club ne fait rien »)
+- **Hypothèse.** Chaque relation actuelle a une date d'extinction connue (dernière interaction + 90 jours, notre règle).
+  En projetant ces extinctions SANS prédire aucun comportement (hypothèse pessimiste : aucune interaction spontanée),
+  on sait QUAND le réseau perd des membres ou se coupe ; choisir les relations à raviver par leur effet structurel
+  marginal sur le réseau projeté préserve plus de réseau que les règles simples, à budget égal.
+- **Baselines.** Les plus proches de l'extinction d'abord ; hasard (30 tirages) ; membres les plus reliés d'abord.
+- **Mesures (à l'horizon, budget k ravivements).** Membres avec au moins une relation actuelle ; taille du plus grand
+  groupe ; nombre de groupes.
+- **Règle produit.** L'importance structurelle ne justifie PAS une relance : chaque ravivement indique s'il existe une
+  raison prouvée (aide dans un sens au moins) ; sinon l'action proposée est une invitation commune à un événement.
+- **Implémentation.** `adaptateurs/club/extinction.py` (projection, prévention gloutonne par gain marginal, variantes
+  INCLUSION / COHÉSION, arrêt dès que plus rien ne se perd), `eval/benchmark_extinction.py`.
+- **1re mesure : ÉCHEC DE CONCEPTION.** Horizon 90 jours = TOUTES les relations actuelles s'éteignent par définition ;
+  avec un plafond de 1, les 5 ravivements donnent le même résultat pour toutes les méthodes (égalité 20/20). Corrigé :
+  horizon 30 jours (« que perdons-nous ce mois-ci ? »), plafond 2 identique pour toutes les méthodes.
+- **Résultat (20 réseaux de 150 membres, 30 jours, 5 ravivements).** Sans action : 99,7 → 76,7 membres reliés, plus
+  grand groupe 37,1 → 11,7. INCLUSION : **86,2** membres reliés (meilleure baseline 81,4 ; gagne 20/20). COHÉSION : plus
+  grand groupe **27,7** (meilleure baseline « les plus reliés d'abord » 20,2 ; gagne 18, égalité 2, perd 0). Chaque
+  variante PERD sur le critère de l'autre (19/20 et 18/20) : le conflit inclusion/cohésion de EXP-C se retrouve dans le temps.
+- **Scène (étape 11).** 15 membres reliés aujourd'hui, 7 dans 30 jours sans action, 13 avec 3 ravivements ; première
+  perte le 15 décembre ; **aucun des 3 ravivements n'a de raison prouvée** → action proposée : invitation commune à un
+  événement, pas de relance (le principe « se taire sans raison » tient).
+- **Cas d'échec / limites.** Projection pessimiste (aucune interaction spontanée) ; la règle des 90 jours n'est pas mesurée.
+- **Décision.** KEEP. **Preuve.** `eval/resultats_benchmark_extinction.md`, `tests/test_extinction.py`.

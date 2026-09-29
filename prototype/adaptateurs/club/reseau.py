@@ -171,13 +171,18 @@ def graphe_actuel(m: Memoire, maintenant: date, g: Optional[nx.Graph] = None) ->
     return g
 
 
-def etats_par_paire(m: Memoire, maintenant: date) -> dict[str, str]:
-    """État de CHAQUE paire ayant des faits, en une seule passe (même règle que etat_relation)."""
+def etats_detailles(m: Memoire, maintenant: date) -> dict[str, dict]:
+    """État COMPLET (état, dernière interaction, faits) de chaque paire ayant des faits, en une seule passe."""
     par_paire: dict[str, list[Evt]] = {}
     for e in m.evenements(jusqu_au=maintenant):
         if len(e.acteurs) >= 2:
             par_paire.setdefault(cle(*e.acteurs[:2]), []).append(e)
-    return {k: _etat(sorted(evs, key=lambda e: (e.le, e.seq)), maintenant)["etat"] for k, evs in par_paire.items()}
+    return {k: _etat(sorted(evs, key=lambda e: (e.le, e.seq)), maintenant) for k, evs in par_paire.items()}
+
+
+def etats_par_paire(m: Memoire, maintenant: date) -> dict[str, str]:
+    """État de CHAQUE paire ayant des faits, en une seule passe (même règle que etat_relation)."""
+    return {k: v["etat"] for k, v in etats_detailles(m, maintenant).items()}
 
 
 def paires_declinees(m: Memoire, maintenant: date) -> list[tuple[str, str]]:
