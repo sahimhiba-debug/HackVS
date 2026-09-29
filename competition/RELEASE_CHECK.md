@@ -16,7 +16,7 @@ Règle : une étape n'est verte que si le CODE DE SORTIE de son processus est 0 
 | Registre des affirmations + pitch + deck + vidéo | `python scripts/validate_competition_claims.py` (complet, benchmark inclus) | tout vérifié (0) |
 | Vidéo | durée = légendes (validateur) ; revue « spectateur novice » à 15 / 45 / 90 s / fin | 114 s, 14 plans, conforme au code |
 | Secrets | recherche de clés dans chaque diff avant commit | aucune |
-| CI GitHub | jobs `qualite` (lint, types, tests, évaluations, registre) et `reproductibilite` (E2E, benchmarks) | vert jusqu'au run 72 ; run du dernier commit : voir l'onglet Actions |
+| CI GitHub | jobs `qualite` (lint, types, tests, évaluations, registre) et `reproductibilite` (E2E, benchmarks) | vert : runs 73 (4d66fbf, première exécution de mypy en CI) et 74 (595fc35) |
 
 ## Ce qui reste ouvert (et le restera sans décision ou ressource externe)
 - **IA générative** : aucun modèle accessible depuis l'environnement ; bancs G1/G2 prêts, NON EXÉCUTÉS. Retirée de la démo.
