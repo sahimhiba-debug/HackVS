@@ -21,9 +21,10 @@ JOUÉS par la présentation et marqués comme tels.
 """
 from __future__ import annotations
 
+import functools
 import hashlib
 from datetime import date
-from typing import Optional
+from typing import Callable, Optional, TypeVar, cast
 
 from app import agenda
 from app.models import Profil
@@ -33,6 +34,7 @@ from plateforme.memoire import Evt
 
 from . import apprentissage
 from .detection import Detecteur
+from .erreurs import Conflit, ErreurMetier, Interdit, Introuvable, Invalide
 from .modele import Opportunite, Reseau
 
 ETATS = ("DETECTEE", "EVALUEE", "PLANIFIEE", "EN_ATTENTE_ACCORD", "ACTIVEE", "TERMINEE", "BLOQUEE", "REPLANIFICATION",
@@ -64,8 +66,20 @@ NATURES = ("ressource", "rencontre", "conseil", "validation", "introduction", "d
 VERDICTS = {"debloque": "RESULTAT_CONFIRME", "partiel": "RESULTAT_PARTIEL", "non": "RESULTAT_NEGATIF"}
 
 
-class ErreurActivation(ValueError):
-    pass
+ErreurActivation = ErreurMetier        # nom historique : tout refus du moteur (sous-classes typées ci-dessous)
+
+
+F = TypeVar("F", bound=Callable)
+
+
+def atomique(f: F) -> F:
+    """Une commande du moteur écrit plusieurs faits (transition, plan, sollicitations…) : tous ou aucun.
+    Sans cela, une erreur au milieu (budget d'attention, règle métier) laissait une activation dans un état partiel."""
+    @functools.wraps(f)
+    def enveloppe(self: "Moteur", *a, **k):
+        with self.m.transaction():
+            return f(self, *a, **k)
+    return cast(F, enveloppe)
 
 
 def _aid(opp_id: str, n: int) -> str:
@@ -95,13 +109,13 @@ class Moteur:
     def _transition(self, aid: str, le: date, vers: str, agent: str, raison: str, **details) -> None:
         de = self.etat(aid)
         if vers not in TRANSITIONS.get(de, set()):
-            raise ErreurActivation(f"transition interdite : {de or 'rien'} → {vers}")
+            raise Conflit(f"transition interdite : {de or 'rien'} → {vers}")
         self._ecrire("ACTIVATION", le, [], aid=aid, de=de, etat=vers, agent=agent, raison=raison, details=details)
 
     def plan(self, aid: str) -> dict:
         p = self._evs(aid, "ACTIVATION_PLAN")
         if not p:
-            raise ErreurActivation("activation inconnue")
+            raise Introuvable("activation inconnue")
         return p[-1].donnees
 
     def opportunite(self, aid: str) -> Opportunite:
@@ -111,9 +125,10 @@ class Moteur:
         return list(dict.fromkeys(e.donnees["aid"] for e in self.m.evenements("ACTIVATION_PLAN")))
 
     # ------------------------------------------------------------------ Détecteur → Garde → Planificateur
+    @atomique
     def creer(self, opp: Opportunite, le: date, anonyme: bool = False, langue: Optional[str] = None) -> str:
         if opp.type == "LACUNE":
-            raise ErreurActivation("une lacune ne s'active pas en sollicitant des membres : elle se signale à l'animatrice")
+            raise Invalide("une lacune ne s'active pas en sollicitant des membres : elle se signale à l'animatrice")
         aid = _aid(opp.id, len(self.activations()))
         self._transition(aid, le, "DETECTEE", "Détecteur", f"{opp.type} : {opp.declencheur}", opportunite=opp.id)
         probleme = self._garde(opp)
@@ -207,7 +222,7 @@ class Moteur:
 
     def _solliciter(self, aid: str, le: date, etape: dict, question: Optional[str] = None) -> None:
         if self.ouvertes().get(etape["membre"], 0) >= BUDGET_ATTENTION:
-            raise ErreurActivation("budget d'attention atteint pour cette personne")
+            raise Conflit("budget d'attention atteint pour cette personne")
         self._ecrire("SOLLICITATION_PRIVEE", le, [etape["membre"]], aid=aid, etape=etape["id"],
                      demande=etape["demande"] + (f" — {question}" if question else ""))
 
@@ -217,13 +232,14 @@ class Moteur:
     def _reponses(self, aid: str) -> dict[tuple[str, str], Evt]:
         return {(e.donnees["etape"], e.acteurs[0]): e for e in self._evs(aid, "REPONSE")}
 
+    @atomique
     def lancer(self, aid: str, le: date) -> None:
         """Première sollicitation : le BÉNÉFICIAIRE d'abord (personne d'autre n'est exposé avant son accord)."""
         if self.etat(aid) != "PLANIFIEE":
-            raise ErreurActivation("seule une activation planifiée peut être lancée")
+            raise Conflit("seule une activation planifiée peut être lancée")
         etapes = self.plan(aid)["etapes"]
         if any(e.get("incompatible") for e in etapes):
-            raise ErreurActivation("le plan viole une contrainte : replanifier d'abord")
+            raise Conflit("le plan viole une contrainte : replanifier d'abord")
         premiere = [e for e in etapes if e["type"] == "accord_beneficiaire"] or \
                    [e for e in etapes if e["type"] in ("contribution", "animation", "accord_participant")]
         self._transition(aid, le, "EN_ATTENTE_ACCORD", "Coordinateur",
@@ -231,15 +247,19 @@ class Moteur:
         for e in premiere:
             self._solliciter(aid, le, e)
 
+    @atomique
     def repondre(self, aid: str, le: date, membre: str, accepte: bool) -> None:
         """Geste HUMAIN : seule une personne sollicitée répond, une seule fois."""
         etapes = self.plan(aid)["etapes"]
         sol = self._sollicitations(aid)
-        ouvertes = [e for e in etapes if (e["id"], membre) in sol and (e["id"], membre) not in self._reponses(aid)]
+        rep = self._reponses(aid)
+        ouvertes = [e for e in etapes if (e["id"], membre) in sol and (e["id"], membre) not in rep]
         if not ouvertes:
-            raise ErreurActivation("seule une personne sollicitée (et qui n'a pas encore répondu) peut répondre")
+            if any(k[1] == membre for k in sol):
+                raise Conflit("vous avez déjà répondu à cette sollicitation")     # nouvel essai, double clic
+            raise Interdit("seule une personne sollicitée peut répondre")
         if self.etat(aid) != "EN_ATTENTE_ACCORD":
-            raise ErreurActivation("cette activation n'attend pas de réponse")
+            raise Conflit("cette activation n'attend pas de réponse")
         e = ouvertes[0]
         self._ecrire("REPONSE", le, [membre], aid=aid, etape=e["id"], accepte=accepte, geste="humain")
         if not accepte:
@@ -268,6 +288,7 @@ class Moteur:
             return
         self.replanifier(aid, le, etape["id"], raison)
 
+    @atomique
     def replanifier(self, aid: str, le: date, etape_id: str, raison: str) -> None:
         """Planificateur : remplacer UNE étape par la meilleure alternative encore éligible — ou s'arrêter proprement."""
         if self.etat(aid) == "BLOQUEE":
@@ -337,6 +358,7 @@ class Moteur:
         return {"texte": "d'autres la déclarent mais une règle dure les écarte : " + ", ".join(f"{k} ({v})" for k, v in r["raisons"].items())}
 
     # ------------------------------------------------------------------ perturbations (le réseau change pendant l'action)
+    @atomique
     def retirer_membre(self, membre: str, le: date, raison: str = "capacité retirée du réseau") -> list[str]:
         """Un membre quitte le réseau ou retire sa capacité : chaque activation en cours qui comptait sur lui se replanifie."""
         self.exclus.add(membre)
@@ -354,10 +376,11 @@ class Moteur:
                         self._replanifier_avant_lancement(aid, le, e["id"])
         return touchees
 
+    @atomique
     def changer_contraintes(self, aid: str, le: date, langue: Optional[str] = None, anonyme: Optional[bool] = None) -> None:
         """Le jury change une contrainte AVANT le lancement : le plan est recalculé (version suivante), jamais bricolé."""
         if self.etat(aid) != "PLANIFIEE":
-            raise ErreurActivation("les contraintes se changent avant les premières sollicitations")
+            raise Conflit("les contraintes se changent avant les premières sollicitations")
         p = self.plan(aid)
         opp = Opportunite(**p["opportunite"])
         etapes = self._planifier(opp, langue)
@@ -389,32 +412,37 @@ class Moteur:
                          + ("réattribuée" if alt else "sans alternative"))
 
     # ------------------------------------------------------------------ contrôle du Club et du membre
+    @atomique
     def mettre_en_pause(self, aid: str, le: date, par: str = "animatrice") -> None:
         if self.etat(aid) not in PAUSABLES:
-            raise ErreurActivation("seule une activation planifiée ou en cours peut être mise en pause")
+            raise Conflit("seule une activation planifiée ou en cours peut être mise en pause")
         self._transition(aid, le, "EN_PAUSE", "Club", f"mise en pause par {par}", reprise=self.etat(aid))
 
+    @atomique
     def reprendre(self, aid: str, le: date) -> None:
         if self.etat(aid) != "EN_PAUSE":
-            raise ErreurActivation("cette activation n'est pas en pause")
+            raise Conflit("cette activation n'est pas en pause")
         vers = self._evs(aid, "ACTIVATION")[-1].donnees["details"]["reprise"]
         self._transition(aid, le, vers, "Club", "reprise")
 
+    @atomique
     def annuler(self, aid: str, le: date, par: str = "animatrice") -> None:
         if self.etat(aid) in FINAUX or self.etat(aid) in ("TERMINEE", "RESULTAT_INCONNU"):
-            raise ErreurActivation("activation déjà terminée")
+            raise Conflit("activation déjà terminée")
         self._transition(aid, le, "ANNULEE", "Club", f"annulée par {par} ; les personnes sollicitées sont libérées")
 
+    @atomique
     def retirer_consentement(self, aid: str, le: date, membre: str) -> None:
         """Un membre qui avait accepté se retire : l'étape repart en replanification ; sa visibilité est retirée."""
         if self.etat(aid) not in ("EN_ATTENTE_ACCORD", "ACTIVEE"):
-            raise ErreurActivation("retrait possible tant que l'activation est en cours")
+            raise Conflit("retrait possible tant que l'activation est en cours")
         e = next((x for x in self.plan(aid)["etapes"] if x.get("membre") == membre and x["type"] in ("contribution", "animation")), None)
         if e is None or not (self._reponses(aid).get((e["id"], membre)) and self._reponses(aid)[(e["id"], membre)].donnees["accepte"]):
-            raise ErreurActivation("seule une personne qui a accepté peut retirer son accord")
+            raise Interdit("seule une personne qui a accepté peut retirer son accord")
         self._ecrire("RETRAIT_CONSENTEMENT", le, [membre], aid=aid, etape=e["id"], geste="humain")
         self._bloquer(aid, le, e, "une personne a retiré son accord")
 
+    @atomique
     def retirer_capacite(self, membre: str, concept: str, le: date) -> list[str]:
         """Un membre retire une capacité de son profil : les plans qui comptaient dessus se replanifient."""
         touchees = []
@@ -430,6 +458,7 @@ class Moteur:
                         self._replanifier_avant_lancement(aid, le, e["id"])
         return touchees
 
+    @atomique
     def echeances(self, le: date) -> list[str]:
         """Coordinateur : silence au-delà du délai = « sans réponse » (on n'insiste pas) ; résultat non confirmé = INCONNU."""
         faits = []
@@ -454,19 +483,20 @@ class Moteur:
         return faits
 
     # ------------------------------------------------------------------ contributions, résultat, mémoire
+    @atomique
     def contribuer(self, aid: str, le: date, membre: str, nature: str, titre: str, contenu: str,
                    reutilisable: bool = False, attribution: bool = False) -> None:
         if self.etat(aid) != "ACTIVEE":
-            raise ErreurActivation("on contribue à une activation dont tous les accords sont donnés")
+            raise Conflit("on contribue à une activation dont tous les accords sont donnés")
         e = next((x for x in self.plan(aid)["etapes"] if x.get("membre") == membre and x["type"] in ("contribution", "animation")), None)
         if e is None:
-            raise ErreurActivation("seule une personne engagée dans le plan contribue")
+            raise Interdit("seule une personne engagée dans le plan contribue")
         if nature not in NATURES:
-            raise ErreurActivation("nature de contribution inconnue")
+            raise Invalide("nature de contribution inconnue")
         if not titre.strip():
-            raise ErreurActivation("une contribution a un titre")
+            raise Invalide("une contribution a un titre")
         if any(x.donnees["etape"] == e["id"] for x in self._evs(aid, "CONTRIBUTION_RECUE")):
-            raise ErreurActivation("contribution déjà reçue pour cette étape")
+            raise Conflit("contribution déjà reçue pour cette étape")
         self._ecrire("CONTRIBUTION_RECUE", le, [membre], aid=aid, etape=e["id"], nature=nature, titre=titre.strip()[:120],
                      contenu=contenu.strip()[:4000], reutilisable=reutilisable, attribution=attribution, geste="humain")
         benef = self.opportunite(aid).beneficiaire
@@ -477,15 +507,16 @@ class Moteur:
         if attendues <= recues:
             self._transition(aid, le, "TERMINEE", "Coordinateur", f"{len(recues)} contribution(s) reçue(s)")
 
+    @atomique
     def confirmer(self, aid: str, le: date, membre: str, verdict: str, etape_suivante: bool, preuve: str = "") -> dict:
         """Vérificateur : SEUL le bénéficiaire déclare l'effet. Un effet confirmé devient un motif vérifié (Mémoire)."""
         opp = self.opportunite(aid)
         if opp.beneficiaire != membre:
-            raise ErreurActivation("seul le bénéficiaire confirme l'effet")
+            raise Interdit("seul le bénéficiaire confirme l'effet")
         if verdict not in VERDICTS:
-            raise ErreurActivation("verdict inconnu")
+            raise Invalide("verdict inconnu")
         if self.etat(aid) not in ("TERMINEE", "RESULTAT_INCONNU"):
-            raise ErreurActivation("on confirme l'effet d'une activation terminée")
+            raise Conflit("on confirme l'effet d'une activation terminée")
         self._ecrire("RESULTAT_DECLARE", le, [membre], aid=aid, verdict=verdict, etape_suivante=etape_suivante,
                      preuve=preuve[:300], geste="humain")
         self._transition(aid, le, VERDICTS[verdict], "Vérificateur", f"déclaré par le bénéficiaire : {verdict}"
@@ -511,11 +542,12 @@ class Moteur:
                     resultat=verdict, activation=aid, statut=self.statut)
         return self.resultat(aid)
 
+    @atomique
     def reutiliser(self, aid: str, le: date) -> None:
         """Opportunité MÉMOIRE : la ressource vérifiée est transmise ; personne n'est sollicité."""
         opp = self.opportunite(aid)
         if opp.type != "MEMOIRE" or self.etat(aid) != "ACTIVEE":
-            raise ErreurActivation("seule une opportunité mémoire acceptée par son bénéficiaire se réutilise")
+            raise Conflit("seule une opportunité mémoire acceptée par son bénéficiaire se réutilise")
         self._transition(aid, le, "TERMINEE", "Mémoire", "ressource vérifiée transmise ; aucune personne sollicitée")
 
     # ------------------------------------------------------------------ lecture
@@ -542,7 +574,7 @@ class Moteur:
         p = self.plan(aid)
         mes = [e for e in p["etapes"] if (e["id"], membre) in self._sollicitations(aid)]
         if not mes:
-            raise ErreurActivation("vous n'êtes pas sollicité(e) pour cette activation")
+            raise Interdit("vous n'êtes pas sollicité(e) pour cette activation")
         par_id = self.r.par_id()
         opp = Opportunite(**p["opportunite"])
         benef = par_id.get(opp.beneficiaire or "")
@@ -571,7 +603,7 @@ class Moteur:
         un silence ne sont jamais attribués (« une autre personne est sollicitée »)."""
         opp = self.opportunite(aid)
         if opp.beneficiaire != membre:
-            raise ErreurActivation("seul le bénéficiaire voit le suivi")
+            raise Interdit("seul le bénéficiaire voit le suivi")
         par_id = self.r.par_id()
         rep, sol = self._reponses(aid), self._sollicitations(aid)
         lignes = []

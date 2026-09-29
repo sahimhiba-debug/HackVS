@@ -14,9 +14,10 @@ import json
 import math
 import sqlite3
 import threading
+from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Iterator, Optional
 
 import networkx as nx
 from pydantic import BaseModel, ConfigDict
@@ -45,7 +46,8 @@ class Memoire:
         if chemin != ":memory:":
             Path(chemin).parent.mkdir(parents=True, exist_ok=True)
         self._db = sqlite3.connect(chemin, check_same_thread=False)
-        self._v = threading.Lock()
+        self._v = threading.RLock()      # réentrant : une transaction garde le verrou pendant toutes ses écritures
+        self._profondeur = 0             # > 0 : dans une transaction (les écritures attendent sa validation)
         with self._v:
             self._db.execute("CREATE TABLE IF NOT EXISTS evenements (seq INTEGER PRIMARY KEY AUTOINCREMENT, id TEXT UNIQUE, donnees TEXT)")
             self._db.commit()
@@ -69,9 +71,29 @@ class Memoire:
         with self._v:
             cur = self._db.execute("INSERT OR IGNORE INTO evenements (id, donnees) VALUES (?, ?)",
                                    (e.id, e.model_dump_json(exclude={"seq"})))
-            self._db.commit()
+            if not self._profondeur:
+                self._db.commit()
             seq = cur.lastrowid if cur.rowcount else self._db.execute("SELECT seq FROM evenements WHERE id = ?", (e.id,)).fetchone()[0]
         return e.model_copy(update={"seq": seq})
+
+    @contextmanager
+    def transaction(self) -> Iterator[None]:
+        """Tout ou rien : les faits écrits dans le bloc sont validés ensemble, ou aucun si une exception s'échappe.
+        Pendant le bloc, les autres fils attendent (verrou réentrant) ; le fil courant lit ses propres écritures.
+        Imbrication : seule la transaction la plus externe valide ou annule."""
+        with self._v:
+            self._profondeur += 1
+            try:
+                yield
+            except BaseException:
+                self._profondeur -= 1
+                if not self._profondeur:
+                    self._db.rollback()
+                    self._cache = []                       # le cache a pu lire des faits annulés : relecture complète
+                raise
+            self._profondeur -= 1
+            if not self._profondeur:
+                self._db.commit()
 
     def evenements(self, *types: str, jusqu_au: Optional[date] = None) -> list[Evt]:
         with self._v:
