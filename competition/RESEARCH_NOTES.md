@@ -21,3 +21,28 @@ interventions ont réellement produit — sans apprentissage automatique, avec d
 | Sérendipité contrôlée | Les recommandations par similarité enferment | Aide prouvée + communautés différentes + faible redondance | Intégrée comme objectif « diversité » du Pareto | « Vous ne vous ressemblez pas : c'est pour ça » | Justification creuse | Faible si intégrée | DELETE (EXP-C, EXP-G : la diversité sectorielle ne discrimine rien ; la similarité ne l'enferme pas non plus) |
 | Événement thématique proposé | Choisir le thème de la prochaine soirée | Thème qui couvre le plus de besoins non servis + ponts | Comparaison avec thème « le plus fréquent » | Oui | Recouvre le plan de soirée existant | Moyen | DEFER |
 | Modèle ML de prédiction d'acceptation | — | — | Aucune donnée réelle pour l'entraîner | — | Fabriquerait de la confiance | — | REJECT |
+
+## Bilan d'étape du sprint (état au commit courant ; détails et chiffres : EXPERIMENT_LOG.md)
+
+**BASELINE.** Gel technique `fb8d88f` (tag local `technical-freeze-v1`) : 166 tests, matching par preuves, relances
+fondées, optimiseur de soirée, confidentialité par inférence.
+
+**PERCÉES (gardées, mesurées, attaquées).**
+1. *Le réseau en fil de fer* (EXP-J) : maximiser la taille du réseau crée des ponts fragiles (+15,4 par plan) ; la
+   cohésion ROBUSTE (groupe qui survit à la perte de n'importe quelle relation) donne un groupe robuste 4,2× plus grand.
+   Gain exact par l'arbre des ponts, vérifié contre la force brute.
+2. *Il n'existe pas de meilleur plan* (EXP-C/J) : front de Pareto à 4 axes, aucun plan idéal (0/20), conflit
+   inclusion/cohésion mesuré ; deux axes « attendus » (diversité, non-redondance) réfutés et retirés.
+3. *Voir venir* (EXP-F) : date de la première perte « si le Club ne fait rien », ravivements qui préservent le réseau ;
+   la règle « pas de relance sans raison » tient (invitation plutôt que relance).
+4. *Simulation auditée par les faits* (EXP-I) : décision enregistrée, confrontée au réseau reconstruit à sa date.
+5. *Diagnostic d'organisation* (EXP-H) : la boucle complète en une vue, 1,24 s pour 150 membres, « ne rien faire » quand
+   rien n'est prouvé.
+6. *Consentement à deux niveaux* : trois violations trouvées en red team (dont une antérieure au gel), corrigées ;
+   invariant de classe testé sur des réseaux générés avec retraits et refus aléatoires.
+
+**REJETS (mesurés).** Sérendipité par diversité sectorielle (EXP-G : hypothèse réfutée) ; robustesse par comptage comme
+axe (colinéaire) ; prévention robuste (EXP-K : perd contre la baseline) ; ML (aucune donnée).
+
+**LIMITES.** Toutes les mesures de réseau sont SYNTHÉTIQUES ; « 90 jours », « 3 relances par jour » sont des hypothèses ;
+l'invitation ciblée n'apporte rien quand les hôtes abondent ; la boucle prévu/réalisé attend des données réelles.
