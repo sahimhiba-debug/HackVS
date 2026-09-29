@@ -132,6 +132,9 @@ def _erreurs(fn):
 
 
 # ---------------------------------------------------------------- schémas d'entrée
+ID_MAX, LISTE_MAX, BESOIN_TEXTE_MAX, CRITERES_MAX = 64, 20, 3000, 30   # bornes d'entrée (anti-abus, pas un choix produit)
+
+
 class EntreeAnalyse(BaseModel):
     texte: str
     analyseur: Literal["auto", "regles", "claude"] = "auto"
@@ -153,19 +156,19 @@ class EntreeModif(BaseModel):
 
 
 class EntreeActionBesoin(BaseModel):
-    resolu_par: Optional[str] = None
-    note: str = ""
+    resolu_par: Optional[str] = Field(None, max_length=ID_MAX)
+    note: str = Field("", max_length=500)
 
 
 class EntreeRelation(BaseModel):
-    besoin_id: str
-    cible_id: Optional[str] = None  # requis pour une demande (auteur → aidant), ignoré pour une offre
-    message: str
+    besoin_id: str = Field(max_length=ID_MAX)
+    cible_id: Optional[str] = Field(None, max_length=ID_MAX)  # requis pour une demande (auteur → aidant), ignoré pour une offre
+    message: str = Field(max_length=2000)
 
 
 class EntreeTransition(BaseModel):
-    date_rencontre: Optional[str] = None
-    resultat: Optional[str] = None
+    date_rencontre: Optional[str] = Field(None, max_length=10)
+    resultat: Optional[str] = Field(None, max_length=40)
 
 
 class EntreeConsentement(BaseModel):
@@ -217,17 +220,17 @@ class EntreeTexte(BaseModel):
 
 
 class OffreSaisie(BaseModel):
-    concept: Optional[str] = None
-    texte: str
+    concept: Optional[str] = Field(None, max_length=80)
+    texte: str = Field(max_length=500)
 
 
 class EntreeProfil(BaseModel):
-    offre: list[OffreSaisie]
-    recherche: list[OffreSaisie] = []
-    zones_service: list[str] = []
-    langues: list[str] = []
-    presentation: Optional[str] = None
-    creneaux: Optional[list[str]] = None
+    offre: list[OffreSaisie] = Field(max_length=LISTE_MAX)
+    recherche: list[OffreSaisie] = Field([], max_length=LISTE_MAX)
+    zones_service: list[str] = Field([], max_length=LISTE_MAX)
+    langues: list[str] = Field([], max_length=LISTE_MAX)
+    presentation: Optional[str] = Field(None, max_length=1500)
+    creneaux: Optional[list[str]] = Field(None, max_length=14)
 
 
 @app.post("/api/profil/analyser")
@@ -327,6 +330,8 @@ def analyser_flux(texte: str = Query(...), analyseur: str = "auto"):
 def besoin_valide(b: Besoin) -> Besoin:
     """Le client peut modifier les critères : le serveur n'accepte que le vocabulaire fermé
     et recalcule les libellés (on ne fait jamais confiance au libellé envoyé)."""
+    if len(b.texte) > BESOIN_TEXTE_MAX or len(b.criteres) > CRITERES_MAX or len(b.exclusions) > CRITERES_MAX:
+        raise HTTPException(422, f"Besoin trop long ({BESOIN_TEXTE_MAX} caractères et {CRITERES_MAX} critères maximum).")
     propres = []
     for c in b.criteres:
         if c.type == "expertise" and c.valeur in TAX.concepts:
@@ -353,7 +358,7 @@ def api_rechercher(e: EntreeRecherche, x_membre: Optional[str] = Header(None)):
 
 class EntreeExplication(BaseModel):
     besoin: Besoin
-    membre_id: str
+    membre_id: str = Field(max_length=ID_MAX)
 
 
 @app.post("/api/expliquer")
@@ -667,11 +672,11 @@ class Adhesion(BaseModel):
     fonction: str = Field("", max_length=80)
     entreprise: str = Field(min_length=2, max_length=120)
     commune: str = Field(min_length=2, max_length=60)
-    offre: list[OffreSaisie]
-    recherche: list[OffreSaisie] = []
-    secteurs: list[str] = []
-    langues: list[str] = []
-    zones_service: list[str] = []
+    offre: list[OffreSaisie] = Field(max_length=LISTE_MAX)
+    recherche: list[OffreSaisie] = Field([], max_length=LISTE_MAX)
+    secteurs: list[str] = Field([], max_length=LISTE_MAX)
+    langues: list[str] = Field([], max_length=LISTE_MAX)
+    zones_service: list[str] = Field([], max_length=LISTE_MAX)
     accepte_introductions: bool = False     # confidentialité par défaut : invisible tant que le membre ne choisit pas
 
 

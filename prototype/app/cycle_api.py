@@ -36,19 +36,19 @@ class Avance(BaseModel):
 
 
 class NouveauBesoin(BaseModel):
-    auteur: str
+    auteur: str = Field(max_length=64)
     texte: str = Field(min_length=5, max_length=500)
 
 
 class Reponse(BaseModel):
     accepte: bool
-    par: str
+    par: str = Field(max_length=64)
 
 
 class Confirmation(BaseModel):
-    a: str
-    b: str
-    par: str
+    a: str = Field(max_length=64)
+    b: str = Field(max_length=64)
+    par: str = Field(max_length=64)
 
 
 def creer_routeur(profils_effectifs: Callable[[], list[Profil]], tax: Taxonomie, m: me.Memoire,

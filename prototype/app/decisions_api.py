@@ -28,9 +28,9 @@ class Demande(BaseModel):
 
 
 class Branche(BaseModel):
-    retirer_contraintes: list[str] = []
-    ajouter_contraintes: list[str] = []
-    parametres: dict[str, int] = {}
+    retirer_contraintes: list[str] = Field([], max_length=20)
+    ajouter_contraintes: list[str] = Field([], max_length=20)
+    parametres: dict[str, int] = Field({}, max_length=20)
 
 
 class Stress(BaseModel):

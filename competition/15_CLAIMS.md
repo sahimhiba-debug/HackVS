@@ -17,7 +17,7 @@
 - Le moteur de décision passe 20 scénarios dont l'attendu est fixé avant l'exécution (abstention, escalade, blocage, rejeu…).
 - Le produit fonctionne sans aucune clé d'API ni appel externe ; aucun modèle externe n'a été vérifié contre son API réelle.
 - Plus de 100 tests automatisés, lint et intégration continue.
-- Nous avons trouvé et corrigé 26 défauts réels en attaquant notre propre système, chacun avec son test.
+- Nous avons trouvé et corrigé 27 défauts réels en attaquant notre propre système, chacun avec son test.
 - Un nouveau membre est invisible par défaut et n'est recommandé que s'il le choisit.
 - Un brouillon privé ou un besoin clos n'est jamais utilisé comme raison de rencontre.
 - Des plateformes existantes proposent déjà la mise en relation par IA et la communauté toute l'année (Swapcard, Grip, Brella).
@@ -28,4 +28,4 @@ Avec précaution (hypothèse ou non vérifié) :
 - [UNVERIFIED] L'adhésion coûte CHF 500 par an et le réseau compte plus de 160 représentants d'entreprises. — NE PAS citer comme un fait vérifié
 - [INFERRED] Les rencontres oubliées sont une perte de valeur pour les membres du Club. — formuler comme une question, pas comme un chiffre
 
-Chiffres autorisés dans le pitch : 0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 16, 17, 20, 24, 26, 50, 60, 86, 90, 96, 100, 144, 16,3, 17,8, 2026, 35,0, 37,4
+Chiffres autorisés dans le pitch : 0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 16, 17, 20, 24, 27, 50, 60, 86, 90, 96, 100, 144, 16,3, 17,8, 2026, 35,0, 37,4
