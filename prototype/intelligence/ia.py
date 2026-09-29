@@ -18,6 +18,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import random
 import re
 import time
 from pathlib import Path
@@ -55,6 +56,7 @@ class AppelIA(BaseModel):
     statut: Statut
     repli: bool = False            # la sortie montrée vient du repli déterministe
     erreur: Optional[str] = None
+    politique: Optional[str] = None  # raison d'un traitement LOCAL imposé (ex. note privée)
     controle: Optional[dict] = None
 
 
@@ -63,11 +65,22 @@ class Reponse(BaseModel):
     appel: AppelIA
 
 
+class ErreurFournisseur(RuntimeError):
+    """CONTRAT de tout fournisseur : toute panne (réseau, délai, 429, 5xx, réponse mal formée) est levée sous ce type.
+    `Intelligence` ne rattrape QUE celui-ci : un bogue de notre code n'est jamais déguisé en « fournisseur indisponible »."""
+
+    def __init__(self, cause: str, reessayable: bool = False):
+        super().__init__(cause)
+        self.cause, self.reessayable = cause, reessayable
+
+
 class Fournisseur(Protocol):
     nom: str
     modele: str
 
-    def completer(self, systeme_txt: str, message: str, schema: Optional[dict]) -> str: ...
+    def completer(self, systeme_txt: str, message: str, schema: Optional[dict]) -> str:
+        """Texte brut du modèle, ou `ErreurFournisseur`. Jamais d'autre exception."""
+        ...
 
 
 class NonConfigure(RuntimeError):
@@ -75,9 +88,12 @@ class NonConfigure(RuntimeError):
 
 
 class Apertus:
+    """Apertus via une API compatible OpenAI. Délai borné, 3 tentatives au plus avec recul exponentiel et gigue sur
+    les erreurs RÉESSAYABLES (réseau, délai, 429, 5xx) — une requête ne peut ni pendre, ni boucler."""
     nom = "apertus"
+    TENTATIVES = 3
 
-    def __init__(self, http=None):
+    def __init__(self, http=None, dormir: Callable[[float], None] = time.sleep, alea: Optional[random.Random] = None):
         manque = [k for k in ("APERTUS_BASE_URL", "APERTUS_API_KEY", "APERTUS_MODEL") if not os.environ.get(k)]
         if manque:
             raise NonConfigure("variables absentes : " + ", ".join(manque))
@@ -86,6 +102,10 @@ class Apertus:
         self._cle = os.environ["APERTUS_API_KEY"]
         self.delai = float(os.environ.get("APERTUS_DELAI_S", "30"))
         self.http = http
+        self._dormir, self._alea = dormir, alea or random.Random()
+
+    def __repr__(self) -> str:                               # jamais la clé dans une trace ou un journal
+        return f"Apertus(base={self.base!r}, modele={self.modele!r})"
 
     @staticmethod
     def configure() -> bool:
@@ -101,21 +121,28 @@ class Apertus:
         if schema:
             corps["response_format"] = {"type": "json_schema", "json_schema": {"name": "sortie", "schema": schema, "strict": True}}
         entetes = {"Authorization": f"Bearer {self._cle}", "Content-Type": "application/json"}
-        derniere: Optional[Exception] = None
-        for _ in range(2):                                   # un nouvel essai sur erreur réseau ou 5xx
+        derniere = ErreurFournisseur("aucune tentative")
+        for tentative in range(self.TENTATIVES):
+            if tentative:
+                self._dormir(min(4.0, 0.5 * 2 ** (tentative - 1)) * (0.5 + self._alea.random()))   # recul + gigue
             try:
                 rep = client.post(f"{self.base}/chat/completions", headers=entetes, json=corps)
                 if rep.status_code in (400, 422) and "response_format" in corps:
                     corps.pop("response_format")              # serveur sans sortie contrainte : la consigne reste
                     rep = client.post(f"{self.base}/chat/completions", headers=entetes, json=corps)
-                if rep.status_code >= 500:
-                    derniere = RuntimeError(f"HTTP {rep.status_code}")
-                    continue
-                rep.raise_for_status()
-                return rep.json()["choices"][0]["message"]["content"] or ""
-            except (httpx.TransportError, httpx.TimeoutException) as e:
-                derniere = e
-        raise derniere or RuntimeError("échec")
+            except (httpx.TimeoutException, httpx.TransportError) as e:
+                derniere = ErreurFournisseur(type(e).__name__, reessayable=True)
+                continue
+            if rep.status_code == 429 or rep.status_code >= 500:
+                derniere = ErreurFournisseur(f"HTTP {rep.status_code}", reessayable=True)
+                continue
+            if rep.status_code >= 400:
+                raise ErreurFournisseur(f"HTTP {rep.status_code}")               # 401, 403, 404… : inutile de réessayer
+            try:
+                return str(rep.json()["choices"][0]["message"]["content"] or "")
+            except (ValueError, KeyError, IndexError, TypeError) as e:
+                raise ErreurFournisseur(f"réponse mal formée ({type(e).__name__})") from None
+        raise derniere
 
 
 class Maquette:
@@ -129,7 +156,7 @@ class Maquette:
     def completer(self, systeme_txt: str, message: str, schema: Optional[dict]) -> str:
         cle = next((k for k in self.reponses if k in systeme_txt), None)
         if cle is None:
-            raise RuntimeError("aucune réponse de maquette")
+            raise ErreurFournisseur("aucune réponse de maquette")   # même contrat que le vrai fournisseur
         return self.reponses[cle]
 
 
@@ -169,6 +196,9 @@ SCHEMA_TEXTE = {"explication": {"type": "object", "additionalProperties": False,
                 "message": {"type": "object", "additionalProperties": False, "required": ["message"],
                             "properties": {"message": {"type": "string"}}}}
 
+# Une sortie de modèle qui contient un courriel, un téléphone ou une adresse web est rejetée : le modèle ne reçoit
+# aucune de ces données, donc toute occurrence est soit inventée, soit une fuite — les deux sont refusées.
+_DONNEES_PERSONNELLES = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+|(?:\+|00)\d[\d .-]{7,}\d|https?://|www\.", re.I)
 _PREMIERE = re.compile(r"\b(je|j'|nous|moi|mon|ma|mes|notre|nos|ich|wir|mein|meine|i|we|my|our)\b")
 _BESOIN = re.compile(r"(cherch|veu|besoin|souhait|recherch|aimerai|voudrai|trouver|\bdois\b|\bdevons\b|\bfaut\b|sucht|suchen|brauch|looking for|need|want)")
 _RENCONTRE = re.compile(r"(rencontr|croise|vu |getroffen|met )")
@@ -184,15 +214,24 @@ class Intelligence:
     """Point d'entrée unique des tâches de langage. `fournisseur=None` : repli déterministe (déclaré)."""
 
     def __init__(self, tax: Taxonomie, fournisseur: Optional[Fournisseur] = None,
-                 journal: Optional[Callable[[AppelIA], None]] = None):
+                 journal: Optional[Callable[[AppelIA], None]] = None, notes_privees_autorisees: bool = False,
+                 horloge: Callable[[], float] = time.monotonic):
         self.tax = tax
         self.f = fournisseur
         self.journal = journal
         self.appels: list[AppelIA] = []
+        self.notes_privees_autorisees = notes_privees_autorisees
+        self._horloge = horloge
+        self._echecs_consecutifs = 0
+        self._ferme_jusqu_a = 0.0
+
+    SEUIL_DISJONCTEUR = 3                   # 3 pannes de suite : on cesse d'appeler le fournisseur…
+    PAUSE_DISJONCTEUR_S = 60.0              # …pendant 60 s (la démonstration reste fluide), puis on réessaie
 
     @classmethod
-    def depuis_environnement(cls, tax: Taxonomie, journal=None) -> "Intelligence":
-        return cls(tax, Apertus() if Apertus.configure() else None, journal)
+    def depuis_environnement(cls, tax: Taxonomie, journal=None, notes_privees_autorisees: bool = False) -> "Intelligence":
+        """LE seul endroit qui choisit le fournisseur. Le reste du code ne teste jamais « est-ce Apertus ? »."""
+        return cls(tax, Apertus() if Apertus.configure() else None, journal, notes_privees_autorisees)
 
     def etat(self) -> dict:
         derniers = [a for a in self.appels if a.fournisseur == "apertus"]
@@ -207,26 +246,41 @@ class Intelligence:
             self.journal(a)
 
     def _executer(self, tache: str, nom_prompt: Optional[str], message: str, schema: Optional[dict],
-                  valider_sortie: Callable[[str], tuple[dict, Optional[dict]]], repli: Callable[[], dict]) -> Reponse:
+                  valider_sortie: Callable[[str], tuple[dict, Optional[dict]]], repli: Callable[[], dict],
+                  local_seulement: Optional[str] = None) -> Reponse:
+        """entrée → fournisseur → sortie BRUTE (non fiable) → validation (schéma, vocabulaire, extraits, faits, données
+        personnelles) → acceptée, ou rejetée au profit du repli déterministe. Chaque issue est tracée."""
         trace = hashlib.sha256(f"{tache}|{message}|{len(self.appels)}".encode()).hexdigest()[:12]
         t0 = time.perf_counter()
-        if self.f is None:
+        ms = lambda: round((time.perf_counter() - t0) * 1000, 1)  # noqa: E731
+        if self.f is None or local_seulement:
             sortie = repli()
-            a = AppelIA(trace=trace, tache=tache, fournisseur="deterministe", latence_ms=round((time.perf_counter() - t0) * 1000, 1),
+            a = AppelIA(trace=trace, tache=tache, fournisseur="deterministe", latence_ms=ms(), politique=local_seulement,
                         statut="OK" if sortie.get("statut", "OK") == "OK" else "INCERTAIN")
             self._tracer(a)
             return Reponse(sortie=sortie, appel=a)
         texte_prompt, version = prompt(nom_prompt) if nom_prompt else (systeme(self.tax), "comprendre_demande_v1")
-        try:
-            brut = self.f.completer(texte_prompt, message, schema)
-        except Exception as e:                                # indisponible : repli VISIBLE
+        if self._horloge() < self._ferme_jusqu_a:                 # disjoncteur ouvert : on n'insiste pas
             sortie = repli()
-            a = AppelIA(trace=trace, tache=tache, fournisseur=self.f.nom, modele=self.f.modele, prompt=version,
-                        latence_ms=round((time.perf_counter() - t0) * 1000, 1), statut="INDISPONIBLE", repli=True,
-                        erreur=type(e).__name__)
+            a = AppelIA(trace=trace, tache=tache, fournisseur=self.f.nom, modele=self.f.modele, prompt=version, latence_ms=ms(),
+                        statut="INDISPONIBLE", repli=True, erreur="disjoncteur ouvert après pannes répétées")
             self._tracer(a)
             return Reponse(sortie=sortie, appel=a)
         try:
+            brut = self.f.completer(texte_prompt, message, schema)
+            self._echecs_consecutifs = 0
+        except ErreurFournisseur as e:                            # panne du FOURNISSEUR seulement : repli VISIBLE
+            self._echecs_consecutifs += 1
+            if self._echecs_consecutifs >= self.SEUIL_DISJONCTEUR:
+                self._ferme_jusqu_a = self._horloge() + self.PAUSE_DISJONCTEUR_S
+            sortie = repli()
+            a = AppelIA(trace=trace, tache=tache, fournisseur=self.f.nom, modele=self.f.modele, prompt=version,
+                        latence_ms=ms(), statut="INDISPONIBLE", repli=True, erreur=e.cause[:120])
+            self._tracer(a)
+            return Reponse(sortie=sortie, appel=a)
+        try:
+            if _DONNEES_PERSONNELLES.search(brut):
+                raise ValueError("la sortie contient une donnée personnelle (courriel, téléphone ou adresse web)")
             sortie, controle = valider_sortie(brut)
             statut: Statut = "OK" if sortie.get("statut", "OK") == "OK" else "INCERTAIN"
             a = AppelIA(trace=trace, tache=tache, fournisseur=self.f.nom, modele=self.f.modele, prompt=version,
@@ -256,7 +310,9 @@ class Intelligence:
             c = Capture.model_validate_json(_json_de(brut))
             return self._valider_capture(note, c), None
         return self._executer("capturer_rencontre", "capturer_rencontre", message, SCHEMA_CAPTURE, valide,
-                              lambda: self._capture_regles(note))
+                              lambda: self._capture_regles(note),
+                              local_seulement=None if self.notes_privees_autorisees else
+                              "note privée : traitée localement (APERTUS_NOTES_PRIVEES non activé)")
 
     def expliquer(self, faits: dict, pseudonymes: set[str]) -> Reponse:
         repli = {"explication": " ".join(faits.get("raisonnement", [])[:4]), "statut": "OK"}

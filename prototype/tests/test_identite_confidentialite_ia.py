@@ -16,7 +16,7 @@ TAX = charger_taxonomie()
 
 def _coffre():
     r = md.construire()
-    return r, Coffre(AdhesionsSynthetiques(r.profils).importer(), secret="test")
+    return r, Coffre(AdhesionsSynthetiques(r.profils).importer(), secret=b"secret-de-test-assez-long")
 
 
 # ------------------------------------------------------------------ adhésions et identité
@@ -147,7 +147,7 @@ def test_apertus_sortie_valide_acceptee_et_tracee(env_apertus):
                                            "besoin_de_l_autre": {"concept": "boissons", "extrait": "cherche des producteurs de boissons"},
                                            "capacite_de_l_autre": None, "besoin_du_membre": {"concept": "vins", "extrait": "phrase absente"},
                                            "suite_proposee": "Le recontacter", "incertitudes": []}))])
-    ia = Intelligence(TAX, Apertus(http=http))
+    ia = Intelligence(TAX, Apertus(http=http), notes_privees_autorisees=True)   # choix explicite (sinon : local)
     r = ia.capturer_rencontre("Rencontré Markus : il cherche des producteurs de boissons.")
     assert r.appel.fournisseur == "apertus" and r.appel.modele == "apertus-test" and r.appel.prompt == "capturer_rencontre_v1"
     assert r.sortie["sujets"] == ["boissons"] and r.sortie["besoin_du_membre"] is None   # hors vocabulaire / extrait inventé : retirés
@@ -168,9 +168,9 @@ def test_apertus_explication_infidele_rejetee(env_apertus):
 
 
 def test_apertus_indisponible_puis_repli_visible(env_apertus):
-    http, vus = _double([(503, ""), (503, "")])
-    r = Intelligence(TAX, Apertus(http=http)).comprendre_demande("Je cherche une traductrice")
-    assert r.appel.statut == "INDISPONIBLE" and r.appel.repli and len(vus) == 2
+    http, vus = _double([(503, ""), (503, ""), (503, "")])
+    r = Intelligence(TAX, Apertus(http=http, dormir=lambda s: None)).comprendre_demande("Je cherche une traductrice")
+    assert r.appel.statut == "INDISPONIBLE" and r.appel.repli and len(vus) == 3              # 3 tentatives bornées
     assert r.sortie["besoin"]["criteres"][0]["valeur"] == "traduction"
 
 
@@ -192,7 +192,7 @@ def test_maquette_reservee_aux_tests_et_prompts_versionnes():
     for nom in ("capturer_rencontre", "expliquer_opportunite", "rediger_sollicitation", "comprendre_demande"):
         texte, version = prompt(nom)
         assert version.endswith("_v1") and texte.strip()
-    r = Intelligence(TAX, Maquette({"capturer_rencontre": "pas du json"})).capturer_rencontre("Rencontré Léa.")
+    r = Intelligence(TAX, Maquette({"capturer_rencontre": "pas du json"}), notes_privees_autorisees=True).capturer_rencontre("Rencontré Léa.")
     assert r.appel.fournisseur == "maquette" and r.appel.statut == "REJETE"
 
 
