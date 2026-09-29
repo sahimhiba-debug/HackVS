@@ -1,4 +1,6 @@
-# Architecture
+# Architecture du prototype précédent « Le Fil du Club » (toujours servi : /, /demo/stage, /decision…)
+
+> Club Pulse (/app, /console, `intelligence/`) est décrit dans [ARCHITECTURE.md](ARCHITECTURE.md). Ce document reste exact pour les modules historiques.
 
 **Principe : l'IA peut suggérer ; le code déterministe valide ; l'humain décide.**
 Chaque bloc ci-dessous existe dans le dépôt (chemins sous `prototype/`). Rien n'est décrit qui n'est pas implémenté.
