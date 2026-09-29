@@ -15,7 +15,8 @@ from app import main
 c = TestClient(main.app)
 c.post("/api/demo/reinitialiser")
 S, J = {"X-Membre": "p00"}, {"X-Membre": "p01"}
-b = c.post("/api/analyser", json={"texte": "On lance nos jus d'abricot en Suisse alémanique. Je cherche un transporteur frigorifique qui livre Zurich deux fois par semaine."}).json()["besoin"]
+texte = "Je cherche un transporteur frigorifique qui livre Zurich deux fois par semaine."
+b = c.post("/api/analyser", json={"texte": texte}).json()["besoin"]
 b = c.post("/api/besoins", json={"besoin": b, "publier": True}, headers=S).json()
 r = c.post("/api/relations", json={"besoin_id": b["id"], "cible_id": "p01", "message": "Bonjour"}, headers=S).json()
 c.post(f"/api/relations/{r['id']}/accepter", json={}, headers=J)

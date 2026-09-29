@@ -1,7 +1,7 @@
 # Audit technique — cartographie (mémo de travail, mis à jour à chaque cycle)
 
 Règle : chaque ligne cite une preuve exécutable. « Partiel » et « absent » sont des états normaux, pas des fautes à cacher.
-Mesures : 167 tests (pytest), lint vert, 20/20 scénarios de décision, registre des preuves vérifié, CI verte (runs 21–25).
+Mesures : 166 tests (pytest), lint vert, 20/20 scénarios de décision, registre des preuves vérifié, CI verte (runs 21–25).
 
 | Composant | Statut | Preuve | Tests | Risques restants | Prochaine action |
 |---|---|---|---|---|---|
