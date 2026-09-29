@@ -69,7 +69,7 @@ class VuesEssai:
         recues = {x.donnees["etape"] for x in b._evs(eid, "CONTRIBUTION")}
         etapes = []
         for e in p.etapes:
-            o = b.offre(e.offre_id) if e.offre_id else None
+            o = b.offre_de(eid, e)
             statut = ("contribution reçue" if e.id in recues else
                       "accord valable" if e.contributeur and cov.get(e.contributeur) is None else
                       self._statut_public(cov.get(e.contributeur or f"etape:{e.id}")))
@@ -83,7 +83,8 @@ class VuesEssai:
                            "offre": ({"quoi": o.quoi, "conditions": o.conditions, "duree_max_min": o.duree_max_min,
                                       "jusqu_au": o.au.isoformat()} if o else None),
                            "statut": statut, "vous": e.contributeur == pid,
-                           "offre_id": e.offre_id if e.contributeur == pid else None})   # sa PROPRE offre seulement
+                           "invitation": e.invitation,
+                           "offre_id": o.id if o and e.contributeur == pid else None})   # sa PROPRE offre seulement
         role = "porteur" if pid == porteur else ("console" if console else "contributeur")
         v = {"id": eid, "role": role, "version": b.version(eid), "etat": etat, "etat_libelle": LIBELLES.get(etat, etat),
              "porteur": self.nom(eid, pid, porteur, console), "question": p.question, "objet": p.objet, "pourquoi": p.pourquoi,

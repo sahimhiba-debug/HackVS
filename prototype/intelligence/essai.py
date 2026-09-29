@@ -71,6 +71,9 @@ class Etape(BaseModel):
     duree_min: int = Field(ge=1, le=120)
     contributeur: Optional[str] = Field(default=None, max_length=32)
     offre_id: Optional[str] = Field(default=None, max_length=32)
+    # SUR INVITATION : la personne est nommée par une opportunité détectée, sans offre publiée. Aucune disponibilité
+    # n'est supposée : c'est SON acceptation qui la déclare (une offre personnelle, pour ce seul essai, modifiable).
+    invitation: bool = False
 
 
 class Protocole(BaseModel):
@@ -80,6 +83,8 @@ class Protocole(BaseModel):
     critere: str = Field(default="", max_length=300)                  # ce qu'on observera, et comment on le lira
     echeance: date
     etapes: list[Etape] = Field(default_factory=list, max_length=4)
+    # d'où vient cet essai (opportunité détectée : identifiant, type, capacités) — sert la MÉMOIRE, jamais une décision
+    origine: Optional[dict] = None
 
 
 class OffreVolontaire(BaseModel):
@@ -93,6 +98,8 @@ class OffreVolontaire(BaseModel):
     au: date
     conditions: str = Field(default="", max_length=300)
     version: int = 1
+    pour_essai: Optional[str] = None                                  # offre personnelle déclarée EN acceptant un essai
+    pour_etape: Optional[str] = None
 
 
 def _mots(t: str) -> set[str]:
@@ -110,14 +117,20 @@ def portee(p: Protocole, porteur: str, membre: str) -> dict:
     if membre == porteur:
         return {"porteur": True, **p.model_dump(mode="json", exclude={"pourquoi"})}
     return {"question": p.question, "objet": p.objet, "critere": p.critere, "echeance": p.echeance.isoformat(), "partage": PARTAGE,
-            "gestes": [e.model_dump(mode="json", include={"nature", "geste", "duree_min", "offre_id"}) for e in p.etapes if e.contributeur == membre]}
+            "gestes": [e.model_dump(mode="json", include={"nature", "geste", "duree_min", "offre_id", "invitation"})
+                       for e in p.etapes if e.contributeur == membre]}
 
 
 class Banc:
     """Commandes (atomiques) et lectures (replis purs) du banc d'essai. Aucune règle d'accès aux NOMS ici : les vues."""
 
-    def __init__(self, memoire: Memoire, aujourd_hui: Callable[[], date], organisation: Callable[[str], str]):
+    def __init__(self, memoire: Memoire, aujourd_hui: Callable[[], date], organisation: Callable[[str], str],
+                 eligibilite: Optional[Callable[[str, str], Optional[str]]] = None):
+        """`eligibilite(porteur, candidat)` : pourquoi ce candidat ne peut PAS être sollicité pour ce porteur (None : il
+        peut l'être). Fournie par la composition à partir des règles dures du réseau (langue commune, refus des
+        sollicitations, disponibilité, introduction déjà déclinée…) : une seule source de vérité pour ces règles."""
         self.m, self._jour, self._org = memoire, aujourd_hui, organisation
+        self._eligibilite = eligibilite or (lambda porteur, candidat: None)
 
     # ------------------------------------------------------------------ journal
     def _ecrire(self, type_: str, acteurs: list[str], statut: Statut = Statut.DECLARE, **donnees) -> None:
@@ -129,12 +142,13 @@ class Banc:
 
     # ------------------------------------------------------------------ offres volontaires
     def publier_offre(self, auteur: str, nature: str, quoi: str, capacite: int, du: date, au: date,
-                      duree_max_min: Optional[int] = None, conditions: str = "") -> str:
+                      duree_max_min: Optional[int] = None, conditions: str = "", pour: Optional[tuple[str, str]] = None) -> str:
         if au < du:
             raise Invalide("la période de l'offre se termine avant de commencer")
         oid = "of-" + _empreinte([auteur, quoi, len(self.m.evenements())])[:8]
         o = OffreVolontaire(id=oid, auteur=auteur, nature=nature, quoi=quoi, capacite=capacite, du=du, au=au,  # type: ignore[arg-type]
-                            duree_max_min=duree_max_min, conditions=conditions)
+                            duree_max_min=duree_max_min, conditions=conditions,
+                            pour_essai=pour[0] if pour else None, pour_etape=pour[1] if pour else None)
         self._ecrire("OFFRE", [auteur], offre=o.model_dump(mode="json"))
         return oid
 
@@ -144,9 +158,20 @@ class Banc:
             raise Introuvable("offre inconnue")
         return OffreVolontaire(**evs[-1].donnees["offre"])
 
-    def offres(self) -> list[OffreVolontaire]:
+    def offres(self, publiques: bool = False) -> list[OffreVolontaire]:
+        """`publiques=True` : seulement les offres ouvertes à tout essai (pas celles déclarées pour un essai précis)."""
         ids = list(dict.fromkeys(e.donnees["offre"]["id"] for e in self.m.evenements("OFFRE")))
-        return [self.offre(i) for i in ids]
+        return [o for o in (self.offre(i) for i in ids) if not (publiques and o.pour_essai)]
+
+    def offre_de(self, eid: str, e: Etape) -> Optional[OffreVolontaire]:
+        """L'offre qui porte ce geste : l'offre choisie, ou — sur invitation — celle que la personne a déclarée EN
+        acceptant (None tant qu'elle n'a pas accepté : sa disponibilité est alors INCONNUE)."""
+        if e.offre_id:
+            return self.offre(e.offre_id)
+        if e.invitation and e.contributeur:
+            miennes = [o for o in self.offres() if o.auteur == e.contributeur and o.pour_essai == eid and o.pour_etape == e.id]
+            return miennes[-1] if miennes else None
+        return None
 
     def etat_offre(self, oid: str) -> str:
         if any(e.donnees["offre"] == oid for e in self.m.evenements("OFFRE_RETIREE")):
@@ -186,7 +211,8 @@ class Banc:
                 continue
             etat, p, porteur = self.etat(eid), self.protocole(eid), self.porteur(eid)
             for e in p.etapes:
-                if e.offre_id != oid or not e.contributeur:
+                o = self.offre_de(eid, e) if e.contributeur else None
+                if o is None or o.id != oid or e.contributeur is None:
                     continue
                 recue = any(x.donnees["etape"] == e.id for x in self._evs(eid, "CONTRIBUTION"))
                 if recue or (etat not in FINAUX and self._accord_donne(eid, e.contributeur, p, porteur)):
@@ -286,7 +312,8 @@ class Banc:
             elif not self._accord_donne(eid, e.contributeur, p, porteur):
                 res[e.contributeur] = "sa part a changé depuis son accord"
             else:
-                raison = self.offre_couvre(self.offre(e.offre_id), e, p.echeance, sauf=eid) if e.offre_id else "aucune offre"
+                o = self.offre_de(eid, e)
+                raison = self.offre_couvre(o, e, p.echeance, sauf=eid) if o else "aucune disponibilité déclarée"
                 res[e.contributeur] = f"son offre ne couvre plus ce geste : {raison}" if raison else None
         return res
 
@@ -334,7 +361,8 @@ class Banc:
     def _revoir_essais_de_l_offre(self, oid: str, cause: str) -> list[str]:
         touches = []
         for eid in self.essais():
-            if self.etat(eid) in FINAUX or not any(e.offre_id == oid for e in self.protocole(eid).etapes):
+            if self.etat(eid) in FINAUX or not any((o := self.offre_de(eid, e)) is not None and o.id == oid
+                                                   for e in self.protocole(eid).etapes):
                 continue
             avant = self.etat(eid)
             self._reevaluer(eid, cause)
@@ -349,8 +377,8 @@ class Banc:
         porteur = self.porteur(eid)
         retraits = {x.acteurs[0] for x in self._evs(eid, "RETRAIT")}
         exclus = self.refus(eid) | retraits | {porteur} | {x.contributeur for x in self.protocole(eid).etapes if x.contributeur and x.id != e.id}
-        res = [o for o in self.offres() if o.auteur not in exclus and self._org(o.auteur) != self._org(porteur)
-               and self.offre_couvre(o, e, echeance, sauf=eid) is None]
+        res = [o for o in self.offres(publiques=True) if o.auteur not in exclus and self._org(o.auteur) != self._org(porteur)
+               and self._eligibilite(porteur, o.auteur) is None and self.offre_couvre(o, e, echeance, sauf=eid) is None]
         mots = _mots(e.geste)                                   # l'offre la plus proche du geste, puis la plus durable
         return sorted(res, key=lambda o: (-len(mots & _mots(o.quoi)), -o.au.toordinal(), o.id))
 
@@ -367,8 +395,9 @@ class Banc:
                             "texte": f"Garder l'essai tel quel ; demander ce geste à une autre personne qui l'offre : « {o.quoi} »"
                                      + (f" ({o.duree_max_min} min au plus)" if o.duree_max_min else ""),
                             "a_decider": ["porteur", o.auteur]})
-            if e.contributeur and e.offre_id and raison.startswith("son offre ne couvre plus"):
-                o = self.offre(e.offre_id)
+            o_ = self.offre_de(eid, e) if e.contributeur else None
+            if o_ is not None and raison.startswith("son offre ne couvre plus"):
+                o = o_
                 if self.etat_offre(o.id) == "active" and o.duree_max_min and o.duree_max_min < e.duree_min:
                     res.append({"id": f"raccourcir:{e.id}:{o.duree_max_min}", "type": "raccourcir", "etape": e.id, "duree": o.duree_max_min,
                                 "membre": e.contributeur,
@@ -419,6 +448,11 @@ class Banc:
         etapes: list[Etape] = []
         manquants = []
         for e in p.etapes:
+            if e.contributeur:                                # désignée par une opportunité : mêmes règles dures
+                raison = ("vous-même" if e.contributeur == porteur else "même organisation" if self._org(e.contributeur) == self._org(porteur)
+                          else "a déjà décliné cet essai" if e.contributeur in self.refus(eid) else self._eligibilite(porteur, e.contributeur))
+                if raison:
+                    raise Conflit(f"la personne proposée pour « {e.geste} » ne peut pas être sollicitée : {raison}")
             if not e.contributeur:
                 c = [o for o in self.candidats(eid, e, p.echeance) if o.auteur not in {x.contributeur for x in etapes}]
                 if not c:
@@ -439,15 +473,20 @@ class Banc:
             self._reevaluer(eid, "proposition publiée")
         return v
 
-    def modifier(self, porteur: str, eid: str, attendue: int, **champs) -> dict:
-        """Modification par le porteur (question, critère, geste, durée, échéance…) : nouvelle version ; seuls les accords
-        dont la PORTÉE a changé sont à redonner ; les autres restent valables (dit en clair)."""
+    def modifier(self, porteur: str, eid: str, attendue: int, durees: Optional[dict[str, int]] = None, **champs) -> dict:
+        """Modification par le porteur (question, critère, échéance, et `durees` : durée d'un geste) : nouvelle version ;
+        seuls les accords dont la PORTÉE a changé sont à redonner ; les autres restent valables (dit en clair)."""
         self._exiger_porteur(eid, porteur)
         self._verifier_version(eid, attendue)
         if self.etat(eid) not in {"PROPOSE", "AUTORISE", "A_ADAPTER"}:
             raise Conflit("l'essai ne peut plus être modifié dans cet état")
         avant = self.protocole(eid)
-        apres = Protocole(**(avant.model_dump() | {k: v for k, v in champs.items() if v is not None}))
+        inconnus = set(durees or {}) - {e.id for e in avant.etapes}
+        if inconnus:
+            raise Invalide(f"geste inconnu : {', '.join(sorted(inconnus))}")
+        etapes = [e.model_copy(update={"duree_min": (durees or {})[e.id]}) if e.id in (durees or {}) else e for e in avant.etapes]
+        apres = Protocole(**(avant.model_dump() | {k: v for k, v in champs.items() if v is not None}
+                             | {"etapes": [e.model_dump() for e in etapes]}))
         with self.m.transaction():
             self._nouvelle_version(eid, apres, porteur, "modifié par le porteur")
             self._accord(eid, porteur, True)
@@ -476,7 +515,8 @@ class Banc:
         etapes = []
         for e in avant.etapes:
             if e.id == alt["etape"]:
-                e = (e.model_copy(update={"contributeur": alt["membre"], "offre_id": alt["offre"]}) if alt["type"] == "remplacer"
+                e = (e.model_copy(update={"contributeur": alt["membre"], "offre_id": alt["offre"], "invitation": False})
+                     if alt["type"] == "remplacer"
                      else e.model_copy(update={"duree_min": alt["duree"]}))
             etapes.append(e)
         apres = avant.model_copy(update={"etapes": etapes})
@@ -572,9 +612,14 @@ class Banc:
         with self.m.transaction():
             if accepte:
                 for e in gestes:                              # capacité et couverture revérifiées AU MOMENT d'accepter
-                    raison = self.offre_couvre(self.offre(e.offre_id), e, p.echeance, sauf=eid) if e.offre_id else "aucune offre"
+                    o = self.offre_de(eid, e)
+                    if o is None and e.invitation:            # accepter une invitation = déclarer SA disponibilité
+                        oid = self.publier_offre(membre, e.nature, e.geste, 1, self._jour(), p.echeance, duree_max_min=e.duree_min,
+                                                 conditions=f"déclarée en acceptant l'essai « {p.question[:80]} »", pour=(eid, e.id))
+                        o = self.offre(oid)
+                    raison = self.offre_couvre(o, e, p.echeance, sauf=eid) if o else "aucune offre"
                     if raison:
-                        raise Conflit(f"votre offre ne couvre pas ce geste : {raison}")
+                        raise Conflit(f"votre disponibilité déclarée ne couvre pas ce geste : {raison} — mettez-la à jour d'abord")
             self._accord(eid, membre, accepte)
             self._reevaluer(eid, "une personne a accepté" if accepte else "une personne a décliné")
 

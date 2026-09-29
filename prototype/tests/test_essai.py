@@ -304,3 +304,81 @@ def test_retrait_puis_reacceptation_ne_consomme_pas_deux_fois_une_offre():
     with pytest.raises(Conflit, match="capacité"):
         b.decider(PAULINE, a, va, True)                                     # réaccepter A dépasserait la capacité
     assert b.reservations(m.pauline) == 1
+
+
+# ------------------------------------------------------------------ gestes SUR INVITATION (depuis une opportunité)
+def _invitation(m, duree=60, eligibilite=None):
+    if eligibilite:
+        m.b._eligibilite = eligibilite
+    p = Protocole(question="Comment entrer sur le marché allemand avec nos tisanes ?", critere="deux contacts de distributeurs à relancer",
+                  echeance=J + timedelta(days=10), origine={"opportunite": "o-test", "type": "SUIVI", "concepts": ["export_allemagne"]},
+                  etapes=[Etape(id="e1", nature="competence", geste="Échange sur la distribution en Allemagne", duree_min=duree,
+                                contributeur=MARKUS, invitation=True)])
+    eid = m.b.brouillon(SOPHIE, p)
+    return eid, m.b.proposer(SOPHIE, eid, 0)
+
+
+def test_invitation_la_disponibilite_est_declaree_par_l_acceptation_pas_supposee():
+    m = Monde()
+    b = m.b
+    eid, v = _invitation(m)
+    e = b.protocole(eid).etapes[0]
+    assert b.offre_de(eid, e) is None and b.couverture(eid)[MARKUS] == "en attente de sa réponse"   # inconnue
+    b.decider(MARKUS, eid, v, True)
+    o = b.offre_de(eid, e)
+    assert o is not None and o.auteur == MARKUS and o.duree_max_min == 60 and o.pour_essai == eid and o.capacite == 1
+    assert b.etat(eid) == "AUTORISE"
+    assert o.id not in {x.id for x in b.offres(publiques=True)}             # personnelle : jamais proposée à un autre essai
+
+
+def test_invitation_moins_de_temps_raccourcir_ou_remplacer_ou_rien():
+    m = Monde()
+    b = m.b
+    claudia = b.publier_offre("s15", "competence", "Conseil pour un lancement de produit en Allemagne", 2, J, J + timedelta(days=30),
+                              duree_max_min=60)
+    eid, v = _invitation(m)
+    b.decider(MARKUS, eid, v, True)
+    o = b.offre_de(eid, b.protocole(eid).etapes[0])
+    assert b.modifier_offre(MARKUS, o.id, duree_max_min=20) == [eid]       # « Markus n'a plus que 20 minutes au lieu de 60 »
+    assert b.etat(eid) == "A_ADAPTER" and "demande 60 min, l'offre en accepte 20" in b.couverture(eid)[MARKUS]
+    alts = {a["type"]: a for a in b.alternatives(eid)}
+    assert set(alts) == {"raccourcir", "remplacer"} and alts["remplacer"]["offre"] == claudia and alts["raccourcir"]["duree"] == 20
+    b.choisir_alternative(SOPHIE, eid, v, alts["raccourcir"]["id"])
+    assert b.couverture(eid)[MARKUS] == "sa part a changé depuis son accord"   # 20 min : il redonne son accord
+    b.decider(MARKUS, eid, b.version(eid), True)
+    assert b.etat(eid) == "AUTORISE"
+
+
+def test_invitation_remplacer_l_accord_de_markus_ne_suit_pas_claudia():
+    m = Monde()
+    b = m.b
+    b.publier_offre("s15", "competence", "Conseil pour un lancement de produit en Allemagne", 2, J, J + timedelta(days=30), duree_max_min=60)
+    eid, v = _invitation(m)
+    b.decider(MARKUS, eid, v, True)
+    b.modifier_offre(MARKUS, b.offre_de(eid, b.protocole(eid).etapes[0]).id, duree_max_min=20)
+    alt = next(a for a in b.alternatives(eid) if a["type"] == "remplacer")
+    b.choisir_alternative(SOPHIE, eid, v, alt["id"])
+    e = b.protocole(eid).etapes[0]
+    assert e.contributeur == "s15" and not e.invitation and b.couverture(eid)["s15"] == "en attente de sa réponse"
+
+
+def test_invitation_regles_dures_du_reseau_appliquees_a_la_personne_designee():
+    m = Monde()
+    with pytest.raises(Conflit, match="aucune langue commune"):
+        _invitation(m, eligibilite=lambda porteur, candidat: "aucune langue commune" if candidat == MARKUS else None)
+    m2 = Monde()
+    m2.b.publier_offre("s15", "competence", "Conseil Allemagne", 2, J, J + timedelta(days=30), duree_max_min=60)
+    eid, v = _invitation(m2, eligibilite=lambda porteur, candidat: "introduction déjà déclinée" if candidat == "s15" else None)
+    m2.b.decider(MARKUS, eid, v, False)
+    assert m2.b.etat(eid) == "IMPOSSIBLE"                                   # Claudia écartée par la règle : aucune alternative
+
+
+def test_exigence_allongee_la_disponibilite_declaree_ne_couvre_plus():
+    m = Monde()
+    b = m.b
+    eid, v = _invitation(m, duree=30)
+    b.decider(MARKUS, eid, v, True)
+    d = b.modifier(SOPHIE, eid, v, durees={"e1": 45})                      # « changer l'exigence » : 30 → 45 min
+    assert d["a_redemander"] == [MARKUS] and b.etat(eid) == "PROPOSE"
+    with pytest.raises(Conflit, match="disponibilité déclarée ne couvre pas"):
+        b.decider(MARKUS, eid, b.version(eid), True)                        # 30 min déclarées, 45 demandées
