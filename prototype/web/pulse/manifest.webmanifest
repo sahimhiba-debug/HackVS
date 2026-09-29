@@ -1,0 +1,12 @@
+{
+  "name": "Club Pulse — Club des Affaires",
+  "short_name": "Club Pulse",
+  "description": "Ce que votre réseau peut faire maintenant (démonstration, données fictives).",
+  "start_url": "/app#pouls",
+  "scope": "/app",
+  "display": "standalone",
+  "background_color": "#f5f4ef",
+  "theme_color": "#121212",
+  "lang": "fr",
+  "icons": [{ "src": "/static/pulse/icone.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

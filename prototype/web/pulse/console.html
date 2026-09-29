@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tour de contrôle</title>
+  <meta name="description" content="Club Pulse — tour de contrôle du Club : que faut-il activer maintenant ? Monde de démonstration fictif.">
+  <link rel="icon" href="/static/pulse/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/pulse/pulse.css">
+  <style>
+    .page { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 24px; max-width: 1560px; margin: 0 auto; padding: 18px 24px 40px; }
+    header.haut { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 24px; border-bottom: 1px solid var(--ligne); background: var(--surface); position: sticky; top: 0; z-index: 5; }
+    header.haut .droite { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    h1.titre { font-size: clamp(26px, 2.6vw, 38px); font-weight: 700; letter-spacing: -0.03em; }
+    .situation { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+    .situation .fait b { font-size: 26px; }
+    .phases { list-style: none; margin: 12px 0 0; padding: 0; font-size: 14px; }
+    .phases li { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; padding: 5px 0; border-bottom: 1px dashed var(--ligne); }
+    .phases li::before { content: "✓"; color: var(--vert); font-weight: 700; }
+    .phases .ms { color: var(--encre-3); font-variant-numeric: tabular-nums; }
+    .priorites { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+    .prio h3 { font-size: 17px; margin: 8px 0; }
+    .prio dl { display: grid; grid-template-columns: 1fr; gap: 6px; margin: 0; font-size: 13px; }
+    .prio dt { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; color: var(--encre-3); }
+    .prio dd { margin: 0 0 4px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--ligne); vertical-align: top; }
+    th { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--encre-3); }
+    .cote { position: sticky; top: 76px; align-self: start; display: grid; gap: 14px; }
+    .telephone { border: 10px solid #121212; border-radius: 36px; overflow: hidden; height: 720px; background: var(--papier); }
+    .telephone iframe { width: 100%; height: 100%; border: 0; display: block; }
+    .personas { display: flex; flex-wrap: wrap; gap: 6px; }
+    .personas button[aria-pressed="true"] { background: var(--encre); color: var(--papier); }
+    .legende { font-size: 15px; }
+    .journal { max-height: 280px; overflow: auto; font-size: 13px; }
+    .tiroir { margin-top: 12px; }
+    @media (max-width: 1180px) { .page { grid-template-columns: 1fr; } .cote { position: static; } .priorites { grid-template-columns: 1fr; } .situation { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 640px) { .page { padding: 12px 16px 32px; } header.haut { padding: 12px 16px; } .situation { grid-template-columns: 1fr 1fr; } .telephone { height: 640px; } }
+  </style>
+</head>
+<body>
+  <header class="haut">
+    <span class="marque"><span class="pouls-point" aria-hidden="true"></span>Club Pulse · Tour de contrôle</span>
+    <span class="puce fictif">monde de démonstration fictif</span>
+    <div class="droite"><span class="puce" id="date"></span><span class="puce" id="ia"></span></div>
+  </header>
+  <div class="page">
+    <main>
+      <p class="surtitre">Club des Affaires</p>
+      <h1 class="titre">Que faut-il activer maintenant ?</h1>
+      <div class="actions" style="margin-top:14px">
+        <button class="btn rouge" id="scan">Analyser le réseau</button>
+        <button class="btn discret petit" data-temps="4">+4 jours</button>
+        <button class="btn discret petit" data-temps="21">+21 jours</button>
+      </div>
+      <ul class="phases" id="phases" aria-live="polite"></ul>
+      <div class="situation" id="situation"></div>
+      <section class="bloc"><span class="surtitre" id="titre-prio">Priorités</span><div class="priorites" id="priorites"></div></section>
+      <section class="bloc" id="intervention"></section>
+      <section class="bloc"><span class="surtitre">Activations</span><div class="carte" style="margin-top:6px"><table><thead><tr><th>n°</th><th>objectif</th><th>état</th><th></th></tr></thead><tbody id="activations"></tbody></table></div>
+        <div id="detail" class="tiroir"></div></section>
+      <section class="bloc"><span class="surtitre">Toutes les opportunités</span><div class="carte" style="margin-top:6px"><table><thead><tr><th>type</th><th>opportunité</th><th>confiance</th><th>demandes servies</th></tr></thead><tbody id="toutes"></tbody></table></div></section>
+      <section class="bloc" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="carte"><span class="surtitre">Adhésions</span><div id="adhesions"></div></div>
+        <div class="carte"><span class="surtitre">Appels de langage (audit)</span><div id="appels" class="journal"></div></div>
+      </section>
+      <p class="note" style="margin-top:18px">Chaque chiffre est calculé à l'instant sur un Club FICTIF de 150 membres. Aucune donnée réelle du Club, aucun résultat réel mesuré.</p>
+    </main>
+    <aside class="cote" aria-label="Démonstration et jury">
+      <div class="carte">
+        <span class="surtitre">Démonstration guidée</span>
+        <p class="legende" id="legende" style="margin-top:6px">Monde réinitialisé.</p>
+        <p class="note" id="etape"></p>
+        <div class="actions" style="margin-top:10px">
+          <button class="btn plein petit" id="suivant">Étape suivante →</button>
+          <button class="btn discret petit" id="reinit">Réinitialiser</button>
+          <button class="btn discret petit" id="tout">Rejouer tout</button>
+        </div>
+      </div>
+      <div class="carte">
+        <span class="surtitre">Incarner un membre (démo)</span>
+        <div class="personas" id="personas" style="margin-top:8px"></div>
+      </div>
+      <div class="telephone"><iframe id="tel" title="Application du membre" src="/app#acces"></iframe></div>
+      <div class="carte">
+        <span class="surtitre">Jury : écrire une demande</span>
+        <div class="champ"><label for="jury">Au nom du membre incarné</label><textarea id="jury" rows="2" placeholder="ex. Je cherche une traductrice francophone pour nos étiquettes."></textarea></div>
+        <div class="actions" style="margin-top:8px"><button class="btn plein petit" id="jury-go">Que peut faire le Club ?</button></div>
+        <div id="jury-res"></div>
+      </div>
+    </aside>
+  </div>
+  <div id="toasts" aria-live="assertive"></div>
+  <script type="module">
+    const $ = (s, r = document) => r.querySelector(s);
+    function h(tag, attrs = {}, ...enfants) {
+      const el = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs || {})) {
+        if (v === null || v === undefined || v === false) continue;
+        if (k === "class") el.className = v; else if (k.startsWith("on")) el.addEventListener(k.slice(2), v); else el.setAttribute(k, v === true ? "" : v);
+      }
+      for (const e of enfants.flat(Infinity)) if (e !== null && e !== undefined && e !== false) el.append(e instanceof Node ? e : document.createTextNode(String(e)));
+      return el;
+    }
+    const toast = (m, g = "") => { const t = h("div", { class: "toast " + g }, m); $("#toasts").append(t); setTimeout(() => t.remove(), 4000); };
+    async function api(chemin, { methode, corps, session } = {}) {
+      const o = { method: methode || (corps === undefined ? "GET" : "POST"), headers: {} };
+      if (session) o.headers["X-Pulse-Session"] = session;
+      if (corps !== undefined) { o.headers["Content-Type"] = "application/json"; o.body = JSON.stringify(corps); }
+      const r = await fetch(chemin, o);
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(typeof d.detail === "string" ? d.detail : `Erreur ${r.status}`);
+      return d;
+    }
+    const CONF = { elevee: "élevée", moyenne: "moyenne", faible: "faible" };
+    let persona = null, occupe = false, personas = [];
+    const rafraichirTel = () => { try { $("#tel").contentWindow.postMessage("rafraichir", location.origin); } catch { /* iframe absente */ } };
+
+    function iaTexte(ia) { return ia.configure ? `Apertus · ${ia.modele} · ${ia.appels_apertus_reussis} appel(s) réussi(s)` : "Apertus non configuré · règles locales"; }
+    async function charger(scan = false) {
+      const t = scan ? await api("/api/pulse/console/scan", { corps: {} }) : await api("/api/pulse/console");
+      $("#date").textContent = `date simulée : ${t.date}`;
+      $("#ia").textContent = iaTexte(t.ia);
+      if (scan) {
+        $("#phases").replaceChildren();
+        t.phases.forEach((p, i) => setTimeout(() => $("#phases").append(h("li", { class: "apparait" }, h("span", {}, h("b", {}, p.etape), " — ", p.detail),
+          h("span", { class: "ms" }, p.ms !== null && p.ms !== undefined ? `${p.ms} ms` : ""))), i * 90));   // résultats RÉELS, affichés ligne à ligne
+      }
+      $("#situation").replaceChildren(...t.situation.map((s) => h("div", { class: "fait" }, h("b", {}, s.valeur), h("span", {}, s.libelle))));
+      $("#titre-prio").textContent = `${t.priorites.length} opportunité(s) à regarder en premier`;
+      $("#priorites").replaceChildren(...t.priorites.map((o) => h("article", { class: "carte prio apparait" },
+        h("span", { class: "puce rouge" }, o.type_libelle), h("h3", {}, o.titre),
+        h("dl", {}, h("dt", {}, "Pourquoi maintenant"), h("dd", {}, o.pourquoi_maintenant || "—"),
+          h("dt", {}, "Ce qui manque"), h("dd", {}, o.manque.length ? o.manque.join(" · ") : "rien"),
+          h("dt", {}, "Action"), h("dd", {}, o.action), h("dt", {}, "Risque"), h("dd", {}, o.risques.length ? o.risques.join(" · ") : "aucun identifié"),
+          h("dt", {}, "Confiance"), h("dd", {}, CONF[o.confiance], " — ", o.confiance_raisons.join(", "))),
+        h("div", { class: "actions", style: "margin-top:10px" }, o.activable ? h("button", { class: "btn plein petit", onclick: () => activer(o.id) }, "Activer") : null,
+          o.activable ? h("button", { class: "btn discret petit", onclick: () => activer(o.id, "fr") }, "Activer · francophones seulement") : null,
+          h("button", { class: "btn discret petit", onclick: () => ecarter(o.id) }, "Écarter")))));
+      $("#intervention").replaceChildren(t.intervention ? h("div", { class: "encadre" }, h("b", {}, "Intervention minimale : "), t.intervention.phrase) : "");
+      $("#activations").replaceChildren(...t.activations.map((a) => h("tr", {}, h("td", {}, a.numero), h("td", {}, a.objectif), h("td", {}, h("span", { class: "puce" }, a.etat_libelle)),
+        h("td", {}, h("button", { class: "btn discret petit", onclick: () => detail(a.id) }, "Voir")))));
+      $("#toutes").replaceChildren(...t.toutes.map((o) => h("tr", {}, h("td", {}, o.type), h("td", {}, o.titre), h("td", {}, CONF[o.confiance]), h("td", {}, o.demandes_servies))));
+      const a = t.adhesions;
+      $("#adhesions").replaceChildren(h("p", { style: "margin-top:6px" }, `Source : ${a.source}${a.synthetique ? " (synthétique)" : ""}`),
+        h("p", {}, `${a.organisations} organisations · ${a.adhesions} adhésions (${a.cartes_entreprise} cartes entreprise) · ${a.personnes} personnes · ${a.comptes_actives} comptes activés`),
+        h("p", { class: "note" }, `Système d'adhésion du Club : ${a.api_club}`),
+        h("p", { class: "note" }, `Pistes écartées par les règles : ${Object.entries(t.ecartees).map(([k, v]) => `${k} (${v})`).join(" · ") || "aucune"}`));
+      $("#appels").replaceChildren(...(t.appels_ia.length ? t.appels_ia.slice().reverse().map((x) => h("p", { style: "margin:4px 0" },
+        h("b", {}, x.tache), ` · ${x.fournisseur}${x.modele ? " · " + x.modele : ""}${x.prompt ? " · " + x.prompt : ""} · ${x.statut}${x.repli ? " (repli)" : ""} · ${x.latence_ms} ms`))
+        : [h("p", { class: "note" }, "Aucun appel pour l'instant.")]));
+    }
+    async function activer(id, langue = null) {
+      try { const r = await api(`/api/pulse/console/opportunites/${id}/activer`, { corps: { anonyme: false, langue } }); toast(langue ? "Plan recalculé : francophones seulement." : "Activation lancée.");
+        await charger(); detail(r.activation); rafraichirTel(); } catch (e) { toast(e.message, "erreur"); }
+    }
+    async function ecarter(id) { try { await api(`/api/pulse/console/opportunites/${id}/ecarter`, { corps: {} }); await charger(); } catch (e) { toast(e.message, "erreur"); } }
+    async function detail(aid) {
+      const a = await api(`/api/pulse/console/activations/${aid}`);
+      const act = (x, l) => h("button", { class: "btn discret petit", onclick: async () => { try { await api(`/api/pulse/console/activations/${aid}/${x}`, { corps: {} }); await charger(); detail(aid); rafraichirTel(); } catch (e) { toast(e.message, "erreur"); } } }, l);
+      $("#detail").replaceChildren(h("div", { class: "carte apparait" }, h("span", { class: "surtitre" }, `Activation n°${a.numero} · ${a.type}`),
+        h("h3", { style: "margin:6px 0" }, a.objectif), h("span", { class: "puce" }, a.etat_libelle),
+        h("div", { class: "actions", style: "margin-top:10px" }, a.etat === "PLANIFIEE" ? act("lancer", "Lancer") : null, act("pause", "Pause"), act("reprendre", "Reprendre"), act("annuler", "Annuler")),
+        h("table", { style: "margin-top:10px" }, h("thead", {}, h("tr", {}, h("th", {}, "étape"), h("th", {}, "qui"), h("th", {}, "statut"), h("th", {}, "réserve"))),
+          h("tbody", {}, a.etapes.map((e) => h("tr", {}, h("td", {}, e.etape, e.question ? h("p", { class: "note" }, e.question) : null), h("td", {}, e.qui || "—"), h("td", {}, e.statut), h("td", {}, e.reserve ?? ""))))),
+        h("div", { class: "bloc" }, h("span", { class: "surtitre" }, "Journal des agents (déterministes)"),
+          h("ol", { class: "chrono journal" }, a.chronologie.map((c) => h("li", { class: ["BLOQUEE", "ALTERNATIVE_PROPOSEE"].includes(c.etat) ? "fort" : c.etat.startsWith("RESULTAT_CONF") ? "ok" : "" },
+            h("div", {}, h("b", {}, c.agent), ` → ${c.libelle}`, h("span", { class: "note" }, ` · ${c.le}`), h("p", { class: "note" }, c.raison)))))),
+        h("p", { class: "note" }, "Vue du Club : qui a décliné n'est jamais affiché, même ici.")));
+    }
+    async function etatDemo(r) {
+      const e = r || await api("/api/pulse/etat");
+      const der = e.traces[e.traces.length - 1];
+      $("#legende").textContent = der ? der.legende : "Monde réinitialisé : Sophie vient d'être invitée ; le Club compte 150 membres fictifs.";
+      $("#etape").textContent = `Étape ${e.etape}/${e.total}${der ? " · " + der.acte + (der.joue ? " · geste humain JOUÉ par la présentation" : " · calcul du système") : ""}`;
+      $("#suivant").disabled = occupe || e.etape >= e.total;      // jamais réactivé pendant une opération en cours
+      if (der && der.ecran && der.ecran.app) choisir(der.ecran.app, der.ecran.vue, der.ecran.cible);
+    }
+    async function chargerPersonas() {
+      personas = await api("/api/pulse/console/personas");
+      $("#personas").replaceChildren(...personas.map((p) => h("button", { class: "btn discret petit", "aria-pressed": persona === p.id ? "true" : "false", onclick: () => choisir(p.id) },
+        p.nom.split(" ")[0], p.capacite ? h("span", { class: "note" }, ` · ${p.capacite}`) : null)));
+    }
+    async function choisir(id, vue = "pouls", cible = null) {
+      await chargerPersonas();
+      const p = personas.find((x) => x.id === id);
+      persona = id;
+      [...$("#personas").children].forEach((b, i) => b.setAttribute("aria-pressed", personas[i].id === id ? "true" : "false"));
+      const ancre = { pouls: "#pouls", profil: "#profil", memoire: "#memoire", demandes: "#activations", activation: cible ? `#act/${cible}` : "#activations",
+        opportunite: cible ? `#opp/${cible}` : "#pouls" }[vue] || "#pouls";
+      $("#tel").src = p.session ? `/app?session=${encodeURIComponent(p.session)}&t=${Date.now()}${ancre}` : `/app?code=${p.code}#acces`;
+    }
+    let total = 10, etapeCourante = 0;
+    async function pas(chemin) {
+      if (occupe) return; occupe = true;
+      const boutons = ["#suivant", "#reinit", "#tout"].map((s) => $(s));
+      boutons.forEach((b) => { b.disabled = true; });                 // occupé : visible, et aucun clic perdu en silence
+      try { const r = await api(chemin, { corps: {} }); etapeCourante = r.etape; total = r.total; await etatDemo(r);
+        await charger(chemin.includes("suivant") && r.derniere && r.derniere.ecran && r.derniere.ecran.console === "scan"); }
+      catch (e) { toast(e.message, "erreur"); }
+      finally { occupe = false; boutons.forEach((b) => { b.disabled = false; }); $("#suivant").disabled = etapeCourante >= total; }
+    }
+    $("#scan").addEventListener("click", () => charger(true).catch((e) => toast(e.message, "erreur")));
+    document.querySelectorAll("[data-temps]").forEach((b) => b.addEventListener("click", async () => {
+      try { const r = await api("/api/pulse/console/temps", { corps: { jours: Number(b.dataset.temps) } }); toast(`Date simulée : ${r.date} · ${r.echeances.length} échéance(s) traitée(s)`); await charger(); rafraichirTel(); }
+      catch (e) { toast(e.message, "erreur"); } }));
+    $("#suivant").addEventListener("click", () => pas("/api/pulse/demo/suivant"));
+    $("#reinit").addEventListener("click", () => pas("/api/pulse/demo/reinitialiser").then(() => choisir("n01")));
+    $("#tout").addEventListener("click", () => pas("/api/pulse/demo/aller/10"));
+    $("#jury-go").addEventListener("click", async () => {
+      const p = personas.find((x) => x.id === persona);
+      if (!p || !p.session) { toast("Incarnez d'abord un membre dont le compte est activé.", "erreur"); return; }
+      try { const r = await api("/api/pulse/moi/demandes", { corps: { texte: $("#jury").value }, session: p.session });
+        $("#jury-res").replaceChildren(h("div", { class: "bloc" }, h("span", { class: "surtitre" }, "Compris"),
+          h("ul", {}, r.compris.map((c) => h("li", {}, c.libelle, c.extrait ? h("span", { class: "note" }, ` ← « ${c.extrait} »`) : ""))),
+          r.incertain.length ? h("p", { class: "encadre" }, r.incertain.join(" · ")) : null,
+          r.opportunites.map((o) => h("p", { style: "margin-top:6px" }, h("span", { class: "puce rouge" }, o.type_libelle), " ", o.titre)),
+          r.sans_solution.map((b) => h("div", { class: "encadre", style: "margin-top:6px" }, h("b", {}, "Aucune activation vérifiée : "), b.pourquoi, h("p", { class: "note" }, b.prochaine_action))),
+          !r.opportunites.length && !r.sans_solution.length ? h("p", { class: "note" }, "Rien à proposer : précisez.") : null));
+        await charger(); rafraichirTel();
+      } catch (e) { toast(e.message, "erreur"); }
+    });
+    etatDemo().then(() => charger()).then(() => { if (!persona) choisir("n01"); }).catch((e) => toast(e.message, "erreur"));
+  </script>
+</body>
+</html>

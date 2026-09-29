@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#121212">
+  <title>Club Pulse</title>
+  <meta name="description" content="Club Pulse — le Club des Affaires, vivant sur votre téléphone : ce que votre réseau peut faire maintenant.">
+  <link rel="manifest" href="/app/manifest.webmanifest">
+  <link rel="icon" href="/static/pulse/icone.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/pulse/icone.svg">
+  <link rel="stylesheet" href="/static/pulse/pulse.css">
+  <style>
+    body { background: var(--papier); }
+    .app { max-width: 560px; margin: 0 auto; min-height: 100vh; padding: 0 16px calc(96px + env(safe-area-inset-bottom)); }
+    header.haut { position: sticky; top: 0; z-index: 5; background: var(--papier); display: flex; align-items: center; gap: 10px;
+      padding: calc(12px + env(safe-area-inset-top)) 0 12px; border-bottom: 1px solid var(--ligne); }
+    header.haut .qui { margin-left: auto; font-size: 13px; color: var(--encre-2); text-align: right; }
+    main { padding-top: 18px; }
+    .grand { font-size: clamp(26px, 7vw, 34px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; }
+    .item, .carte.cliquable.item { display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: start; }
+    .item .ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 19px; background: var(--surface-2); border: 1px solid var(--ligne); }
+    .item.opportunite .ic { background: var(--rouge-pale); border-color: transparent; }
+    .item h3 { font-size: 16px; }
+    .item p { font-size: 14px; color: var(--encre-2); margin-top: 3px; }
+    nav.onglets { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--ligne); z-index: 6;
+      display: grid; grid-template-columns: repeat(5, 1fr); padding-bottom: env(safe-area-inset-bottom); }
+    nav.onglets a { text-decoration: none; font-size: 11px; font-weight: 600; color: var(--encre-3); display: grid; justify-items: center; gap: 2px; padding: 9px 2px 10px; min-height: 56px; }
+    nav.onglets a span { font-size: 19px; line-height: 1; }
+    nav.onglets a[aria-current="page"] { color: var(--encre); }
+    nav.onglets a[aria-current="page"] span { filter: none; }
+    .rapide { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+    .rapide button { text-align: left; }
+    .graphe svg { width: 100%; height: auto; display: block; }
+    .graphe .l-avant { stroke: var(--ligne-forte); stroke-width: 2; }
+    .graphe .l-nouveau { stroke: var(--rouge); stroke-width: 3.5; }
+    .graphe circle { fill: var(--surface); stroke: var(--encre-2); stroke-width: 2; }
+    .graphe circle.benef { fill: var(--rouge); stroke: var(--rouge); }
+    .graphe text { font-size: 12px; fill: var(--encre); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; }
+    @media (max-width: 380px) { .faits { grid-template-columns: 1fr 1fr; } .rapide { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="haut">
+      <span class="marque"><span class="pouls-point" aria-hidden="true"></span>Club Pulse</span>
+      <span class="puce fictif" title="Monde de démonstration : personnes, entreprises et dates inventées">fictif</span>
+      <span class="qui" id="qui"></span>
+    </header>
+    <main id="ecran" aria-live="polite"></main>
+  </div>
+  <nav class="onglets" id="onglets" aria-label="Navigation" hidden>
+    <a href="#pouls" data-o="pouls"><span aria-hidden="true">◉</span>Pouls</a>
+    <a href="#activations" data-o="activations"><span aria-hidden="true">⇄</span>Activations</a>
+    <a href="#evenements" data-o="evenements"><span aria-hidden="true">▦</span>Événements</a>
+    <a href="#memoire" data-o="memoire"><span aria-hidden="true">◈</span>Mémoire</a>
+    <a href="#profil" data-o="profil"><span aria-hidden="true">◐</span>Profil</a>
+  </nav>
+  <div id="toasts" aria-live="assertive"></div>
+  <script type="module">
+    const $ = (s, r = document) => r.querySelector(s);
+    function h(tag, attrs = {}, ...enfants) {
+      const el = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs || {})) {
+        if (v === null || v === undefined || v === false) continue;
+        if (k === "class") el.className = v; else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+        else if (k === "value") el.value = v; else el.setAttribute(k, v === true ? "" : v);
+      }
+      for (const e of enfants.flat(Infinity)) if (e !== null && e !== undefined && e !== false) el.append(e instanceof Node ? e : document.createTextNode(String(e)));
+      return el;
+    }
+    const lire = (k) => { try { return sessionStorage.getItem(k); } catch { return null; } };
+    const ecrire = (k, v) => { try { v === null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch { /* stockage indisponible */ } };
+    const params = new URLSearchParams(location.search);
+    let session = params.get("session") || lire("pulse-session");
+    if (params.get("session")) ecrire("pulse-session", session);
+    function toast(msg, genre = "") { const t = h("div", { class: "toast " + genre }, msg); $("#toasts").append(t); setTimeout(() => t.remove(), 3800); }
+    async function api(chemin, { methode, corps } = {}) {
+      const o = { method: methode || (corps === undefined ? "GET" : "POST"), headers: {} };
+      if (session) o.headers["X-Pulse-Session"] = session;
+      if (corps !== undefined) { o.headers["Content-Type"] = "application/json"; o.body = JSON.stringify(corps); }
+      let r;
+      try { r = await fetch(chemin, o); } catch { throw new Error("Hors ligne : Club Pulse a besoin du réseau pour cette action."); }
+      const d = await r.json().catch(() => ({}));
+      if (r.status === 401) { ecrire("pulse-session", null); session = null; location.hash = "#acces"; }
+      if (!r.ok) throw new Error(typeof d.detail === "string" ? d.detail : "Données invalides.");
+      return d;
+    }
+    const ICONES = { opportunite: "⚡", contribution: "🤝", accord: "🤝", activation: "⇄", evenement: "📅", memoire: "🧠" };
+    const CONF = { elevee: "élevée", moyenne: "moyenne", faible: "faible" };
+    const iaLabel = (ia) => ia && ia.fournisseur === "apertus" && !ia.repli ? `Apertus · ${ia.modele || ""}` : "règles locales (aucun modèle génératif)";
+    const section = (titre, ...enfants) => h("div", { class: "bloc" }, h("span", { class: "surtitre" }, titre), ...enfants);
+    const afficher = (...enfants) => $("#ecran").replaceChildren(...enfants.flat().filter(Boolean));
+
+    // ------------------------------------------------------------------ accès (QR → code) et accueil
+    function ecranAcces() {
+      $("#onglets").hidden = true;
+      const code = h("input", { id: "code", inputmode: "text", autocomplete: "one-time-code", maxlength: 12, value: params.get("code") || "" });
+      afficher(h("p", { class: "surtitre" }, "Club des Affaires"),
+        h("h1", { class: "grand" }, "Activez votre compte du Club"),
+        h("p", { class: "note", style: "margin-top:8px" }, "Vous êtes déjà membre : pas d'inscription. Le code figure sur l'invitation du Club (QR)."),
+        h("div", { class: "champ" }, h("label", { for: "code" }, "Code d'invitation"), code),
+        h("div", { class: "actions", style: "margin-top:14px" }, h("button", { class: "btn plein", onclick: async () => {
+          try { const r = await api("/api/pulse/acces", { corps: { code: code.value.trim() } }); session = r.session; ecrire("pulse-session", session);
+            location.hash = r.profil_complet ? "#pouls" : "#accueil"; } catch (e) { toast(e.message, "erreur"); } } }, "Continuer")),
+        h("p", { class: "note", style: "margin-top:18px" }, "Démonstration : membres fictifs ; les codes de démo sont dans la console du Club."));
+    }
+    async function ecranAccueil() {
+      $("#onglets").hidden = true;
+      const p = await api("/api/pulse/moi/profil");
+      const choisis = { aide: [], cherche: [] };
+      const zone = (sens, titre, ex) => {
+        const ta = h("textarea", { rows: 2, placeholder: ex, id: "t-" + sens });
+        const props = h("div", { class: "choix" });
+        return h("div", { class: "bloc" }, h("span", { class: "surtitre" }, titre),
+          h("div", { class: "champ" }, h("label", { for: "t-" + sens }, "En une phrase"), ta),
+          h("button", { class: "btn discret petit", style: "margin-top:8px", onclick: async () => {
+            try { const r = await api("/api/pulse/moi/profil/proposer", { corps: { texte: ta.value, sens } });
+              props.replaceChildren(h("p", { class: "note", style: "width:100%" }, "Choisissez ce qui est juste (vous pouvez corriger) :"),
+                ...r.map((x) => h("button", { "aria-pressed": "false", onclick: (ev) => {
+                  [...props.querySelectorAll("button")].forEach((b) => b.setAttribute("aria-pressed", "false"));
+                  ev.currentTarget.setAttribute("aria-pressed", "true"); choisis[sens] = [{ texte: x.texte, concept: x.concept }]; } }, x.libelle)));
+            } catch (e) { toast(e.message, "erreur"); } } }, "Proposer"), props);
+      };
+      const visible = h("input", { type: "checkbox", id: "visible" });
+      afficher(h("p", { class: "surtitre" }, "Bienvenue"), h("h1", { class: "grand" }, `Bonjour ${(p.nom || "").split(" ")[0]}`),
+        h("div", { class: "carte", style: "margin-top:14px" }, h("span", { class: "surtitre" }, "1 · Identité (importée de votre adhésion)"),
+          h("p", {}, h("b", {}, p.nom), " · ", p.organisation), h("p", { class: "note" }, `Adhésion ${p.adhesion} · rôle : ${p.role}`)),
+        zone("aide", "2 · Je peux aider avec…", "ex. tisanes de plantes alpines bio"),
+        zone("cherche", "3 · Je cherche en ce moment…", "ex. faire valider nos étiquettes pour l'Allemagne"),
+        h("div", { class: "bloc" }, h("span", { class: "surtitre" }, "4 · Visibilité"),
+          h("label", { class: "bascule", for: "visible" }, visible, h("span", {}, "Le Club peut me solliciter en privé quand ma capacité est utile. ",
+            h("span", { class: "note" }, "Mon nom reste caché jusqu'à mon accord ; mes notes restent privées.")))),
+        h("div", { class: "actions", style: "margin-top:18px" }, h("button", { class: "btn plein", onclick: async () => {
+          try { await api("/api/pulse/moi/accueil", { corps: { aide: choisis.aide, cherche: choisis.cherche, visible: visible.checked } }); location.hash = "#pouls"; }
+          catch (e) { toast(e.message, "erreur"); } } }, "Terminer")));
+    }
+
+    // ------------------------------------------------------------------ pouls
+    async function ecranPouls() {
+      const p = await api("/api/pulse/moi/pouls");
+      $("#qui").textContent = `${p.bonjour} · ${p.date}`;
+      const demande = h("textarea", { rows: 2, placeholder: "Décrivez ce dont vous avez besoin…", id: "demande" });
+      afficher(h("p", { class: "surtitre" }, `Bonjour ${p.bonjour}`),
+        h("h1", { class: "grand" }, "Ce que votre réseau peut faire maintenant"),
+        h("p", { class: "note", style: "margin-top:6px" }, p.items.length ? `${p.items.length} chose(s) à regarder` : "Rien de nouveau : le Club se tait quand il n'a rien d'utile à dire."),
+        h("div", { style: "margin-top:14px" }, p.items.map((x) => h("button", { class: `carte cliquable item ${x.type} apparait`, onclick: () => ouvrir(x) },
+          h("div", { class: "ic", "aria-hidden": "true" }, ICONES[x.type] || "•"),
+          h("div", {}, x.etiquette ? h("span", { class: "puce rouge" }, x.etiquette) : null, h("h3", { style: "margin-top:4px" }, x.titre), h("p", {}, x.detail))))),
+        h("div", { class: "bloc" }, h("span", { class: "surtitre" }, "Demander au Club"),
+          h("div", { class: "champ" }, h("label", { for: "demande", class: "sr" }, "Votre demande"), demande),
+          h("div", { class: "actions", style: "margin-top:8px" }, h("button", { class: "btn plein petit", onclick: async () => {
+            try { const r = await api("/api/pulse/moi/demandes", { corps: { texte: demande.value } }); montrerDemande(r); } catch (e) { toast(e.message, "erreur"); } } }, "Que peut faire le Club ?"),
+            h("a", { class: "btn discret petit", href: "#memoire" }, "Noter une rencontre"))),
+        h("div", { id: "resultat-demande" }),
+        h("p", { class: "ia", style: "margin-top:18px" }, "Compréhension du langage : ", p.ia.configure ? `Apertus configuré (${p.ia.modele})` : "règles locales — Apertus non configuré sur ce serveur"));
+    }
+    function ouvrir(x) {
+      if (x.type === "opportunite") location.hash = `#opp/${x.cible}`;
+      else if (x.type === "contribution" || x.type === "accord") location.hash = `#demande/${x.cible}`;
+      else if (x.type === "activation") location.hash = `#act/${x.cible}`;
+      else if (x.type === "evenement") location.hash = "#evenements";
+      else location.hash = "#memoire";
+    }
+    function montrerDemande(r) {
+      $("#resultat-demande").replaceChildren(h("div", { class: "carte apparait", style: "margin-top:12px" },
+        h("span", { class: "surtitre" }, "Compris"), h("ul", {}, r.compris.map((c) => h("li", {}, c.libelle, c.extrait ? h("span", { class: "note" }, ` ← « ${c.extrait} »`) : ""))),
+        r.incertain.length ? h("p", { class: "encadre", style: "margin-top:8px" }, r.incertain.join(" · ")) : null,
+        r.opportunites.map((o) => h("button", { class: "carte cliquable", style: "margin-top:10px", onclick: () => { location.hash = `#opp/${o.id}`; } },
+          h("span", { class: "puce rouge" }, o.type_libelle), h("h3", { style: "margin-top:6px" }, o.titre), h("p", { class: "note" }, o.action))),
+        r.sans_solution.map((b) => h("div", { class: "encadre", style: "margin-top:10px" }, h("b", {}, "Pas de solution vérifiée dans le Club · ", b.capacite),
+          h("p", {}, b.pourquoi), h("p", { class: "note" }, "Prochaine action : ", b.prochaine_action))),
+        !r.opportunites.length && !r.sans_solution.length ? h("p", { class: "note" }, "Rien à proposer pour l'instant : précisez votre demande.") : null,
+        h("p", { class: "ia", style: "margin-top:8px" }, "Compréhension : ", iaLabel(r.ia), r.ia.repli ? " (repli après indisponibilité)" : "")));
+    }
+
+    // ------------------------------------------------------------------ opportunité
+    async function ecranOpportunite(id) {
+      const o = await api(`/api/pulse/moi/opportunites/${id}`);
+      const expl = h("div", { class: "carte", style: "margin-top:12px" }, h("span", { class: "surtitre" }, "En clair"), h("p", { class: "note" }, "…"));
+      afficher(h("p", { class: "surtitre" }, "Opportunité détectée"), h("span", { class: "puce rouge" }, o.type_libelle),
+        h("h1", { class: "grand", style: "margin-top:8px" }, o.titre),
+        h("div", { class: "faits" }, h("div", { class: "fait" }, h("b", {}, CONF[o.confiance]), h("span", {}, "confiance")),
+          h("div", { class: "fait" }, h("b", {}, o.personnes_a_solliciter), h("span", {}, "personne(s) à solliciter")),
+          h("div", { class: "fait" }, h("b", {}, o.capacites.length), h("span", {}, "capacité(s)")),
+          h("div", { class: "fait" }, h("b", {}, o.manque.length), h("span", {}, "manque(s)"))),
+        section("Pourquoi maintenant", h("p", {}, o.pourquoi_maintenant)),
+        section("Pourquoi", h("ol", { class: "liste-num" }, o.pourquoi.map((x) => h("li", {}, x)))),
+        expl,
+        o.manque.length ? section("Ce qui manque", h("p", { class: "encadre" }, o.manque.join(" · "))) : null,
+        o.risques.length ? section("Ce qui peut échouer", h("ul", {}, o.risques.map((x) => h("li", {}, x)))) : null,
+        section("Prochaine action", h("p", {}, o.action)),
+        section("Ce qui sera partagé", h("p", { class: "note" }, o.partage)),
+        o.activable ? h("div", { class: "actions", style: "margin-top:18px" },
+          h("button", { class: "btn rouge", onclick: () => activer(id, false) }, "Activer"),
+          h("button", { class: "btn discret", onclick: () => activer(id, true) }, "Activer sans révéler mon nom"),
+          h("a", { class: "btn discret", href: "#pouls" }, "Pas maintenant")) : h("p", { class: "encadre", style: "margin-top:14px" }, "Signalé à l'animatrice du Club."));
+      try { const x = await api(`/api/pulse/moi/opportunites/${id}/pourquoi`);
+        if (x.ia.fournisseur !== "apertus" || x.ia.repli) { expl.replaceChildren(h("p", { class: "ia" }, "Explication : ", x.source, " — le « pourquoi » ci-dessus vient directement des règles.")); expl.className = "bloc"; return; }
+        expl.replaceChildren(h("span", { class: "surtitre" }, "En clair"), h("p", {}, x.texte), h("p", { class: "ia", style: "margin-top:6px" }, "Source : ", x.source)); }
+      catch { expl.remove(); }
+    }
+    async function activer(id, anonyme) {
+      try { const r = await api(`/api/pulse/moi/opportunites/${id}/activer`, { corps: { anonyme } }); location.hash = `#act/${r.activation}`; }
+      catch (e) { toast(e.message, "erreur"); }
+    }
+
+    // ------------------------------------------------------------------ sollicitation reçue
+    async function ecranDemande(aid) {
+      const liste = await api("/api/pulse/moi/sollicitations");
+      const d = liste.find((x) => x.activation === aid);
+      if (!d) { location.hash = `#act/${aid}`; return; }
+      afficher(h("p", { class: "surtitre" }, d.pour_vous ? "Pour vous" : "Demande privée"), h("h1", { class: "grand" }, d.titre),
+        d.pourquoi_vous ? section("Pourquoi vous", h("p", {}, d.pourquoi_vous)) : null,
+        d.qui_demande ? section("Qui demande", h("p", {}, d.qui_demande)) : null,
+        section("Ce qui est demandé", h("ul", {}, d.votre_part.map((x) => h("li", {}, h("b", {}, x.libelle), " — ", x.demande)))),
+        d.ce_qui_serait_fait ? section("Ce que le Club ferait", h("ul", {}, d.ce_qui_serait_fait.map((x) => h("li", {}, x)))) : null,
+        d.message ? h("div", { class: "carte", style: "margin-top:14px" }, h("p", {}, d.message.texte), h("p", { class: "ia", style: "margin-top:6px" }, "Rédaction : ", iaLabel(d.message.ia))) : null,
+        section("Visibilité", h("p", { class: "note" }, d.visibilite)),
+        h("div", { class: "actions", style: "margin-top:18px" },
+          h("button", { class: "btn plein", onclick: () => repondre(aid, true) }, "Accepter"),
+          h("button", { class: "btn discret", onclick: () => repondre(aid, false) }, "Décliner")));
+    }
+    async function repondre(aid, accepte) {
+      try { await api(`/api/pulse/moi/sollicitations/${aid}`, { corps: { accepte } }); toast(accepte ? "Merci : vous êtes engagé·e." : "C'est noté. Personne ne le saura.");
+        location.hash = accepte ? `#act/${aid}` : "#pouls"; } catch (e) { toast(e.message, "erreur"); }
+    }
+
+    // ------------------------------------------------------------------ activation
+    function graphe(ev) {
+      if (!ev) return null;
+      const W = 320, H = 190, n = ev.noeuds.length, P = {};
+      ev.noeuds.forEach((x, i) => { const a = -Math.PI / 2 + (2 * Math.PI * i) / n; P[x.cle] = [W / 2 + 110 * Math.cos(a), H / 2 + 70 * Math.sin(a)]; });
+      const ns = "http://www.w3.org/2000/svg", el = (t, a) => { const e = document.createElementNS(ns, t); for (const [k, v] of Object.entries(a)) e.setAttribute(k, v); return e; };
+      const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": ev.phrase });
+      ev.liens_avant.forEach(([a, b]) => svg.append(el("line", { x1: P[a][0], y1: P[a][1], x2: P[b][0], y2: P[b][1], class: "l-avant" })));
+      ev.liens_nouveaux.forEach(([a, b]) => svg.append(el("line", { x1: P[a][0], y1: P[a][1], x2: P[b][0], y2: P[b][1], class: "l-nouveau" })));
+      ev.noeuds.forEach((x) => { const [cx, cy] = P[x.cle]; svg.append(el("circle", { cx, cy, r: 9, class: x.beneficiaire ? "benef" : "" }));
+        const t = el("text", { x: cx, y: cy + 24, "text-anchor": "middle" }); t.textContent = x.nom.length > 26 ? x.nom.slice(0, 25) + "…" : x.nom; svg.append(t); });
+      return h("div", { class: "carte graphe", style: "margin-top:12px" }, h("span", { class: "surtitre" }, "Ce qui a changé dans le réseau"), svg,
+        h("p", { class: "note" }, ev.phrase, ` Relations actives : ${ev.relations_beneficiaire.avant} → ${ev.relations_beneficiaire.apres}. Réseau atteignable : ${ev.reseau_atteignable.avant} → ${ev.reseau_atteignable.apres} membres.`));
+    }
+    async function ecranActivation(aid) {
+      const a = await api(`/api/pulse/moi/activations/${aid}`);
+      const fin = ["RESULTAT_CONFIRME", "RESULTAT_PARTIEL"].includes(a.etat);
+      const pourquoi = h("input", { id: "pq", placeholder: "Pourquoi ? (facultatif)", maxlength: 300 });
+      const contrib = a.peut_contribuer ? formContribution(aid) : null;
+      afficher(h("p", { class: "surtitre" }, `Activation n°${a.numero}`), h("h1", { class: "grand" }, a.objectif),
+        h("p", { style: "margin-top:8px" }, h("span", { class: `puce ${fin ? "vert" : a.etat.includes("BLOQ") || a.etat.includes("ALTERN") ? "ambre" : ""}` }, a.etat_libelle),
+          a.anonyme ? h("span", { class: "puce", style: "margin-left:6px" }, "demande anonyme") : null),
+        section("Étapes", h("ul", { class: "etapes-act" }, a.etapes.map((e) => h("li", {}, h("span", {}, e.etape), h("span", { class: "note" }, e.statut))))),
+        a.contributions.length ? section("Contributions reçues", a.contributions.map((c) => h("div", { class: "carte" }, h("b", {}, c.titre), h("p", { class: "note" }, `${c.qui} · ${c.nature}`),
+          c.contenu ? h("p", { style: "white-space:pre-line;margin-top:6px;font-size:14px" }, c.contenu) : null))) : null,
+        a.contacts && a.contacts.length ? section("Contacts (après accord mutuel)", h("ul", {}, a.contacts.map((c) => h("li", {}, `${c.qui} — ${c.contact}`)))) : null,
+        contrib,
+        a.reutilisation ? h("div", { class: "actions", style: "margin-top:14px" }, h("button", { class: "btn plein", onclick: async () => {
+          try { await api(`/api/pulse/moi/activations/${aid}/reutiliser`, { corps: {} }); route(); } catch (e) { toast(e.message, "erreur"); } } }, "Recevoir la ressource vérifiée")) : null,
+        a.a_confirmer ? h("div", { class: "carte", style: "margin-top:14px" }, h("h3", {}, "Cela a-t-il débloqué votre prochaine étape ?"),
+          h("div", { class: "champ" }, h("label", { for: "pq", class: "sr" }, "Pourquoi"), pourquoi),
+          h("div", { class: "actions", style: "margin-top:10px" }, ...[["debloque", "Oui"], ["partiel", "Partiellement"], ["non", "Non"]].map(([v, l]) =>
+            h("button", { class: v === "debloque" ? "btn plein" : "btn discret", onclick: async () => {
+              try { await api(`/api/pulse/moi/activations/${aid}/confirmer`, { corps: { verdict: v, etape_suivante: v !== "non", pourquoi: pourquoi.value } }); route(); }
+              catch (e) { toast(e.message, "erreur"); } } }, l)))) : null,
+        fin ? h("div", { class: "encadre vert", style: "margin-top:14px" }, h("b", {}, a.resultat.statut), h("p", {}, "Confirmé par la personne aidée. Ce résultat rejoint la mémoire vérifiée du Club — anonymisée.")) : null,
+        graphe(a.evolution),
+        section("Chronologie", h("ol", { class: "chrono" }, a.chronologie.map((c) => h("li", { class: c.etat.startsWith("RESULTAT_CONF") ? "ok" : ["BLOQUEE", "ALTERNATIVE_PROPOSEE"].includes(c.etat) ? "fort" : "" },
+          h("div", {}, h("b", {}, c.libelle), h("span", { class: "note" }, ` · ${c.le} · ${c.agent}`), h("p", { class: "note" }, c.raison)))))));
+    }
+    function formContribution(aid) {
+      const nature = h("select", { id: "nature" }, ...["ressource", "conseil", "validation", "rencontre", "introduction", "document"].map((x) => h("option", { value: x }, x)));
+      const titre = h("input", { id: "titre", maxlength: 120 }), contenu = h("textarea", { id: "contenu", rows: 4 });
+      const club = h("input", { type: "checkbox", id: "club" }), nom = h("input", { type: "checkbox", id: "nom" });
+      return h("div", { class: "carte", style: "margin-top:14px" }, h("h3", {}, "Votre contribution"),
+        h("div", { class: "champ" }, h("label", { for: "nature" }, "Nature"), nature), h("div", { class: "champ" }, h("label", { for: "titre" }, "Titre"), titre),
+        h("div", { class: "champ" }, h("label", { for: "contenu" }, "Contenu"), contenu),
+        h("label", { class: "bascule", for: "club" }, club, h("span", {}, "Réutilisable par d'autres membres si l'effet est confirmé")),
+        h("label", { class: "bascule", for: "nom" }, nom, h("span", {}, "Avec mon nom")),
+        h("div", { class: "actions", style: "margin-top:12px" }, h("button", { class: "btn plein", onclick: async () => {
+          try { await api(`/api/pulse/moi/activations/${aid}/contribuer`, { corps: { nature: nature.value, titre: titre.value, contenu: contenu.value, reutilisable: club.checked, attribution: nom.checked } });
+            toast("Contribution envoyée."); route(); } catch (e) { toast(e.message, "erreur"); } } }, "Envoyer")));
+    }
+    async function ecranActivations() {
+      const [dem, acts] = await Promise.all([api("/api/pulse/moi/sollicitations"), api("/api/pulse/moi/activations")]);
+      afficher(h("h1", { class: "grand" }, "Activations"),
+        section("Demandes pour vous", dem.length ? dem.map((d) => h("button", { class: "carte cliquable", onclick: () => { location.hash = `#demande/${d.activation}`; } }, h("h3", {}, d.titre), h("p", { class: "note" }, d.pourquoi_vous || "")))
+          : h("p", { class: "note" }, "Aucune demande en attente.")),
+        section("En cours et terminées", acts.length ? acts.map((a) => h("button", { class: "carte cliquable", onclick: () => { location.hash = `#act/${a.id}`; } },
+          h("span", { class: "puce" }, a.etat_libelle), h("h3", { style: "margin-top:6px" }, a.objectif))) : h("p", { class: "note" }, "Aucune activation.")));
+    }
+
+    // ------------------------------------------------------------------ événements, mémoire, profil
+    async function ecranEvenements() {
+      const evs = await api("/api/pulse/moi/evenements");
+      afficher(h("h1", { class: "grand" }, "Événements"), evs.map((e) => h("div", { class: "carte", style: "margin-top:12px" },
+        h("span", { class: "puce" }, e.inscrit ? "inscrit·e" : "non inscrit·e"), h("h3", { style: "margin-top:6px" }, e.nom), h("p", { class: "note" }, `${e.le} · dans ${e.dans_jours} jours`),
+        e.inscrit ? [section("Avant", e.avant.length ? e.avant.map((o) => h("button", { class: "btn discret petit", onclick: () => { location.hash = `#opp/${o.id}`; } }, o.titre)) : h("p", { class: "note" }, "Rien à préparer.")),
+          section("Pendant", h("p", { class: "note" }, e.pendant), h("a", { class: "btn discret petit", href: "#memoire" }, "Noter une rencontre")), section("Après", h("p", { class: "note" }, e.apres))] : null)));
+    }
+    async function ecranMemoire() {
+      const [notes, club] = await Promise.all([api("/api/pulse/moi/notes"), api("/api/pulse/memoire")]);
+      const t = h("textarea", { rows: 4, id: "note", placeholder: "Qui avez-vous rencontré ? Que cherche cette personne ? Que cherchez-vous ? (la dictée de votre clavier fonctionne)" });
+      afficher(h("h1", { class: "grand" }, "Mémoire"),
+        h("div", { class: "carte", style: "margin-top:14px" }, h("span", { class: "surtitre" }, "Noter une rencontre · privé"),
+          h("div", { class: "champ" }, h("label", { for: "note", class: "sr" }, "Note"), t),
+          h("div", { class: "actions", style: "margin-top:8px" }, h("button", { class: "btn plein petit", onclick: async () => {
+            try { await api("/api/pulse/moi/notes", { corps: { texte: t.value } }); route(); } catch (e) { toast(e.message, "erreur"); } } }, "Garder cette note"))),
+        section("Mes notes privées", notes.length ? notes.slice().reverse().map((n) => h("div", { class: "carte" },
+          h("p", { class: "note" }, `${n.le}${n.avec_nom ? " · avec " + n.avec_nom : ""} · visible par vous seul·e`), h("p", { style: "margin-top:4px" }, n.texte),
+          n.capture.incertitudes.length ? h("p", { class: "encadre", style: "margin-top:8px;font-size:14px" }, n.capture.incertitudes.join(" · ")) : null,
+          n.propositions.map((p, i) => h("div", { class: "actions", style: "margin-top:8px" }, n.partagee.includes(i) ? h("span", { class: "puce vert" }, "partagé : " + p.libelle)
+            : h("button", { class: "btn discret petit", onclick: async () => { try { await api(`/api/pulse/moi/notes/${n.id}/partager/${i}`, { corps: {} }); toast("Ajouté à votre profil."); route(); } catch (e) { toast(e.message, "erreur"); } } }, p.libelle))),
+          h("p", { class: "ia", style: "margin-top:6px" }, "Extraction : ", iaLabel(n.ia)))) : h("p", { class: "note" }, "Aucune note.")),
+        section("Mémoire vérifiée du Club", club.length ? club.map((m) => h("div", { class: "carte" }, h("span", { class: "puce vert" }, m.resultat === "debloque" ? "débloqué" : "partiel"),
+          h("h3", { style: "margin-top:6px" }, m.capacites.join(" + ")), h("p", { class: "note" }, `${m.confirmations} confirmation(s) · il y a ${m.age_jours} jours${m.secteur ? " · secteur : " + m.secteur : ""} · ${m.statut === "SYNTHETIQUE" ? "historique synthétique" : "démonstration"}`),
+          m.ressources.map((r) => h("p", { style: "margin-top:6px" }, h("a", { href: r.telecharger, download: "" }, r.titre), h("span", { class: "note" }, ` · ${r.auteur}`))),
+          h("p", { class: "note", style: "margin-top:4px" }, m.visibilite))) : h("p", { class: "note" }, "Encore vide.")));
+    }
+    async function ecranProfil() {
+      const p = await api("/api/pulse/moi/profil");
+      const ajout = h("input", { id: "ajout", placeholder: "Ajouter à « je cherche »", maxlength: 200 });
+      const maj = async (corps) => { try { await api("/api/pulse/moi/profil", { methode: "PATCH", corps }); route(); } catch (e) { toast(e.message, "erreur"); } };
+      afficher(h("h1", { class: "grand" }, p.nom), h("p", { class: "note", style: "margin-top:4px" }, `${p.organisation} · adhésion ${p.adhesion}`),
+        section("Je peux aider avec", p.je_peux_aider.length ? p.je_peux_aider.map((x) => h("div", { class: "carte" }, h("b", {}, x.libelle), h("p", { class: "note" }, x.texte),
+          x.concept ? h("button", { class: "btn discret petit", style: "margin-top:8px", onclick: () => maj({ retirer_capacite: x.concept }) }, "Retirer cette capacité") : null)) : h("p", { class: "note" }, "Rien pour l'instant.")),
+        section("Je cherche", p.je_cherche.map((x) => h("p", {}, "· ", x.texte, h("span", { class: "note" }, ` (${x.libelle})`))),
+          h("div", { class: "champ" }, h("label", { for: "ajout", class: "sr" }, "Ajouter"), ajout), h("button", { class: "btn discret petit", style: "margin-top:8px", onclick: () => maj({ ajouter_recherche: ajout.value }) }, "Ajouter")),
+        section("Disponibilité et visibilité",
+          h("label", { class: "bascule" }, h("input", { type: "checkbox", checked: p.disponible, onchange: (e) => maj({ disponible: e.target.checked }) }), h("span", {}, "Disponible pour des demandes")),
+          h("label", { class: "bascule" }, h("input", { type: "checkbox", checked: p.sollicitable, onchange: (e) => maj({ sollicitable: e.target.checked }) }), h("span", {}, "Le Club peut me solliciter en privé")),
+          h("label", { class: "bascule" }, h("input", { type: "checkbox", checked: p.visibilite.nom === "PUBLIC", onchange: (e) => maj({ visibilite: { nom: e.target.checked ? "PUBLIC" : "SUR_CONSENTEMENT" } }) }),
+            h("span", {}, "Mon nom est visible de tous les membres ", h("span", { class: "note" }, "(sinon : seulement après mon accord)")))),
+        section("Langues", h("p", {}, p.langues.join(" · "))), h("p", { class: "note", style: "margin-top:14px" }, p.note),
+        h("div", { class: "actions", style: "margin-top:18px" }, h("button", { class: "btn discret petit", onclick: () => { ecrire("pulse-session", null); session = null; location.hash = "#acces"; } }, "Se déconnecter")));
+    }
+
+    // ------------------------------------------------------------------ routeur
+    async function route() {
+      const [nom, id] = (location.hash.slice(1) || "pouls").split("/");
+      if (!session && nom !== "acces") { location.hash = "#acces"; return; }
+      $("#onglets").hidden = nom === "acces" || nom === "accueil";
+      document.querySelectorAll("#onglets a").forEach((a) => a.setAttribute("aria-current", a.dataset.o === nom ? "page" : "false"));
+      try {
+        ({ acces: ecranAcces, accueil: ecranAccueil, pouls: ecranPouls, opp: () => ecranOpportunite(id), demande: () => ecranDemande(id), act: () => ecranActivation(id),
+          activations: ecranActivations, evenements: ecranEvenements, memoire: ecranMemoire, profil: ecranProfil }[nom] || ecranPouls)();
+      } catch (e) { toast(e.message, "erreur"); }
+      window.scrollTo(0, 0);
+    }
+    window.addEventListener("hashchange", route);
+    window.addEventListener("message", (ev) => { if (ev.origin === location.origin && ev.data === "rafraichir") route(); });
+    if (params.get("code") && !session) location.hash = "#acces";
+    route();
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/app/sw.js", { scope: "/app" }).catch(() => {});
+  </script>
+</body>
+</html>
