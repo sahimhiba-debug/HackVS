@@ -83,7 +83,9 @@ Format : **Q** · **Réponse** · *Preuve* · Limite · Relance possible. Règle
 31. **Q : Comment évitez-vous les bulles ?** — L'optimiseur valorise les ponts entre communautés ; « ami d'ami » et
     « similarité » enferment (mesuré, SYNTHÉTIQUE).
 32. **Q : Ne favorisez-vous pas les membres populaires ?** — Un budget par membre limite la sollicitation ; notre
-    benchmark ne discrimine pas ce biais (toutes les méthodes sont à égalité) : nous ne revendiquons rien.
+    benchmark de soirée ne discrimine pas ce biais. Depuis : budget d'attention (3 relances par membre et par jour, le reste
+    reporté) testé sur un cas construit ; et sur le benchmark d'intervention, la méthode « relier les plus connectés » garde
+    un léger avantage sur la taille du plus grand groupe : nous ne revendiquons rien de plus.
 33. **Q : Que se passe-t-il si l'utilisateur refuse ?** — Le refus est un fait enregistré ; la relance n'est jamais
     reproposée ; aucune pénalité. *test_relance_refusee_n_insiste_pas.*
 

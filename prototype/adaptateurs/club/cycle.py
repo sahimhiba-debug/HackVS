@@ -45,6 +45,8 @@ def enregistrer_soiree(m: Memoire, journal: Journal, run_id: str, nom: str, le: 
     run = journal.lire(run_id)
     if (run.decision_humaine or {}).get("verdict") != "APPROUVER":
         raise ErreurCycle("seul un plan approuvé par un humain peut devenir une soirée")
+    if not run.retenue:   # défensif : l'approbation l'exige déjà (plateforme/action.py)
+        raise ErreurCycle("plan sans solution retenue : rien à enregistrer")
     if any(e.donnees.get("run_id") == run_id for e in m.evenements("EVENEMENT_TENU")):
         raise ErreurCycle("cette soirée est déjà enregistrée")
     # Collision : personne n'est à deux tables le même soir (deux plans approuvés enregistrés le même jour).
