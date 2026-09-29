@@ -27,6 +27,7 @@ from plateforme.memoire import Evt, Memoire, fermetures, force, graphe
 from plateforme.optimisation import cle
 
 DELAI_RELANCE_JOURS = 10
+MAX_RELANCES_PAR_MEMBRE = 3     # budget d'attention (hypothèse de produit) : au-delà, reporté, jamais perdu
 
 
 class ErreurCycle(ValueError):
@@ -158,8 +159,23 @@ def relances(m: Memoire, profils: list[Profil], tax: Taxonomie, maintenant: date
         else:
             sans_raison.append([a, b])
     propositions.sort(key=lambda p: (-sum(r["force"] == "forte" for r in p["raisons"]), p["force_du_lien"], p["paire"]))
+    # Budget d'attention : un membre très relié ne reçoit pas 8 relances le même jour. Les plus fortes d'abord ; le
+    # reste est REPORTÉ (compté) et réapparaît quand les premières ont reçu une réponse.
+    recues: dict[str, int] = {}
+    reportees = 0
+    for prop in propositions:
+        gardees = []
+        for r in sorted(prop["raisons"], key=lambda r: (r["force"] != "forte", r["id"])):
+            if recues.get(r["pour"], 0) < MAX_RELANCES_PAR_MEMBRE:
+                recues[r["pour"]] = recues.get(r["pour"], 0) + 1
+                gardees.append(r)
+            else:
+                reportees += 1
+        prop["raisons"] = gardees
+    propositions = [p for p in propositions if p["raisons"]]
     return {"maintenant": maintenant.isoformat(), "delai_jours": delai, "propositions": propositions,
-            "abstentions": {"rien_de_nouveau": len(sans_raison), "trop_tot": len(trop_tot)},
+            "abstentions": {"rien_de_nouveau": len(sans_raison), "trop_tot": len(trop_tot),
+                            "reportees_budget_attention": reportees},
             "trop_tot": trop_tot[:5],
             "principe": "aucune relance sans raison NOUVELLE et documentée ; « restez en contact » n'en est pas une"}
 

@@ -10,7 +10,7 @@
 | 6 | Relation ancienne | oui | `test_adversarial_reseau.py::test_relation_expiree_devient_a_raviver` |
 | 7 | Profil ancien | oui | inconnue « profil non mis à jour » (dimensions, micro-cercle) ; `test_scene.py` |
 | 8 | Preuves contradictoires | partiel | registre : un statut différent n'écrase jamais silencieusement (`test_plateforme.py`) ; pas de fusion de sources contradictoires |
-| 9 | Membre sur-sollicité | partiel | budget par membre (solveur) ; le benchmark ne discrimine PAS ce biais (dit dans 06/16) |
+| 9 | Membre sur-sollicité | oui | budget d'attention : au plus 3 relances par membre et par jour, le reste reporté et compté (`test_humain.py::test_budget_d_attention…`) ; plafond de sollicitations dans les interventions (`test_interventions.py`) |
 | 10 | Membre isolé | oui | benchmark (isolés restants) ; simulation « premier lien » |
 | 11 | Recommandations répétées | oui | relance refusée jamais reproposée (`test_cycle.py`) ; aucune paire répétée d'une soirée à l'autre |
 | 12 | Chambre d'écho | oui (synthétique) | benchmark : similarité et ami d'ami créent moins de ponts |
@@ -33,4 +33,4 @@
 | 29 | Preuve périmée | oui | S17 (blocage) |
 | 30 | Historique contradictoire | oui | `test_adversarial_reseau.py` (refus ancien vs relation vivante) — défaut trouvé et corrigé (FAILURES #20) |
 
-Couverts : 26 · partiels : 3 (8, 9, 27) · non couverts : 1 (16).
+Couverts : 27 · partiels : 2 (8, 27) · non couverts : 1 (16).

@@ -1,4 +1,4 @@
-# Mémo red team (travail) — attaques menées pendant les cycles techniques 1 à 6
+# Mémo red team (travail) — attaques menées pendant les cycles techniques 1 à 7
 
 | Cycle | Attaque | Résultat | Preuve |
 |---|---|---|---|
@@ -13,6 +13,7 @@
 | 5 | Entrées surdimensionnées (100 000 caractères, 5000 offres) | Défaut réel → toutes les entrées bornées, test d'introspection | FAILURES 27 |
 | 5 | Injection SQL dans un identifiant, date invalide | Aucun défaut (requêtes paramétrées, 4xx propres) | idem |
 | 6 | Optimiser l'activation du réseau « naïvement » (isolés d'abord) | Effet de second ordre : îlots de deux | BENCHMARK_MEMO §2 |
+| 7 | Un membre rencontre 8 personnes qui peuvent l'aider, puis publie un besoin | Saturation réelle (8 relances le même jour) → budget d'attention | FAILURES 28 |
 
 ## Surfaces NON attaquées (déclarées)
 - Authentification réelle : absente (identité de démonstration par en-tête ; le mode réel refuse tout, testé).

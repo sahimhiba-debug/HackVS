@@ -123,3 +123,28 @@ def test_branche_et_stress_sur_une_execution_sans_specification_refuses_propreme
         pl.contrefactuel(ad, j, r.run_id, {"retirer_contraintes": ["langue_commune"]})
     with pytest.raises(ErreurSpec):
         pl.stress(ad, j, r.run_id, 1)
+
+
+def test_budget_d_attention_un_membre_ne_recoit_pas_huit_relances_le_meme_jour():
+    """Membre sur-sollicité (scénario adversarial n° 9) : 8 personnes rencontrées peuvent toutes répondre à son besoin."""
+    from datetime import date, timedelta
+
+    from adaptateurs.club import cycle as cy
+    from plateforme.affirmations import Statut
+    from plateforme.memoire import Evt, Memoire
+    clones = [RETO.model_copy(update={"id": f"r{i}", "nom": f"Agent {i}", "entreprise": f"Agence {i} SA"}) for i in range(8)]
+    m, j = Memoire(), date(2026, 10, 3)
+    for c in clones:
+        m.ajouter(Evt(type="RENCONTRE", le=j, acteurs=sorted(["p00", c.id]), statut=Statut.SIMULE, donnees={"evenement": "S"}))
+    cy.publier_besoin(m, "p00", BESOIN.texte, j + timedelta(days=5), TAX, Statut.SIMULE)
+    vues = []
+    for tour in range(4):                                   # la file se vide au rythme des réponses, rien n'est perdu
+        rel = cy.relances(m, [SOPHIE] + clones, TAX, j + timedelta(days=11))
+        raisons = [r for p in rel["propositions"] for r in p["raisons"]]
+        assert len([r for r in raisons if r["pour"] == "p00"]) <= cy.MAX_RELANCES_PAR_MEMBRE
+        if tour == 0:
+            assert rel["abstentions"]["reportees_budget_attention"] == 8 - cy.MAX_RELANCES_PAR_MEMBRE
+        for r in raisons:
+            vues.append(r["avec"])
+            cy.repondre(m, [SOPHIE] + clones, TAX, j + timedelta(days=11), r["id"], False, "p00")
+    assert sorted(vues) == sorted(c.id for c in clones)     # chacune proposée une fois, au fil des réponses

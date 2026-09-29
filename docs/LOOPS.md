@@ -126,3 +126,19 @@ dans le navigateur (bureau et mobile) sans défaut ; vidéo 144 s réenregistré
 
 **Critères de sortie.** A ✓ B ✓ C ✓ D ✓ (routes de démonstration réservées au mode démo) E ✓ F ✓ G ✓ H ✓ I ✓ (matrice,
 1 manque déclaré) J ✓ (aucun défaut critique connu laissé ; limites déclarées dans 16_LIMITATIONS) K ✓ L ✓ M ✓ N ✓ O ✓ P ✓.
+
+## CYCLES TECHNIQUES 1–7 (mandat « tech only » avant le gel)
+
+Détail : `competition/RED_TEAM_MEMO.md`, `BENCHMARK_MEMO.md`, `ARCHITECTURE_MEMO.md`, `TECHNICAL_AUDIT.md`.
+
+| Cycle | Hypothèse attaquée | Défaut réel | Correction de fond | Preuve |
+|---|---|---|---|---|
+| 1 | La confidentialité résiste à l'inférence | refus et graphe devinables | k-anonymat, réponse uniforme, vue = ses relations | FAILURES 21–22 |
+| 2 | Historique = actuel ? | présentations fondées sur des liens morts | `graphe_actuel`, règle d'état unique | FAILURES 23, propriété (100 historiques) |
+| 3 | Tient à 5000 membres ? | relances quadratiques (20,8 s à 500) | cache incrémental du journal, index en une passe | FAILURES 24, test de complexité |
+| 4 | « Valide mais absurde » | collègues proposés, refus contourné par une table | clé d'organisation ; refus non levable | FAILURES 25–26 |
+| 5 | L'API résiste aux tiers et aux abus | entrées non bornées | bornes + test d'introspection | FAILURES 27 |
+| 6 | Activer le réseau par intervention minimale | îlots de deux (second ordre) | INCLUSION / COHÉSION présentés à l'humain | BENCHMARK_MEMO §2 |
+| 7 | Membre sur-sollicité | 8 relances le même jour | budget d'attention (3 / membre / jour, reporté) | FAILURES 28 |
+
+**Mesures.** 119 → 163 tests ; lint ; 20/20 scénarios ; registre des preuves vérifié ; CI verte à chaque cycle poussé.
