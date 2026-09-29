@@ -126,6 +126,11 @@ def test_double_activation_rejetee_en_conflit():
     premier = client.post(f"/api/pulse/moi/opportunites/{oid}/activer", headers=h, json={})
     second = client.post(f"/api/pulse/moi/opportunites/{oid}/activer", headers=h, json={})
     assert premier.status_code == 200 and second.status_code == 409        # un nouvel essai réseau ne crée rien
+    lecture = client.get(f"/api/pulse/moi/opportunites/{oid}", headers=h)   # RELIRE n'est pas un conflit (défaut réel :
+    assert lecture.status_code == 200                                      # 409 sur un écran rafraîchi après l'activation)
+    assert lecture.json()["activation"] == premier.json()["activation"] and not lecture.json()["activable"]
+    assert client.get(f"/api/pulse/moi/opportunites/{oid}/pourquoi", headers=h).status_code == 200
+    assert client.get(f"/api/pulse/moi/opportunites/{oid}", headers=_h(A)).status_code == 403   # toujours pas pour autrui
 
 
 def _en_parallele(*appels):

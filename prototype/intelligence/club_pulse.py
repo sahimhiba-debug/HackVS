@@ -311,18 +311,30 @@ class ClubPulse:
         return res
 
     def opportunite(self, oid: str) -> Opportunite:
-        o = next((x for x in self.scanner()["opportunites"] if x.id == oid), None)
-        if o is None:
-            if any(self.moteur.plan(a)["opportunite"]["id"] == oid for a in self.moteur.activations()):
-                raise Conflit("cette opportunité est déjà activée")          # double clic, nouvel essai réseau
-            raise Introuvable("opportunité inconnue")
+        """Pour AGIR sur une opportunité ouverte : déjà activée → Conflit (double clic, nouvel essai réseau)."""
+        o, aid = self.trouver_opportunite(oid)
+        if aid is not None:
+            raise Conflit("cette opportunité est déjà activée")
         return o
+
+    def trouver_opportunite(self, oid: str) -> tuple[Opportunite, Optional[str]]:
+        """Pour LIRE : une opportunité devenue activation n'est pas une erreur, c'est un état plus avancé. Renvoie
+        l'opportunité (telle qu'elle a été activée) et l'activation qui la porte, s'il y en a une. (Défaut réel : une
+        lecture tardive recevait 409 — un écran rafraîchi juste après l'activation affichait une erreur.)"""
+        o = next((x for x in self.scanner()["opportunites"] if x.id == oid), None)
+        if o is not None:
+            return o, None
+        for a in self.moteur.activations():
+            p = self.moteur.plan(a)
+            if p["opportunite"]["id"] == oid:
+                return Opportunite(**p["opportunite"]), a
+        raise Introuvable("opportunité inconnue")
 
     # ------------------------------------------------------------------ vues d'opportunité (par spectateur)
 
     def expliquer(self, oid: str, sp: Spectateur) -> dict:
         """L'IA reformule le « pourquoi » à partir de faits PSEUDONYMISÉS ; le texte est contrôlé puis rendu pour le spectateur."""
-        o = self.opportunite(oid)
+        o, _ = self.trouver_opportunite(oid)
         cle = (oid, sp.role + (sp.id or ""))
         if cle not in self.explications:
             faits = {"titre": o.titre, "raisonnement": o.raisonnement, "manque": o.manque, "action": o.action,

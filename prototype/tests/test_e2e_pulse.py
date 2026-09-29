@@ -24,6 +24,7 @@ def test_console_demo_guidee_complete(url):  # noqa: F811
         erreurs: list[str] = []
         pg.on("pageerror", lambda e: erreurs.append(str(e)))
         pg.on("console", lambda m: erreurs.append(m.text) if m.type == "error" else None)
+        pg.on("response", lambda r: erreurs.append(f"{r.status} {r.request.method} {r.url}") if r.status >= 400 else None)
         pg.goto(url + "/console")
         pg.click("#reinit")
         pg.wait_for_function("() => document.querySelector('#etape').textContent.includes('Étape 0/10')")

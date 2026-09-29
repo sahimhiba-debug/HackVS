@@ -211,7 +211,8 @@
         o.risques.length ? section("Ce qui peut échouer", h("ul", {}, o.risques.map((x) => h("li", {}, x)))) : null,
         section("Prochaine action", h("p", {}, o.action)),
         section("Ce qui sera partagé", h("p", { class: "note" }, o.partage)),
-        o.activable ? h("div", { class: "actions", style: "margin-top:18px" },
+        o.activation ? h("p", { class: "encadre", style: "margin-top:14px" }, "Déjà activée. ", h("a", { href: `#act/${o.activation}` }, "Voir l'activation"))
+        : o.activable ? h("div", { class: "actions", style: "margin-top:18px" },
           h("button", { class: "btn rouge", onclick: () => activer(id, false) }, "Activer"),
           h("button", { class: "btn discret", onclick: () => activer(id, true) }, "Activer sans révéler mon nom"),
           h("a", { class: "btn discret", href: "#pouls" }, "Pas maintenant")) : h("p", { class: "encadre", style: "margin-top:14px" }, "Signalé à l'animatrice du Club."));

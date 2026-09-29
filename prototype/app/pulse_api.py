@@ -259,12 +259,16 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
 
     @r.get("/moi/opportunites/{oid}")
     def opportunite(oid: str, pid: str = Depends(membre)) -> dict:
-        return au_monde(lambda c: c.vues.vue_opportunite(c.opportunite(oid), Spectateur("membre", pid)))
+        def f(c: ClubPulse) -> dict:
+            o, aid = c.trouver_opportunite(oid)
+            v = c.vues.vue_opportunite(o, Spectateur("membre", pid))              # contrôle d'accès (403) d'abord
+            return v | {"activation": aid, "activable": v["activable"] and aid is None}
+        return au_monde(f)
 
     @r.get("/moi/opportunites/{oid}/pourquoi")
     def pourquoi(oid: str, pid: str = Depends(membre)) -> dict:
         def f(c: ClubPulse) -> dict:
-            c.vues.vue_opportunite(c.opportunite(oid), Spectateur("membre", pid))    # contrôle d'accès avant l'IA
+            c.vues.vue_opportunite(c.trouver_opportunite(oid)[0], Spectateur("membre", pid))    # contrôle d'accès avant l'IA
             return c.expliquer(oid, Spectateur("membre", pid))
         return au_monde(f)
 
@@ -335,7 +339,10 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
 
     @r.get("/console/opportunites/{oid}", dependencies=[Depends(console)])
     def c_opportunite(oid: str) -> dict:
-        return au_monde(lambda c: c.vues.vue_opportunite(c.opportunite(oid), ANIMATRICE) | {"explication": c.expliquer(oid, ANIMATRICE)})
+        def f(c: ClubPulse) -> dict:
+            o, aid = c.trouver_opportunite(oid)
+            return c.vues.vue_opportunite(o, ANIMATRICE) | {"activation": aid, "explication": c.expliquer(oid, ANIMATRICE)}
+        return au_monde(f)
 
     @r.post("/console/opportunites/{oid}/activer", dependencies=[Depends(console)], response_model=ActivationCreee)
     def c_activer(oid: str, a: Activer) -> dict:
