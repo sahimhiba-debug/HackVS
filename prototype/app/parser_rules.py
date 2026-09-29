@@ -127,12 +127,15 @@ def analyser(texte: str, tax: Taxonomie) -> Besoin:
     # 2. Termes ambigus restants : résolus seulement si un seul sens a des indices dans le texte.
     ambiguites: list[Ambiguite] = []
     for spec_terme, spec in tax.ambigus.items():
-        for m in motif(spec_terme).finditer(n):
+        for m in (x for t in [spec_terme, *spec.get("variantes", [])] for x in motif(t).finditer(n)):
             if _chevauche(m.start(), m.end(), pris) or not dans_recherche(m.start()):
                 continue
             pris.append((m.start(), m.end()))
             options = spec["options"]
             indices = {cid: [i for i in hints if motif(normaliser(i)[0]).search(n)] for cid, hints in options.items()}
+            deja = [cid for cid in options if any(c.valeur == cid for _, c in trouves)]
+            if len(deja) == 1:     # un sens est DÉJÀ exprimé ailleurs dans le besoin (« distribution … épiceries fines ») : c'est lui
+                indices = {deja[0]: [f"déjà exprimé : {tax.libelle(deja[0])}"]}
             gagnants = [cid for cid, t in indices.items() if t]
             ex = extrait(m.start(), m.end())
             if nie(m.start()):
@@ -188,6 +191,10 @@ def analyser(texte: str, tax: Taxonomie) -> Besoin:
         if (c.type, c.valeur) not in vus:
             vus.add((c.type, c.valeur))
             criteres.append(c)
+        else:   # même critère exprimé deux fois (« activité en Allemagne … la distribution ») : les deux extraits restent visibles
+            premier = next(x for x in criteres if (x.type, x.valeur) == (c.type, c.valeur))
+            if c.extrait and c.extrait != premier.extrait:
+                premier.note = ((premier.note + " ; ") if premier.note else "") + f"aussi exprimé par « {c.extrait} »"
 
     # Le plus précis l'emporte (« avocat » + « droit du travail » → droit du travail).
     presents = {c.valeur for c in criteres if c.type == "expertise"}

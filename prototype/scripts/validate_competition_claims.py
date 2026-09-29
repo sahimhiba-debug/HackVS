@@ -63,26 +63,34 @@ def controle(nom: str) -> tuple[bool, str]:
         return _pytest(nom[5:])
     s = _scene() if nom.startswith("scene") else None
     if nom == "scene_abstention":
-        t = s[7]["tentatives"][0]
-        return t["decision"] == "S_ABSTENIR", t["raisons"][0]
+        j = s[8]["japon"]
+        return j["decision"] == "S_ABSTENIR", f"« {j['demande']} » : abstention ({j['examines']} membres examinés)"
     if nom == "scene_double_accord":
-        return s[2]["coordonnees_avant_accord"] is False and s[2]["coordonnees_apres_accord"] is True, "avant : non ; après accord : oui"
+        return s[3]["coordonnees_avant_accord"] is False and s[3]["coordonnees_apres_accord"] is True, "avant : non ; après accord : oui"
     if nom == "scene_refus_non_nomme":
-        return s[1]["ecartes_par_leur_choix"] == 0 and "Kalbermatten" not in json.dumps(s, ensure_ascii=False), "jamais nommé, non compté (k < 3)"
+        return s[2]["ecartes_par_leur_choix"] == 0 and "Kalbermatten" not in json.dumps(s, ensure_ascii=False), "jamais nommé, non compté (k < 3)"
     if nom == "scene_relances":
-        n = sum(len(p["raisons"]) for p in s[6]["relances"])
-        return n == 1 and s[6]["silences"]["rien_de_nouveau"] == 17, f"{n} relance, {s[6]['silences']['rien_de_nouveau']} silences"
+        n = sum(len(p["raisons"]) for p in s[5]["relances"])
+        return n == 1 and s[5]["silences"]["rien_de_nouveau"] == 17, f"{n} relance, {s[5]['silences']['rien_de_nouveau']} silences"
     if nom == "scene_reciprocite":
-        c = s[1]["candidats"][0]
+        c = s[2]["candidats"][0]
         return c["nom"] == "Markus Heinzmann" and c["dimensions"]["reciprocite"]["etablie"], c["dimensions"]["reciprocite"].get("votre_offre", "")
     if nom == "scene_simulation":
-        f = s[4]
-        r = max(f["plans"], key=lambda p: p["plus_grand_groupe"])
-        c = max(f["plans"], key=lambda p: p["groupe_robuste"])
-        ok = (r is not c and (f["avant"]["plus_grand_groupe"], r["plus_grand_groupe"]) == (8, 15)
-              and (f["avant"]["groupe_robuste"], c["groupe_robuste"], r["groupe_robuste"]) == (4, 8, 4))
-        av = f["avant"]
-        return ok, f"réunir : {av['plus_grand_groupe']} → {r['plus_grand_groupe']} ; consolider : robuste {av['groupe_robuste']} → {c['groupe_robuste']}"
+        f = s[7]
+        ok = (f["avant"]["groupes"], f["apres"]["groupes"], f["avant"]["groupe_robuste"], f["apres"]["groupe_robuste"]) == (2, 1, 4, 15)
+        return ok, f"groupes {f['avant']['groupes']} → {f['apres']['groupes']} ; robuste {f['avant']['groupe_robuste']} → {f['apres']['groupe_robuste']}"
+    if nom == "scene_isolee":
+        f = s[8]
+        ok = f["decision"] == "S_ABSTENIR" and f["introductions_fondees"] == 0 and f["introductions_possibles"] == 15
+        return ok, f"{f['introductions_possibles']} introductions possibles, {f['introductions_fondees']} fondée"
+    if nom == "scene_saturation":
+        v = [x["rencontres_utiles_possibles"] for x in s[9]["soirees"]]
+        return v == [9, 1, 0] and s[9]["soirees"][-1]["decision"] == "S_ABSTENIR", " → ".join(map(str, v)) + " puis abstention"
+    if nom == "scene_compilateur":
+        comp = {c["role"]: c["quoi"] for c in s[1]["compris"]}
+        ok = (comp.get("besoin principal") == "Développement commercial en Allemagne" and comp.get("langue") == "français"
+              and comp.get("contrainte") == "pas un concurrent direct" and not s[1]["incertain"])
+        return ok, ", ".join(f"{k} : {v}" for k, v in comp.items())
     if nom == "scene_rejeu":
         from app import stage
         from app.taxonomy import charger_taxonomie
@@ -161,14 +169,20 @@ def main() -> None:
               "| ID | Affirmation | Type | Contrôle (date : " + jour + ") | Preuve | Peut-on le dire ? | Où le montrer |", "|---|---|---|---|---|---|---|"]
     (COMP / "14_PROOF_LEDGER.md").write_text("\n".join(entete + lignes) + "\n", encoding="utf-8")
     # chiffres des textes de pitch
-    for f in sorted(COMP.glob("PITCH_*.md")) + [COMP / "10_PITCH.md", COMP / "video" / "VOICEOVER.md"]:
+    deck = PROTO / "web" / "presentation.html"                          # le deck projeté : même exigence que le pitch
+    for f in sorted(COMP.glob("PITCH_*.md")) + [COMP / "10_PITCH.md", COMP / "video" / "VOICEOVER.md", deck]:
         if not f.exists():
             continue
-        corps = re.sub(r"<!--.*?-->", "", f.read_text(encoding="utf-8"), flags=re.S)
+        brut = f.read_text(encoding="utf-8")
+        if f.suffix == ".html":                                         # texte visible + notes d'orateur, sans CSS ni script
+            brut = brut[brut.index("<main"):brut.index("</main>")]
+            brut = " ".join(re.findall(r'data-notes="([^"]*)"', brut)) + " " + re.sub(r"<[^>]+>", " ", brut)
+        corps = re.sub(r"<!--.*?-->", "", brut, flags=re.S)
         corps = "\n".join(l for l in corps.splitlines() if not l.startswith("#") and "Durée" not in l and "mots" not in l)
         corps = re.sub(r"\d+:\d+(?:[–-]\d+:\d+)?", "", corps)            # minutages de régie : pas des affirmations
         corps = re.sub(r"\b\d+_[A-Z]\w*", "", corps)                     # références de fichiers (09_DEMO_SCRIPT)
         corps = re.sub(r"(?m)^\s*\d+\.\s", "", corps)                     # numérotation de listes
+        corps = re.sub(r"\b\d+ · ", "", corps)                             # numéros de diapositive (« 8 · Impact »)
         inconnus = sorted(chiffres(corps) - autorises - {x.replace(".", ",") for x in autorises} - {x.replace(",", ".") for x in autorises})
         if inconnus:
             echecs.append(f"{f.name} cite des chiffres non prouvés : {inconnus}")

@@ -78,7 +78,9 @@ def test_coherence_decision_explication_sur_tous_les_membres():
             corr = _correspondances(r.texte, {"X-Membre": p.id})
             _verifier_coherence(p.id, corr)
             verifies += len(corr["suggestions"])
-    assert verifies >= 20
+    # Seuil abaissé de 20 à 15 : 3 des 21 suggestions d'origine étaient des FAUX POSITIFS (des transporteurs proposés pour
+    # « distribution dans les épiceries fines », un besoin commercial). Un seuil de volume ne doit pas récompenser l'erreur.
+    assert verifies >= 15
 
 
 def test_adhesion_valide_ses_entrees():

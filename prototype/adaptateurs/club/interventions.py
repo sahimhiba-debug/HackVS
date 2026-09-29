@@ -94,6 +94,44 @@ def refus_motives(a: str, b: str, profils: list[Profil], besoins_publies: list, 
     return raisons
 
 
+def _concepts(p: Profil) -> set[str]:
+    return set(p.secteurs) | {o.concept for o in p.offre + p.recherche if o.concept}
+
+
+def relier_sans_preuve(x: str, profils: list[Profil], besoins_publies: list, tax, g_actuel: nx.Graph,
+                       etats: dict[str, str]) -> dict:
+    """Faut-il relier un membre à quelqu'un, n'importe qui ? Compte ce que l'organisation POURRAIT faire (chaque
+    introduction possible améliorerait l'indicateur « membres isolés ») et ce qui est FONDÉ (aide prouvée).
+    Mêmes règles que `candidates` via `refus_motives`. Montre aussi ce qu'une recommandation par ressemblance
+    (Jaccard des concepts, la baseline « similarité » du benchmark) proposerait. Rien n'est écrit."""
+    membres = [p for p in profils if p.type == "membre_club" and p.id != x]
+    moi = next(p for p in profils if p.id == x)
+    raisons: dict[str, int] = {}
+    fondees, possibles = [], 0
+    aides = calculer_aides([p for p in profils if p.type == "membre_club" and p.accepte_introductions and p.disponible],
+                           besoins_publies, tax)
+    for y in membres:
+        r = refus_motives(x, y.id, profils, besoins_publies, tax, g_actuel, etats, aides)
+        bloquant = [z for z in r if not z.startswith("aucune aide")]
+        if not bloquant:
+            possibles += 1                       # l'introduction serait techniquement possible (consentement, pas de refus)
+        if not r:
+            fondees.append(y.id)
+        for z in r:
+            raisons[z] = raisons.get(z, 0) + 1
+
+    def jaccard(y: Profil) -> float:
+        a, b = _concepts(moi), _concepts(y)
+        return len(a & b) / len(a | b) if a | b else 0.0
+    proches = sorted(((round(jaccard(y), 2), y.id) for y in membres if y.accepte_introductions), key=lambda t: (-t[0], t[1]))
+    ressemblant = proches[0] if proches and proches[0][0] > 0 else None
+    return {"membre": x, "introductions_possibles": possibles, "introductions_fondees": fondees,
+            "raisons": dict(sorted(raisons.items(), key=lambda kv: -kv[1])),
+            "par_ressemblance": {"membre": ressemblant[1], "ressemblance": ressemblant[0]} if ressemblant else None,
+            "decision": "PROPOSER_A_L_HUMAIN" if fondees else "S_ABSTENIR",
+            "ce_qui_changerait": "qu'un des deux publie un besoin auquel l'autre répond par une offre déclarée"}
+
+
 def _composantes(g: nx.Graph) -> tuple[dict[str, int], dict[int, int], int]:
     ident, taille = {}, {}
     for n, comp in enumerate(sorted(nx.connected_components(g), key=lambda c: (-len(c), min(c)))):

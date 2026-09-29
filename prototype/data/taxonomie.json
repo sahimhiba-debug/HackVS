@@ -33,7 +33,6 @@
         "stockage",
         "livraison",
         "livraisons",
-        "distribution",
         "logistik",
         "spedition",
         "lagerung",
@@ -577,11 +576,27 @@
         "developpement commercial en allemagne",
         "développement commercial en allemagne",
         "deutschen markt",
-        "vertrieb in deutschland"
+        "vertrieb in deutschland",
+        "ventes en allemagne",
+        "vendre en allemagne",
+        "commerce en allemagne",
+        "developper en allemagne",
+        "développer en allemagne",
+        "se developper en allemagne",
+        "percer en allemagne"
       ]
     }
   },
   "ambigus": {
+    "distribution": {
+      "libelle": "distribution",
+      "variantes": ["distrib", "distributions"],
+      "options": {
+        "logistique": ["livrer", "livraison", "livraisons", "transport", "transporter", "entrepot", "entreposage", "stock", "stockage", "camion", "camions", "palettes", "tournees", "colis"],
+        "export_allemagne": ["allemagne", "deutschland", "marche allemand"],
+        "export_suisse_alemanique": ["suisse alemanique", "outre-sarine", "deutschschweiz", "zurich", "zurichois", "zurichoise", "zurichoises", "berne", "bernois", "bale", "balois"]
+      }
+    },
     "securite": {
       "libelle": "sécurité",
       "options": {
@@ -854,7 +869,14 @@
     "hors concurrents",
     "sans concurrent",
     "non concurrent",
-    "pas quelqu'un qui me fait concurrence"
+    "pas quelqu'un qui me fait concurrence",
+    "pas concurrent",
+    "pas concurrents",
+    "pas un concurent",
+    "pas concurent",
+    "pas de concurent",
+    "ne soit pas concurrent",
+    "qui ne me concurrence pas"
   ],
   "marqueurs_forts": [
     "obligatoirement",

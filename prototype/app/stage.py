@@ -11,47 +11,32 @@
 from __future__ import annotations
 
 import json
-import re
 import threading
 from datetime import date, datetime, timedelta, timezone
-from typing import Callable, Optional
+from typing import Callable
 
 import networkx as nx
 from fastapi import APIRouter, HTTPException, Query
 
 from adaptateurs.club import diagnostic as dg
 from adaptateurs.club import interventions, pareto, reseau, sante
+from adaptateurs.club.interventions import indicateurs_actuels
 from adaptateurs.club import cycle as cy
 from plateforme import memoire as me
 from plateforme.affirmations import Statut
 
-from . import parser_llm
 from .matching import rechercher
 from .models import Profil
-from .parser_rules import analyser
+from .parser_rules import analyser, extraire_profil
 from .store import Magasin
 from .taxonomy import DATA_DIR, Taxonomie
 
 SOPHIE = "n01"
 
 
-_IA: dict[str, tuple] = {}     # une interprétation IA par texte et par processus : le rejeu reste identique
-
-
-def interpreter_ia(texte: str, tax: Taxonomie) -> Optional[tuple]:
-    """Interprétation par le modèle génératif CONFIGURÉ (validée par `parser_llm.valider`), ou None s'il n'y en a pas.
-    Jamais de sortie simulée : sans modèle, la scène le dit."""
-    if not parser_llm.llm_configure():
-        return None
-    if texte not in _IA:
-        _IA[texte] = parser_llm.analyser(texte, tax)
-    return _IA[texte]
-
-
 class Monde:
-    def __init__(self, tax: Taxonomie, interpreter: Optional[Callable[[str], Optional[tuple]]] = None):
+    def __init__(self, tax: Taxonomie):
         self.tax = tax
-        self.interpreter = interpreter or (lambda texte: interpreter_ia(texte, tax))
         self.donnees = json.loads((DATA_DIR / "stage_reseau.json").read_text(encoding="utf-8"))
         self.debut = date.fromisoformat(self.donnees["debut"])
         self.memoire = me.Memoire()
@@ -102,9 +87,10 @@ class Monde:
         return self.memoire.avancer(jours, self.debut)
 
 
-# ------------------------------------------------------------------ les étapes : trois scènes, un seul monde
-# A — un membre exprime librement un besoin ; B — l'organisatrice compare, voit la fragilité, simule une perte ;
-# C — le système refuse ce qui n'est pas fondé et explique son silence. Chaque étape raconte UNE chose.
+# ------------------------------------------------------------------ les étapes : UNE histoire, un seul monde
+# nouveau membre → besoin → candidats (pourquoi) → consentement → rencontre → suivi → opportunité → le réseau qui
+# évolue → l'abstention (« je pourrais… ») → la saturation → le bilan. Chaque étape raconte UNE chose ; chaque chiffre
+# est calculé par le moteur réutilisable (aucune règle propre à la scène).
 def _nom(w: Monde, i: str) -> str:
     return w.par_id()[i].nom if i in w.par_id() else i
 
@@ -120,81 +106,61 @@ def _g_actuel(w: Monde) -> nx.Graph:
     return g
 
 
-def _compris(b) -> list[dict]:
-    res = [{"quoi": f"{c.libelle} ({'obligatoire' if c.obligatoire else 'souhaité'})", "extrait": c.extrait} for c in b.criteres]
-    res += [{"quoi": f"exclure : {e.libelle}", "extrait": e.extrait} for e in b.exclusions]
-    if b.exclure_concurrents:
-        res.append({"quoi": "exclure les concurrents directs", "extrait": None})
-    return res
+def _contexte_reseau(w: Monde) -> tuple:
+    t = w.synchroniser()
+    return _g_actuel(w), cy.besoins_actifs(w.magasin.besoins(), w.memoire, t), reseau.etats_par_paire(w.memoire, t)
 
 
-def _sophie_rejoint(w: Monde) -> None:
+def _e1_nouveau_membre(w: Monde) -> dict:
     s = w.donnees["sophie"]
+    proposition = extraire_profil(s["description"], w.tax)
     p = Profil(id=SOPHIE, nom=s["nom"], fonction=s["fonction"], entreprise=s["entreprise"], commune=s["commune"],
                type="membre_club", secteurs=["boissons"], offre=s["offre"], recherche=s["recherche"], langues=s["langues"],
                zones_service=s["zones_service"], creneaux=s["creneaux"], accepte_introductions=False, maj=w.jour().isoformat())
     w.magasin.ajouter_membre(p.model_dump())                 # invisible par défaut…
+    invisible = not w.par_id()[SOPHIE].accepte_introductions
     w.magasin.changer_consentement(SOPHIE, True)             # …puis elle choisit d'être recommandable
+    return {"titre": "Sophie rejoint le Club", "dit": "Elle ne connaît personne. Une phrase suffit pour son profil.",
+            "faits": {"description": s["description"],
+                      "propose": [f"{k} : {o['libelle']}" for k in ("offre", "recherche") for o in proposition[k]],
+                      "valide": [f"offre : {w.tax.libelle(o['concept'])}" for o in s["offre"]]
+                                + [f"recherche : {w.tax.libelle(o['concept'])}" for o in s["recherche"]],
+                      "invisible_par_defaut": invisible, "coordonnees_enregistrees": "aucune"}}
 
 
-def _a1_besoin_libre(w: Monde) -> dict:
-    _sophie_rejoint(w)
+def _e2_besoin(w: Monde) -> dict:
     s = w.donnees["sophie"]
-    texte = s["besoin_complexe"]
-    moi = w.par_id()[SOPHIE]
-    regles = analyser(texte, w.tax)
-    r_regles = rechercher(regles, moi, w.profils(), w.tax)
-    ia = w.interpreter(texte)
-    ia_ok = ia is not None and not ia[1].get("erreur") and any(c.type in ("expertise", "texte_libre") for c in ia[0].criteres)
-    faits = {"texte": texte,
-             "regles": {"compris": _compris(regles), "propositions": len(r_regles.suggestions),
-                        "decision": "S_ABSTENIR" if r_regles.abstention else "PROPOSER"}}
-    if ia is None:
-        faits["ia"] = {"etat": "NON_CONFIGUREE", "message": "Aucun modèle génératif configuré ici : rien n'est simulé à sa place."}
-    else:
-        b, tele = ia
-        faits["ia"] = {"etat": "UTILISEE" if ia_ok else "REPLI", "analyseur": tele.get("analyseur"), "modele": tele.get("modele"),
-                       "latence_ms": tele.get("latence_ms"), "compris": _compris(b), "avertissements": b.avertissements,
-                       "controle": "catégories du vocabulaire fermé seulement ; chaque extrait doit figurer dans le texte"}
-    if ia_ok and rechercher(ia[0], moi, w.profils(), w.tax).abstention:
-        ia_ok = False                                      # compris, mais personne de prouvé : on ne présente personne au hasard
-        faits["ia"]["sans_proposition"] = "interprétation valide, mais aucun membre ne la satisfait avec une preuve"
-    if ia_ok:
-        besoin, faits["retenu"] = ia[0], "INTERPRETATION_IA_VERIFIEE"
-    elif not r_regles.abstention:
-        besoin, faits["retenu"] = regles, "REGLES"
-    else:
-        besoin = analyser(s["besoin"], w.tax)             # le produit demande une reformulation courte
-        faits["retenu"], faits["reformulation"] = "REFORMULATION", s["besoin"]
-        faits["reformulation_comprise"] = _compris(besoin)
-    w.ctx["besoin_id"] = w.magasin.creer_besoin(SOPHIE, besoin, publier=True, anonyme=False).id
-    return {"scene": "A", "titre": "Sophie écrit son besoin, avec ses mots",
-            "dit": "Plusieurs besoins, une langue, une exclusion : qui comprend cette phrase ?",
-            "faits": faits}
+    b = analyser(s["besoin"], w.tax)
+    w.ctx["besoin_id"] = w.magasin.creer_besoin(SOPHIE, b, publier=True, anonyme=False).id
+    exp = [c for c in b.criteres if c.type == "expertise"]
+    compris = [{"role": "besoin principal" if c is (exp[0] if exp else None) else ("langue" if c.type == "langue" else "critère"),
+                "quoi": c.libelle, "extrait": c.extrait, "note": c.note} for c in b.criteres]
+    if b.exclure_concurrents:
+        compris.append({"role": "contrainte", "quoi": "pas un concurrent direct", "extrait": None, "note": None})
+    return {"titre": "Son besoin, avec ses mots", "dit": f"« {s['besoin']} »",
+            "faits": {"compris": compris, "incertain": [a.terme for a in b.ambiguites] + b.avertissements,
+                      "analyse": "règles locales et vérifiables : aucune IA générative, aucun appel réseau"}}
 
 
-def _a2_proposition(w: Monde) -> dict:
+def _e3_candidats(w: Monde) -> dict:
     t = w.synchroniser()
     ids = w.par_id()
     b = w.magasin.besoin(w.ctx["besoin_id"])
     res = rechercher(b.besoin, ids[SOPHIE], w.profils(), w.tax)
     g = w.graphe()
     cartes = []
-    for s in res.suggestions:
-        d = reseau.dimensions(w.memoire, ids[SOPHIE], s.model_dump(), ids, t, t, g, w.tax, w.magasin.besoins())
-        cartes.append({"id": s.profil.id, "nom": s.profil.nom, "entreprise": s.profil.entreprise, "niveau": s.niveau,
-                       "preuves": [{"extrait": p.extrait, "nature": p.nature, "champ": p.champ} for p in s.preuves],
-                       "a_verifier": s.a_verifier, "dimensions": d})
+    for sug in res.suggestions:
+        d = reseau.dimensions(w.memoire, ids[SOPHIE], sug.model_dump(), ids, t, t, g, w.tax, w.magasin.besoins())
+        cartes.append({"id": sug.profil.id, "nom": sug.profil.nom, "entreprise": sug.profil.entreprise, "niveau": sug.niveau,
+                       "preuves": [{"extrait": p.extrait, "nature": p.nature, "champ": p.champ} for p in sug.preuves],
+                       "dimensions": d})
     w.ctx["candidat"] = next((c["id"] for c in cartes if c["dimensions"]["reciprocite"]["etablie"]), cartes[0]["id"] if cartes else None)
-    return {"scene": "A", "titre": "Une proposition vérifiable",
-            "dit": "Seulement des personnes dont le profil PROUVE qu'elles peuvent aider.",
+    return {"titre": "Qui peut l'aider — et pourquoi", "dit": "Pas une liste de noms : une preuve pour chaque proposition.",
             "faits": {"candidats": cartes, "examines": res.nb_profils_examines,
-                      "ecartes_par_leur_choix": sum(e.nombre for e in res.ecartes if "sollicités" in e.raison),
-                      "ecartes_autres": [{"raison": e.raison, "nombre": e.nombre} for e in res.ecartes if "sollicités" not in e.raison],
-                      "coordonnees": "jamais affichées : partagées seulement après l'accord des deux"}}
+                      "ecartes_par_leur_choix": sum(e.nombre for e in res.ecartes if "sollicités" in e.raison)}}
 
 
-def _a3_introduction(w: Monde) -> dict:
+def _e4_consentement(w: Monde) -> dict:
     c = w.ctx["candidat"]
     r = w.magasin.creer_relation(w.ctx["besoin_id"], SOPHIE, c, "Bonjour, j'aimerais vous présenter nos tisanes.",
                                  autre_accepte=True, autre_eligible=True)
@@ -202,145 +168,160 @@ def _a3_introduction(w: Monde) -> dict:
     avant = r.coordonnees_partagees
     boite = reseau.boite(w.memoire, w.par_id()[c], w.profils(), w.magasin.relations(c), {}, w.synchroniser())
     r = w.magasin.transition(r.id, "accepter", c)
+    return {"titre": "Une introduction, pas un numéro", "dit": f"{_nom(w, c).split(' ')[0]} reçoit la demande. Il peut refuser.",
+            "faits": {"introductions_a_repondre_pour_lui": len(boite["introductions_a_repondre"]),
+                      "coordonnees_avant_accord": avant, "coordonnees_apres_accord": r.coordonnees_partagees}}
+
+
+def _e5_rencontre(w: Monde) -> dict:
+    c = w.ctx["candidat"]
     w.avancer(7)
     w.magasin.transition(w.ctx["relation"], "planifier", c, date_rencontre=w.jour().isoformat())
     w.magasin.transition(w.ctx["relation"], "confirmer_rencontre", SOPHIE)
     m = reseau.memoire_relation(w.memoire, SOPHIE, c, w.synchroniser())
-    return {"scene": "A", "titre": f"{_nom(w, c).split(' ')[0]} accepte ; ils se rencontrent",
-            "dit": "Une introduction, pas un numéro : il pouvait refuser.",
-            "faits": {"introductions_a_repondre_pour_lui": len(boite["introductions_a_repondre"]),
-                      "coordonnees_avant_accord": avant, "coordonnees_apres_accord": r.coordonnees_partagees,
-                      "ligne_de_temps": m["ensuite"], "quand": m["quand"], "etat_relation": m["etat"]}}
+    return {"titre": "Ils se rencontrent", "dit": "Une relation naît, avec son contexte : quand, pourquoi, et la suite.",
+            "faits": {"quand": m["quand"], "etat_relation": m["etat"], "ligne_de_temps": m["ensuite"]}}
 
 
-def _lisible(texte: str) -> str:
-    """Affichage de scène : retire les listes brutes de tailles (« ([[8, 5], [8, 5]]) ») ; le calcul reste inchangé."""
-    return re.sub(r"\s*\(\[[^()]*\]\)", "", texte)
-
-
-def _diagnostic(w: Monde) -> dict:
-    t = w.synchroniser()
-    return dg.diagnostic(w.memoire, w.profils(), cy.besoins_publies(w.memoire, t), w.tax, t, k=1)
-
-
-def _b1_diagnostic(w: Monde) -> dict:
-    d = _diagnostic(w)
-    act, membres = _g_actuel(w), _membres(w)
-    # seulement les ponts FRAGILES (même définition que le phénomène : ≥ 3 membres de chaque côté), pas les bouts de chaîne
-    ponts = [r["paire"] for r in (sante.sans_relation(act, membres, *e) for e in sorted(tuple(sorted(e)) for e in nx.bridges(act.subgraph(membres))))
-             if min(len(r["coupes_de_leur_groupe"]), r["taille_du_groupe"] - len(r["coupes_de_leur_groupe"])) >= sante.SEUILS["groupe_min"]]
-    return {"scene": "B", "titre": "La vue de l'organisatrice",
-            "dit": "Le même réseau, vu d'en haut : ce qu'aucun membre ne voit seul.",
-            "faits": {"etat": d["comprendre"]["etat"],
-                      "phenomenes": [{"code": p["phenomene"], "observation": _lisible(p["observation"]), "lecture": p["interpretation"],
-                                      "action_possible": p["intervention_possible"]} for p in d["diagnostiquer"]["phenomenes"]],
-                      "ponts": ponts, "nature": "OBSERVATION du graphe (réseau FICTIF) ; lectures et seuils = hypothèses de produit"}}
-
-
-def _b2_deux_plans(w: Monde) -> dict:
-    d = _diagnostic(w)
-    plans = d["agir"]["plans_nommes"]
-    ids = w.par_id()
-
-    def rendu(p: dict) -> dict:
-        consolide = p["objectifs"]["cohesion_robuste"] >= max(q["objectifs"]["cohesion_robuste"] for q in plans)
-        reunit = p["objectifs"]["cohesion"] >= max(q["objectifs"]["cohesion"] for q in plans)
-        libelle = ("Réunir et consolider" if consolide and reunit else "Consolider" if consolide
-                   else "Réunir les îlots" if reunit else "Autre compromis")
-        return {"libelle": libelle, "noms_moteur": p["noms"], "paires": p["paires"], "plus_grand_groupe": p["objectifs"]["cohesion"],
-                "groupe_robuste": p["objectifs"]["cohesion_robuste"], "membres_relies": p["objectifs"]["inclusion"],
-                "pourquoi": [{"qui": [_nom(w, x) for x in q["paire"]],
-                              "preuve": [f"{ids[x['aide']].nom} offre « {x['preuve']} » — {ids[x['aide_a']].nom} cherche "
-                                         f"« {x['besoin'].split(' : ', 1)[-1]} »" for x in q["preuves"]]} for q in p["pourquoi"]]}
-    act = _g_actuel(w)
-    avant = {"plus_grand_groupe": max(len(c) for c in nx.connected_components(act.subgraph(_membres(w)))),
-             "groupe_robuste": pareto.plus_grand_groupe_robuste(act, _membres(w))}
-    return {"scene": "B", "titre": "Une seule introduction ce mois-ci : laquelle ?",
-            "dit": "Deux plans défendables ; aucun ne gagne sur tout.",
-            "faits": {"budget": 1, "avant": avant, "plans": [rendu(p) for p in plans], "un_seul_plan": len(plans) < 2,
-                      "nature": "SIMULATION : chaque introduction est supposée acceptée ; rien n'est envoyé",
-                      "lexique": {"plus_grand_groupe": "membres reliés entre eux, directement ou non",
-                                  "groupe_robuste": "membres qui restent reliés même si UNE relation quelconque disparaît"}}}
-
-
-def _b3_disparition(w: Monde) -> dict:
-    act, membres = _g_actuel(w), _membres(w)
-    e = sante.relation_la_plus_critique(act, membres)
-    r = sante.sans_relation(act, membres, *e) if e else {"existe": False}
-    if e:
-        r["noms"] = [_nom(w, x) for x in r["paire"]]
-        r["coupes_noms"] = [_nom(w, x) for x in r["coupes_de_leur_groupe"]]
-    return {"scene": "B", "titre": "Et si une relation s'éteignait ?",
-            "dit": "Si cette relation s'endort, voici ce que le Club perd.",
-            "faits": r | {"interactif": "cliquer sur n'importe quelle relation du graphe pour simuler sa disparition"}}
-
-
-def _c1_silence(w: Monde) -> dict:
+def _e6_suivi(w: Monde) -> dict:
     t = w.avancer(10)
     w.synchroniser()
     rel = cy.relances(w.memoire, w.profils(), w.tax, t)
     ids = w.par_id()
     props = [{"paire": p["noms"], "raisons": [{"type": r["type"], "pour": ids[r["pour"]].nom, "message": r["message"],
-                                               "preuves": r["preuves"]} for r in p["raisons"]]} for p in rel["propositions"]]
-    return {"scene": "C", "titre": "Dix jours plus tard : parler, ou se taire ?",
+                                               "preuves": r["preuves"], "id": r["id"]} for r in p["raisons"]]} for p in rel["propositions"]]
+    w.ctx["relance"] = next((r["id"] for p in rel["propositions"] for r in p["raisons"] if SOPHIE in p["paire"]), None)
+    return {"titre": "Dix jours plus tard : parler, ou se taire ?",
             "dit": "Une relance seulement s'il existe une raison NOUVELLE et prouvée.",
             "faits": {"relances": props, "silences": rel["abstentions"], "principe": rel["principe"]}}
 
 
-def _c2_refus(w: Monde) -> dict:
+def _e7_opportunite(w: Monde) -> dict:
+    c = w.ctx["candidat"]
+    rep = cy.repondre(w.memoire, w.profils(), w.tax, w.jour(), w.ctx["relance"], True, c) if w.ctx.get("relance") else {"suivi": False}
+    w.magasin.transition(w.ctx["relation"], "cloturer", SOPHIE, resultat="affaire_en_cours")
+    etat = reseau.etat_relation(w.memoire, SOPHIE, c, w.synchroniser())
+    return {"titre": "Le suivi devient une opportunité", "dit": "Une affaire en cours : une opportunité, pas encore un résultat.",
+            "faits": {"suivi": rep.get("suivi"), "etat_relation": etat["etat"], "libelle": etat["libelle"],
+                      "ligne_de_temps": [f["type"] for f in etat["faits"]]}}
+
+
+def _mesure(g: nx.Graph, membres: list[str]) -> dict:
+    i = indicateurs_actuels(g, membres)
+    return {"groupes": i["groupes_actuels"], "plus_grand_groupe": i["plus_grand_groupe"],
+            "isoles": i["sans_relation_actuelle"], "groupe_robuste": pareto.plus_grand_groupe_robuste(g, membres)}
+
+
+def _e8_reseau(w: Monde) -> dict:
     t = w.synchroniser()
-    s = w.donnees["sophie"]
     membres = _membres(w)
-    act = _g_actuel(w)
-    bes = w.magasin.besoins() + cy.besoins_publies(w.memoire, t)
-    etats = reseau.etats_par_paire(w.memoire, t)
-    b = analyser(s["besoin_sans_preuve"], w.tax)
-    japon = rechercher(b, w.par_id()[SOPHIE], w.profils(), w.tax)
-    refuse = next(p.id for p in w.profils() if p.type == "membre_club" and not p.accepte_introductions)
-    seul = next(x for x in membres if act.degree(x) == 0 and x != refuse)      # sans aucune relation actuelle
-
-    def raisons(a: str, b: str) -> list[str]:
-        return interventions.refus_motives(a, b, w.profils(), bes, w.tax, act, etats)
-    # « relier quelqu'un qui est seul, à n'importe qui » : le 1er membre (ordre des identifiants) sans aide prouvée
-    autre = next(y for y in membres if y not in (seul, refuse) and raisons(seul, y) and raisons(seul, y)[0].startswith("aucune aide"))
-    tentatives = [
-        {"qui": "Sophie", "demande": s["besoin_sans_preuve"], "decision": "S_ABSTENIR" if japon.abstention else "PROPOSER",
-         "raisons": [japon.message] if japon.abstention else []},
-        {"qui": "L'organisatrice", "demande": "Présenter Sophie à un membre qui a refusé d'être présenté (non nommé ici)",
-         "decision": "REFUSER", "raisons": raisons(SOPHIE, refuse)},
-        {"qui": "L'organisatrice", "decision": "REFUSER",
-         "demande": f"Présenter {_nom(w, seul)}, sans aucune relation actuelle, à {_nom(w, autre)} « pour qu'elle ne reste pas seule »",
-         "raisons": raisons(seul, autre)},
-    ]
-    return {"scene": "C", "titre": "Ce que le système refuse de faire",
-            "dit": "Chaque refus a une raison vérifiable.",
-            "faits": {"tentatives": tentatives}}
+    d = dg.diagnostic(w.memoire, w.profils(), cy.besoins_publies(w.memoire, t), w.tax, t, k=3)
+    plans = d["agir"]["plans_nommes"]
+    avant = _g_actuel(w)
+    if not plans:
+        return {"titre": "Le réseau qui évolue", "dit": "Aucune action fondée : ne rien faire.", "faits": {"plan": None}}
+    plan = next((p for p in plans if "EQUILIBRE" in p["noms"]), plans[0])
+    apres, ponts = avant.copy(), 0
+    for a, b in plan["paires"]:
+        ponts += not nx.has_path(apres, a, b)
+        apres.add_edge(a, b)
+    preuves = [x for q in plan["pourquoi"] for x in q["preuves"]]
+    return {"titre": "Le réseau qui évolue", "dit": "Ce mois-ci, trois introductions prouvées. Avant, après.",
+            "faits": {"avant": _mesure(avant, membres), "apres": _mesure(apres, membres), "paires": plan["paires"],
+                      "introductions": [{"qui": [_nom(w, x) for x in q["paire"]], "reciproque": q["reciproque"]} for q in plan["pourquoi"]],
+                      "nouveaux_ponts": ponts, "membres_servis": len({x["aide_a"] for x in preuves}),
+                      "besoins_couverts": len({(x["aide_a"], x["besoin"]) for x in preuves}),
+                      "reciproques": sum(q["reciproque"] for q in plan["pourquoi"]),
+                      "autres_plans": len(plans) - 1, "nature": "SIMULATION : introductions supposées acceptées ; rien n'est envoyé",
+                      "lexique": "robuste = reste relié même si UNE relation quelconque disparaît"}}
 
 
-def _c3_bilan(w: Monde) -> dict:
+def _e9_abstention(w: Monde) -> dict:
+    g, bes, etats = _contexte_reseau(w)
+    seul = next(x for x in _membres(w) if g.degree(x) == 0 and w.par_id()[x].accepte_introductions)
+    r = interventions.relier_sans_preuve(seul, w.profils(), bes, w.tax, g, etats)
+    japon = rechercher(analyser(w.donnees["sophie"]["besoin_sans_preuve"], w.tax), w.par_id()[SOPHIE], w.profils(), w.tax)
+    ress = r["par_ressemblance"]
+    return {"titre": "Je pourrais inventer une connexion. Je préfère m'abstenir.",
+            "dit": f"{_nom(w, seul)} n'a aucune relation. La relier ferait baisser l'indicateur « isolés ».",
+            "faits": {"membre": _nom(w, seul), "membre_id": seul, "introductions_possibles": r["introductions_possibles"],
+                      "introductions_fondees": len(r["introductions_fondees"]), "decision": r["decision"],
+                      "raisons": r["raisons"], "ce_qui_changerait": r["ce_qui_changerait"],
+                      "par_ressemblance": ({"id": ress["membre"], "nom": _nom(w, ress["membre"]), "ressemblance": ress["ressemblance"]}
+                                           if ress else None),
+                      "japon": {"demande": w.donnees["sophie"]["besoin_sans_preuve"],
+                                "decision": "S_ABSTENIR" if japon.abstention else "PROPOSER", "examines": japon.nb_profils_examines}}}
+
+
+def _e10_saturation(w: Monde) -> dict:
+    g, bes, _ = _contexte_reseau(w)
+    r = cy.soirees_successives(w.profils(), bes, w.tax, g, n=3, tours=3)
+    return {"titre": "Trois soirées de suite", "dit": "Les rencontres utiles s'épuisent. Le système ne les fabrique pas.",
+            "faits": r}
+
+
+def _e11_bilan(w: Monde) -> dict:
     t = w.synchroniser()
-    return {"scene": "C", "titre": "Ce que vous venez de voir",
+    return {"titre": "Des rencontres ponctuelles, un réseau vivant",
             "dit": "Ce qui est un fait, ce qui est simulé, ce qui reste à prouver.",
             "faits": {"faits_enregistres": sum(1 for e in w.memoire.evenements() if e.type != "HORLOGE"), "le": t.isoformat(),
                       "natures": [
-                          {"quoi": "rencontres passées, introduction, accord, rencontre, relance", "nature": "FAIT enregistré (réseau FICTIF)"},
-                          {"quoi": "phénomènes du réseau (îlots, ponts fragiles)", "nature": "OBSERVATION calculée sur ces faits"},
-                          {"quoi": "effet des deux plans, disparition d'une relation", "nature": "SIMULATION (rien n'est écrit)"},
-                          {"quoi": "interprétation par IA", "nature": "VÉRIFIÉE par le code, ou absente — jamais simulée"},
+                          {"quoi": "rencontres, introduction, accord, relance, opportunité", "nature": "FAIT enregistré (réseau FICTIF)"},
+                          {"quoi": "réseau avant / après, soirées successives", "nature": "SIMULATION (rien n'est écrit)"},
+                          {"quoi": "compréhension du besoin", "nature": "RÈGLES vérifiables, sans IA générative"},
                           {"quoi": "valeur pour un vrai Club", "nature": "NON MESURÉE : à établir par un pilote"}]}}
 
 
-ETAPES: list[Callable[[Monde], dict]] = [_a1_besoin_libre, _a2_proposition, _a3_introduction,
-                                          _b1_diagnostic, _b2_deux_plans, _b3_disparition,
-                                          _c1_silence, _c2_refus, _c3_bilan]
+ETAPES: list[Callable[[Monde], dict]] = [_e1_nouveau_membre, _e2_besoin, _e3_candidats, _e4_consentement, _e5_rencontre,
+                                          _e6_suivi, _e7_opportunite, _e8_reseau, _e9_abstention, _e10_saturation, _e11_bilan]
 
 
-def rejouer_jusqu_a(tax: Taxonomie, n: int, interpreter=None) -> Monde:
-    w = Monde(tax, interpreter)
+def rejouer_jusqu_a(tax: Taxonomie, n: int) -> Monde:
+    w = Monde(tax)
     for i in range(max(0, min(n, len(ETAPES)))):
         w.traces.append(ETAPES[i](w) | {"etape": i, "le": w.jour().isoformat()})
         w.etape = i + 1
     return w
+
+
+# ------------------------------------------------------------------ tour de contrôle (vue organisation, lecture seule)
+def tour(w: Monde) -> list[dict]:
+    """Que se passe-t-il dans le réseau ? Chaque chiffre = une définition + les éléments comptés (aucun score)."""
+    t = w.synchroniser()
+    g, bes, etats = _contexte_reseau(w)
+    membres = _membres(w)
+    ids = w.par_id()
+    nom = lambda x: ids[x].nom if x in ids else x  # noqa: E731
+    rel = cy.relances(w.memoire, w.profils(), w.tax, t)
+    cands = interventions.candidates(w.profils(), bes, w.tax, g, etats)
+    comp = {x: i for i, c in enumerate(nx.connected_components(g.subgraph(membres))) for x in c}
+    ponts = [c for c in cands if comp.get(c.a) != comp.get(c.b)]
+    par_etat: dict[str, list] = {}
+    for cle_paire, e in sorted(etats.items()):
+        par_etat.setdefault(e, []).append(" – ".join(nom(x) for x in cle_paire.split("|")))
+    ajoutes = [d["nom"] for d in w.magasin.membres_ajoutes()]
+    return [
+        {"cle": "nouveaux_membres", "libelle": "nouveaux membres", "valeur": len(ajoutes), "elements": ajoutes,
+         "definition": "membres inscrits depuis le début de la démonstration"},
+        {"cle": "besoins_actifs", "libelle": "besoins actifs", "valeur": len(bes),
+         "elements": [f"{nom(b.auteur_id)} : {b.besoin.texte[:70]}" for b in bes],
+         "definition": "besoins publiés et non clos (brouillons privés exclus)"},
+        {"cle": "introductions", "libelle": "introductions", "valeur": len(w.magasin.relations()),
+         "elements": [f"{nom(r.auteur_id)} → {nom(r.aidant_id)} : {r.libelle_etat}" for r in w.magasin.relations()],
+         "definition": "demandes d'introduction, quel que soit leur état (double accord)"},
+        {"cle": "suivis", "libelle": "relances fondées", "valeur": sum(len(p["raisons"]) for p in rel["propositions"]),
+         "elements": [" – ".join(p["noms"]) + " : " + ", ".join(r["type"] for r in p["raisons"]) for p in rel["propositions"]],
+         "definition": f"raison NOUVELLE et prouvée ; {rel['abstentions']['rien_de_nouveau']} paires sans rien de nouveau (silence)"},
+        {"cle": "opportunites", "libelle": "opportunités", "valeur": len(par_etat.get("OPPORTUNITE", [])),
+         "elements": par_etat.get("OPPORTUNITE", []), "definition": "relations où une affaire est déclarée en cours (pas un résultat)"},
+        {"cle": "a_raviver", "libelle": "relations endormies", "valeur": len(par_etat.get("A_RAVIVER", [])),
+         "elements": par_etat.get("A_RAVIVER", []), "definition": "aucune interaction depuis plus de 90 jours (hypothèse de produit)"},
+        {"cle": "isoles", "libelle": "membres sans relation actuelle", "valeur": sum(1 for x in membres if g.degree(x) == 0),
+         "elements": [nom(x) for x in membres if g.degree(x) == 0], "definition": "aucune relation de moins de 90 jours"},
+        {"cle": "ponts_potentiels", "libelle": "ponts potentiels", "valeur": len(ponts),
+         "elements": [f"{nom(c.a)} – {nom(c.b)} : « {c.preuves[0]['preuve'][:60]} »" for c in ponts],
+         "definition": "introductions avec aide prouvée qui relieraient deux groupes aujourd'hui séparés"},
+    ]
 
 
 # ------------------------------------------------------------------ graphe pour l'affichage (positions stables)
@@ -398,6 +379,13 @@ def creer_routeur(tax: Taxonomie) -> APIRouter:
             w.traces.append(ETAPES[w.etape](w) | {"etape": w.etape, "le": w.jour().isoformat()})
             w.etape += 1
             return vue(w, pos)
+
+    @r.get("/tour")
+    def tour_de_controle():
+        """Vue ORGANISATION du même monde : chaque chiffre avec sa définition et ce qu'il compte (lecture seule)."""
+        with verrou:
+            w = etat["monde"]
+            return {"le": w.jour().isoformat(), "indicateurs": tour(w), "donnees_fictives": True}
 
     @r.get("/sans_relation")
     def sans_relation(a: str = Query(..., max_length=64), b: str = Query(..., max_length=64)):

@@ -813,7 +813,7 @@ def interventions_reseau(k: int = Query(5, ge=1, le=20), plafond: int = Query(1,
         raise HTTPException(501, "Vue d'organisation : rôle d'animateur·rice authentifié non implémenté.")
     projeter_reseau()
     t, ids = aujourdhui_reseau(), par_id()
-    p = interventions.plan(MEMOIRE, profils_effectifs(), MAGASIN.besoins() + cycle_club.besoins_publies(MEMOIRE, t), TAX, t, k, plafond)
+    p = interventions.plan(MEMOIRE, profils_effectifs(), cycle_club.besoins_actifs(MAGASIN.besoins(), MEMOIRE, t), TAX, t, k, plafond)
     for o in p["options"].values():
         for a in o["actions"]:
             a["noms"] = [ids[x].nom for x in a["paire"] if x in ids]
@@ -828,7 +828,7 @@ def diagnostic_reseau(k: int = Query(5, ge=1, le=20), horizon: int = Query(30, g
         raise HTTPException(501, "Vue d'organisation : rôle d'animateur·rice authentifié non implémenté.")
     projeter_reseau()
     t = aujourdhui_reseau()
-    d = diag_reseau.diagnostic(MEMOIRE, profils_effectifs(), MAGASIN.besoins() + cycle_club.besoins_publies(MEMOIRE, t), TAX, t, k, horizon)
+    d = diag_reseau.diagnostic(MEMOIRE, profils_effectifs(), cycle_club.besoins_actifs(MAGASIN.besoins(), MEMOIRE, t), TAX, t, k, horizon)
     return d | {"donnees_fictives": True}
 
 
@@ -852,7 +852,7 @@ def decision_reseau(e: EntreeDecision):
     g = reseau.graphe_actuel(MEMOIRE, t)
     g.add_nodes_from(membres)
     proposables = {frozenset((c.a, c.b)) for c in interventions.candidates(
-        profils, MAGASIN.besoins() + cycle_club.besoins_publies(MEMOIRE, t), TAX, g, reseau.etats_par_paire(MEMOIRE, t))}
+        profils, cycle_club.besoins_actifs(MAGASIN.besoins(), MEMOIRE, t), TAX, g, reseau.etats_par_paire(MEMOIRE, t))}
     if any(len(p) != 2 or frozenset(p) not in proposables for p in e.paires):
         raise HTTPException(409, "Une action ne fait pas partie des actions proposables aujourd'hui (preuve, consentement, refus).")
     try:

@@ -29,11 +29,12 @@ PROBLÈME → INSIGHT → TENSION → NOUVELLE APPROCHE → PREUVE → DÉMO →
   qu'un réseau professionnel qui ressemble à une application de rencontres n'était probablement pas exactement le brief. »
 - Écartées : toute plaisanterie sur les membres, la région, la confidentialité ou un groupe de personnes.
 
-## Le moment intelligent
-Scène B, étape 5 : une seule introduction possible ; « réunir les îlots » (8 → 15 membres reliés, mais par un seul fil)
-contre « consolider » (8 membres résistent à une perte, sans rien réunir). Aucun plan ne gagne sur tout : le système
-montre le prix, l'organisatrice choisit. Puis le clic en direct sur une relation (étape 6) : qui serait perdu.
-Scène C, étape 7 : **une** relance fondée et **17 silences**.
+## Le moment intelligent (la surprise)
+Dans la scène : Chantal n'a aucune relation. Le système POURRAIT la présenter à 15 membres — et son propre
+indicateur « isolés » s'améliorerait. Aucune de ces introductions n'a de raison prouvée : il s'abstient. Titre à
+l'écran : « Je pourrais inventer une connexion. Je préfère m'abstenir. » Un moteur par ressemblance aurait proposé
+quelqu'un (trait gris) : ressembler n'est pas aider. Puis trois soirées de suite, 9 → 1 → 0 rencontres
+utiles, et l'abstention. Derrière ce silence : preuves, consentement, contraintes, optimisation, temps, incertitude.
 
 ## Le moment humain
 Sophie ne connaît personne. Le système ne lui donne pas une liste : il lui donne **une bonne prochaine action** —
@@ -53,21 +54,20 @@ demander une introduction à Markus, qui peut l'aider et qu'elle peut aider en r
 
 **Retenue : 2** — concrète, sans grandiloquence, identique à la fin de la vidéo (cohérence). Variante courte : 3.
 
-## Storyboard (la démo est le cœur ; une seule page, `/demo/stage`)
-| # | Objectif | Visuel | Parole | Temps (version 3 min) |
-|---|---|---|---|---|
-| 1 | Poser la question | Écran de départ de la scène (deux îlots) | Ouverture 3 + « que doit faire l'organisatrice ? » | 0:00–0:20 |
-| 2 | Scène A : un membre | Étapes 1–3 | PITCH_3MIN | 0:20–1:05 |
-| 3 | Scène B : l'organisatrice | Étapes 4–6 + un clic | PITCH_3MIN | 1:05–1:55 |
-| 4 | Scène C : le silence | Étapes 7–8 | PITCH_3MIN | 1:55–2:30 |
-| 5 | Prouvé / non prouvé | Étape 9 | « fictif et calculé ; pilote écrit » | 2:30–2:50 |
-| 6 | Finir | Étape 9 | Fin 2 | 2:50–3:00 |
+## Storyboard (la démo arrive tôt ; les diapositives expliquent ce que le jury vient de voir)
+Deck : `/presentation` (neuf diapositives, notes d'orateur : touche N). Démo : `/demo/stage`.
+| # | Diapositive | Rôle | Temps (version 3 min) |
+|---|---|---|---|
+| début | Le problème · L'idée · Le réseau | problème humain → phrase de promesse → le personnage | 0:00–0:15 |
+| démo | Démonstration en direct | Sophie → Markus → réseau → abstention → soirées | 0:15–2:25 |
+| après | Ce qui est différent · Comment ça marche · Les preuves | expliquer ce qui vient d'être vu (en réponse aux questions si le temps manque) | 2:25–2:50 |
+| fin | Impact · La suite | pilote et critère d'échec ; phrase finale | 2:50–3:00 |
 
 ## Adapter au temps officiel (non confirmé : docs/ASSUMPTIONS.md, I4)
 | Temps | Texte | Démo | On coupe |
 |---|---|---|---|
-| 90 s | PITCH_90SEC | étapes 1, 2, 5, 7 | le clic, les refus, l'introduction |
-| 3 min | PITCH_3MIN | les 9 étapes + 1 clic | rien |
+| 90 s | PITCH_90SEC | besoin, candidats, suivi, réseau, abstention | le clic, les soirées, la tour de contrôle |
+| 3 min | PITCH_3MIN | toutes les étapes | le clic sur une relation (réservé aux questions) |
 | 5 min | PITCH_3MIN + 2 min | + 1 min d'annexe technique (ANNEXE § 1 et § 3) + 1 min de protocole de pilote (VALEUR_METIER § 6) | — |
 | Démo seule (stand) | 09_DEMO_SCRIPT | libre, avec clics | — |
 | Vidéo seule | `competition/video/demo.webm` | enregistrée | — |

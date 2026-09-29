@@ -93,6 +93,15 @@ def besoins_publies(m: Memoire, jusqu_au: Optional[date] = None) -> list:
             for e in m.evenements("BESOIN_PUBLIE", jusqu_au=jusqu_au) if e.donnees.get("besoin_id") not in clos]
 
 
+def besoins_actifs(besoins_magasin: list, m: Memoire, jusqu_au: Optional[date] = None) -> list:
+    """UNE liste de besoins : ceux du magasin (avec leur statut) + ceux de la mémoire qui n'y sont pas déjà.
+    Les besoins du magasin sont projetés en mémoire : les concaténer comptait chaque besoin deux fois (deux sources de
+    vérité ; sans effet sur les aides, qui gardent le maximum par paire, mais faux pour tout compteur et deux fois plus
+    de recherches)."""
+    vus = {(b.auteur_id, b.besoin.texte) for b in besoins_magasin}
+    return list(besoins_magasin) + [b for b in besoins_publies(m, jusqu_au) if (b.auteur_id, b.besoin.texte) not in vus]
+
+
 # ------------------------------------------------------------------ 10 jours plus tard : pourquoi reprendre contact ?
 def _traitees(m: Memoire) -> set[str]:
     return {e.donnees["relance_id"] for e in m.evenements("RELANCE_ACCEPTEE", "RELANCE_REFUSEE")}
@@ -277,3 +286,24 @@ def opportunites(m: Memoire, profils: list[Profil], tax: Taxonomie, maintenant: 
 
 def relations(m: Memoire, maintenant: date) -> list[tuple[str, str]]:
     return sorted(graphe(m, maintenant).edges())
+
+
+def soirees_successives(profils: list, besoins_publies: list, tax, g_actuel, n: int = 3, tours: int = 3,
+                        refus: frozenset = frozenset()) -> dict:
+    """SIMULATION de soirées enchaînées avec les MÊMES membres : chaque table planifiée est supposée tenue et devient une
+    relation ; la soirée suivante ne peut plus planifier que les rencontres utiles (aide prouvée) qui restent.
+    Quand il n'en reste plus, le système s'abstient au lieu de fabriquer des rencontres. Rien n'est écrit."""
+    from app.soiree import planifier
+    deja = {frozenset(e) for e in g_actuel.edges()}
+    res = []
+    for k in range(1, n + 1):
+        p = planifier(profils, besoins_publies, tax, tours=tours, deja_en_relation=frozenset(deja), refus=refus)
+        tables = [(m["a"]["id"], m["b"]["id"]) for m in p["rencontres"]]
+        res.append({"soiree": k, "rencontres_utiles_possibles": p["paires_utiles_possibles"], "tables": len(tables),
+                    "membres_servis": p["comparaison"]["optimal"]["participants_avec_rencontre_utile"],
+                    "decision": "PLANIFIER" if tables else "S_ABSTENIR"})
+        deja |= {frozenset(t) for t in tables}
+        if not tables:
+            break
+    return {"nature": "SIMULATION (chaque table supposée tenue)", "soirees": res,
+            "raison": "plus aucune paire avec une aide prouvée qui ne se connaisse déjà" if res and not res[-1]["tables"] else None}

@@ -23,56 +23,63 @@ def test_rejeu_identique_trois_fois():
 
 def test_histoire_racontee_par_le_moteur():
     t = {x["etape"]: x["faits"] for x in stage.rejouer_jusqu_a(TAX, len(stage.ETAPES)).traces}
-    # A — sans modèle : les règles comprennent mal la phrase libre et s'abstiennent ; rien n'est simulé à la place de l'IA
-    assert t[0]["regles"]["decision"] == "S_ABSTENIR" and t[0]["ia"]["etat"] == "NON_CONFIGUREE"
-    assert t[0]["retenu"] == "REFORMULATION"
-    assert t[0]["reformulation_comprise"][0]["quoi"] == "Développement commercial en Allemagne (obligatoire)"
-    cand = t[1]["candidats"]
+    assert t[0]["invisible_par_defaut"] is True and t[0]["coordonnees_enregistrees"] == "aucune"
+    compris = {c["role"]: c for c in t[1]["compris"]}
+    assert compris["besoin principal"]["quoi"] == "Développement commercial en Allemagne"
+    assert "distribution" in compris["besoin principal"]["note"]
+    assert compris["langue"]["quoi"] == "français" and compris["contrainte"]["quoi"] == "pas un concurrent direct"
+    assert t[1]["incertain"] == [] and "aucune IA générative" in t[1]["analyse"]
+    cand = t[2]["candidats"]
     assert cand[0]["nom"] == "Markus Heinzmann" and cand[0]["niveau"] == "forte"
     assert cand[0]["dimensions"]["reciprocite"]["etablie"] is True
-    assert t[1]["ecartes_par_leur_choix"] == 0                       # Stefan refuse : ni nommé, ni compté (k < 3)
+    assert t[2]["ecartes_par_leur_choix"] == 0                       # Stefan refuse : ni nommé, ni compté (k < 3)
     assert "Kalbermatten" not in json.dumps(t, ensure_ascii=False)
-    assert t[2]["coordonnees_avant_accord"] is False and t[2]["coordonnees_apres_accord"] is True
-    assert t[2]["etat_relation"] == "RENCONTREE"
-    # B — diagnostic, deux plans en conflit, contrefactuel
-    assert {"ISOLEMENT", "PONT_FRAGILE", "FRAGMENTATION"} <= {p["code"] for p in t[3]["phenomenes"]}
-    assert all("[[" not in p["observation"] for p in t[3]["phenomenes"])
-    plans = t[4]["plans"]
-    assert len(plans) == 2 and t[4]["budget"] == 1
-    reunir = max(plans, key=lambda p: p["plus_grand_groupe"])
-    consolider = max(plans, key=lambda p: p["groupe_robuste"])
-    assert reunir is not consolider                                   # aucun plan ne gagne sur tout
-    assert reunir["plus_grand_groupe"] > consolider["plus_grand_groupe"] and consolider["groupe_robuste"] > reunir["groupe_robuste"]
-    assert t[4]["nature"].startswith("SIMULATION")
-    assert t[5]["est_un_pont"] and t[5]["apres"]["groupes"] > t[5]["avant"]["groupes"]
-    # la partie coupée, pas tout le groupe (défaut n° 39 : les 8 membres étaient déclarés coupés)
-    assert t[5]["coupes_de_leur_groupe"] == ["s06", "s07", "s08", "s09"] and t[5]["taille_du_groupe"] == 8
-    # ponts surlignés = ponts FRAGILES du diagnostic, pas les bouts de chaîne (défaut n° 41)
-    fragile = next(p for p in t[3]["phenomenes"] if p["code"] == "PONT_FRAGILE")
-    assert len(t[3]["ponts"]) == int(fragile["observation"].split()[0]) == 2
-    # C — silence et refus motivés
-    assert [r["type"] for p in t[6]["relances"] for r in p["raisons"]] == ["RECIPROCITE_OUVERTE"]
-    assert t[6]["silences"]["rien_de_nouveau"] >= 10
-    dec = [x["decision"] for x in t[7]["tentatives"]]
-    assert dec == ["S_ABSTENIR", "REFUSER", "REFUSER"] and all(x["raisons"] for x in t[7]["tentatives"])
-    assert "consentement" in t[7]["tentatives"][1]["raisons"][0] and "aucune aide" in t[7]["tentatives"][2]["raisons"][0]
-    assert any("NON MESURÉE" in n["nature"] for n in t[8]["natures"])
+    assert t[3]["coordonnees_avant_accord"] is False and t[3]["coordonnees_apres_accord"] is True
+    assert t[4]["etat_relation"] == "RENCONTREE"
+    assert [r["type"] for p in t[5]["relances"] for r in p["raisons"]] == ["RECIPROCITE_OUVERTE"]
+    assert t[5]["silences"]["rien_de_nouveau"] == 17
+    assert t[6]["etat_relation"] == "OPPORTUNITE"
+    r = t[7]                                                          # le réseau qui évolue (simulation)
+    assert (r["avant"]["groupes"], r["apres"]["groupes"]) == (2, 1)
+    assert (r["avant"]["groupe_robuste"], r["apres"]["groupe_robuste"]) == (4, 15)
+    assert r["avant"]["isoles"] == r["apres"]["isoles"] == 2          # pas de lien inventé pour faire baisser l'indicateur
+    assert r["nature"].startswith("SIMULATION") and r["besoins_couverts"] == 3
+    a = t[8]                                                          # « je pourrais… je préfère m'abstenir »
+    assert a["decision"] == "S_ABSTENIR" and a["introductions_fondees"] == 0 and a["introductions_possibles"] >= 10
+    assert a["par_ressemblance"] and a["japon"]["decision"] == "S_ABSTENIR"
+    s_ = t[9]["soirees"]                                              # saturation : 9 → 1 → 0 rencontres utiles
+    assert [x["rencontres_utiles_possibles"] for x in s_] == [9, 1, 0] and s_[-1]["decision"] == "S_ABSTENIR"
+    assert any("NON MESURÉE" in n["nature"] for n in t[10]["natures"])
 
 
-def test_scene_a_avec_une_ia_verifiee_n_utilise_que_des_criteres_valides():
-    """Chemin IA exercé avec un DOUBLE (aucun modèle réel) : sortie passée par `parser_llm.valider`, extrait inventé retiré."""
-    from app.parser_llm import SortieLLM, valider
-    texte = stage.Monde(TAX).donnees["sophie"]["besoin_complexe"]
-    sortie = SortieLLM.model_validate({"competences": [{"valeur": "export_allemagne", "obligatoire": True, "extrait": "développe déjà des ventes"},
-                                                       {"valeur": "traduction", "obligatoire": False, "extrait": "étiquettes doivent être traduites"}],
-                                       "langues": [{"valeur": "de", "obligatoire": True, "extrait": "parle allemand"}],
-                                       "zones": [], "implantations": [], "exclusions": [], "exclure_concurrents": True,
-                                       "termes_hors_catalogue": [], "contexte": ["avant le salon de mars"]})
-    double = valider(texte, sortie, TAX), {"analyseur": "double de test", "modele": "aucun", "latence_ms": 0}
-    w = stage.rejouer_jusqu_a(TAX, 2, interpreter=lambda _t: double)
-    f = w.traces[0]["faits"]
-    assert f["retenu"] == "INTERPRETATION_IA_VERIFIEE" and f["ia"]["etat"] == "UTILISEE" and "reformulation" not in f
-    assert w.traces[1]["faits"]["candidats"][0]["nom"] == "Markus Heinzmann"
+def test_l_abstention_suit_les_regles_du_moteur():
+    """« Je préfère m'abstenir » n'est pas une phrase de présentation : c'est le résultat de candidates/refus_motives."""
+    from adaptateurs.club import interventions as iv
+    w = stage.rejouer_jusqu_a(TAX, 8)
+    g, bes, etats = stage._contexte_reseau(w)
+    x = w.traces[-1]["etape"] and stage._membres(w)
+    seul = next(m for m in x if g.degree(m) == 0 and w.par_id()[m].accepte_introductions)
+    fondees = {c.b if c.a == seul else c.a for c in iv.candidates(w.profils(), bes, TAX, g, etats) if seul in (c.a, c.b)}
+    assert set(iv.relier_sans_preuve(seul, w.profils(), bes, TAX, g, etats)["introductions_fondees"]) == fondees == set()
+
+
+def test_les_simulations_n_ecrivent_rien():
+    w = stage.rejouer_jusqu_a(TAX, 7)
+    avant = w.memoire.empreinte()
+    for etape in stage.ETAPES[7:10]:                                  # réseau, abstention, soirées
+        etape(w)
+    assert w.memoire.empreinte() == avant
+
+
+def test_tour_de_controle_chaque_chiffre_est_explicable():
+    w = stage.rejouer_jusqu_a(TAX, len(stage.ETAPES))
+    for i in stage.tour(w):
+        assert i["definition"] and isinstance(i["valeur"], int)
+        if i["cle"] != "suivis":                                      # suivis : une paire peut porter plusieurs raisons
+            assert len(i["elements"]) == i["valeur"], i
+    ind = {i["cle"]: i["valeur"] for i in stage.tour(w)}
+    assert ind["besoins_actifs"] == 1                                 # une seule source de vérité (plus de doublon)
+    assert client.get("/api/stage/tour").json()["donnees_fictives"] is True
 
 
 def test_refus_motives_coherent_avec_les_candidates_sur_toutes_les_paires():
@@ -94,7 +101,7 @@ def test_refus_motives_coherent_avec_les_candidates_sur_toutes_les_paires():
 
 
 def test_contrefactuel_a_la_demande_n_ecrit_rien():
-    client.post("/api/stage/aller/6")
+    client.post("/api/stage/aller/8")
     avant = client.get("/api/stage").json()
     r = client.get("/api/stage/sans_relation", params={"a": "s02", "b": "s06"}).json()
     assert r["nature"].startswith("SIMULATION") and r["coupes_noms"] and r["est_un_pont"]
@@ -140,19 +147,3 @@ def test_le_graphe_ne_trahit_pas_qui_refuse_les_introductions():
     assert all(set(n) == {"id", "nom", "x", "y", "present"} for n in v["noeuds"])
     html = (stage.DATA_DIR.parent / "web" / "stage.html").read_text(encoding="utf-8")
     assert ".consent" not in html and ".refus" not in html and '" refus"' not in html
-
-
-def test_scene_a_ia_en_echec_ou_sans_resultat_ne_casse_pas_la_scene():
-    """Red team : (1) modèle en panne → repli visible ; (2) interprétation IA valide mais AUCUN membre prouvé → la scène
-    continue par la reformulation (sinon l'étape d'introduction n'aurait personne à présenter)."""
-    from app.models import Besoin, Critere
-    from app.parser_rules import analyser
-    texte = stage.Monde(TAX).donnees["sophie"]["besoin_complexe"]
-    panne = analyser(texte, TAX), {"analyseur": "regles (repli)", "erreur": "APITimeoutError", "latence_ms": 30000}
-    introuvable = Besoin(texte=texte, criteres=[Critere(type="expertise", valeur="cybersecurite", libelle="Cybersécurité",
-                                                         obligatoire=True, extrait="ventes")]), {"analyseur": "double", "modele": "aucun"}
-    for double, etat in ((panne, "REPLI"), (introuvable, "UTILISEE")):
-        w = stage.rejouer_jusqu_a(TAX, len(stage.ETAPES), interpreter=lambda _t, d=double: d)
-        f = w.traces[0]["faits"]
-        assert f["ia"]["etat"] == etat and f["retenu"] == "REFORMULATION", f
-        assert w.traces[2]["faits"]["coordonnees_apres_accord"] is True
