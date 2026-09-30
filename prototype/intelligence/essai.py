@@ -233,6 +233,7 @@ class Banc:
         self._membre_peut = membre_peut or (lambda membre, concept: True)
         self._origine: Statut = Statut.DECLARE
         self.recherches_tronquees = 0
+        self.noeuds_max = 0                                   # plus grande recherche d'équipe depuis la création du banc
         self._hypotheses: dict[str, OffreVolontaire] = {}
 
     # ------------------------------------------------------------------ journal
@@ -687,6 +688,8 @@ class Banc:
         except _BudgetEpuise:
             self.recherches_tronquees += 1
             return None
+        finally:
+            self.noeuds_max = max(self.noeuds_max, noeuds[0])   # le pic observé : mesuré, pas supposé
 
     def solutions(self, eid: Optional[str], p: Optional[Protocole] = None, maximum: int = 3,
                   garder: Optional[dict[str, Optional[OffreVolontaire]]] = None,
