@@ -193,6 +193,22 @@ def index_claims(m: Memoire, profils_de_depart: dict[str, Profil]) -> list[Claim
 
 
 # ---------------------------------------------------------------------- instances (projection) et Ask
+class HypotheticalClaim(BaseModel):
+    """Une pièce IMAGINÉE (« et si quelqu'un offrait… ») : typée à part, jamais écrite au journal, jamais consentie, ne
+    réserve rien. Sert au « et si » de la démonstration et au LEVIER d'une demande — calculés par le même compositeur."""
+    nature: Nature
+    concept: Optional[str] = Field(default=None, max_length=64)
+    quoi: str = Field(default="pièce hypothétique", min_length=3, max_length=200)
+    attributs: dict[str, int] = Field(default_factory=dict, max_length=4)
+    plages: list[Plage] = Field(min_length=1, max_length=8)
+    du: date
+    au: date
+
+    def offre(self, n: int) -> OffreVolontaire:
+        return OffreVolontaire(id=f"hyp-{n}", auteur=f"HYPOTHESE-{n}", nature=self.nature, quoi=self.quoi, capacite=1, du=self.du,
+                               au=self.au, concept=self.concept, plages=self.plages, attributs=self.attributs)
+
+
 class Ask(BaseModel):
     """Une demande MINIMALE : la seule pièce qui manque, pour un créneau précis, adressée à une CATÉGORIE (jamais à une
     personne choisie par le système), limitée dans le temps."""
@@ -207,6 +223,8 @@ class Ask(BaseModel):
     creneau: Creneau
     expire: date
     texte: str
+    levier: int = 1                                      # capacités qui deviendraient composables avec CETTE pièce
+    debloque: list[str] = Field(default_factory=list)    # leurs titres
 
 
 class Instance(BaseModel):
@@ -227,6 +245,9 @@ class Instance(BaseModel):
     # « aucune solution sûre » dit honnêtement : la cause, ce qu'on sait, ce qu'on ignore, ce qui débloquerait
     recomposition: Optional[dict] = None
     sans_solution: Optional[dict] = None
+    # pièces liées SANS lesquelles la capacité ne se compose plus (contrefactuel calculé : « si elle disparaît, tient-elle ? »)
+    critiques: list[str] = Field(default_factory=list)
+    hypothetique: bool = False                           # projection calculée sous une hypothèse (« et si ») : jamais un état
 
 
 def _texte_ask(p: Patron, e: Emplacement, c: Creneau) -> str:
@@ -282,7 +303,42 @@ class Registre:
         inst = self._composer(p, base, hyp)
         if inst.statut == "DEGRADED":
             self._recomposer(p, inst)
+        if inst.distance == 0:
+            inst.critiques = self._critiques(p, inst)
         return inst
+
+    def _critiques(self, p: Patron, inst: Instance) -> list[str]:
+        """Contrefactuel, par le compositeur : sans CETTE pièce liée, une composition existe-t-elle encore ?"""
+        exclus = self.retires(p.id)
+        tous = {o.id for o in self.b.offres(publiques=True) if o.auteur not in exclus}
+        res = []
+        for k, oid in inst.liaisons.items():
+            if oid is None:
+                continue
+            permis = {e.id: tous - {oid} for e in p.emplacements}
+            if not self.b.solutions(None, p.protocole(), maximum=1, permis=permis):
+                res.append(k)
+        return res
+
+    # ------------------------------------------------------------------ « et si » (I3) et levier (I1)
+    def status_if(self, hypotheses: list[HypotheticalClaim]) -> list[Instance]:
+        """La projection SI ces pièces étaient déclarées — sans rien écrire, sans consentement : au mieux « composable,
+        en attente de consentement ». Chaque instance rendue est marquée `hypothetique`."""
+        avant = self.b.m.empreinte()
+        with self.b.hypothese([h.offre(i) for i, h in enumerate(hypotheses, start=1)]):
+            res = [i.model_copy(update={"hypothetique": True}) for i in self._projeter(levier=False)]
+        assert self.b.m.empreinte() == avant, "une hypothèse a écrit dans le journal"
+        return res
+
+    def levier(self, ask: Ask) -> tuple[int, list[str]]:
+        """Combien de capacités deviennent composables (distance 0) avec LA pièce demandée — calculé par le compositeur
+        partagé sous hypothèse, jamais par une boucle à part."""
+        h = HypotheticalClaim(nature=ask.nature, concept=ask.concept, quoi=ask.libelle, attributs=dict(ask.minimums),  # type: ignore[arg-type]
+                              plages=[Plage(jour=ask.creneau.jour, debut=ask.creneau.debut, fin=ask.creneau.fin)],
+                              du=self._jour(), au=ask.expire)
+        avant = {i.finalite: i.distance for i in self._projeter(levier=False)}
+        apres = [i for i in self.status_if([h]) if i.distance == 0 and avant.get(i.finalite) != 0]
+        return len(apres), [i.titre for i in apres]
 
     def _recomposer(self, p: Patron, inst: Instance) -> None:
         """Ce qui peut remplacer la pièce perdue — calculé par le même compositeur, jamais appliqué : une personne décide."""
@@ -353,7 +409,16 @@ class Registre:
         return Instance(**base, statut="DEGRADED" if perdus else None, distance=None, perdus=perdus, hypotheses=hyp)
 
     def projeter(self) -> list[Instance]:
-        return [self.instance(p) for p in sorted(self.patrons.values(), key=lambda x: x.id)]
+        return self._projeter(levier=True)
+
+    def _projeter(self, levier: bool) -> list[Instance]:
+        res = [self.instance(p) for p in sorted(self.patrons.values(), key=lambda x: x.id)]
+        if levier:
+            for i in res:
+                if i.ask is not None:
+                    n, titres = self.levier(i.ask)
+                    i.ask.levier, i.ask.debloque = n, titres
+        return res
 
     # ------------------------------------------------------------------ commandes
     def repondre(self, membre: str, ask_id: str, oui: bool, attributs: Optional[dict[str, int]] = None,

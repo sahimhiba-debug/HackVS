@@ -233,6 +233,7 @@ class Banc:
         self._membre_peut = membre_peut or (lambda membre, concept: True)
         self._origine: Statut = Statut.DECLARE
         self.recherches_tronquees = 0
+        self._hypotheses: dict[str, OffreVolontaire] = {}
 
     # ------------------------------------------------------------------ journal
     @contextmanager
@@ -271,7 +272,24 @@ class Banc:
                 self._revoir_essais_de_l_offre(oid, f"{self._nom_offre(o)} : nouvelle offre publiée")
         return oid
 
+    # ------------------------------------------------------------------ HYPOTHÈSES (« et si… ») : lecture seule
+    @contextmanager
+    def hypothese(self, offres: list[OffreVolontaire]) -> Iterator[None]:
+        """Le temps d'un bloc, des offres HYPOTHÉTIQUES s'ajoutent aux offres lues — sans rien écrire au journal. Elles
+        ne réservent rien, ne portent aucun consentement, et disparaissent à la sortie du bloc (même sur erreur)."""
+        avant = self._hypotheses
+        self._hypotheses = avant | {o.id: o for o in offres}
+        try:
+            yield
+        finally:
+            self._hypotheses = avant
+
+    def hypothetique(self, oid: str) -> bool:
+        return oid in self._hypotheses
+
     def offre(self, oid: str) -> OffreVolontaire:
+        if oid in self._hypotheses:
+            return self._hypotheses[oid]
         evs = [e for e in self.m.evenements("OFFRE") if e.donnees["offre"]["id"] == oid]
         if not evs:
             raise Introuvable("offre inconnue")
@@ -282,7 +300,8 @@ class Banc:
         dernieres: dict[str, dict] = {}                          # un seul passage : la dernière version de chaque offre
         for e in self.m.evenements("OFFRE"):
             dernieres[e.donnees["offre"]["id"]] = e.donnees["offre"]
-        return [o for o in (OffreVolontaire(**d) for d in dernieres.values()) if not (publiques and o.pour_essai)]
+        return [o for o in [*(OffreVolontaire(**d) for d in dernieres.values()), *self._hypotheses.values()]
+                if not (publiques and o.pour_essai)]
 
     def offre_de(self, eid: str, e: Etape) -> Optional[OffreVolontaire]:
         """L'offre qui porte ce geste : l'offre choisie, ou — sur invitation — celle que la personne a déclarée EN
@@ -295,7 +314,7 @@ class Banc:
         return None
 
     def etat_offre(self, oid: str) -> str:
-        if any(e.donnees["offre"] == oid for e in self.m.evenements("OFFRE_RETIREE")):
+        if oid not in self._hypotheses and any(e.donnees["offre"] == oid for e in self.m.evenements("OFFRE_RETIREE")):
             return "retiree"
         o, j = self.offre(oid), self._jour()
         return "expiree" if o.au < j else ("a_venir" if o.du > j else "active")
@@ -347,7 +366,7 @@ class Banc:
         etat = self.etat_offre(o.id)
         if etat != "active":
             return {"retiree": "offre retirée", "expiree": "offre expirée", "a_venir": "offre pas encore ouverte"}[etat]
-        if not self._membre_peut(o.auteur, o.concept):
+        if o.id not in self._hypotheses and not self._membre_peut(o.auteur, o.concept):
             return MEMBRE_INDISPONIBLE
         if o.nature != e.nature:
             return "nature différente"
