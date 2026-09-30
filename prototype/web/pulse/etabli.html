@@ -50,7 +50,8 @@
     <span class="puce fictif">monde fictif</span>
     <span class="droite"><span class="puce" id="ia" data-role="ia">IA…</span>
       <button class="btn discret petit" id="ia-bascule">…</button><span class="puce" id="date">date…</span><span class="puce" id="fraicheur">…</span>
-      <button class="btn discret petit" id="voir-pulse">Ce qui a changé</button></span>
+      <button class="btn discret petit" id="voir-pulse">Ce qui a changé</button>
+      <button class="btn discret petit" id="qr-jure">QR juré</button></span>
   </header>
   <div class="page">
     <h1 class="titre">Ce que le Club peut faire ensemble</h1>
@@ -59,6 +60,7 @@
     <div class="grille" id="grille"></div>
     <div id="passeport"></div>
     <div id="pulse" class="pulse"></div>
+    <div id="jure"></div>
   </div>
   <script type="module">
     const $ = (s) => document.querySelector(s);
@@ -144,6 +146,19 @@
         recits[finalite] = await r.json(); rendre(derniere);
       } catch (e) { $("#fraicheur").textContent = "récit indisponible : réessayez"; $("#fraicheur").className = "puce rouge"; }
     }
+    // QR JURÉ : un passe court (15 min), à usage unique, pour le téléphone d'un personnage FICTIF absent de la scène
+    $("#qr-jure").addEventListener("click", async () => {
+      try {
+        const r = await fetch("/api/pulse/console/jure", { method: "POST", headers: { "X-Pulse-Console": jeton(), "Content-Type": "application/json" },
+          body: JSON.stringify({ persona: "s14", minutes: 15 }) });
+        const p = await r.json();
+        if (!r.ok) throw new Error(p.detail || `serveur : ${r.status}`);
+        const heure = new Date(p.expire * 1000).toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
+        $("#jure").replaceChildren(h("section", { class: "passeport", "aria-label": "QR juré" }, h("span", { class: "surtitre" }, "QR juré"),
+          h("h2", {}, `Jouez ${p.personnage} (fictif) sur votre téléphone`), h("img", { src: p.qr, alt: "QR code du passe de juré", style: "width:min(60vw,280px);background:#fff;padding:8px" }),
+          h("p", { class: "note", "data-role": "jure-regle" }, `Valable une seule fois, jusqu'à ${heure}. Un QR déjà scanné ne donne plus rien.`)));
+      } catch (e) { $("#jure").replaceChildren(h("p", { class: "note" }, "QR juré indisponible : " + e.message)); }
+    });
     let ia = null;
     async function lireIA() {
       try {

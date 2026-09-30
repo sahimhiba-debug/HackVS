@@ -52,6 +52,7 @@
       <span class="puce" id="date-club" title="Date du Club (simulée en démonstration)" hidden></span>
       <span class="qui" id="qui"></span>
     </header>
+    <p id="bandeau-jure" class="note" role="status" hidden style="margin:0;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--ligne)"></p>
     <main id="ecran" aria-live="polite"></main>
   </div>
   <nav class="onglets" id="onglets" aria-label="Navigation" hidden>
@@ -500,6 +501,26 @@
     window.addEventListener("online", () => toast("De retour en ligne."));
     window.addEventListener("offline", () => toast("Hors ligne : les actions attendront le réseau.", "erreur"));
     if (params.get("code") && !session) location.hash = "#acces";
+    // QR JURÉ : le passe est échangé UNE fois contre une session courte, puis retiré de l'adresse (historique, captures)
+    const passe = params.get("jure");
+    if (passe) {
+      params.delete("jure");
+      history.replaceState(null, "", location.pathname + (params.toString() ? "?" + params : "") + "#demandes");
+      try {
+        const r = await fetch("/api/pulse/jure", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jeton: passe }) });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.detail || `serveur : ${r.status}`);
+        session = j.session; ecrire("pulse-session", session);
+        ecrire("pulse-jure", `${j.nom}|${j.jusqu_a}`);
+      } catch (e) { session = null; ecrire("pulse-session", null); toast(e.message, "erreur"); location.hash = "#acces"; }
+    }
+    const jure = lire("pulse-jure");
+    if (jure && session) {
+      const [nom, jusqua] = jure.split("|");
+      const heure = new Date(Number(jusqua) * 1000).toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
+      $("#bandeau-jure").textContent = `Jury : vous jouez ${nom}, personnage FICTIF, jusqu'à ${heure}. Votre passe est journalisé : ce que vous faites est attribué au jury.`;
+      $("#bandeau-jure").hidden = false;
+    }
     route();
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/app/sw.js", { scope: "/app" }).catch(() => {});
   </script>

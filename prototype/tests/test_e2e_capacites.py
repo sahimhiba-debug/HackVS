@@ -113,3 +113,31 @@ def test_budget_de_noeuds_atteint_l_etabli_le_montre():
         pg.click("[data-file='presentation_germanophone'] >> [data-action=acquitter]")
         autre.locator("[data-role=statut]:has-text('acquitté par l')").wait_for()
         assert pg.locator("[data-file]").count() == 0 and "Rien." in pg.inner_text("#attention")
+
+
+def test_qr_jure_etabli_telephone_usage_unique(url):  # noqa: F811
+    """L'Établi montre un QR juré (local, data:) ; le téléphone qui l'ouvre joue Markus (fictif) avec un bandeau et le passe
+    quitte l'adresse ; le même passe, rescanné sur un autre téléphone, ne donne rien."""
+    pw = pytest.importorskip("playwright.sync_api")
+    import json
+    import urllib.request
+    with pw.sync_playwright() as p:
+        b = _chromium(p)
+        etabli = b.new_context(viewport={"width": 1440, "height": 900}).new_page()
+        etabli.goto(url + "/etabli")
+        etabli.click("#qr-jure")
+        etabli.wait_for_selector("section[aria-label='QR juré'] img[src^='data:image/svg+xml']")
+        assert "Valable une seule fois" in etabli.inner_text("[data-role=jure-regle]")
+        requete = urllib.request.Request(url + "/api/pulse/console/jure", data=json.dumps({"persona": "s14", "minutes": 15}).encode(),
+                                         headers={"X-Pulse-Console": "1", "Content-Type": "application/json"})
+        chemin = json.load(urllib.request.urlopen(requete))["url"].split("://", 1)[1].split("/", 1)[1]
+        juge = b.new_context(viewport={"width": 390, "height": 844}).new_page()
+        juge.goto(f"{url}/{chemin}")
+        juge.wait_for_selector("#bandeau-jure:not([hidden])")
+        assert "Jury : vous jouez Markus" in juge.inner_text("#bandeau-jure") and "FICTIF" in juge.inner_text("#bandeau-jure")
+        assert "jure=" not in juge.url and juge.url.endswith("#demandes")          # le passe a quitté l'adresse
+        juge.wait_for_selector("h1:has-text('Demandes du Club')")
+        second = b.new_context(viewport={"width": 390, "height": 844}).new_page()
+        second.goto(f"{url}/{chemin}")
+        second.wait_for_selector(".toast:has-text('déjà été utilisé')")
+        assert second.locator("#bandeau-jure").is_hidden()

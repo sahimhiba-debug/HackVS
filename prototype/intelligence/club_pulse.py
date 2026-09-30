@@ -37,6 +37,7 @@ from .detection import Detecteur
 from .erreurs import Conflit, ErreurMetier, Interdit, Introuvable, Invalide, NonAuthentifie
 from .essai import Banc, Etape, Plage, Protocole
 from .ia import AppelIA, Intelligence, besoin_de
+from .jure import PassesJure
 from .roles_ia import RolesIA
 from .identite import AdhesionsSynthetiques, Coffre, nettoyer
 from .modele import BesoinActif, Opportunite
@@ -75,6 +76,7 @@ class ClubPulse:
         brut = md.construire(sophie_profilee=False, recherches_autres=md.BESOINS_SUIVANTS)
         self.coffre = Coffre(AdhesionsSynthetiques(brut.profils).importer(), secret=self.reglages.secret)
         self.sessions = Sessions(self.reglages.secret, self.reglages.duree_session_s)
+        self.passes_jure = PassesJure(self.reglages.secret)         # QR juré : court, à usage unique, par personnage fictif
         brut.profils = [self.coffre.pseudonymiser(p) for p in brut.profils]    # le moteur ne voit que des pseudonymes
         self.r = brut
         self._semis = self._empreinte_semis()
@@ -357,6 +359,25 @@ class ClubPulse:
         if pid not in self.coffre.actives:                    # compte désactivé ou identité effacée depuis
             raise NonAuthentifie("session invalide")
         return pid
+
+    def emettre_pass_jure(self, pid: str, minutes: int) -> dict:
+        per = self.coffre.identite(pid)
+        if per is None:
+            raise Introuvable("personnage inconnu")
+        jeton, exp = self.passes_jure.emettre(pid, minutes * 60)
+        return {"jeton": jeton, "chemin": f"/app?jure={jeton}", "personnage": per.nom, "expire": exp, "minutes": minutes}
+
+    def utiliser_pass_jure(self, jeton: str) -> dict:
+        pid, exp = self.passes_jure.utiliser(jeton)
+        session = self.sessions.emettre(pid, jusqu_a=exp)             # la session meurt avec le passe
+        self.passes_jure.sessions[session] = exp
+        # journalisé : ce que ce personnage fait pendant la validité du passe est attribuable au jury, jamais au membre
+        self.banc._ecrire("PASSE_JURE", [pid], Statut.OBSERVE, jusqu_a=exp)
+        per = self.coffre.identite(pid)
+        assert per is not None
+        return {"session": session, "nom": per.nom, "jure": True, "jusqu_a": exp,
+                "regle": "Vous jouez ce personnage FICTIF pour le jury ; votre passe est journalisé : ce que ce personnage fait "
+                         "jusqu'à son expiration est attribué au jury."}
 
     def activer_compte(self, code: str) -> dict:
         pid = self.coffre.activer(code)

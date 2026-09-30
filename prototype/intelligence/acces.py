@@ -8,7 +8,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import time
-from typing import Callable
+from typing import Callable, Optional
 
 from .erreurs import NonAuthentifie
 
@@ -20,8 +20,8 @@ class Sessions:
     def _signature(self, pid: str, expiration: int) -> str:
         return hmac.new(self._secret, f"session|{pid}|{expiration}".encode(), hashlib.sha256).hexdigest()[:32]
 
-    def emettre(self, pid: str) -> str:
-        expiration = int(self._horloge()) + self.duree_s
+    def emettre(self, pid: str, jusqu_a: Optional[int] = None) -> str:
+        expiration = int(self._horloge()) + self.duree_s if jusqu_a is None else min(jusqu_a, int(self._horloge()) + self.duree_s)
         return f"{pid}.{expiration}.{self._signature(pid, expiration)}"
 
     def verifier(self, jeton: str) -> str:

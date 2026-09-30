@@ -40,6 +40,27 @@ class Acces(BaseModel):
     code: str = Field(min_length=4, max_length=12)
 
 
+class PassJure(BaseModel):
+    persona: str = Field(min_length=1, max_length=40)
+    minutes: int = Field(default=15, ge=1, le=60)
+
+
+class ActivationJure(BaseModel):
+    jeton: str = Field(min_length=10, max_length=160)
+
+
+def qr_svg(url: str) -> str:
+    """QR code produit ICI (bibliothèque locale, aucun service externe), en data: URI (la CSP l'autorise pour img)."""
+    import base64
+    import io
+
+    import qrcode
+    import qrcode.image.svg
+    tampon = io.BytesIO()
+    qrcode.make(url, image_factory=qrcode.image.svg.SvgPathImage, box_size=10, border=2).save(tampon)
+    return "data:image/svg+xml;base64," + base64.b64encode(tampon.getvalue()).decode()
+
+
 class Session(BaseModel):
     session: str
     nom: str
@@ -125,6 +146,9 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     remplacement = threading.Lock()                   # réinitialiser / avancer la démo : une opération à la fois
     limite_acces = Limiteur(10, 60.0)                 # deviner un code d'invitation : 10 essais par minute et par client
     limite_ia = Limiteur(30, 60.0)                    # appels de langage (notes, demandes) : 30 par minute et par membre
+    # QR JURÉ : jamais par adresse IP (dans la salle, tout le public partage la même) — par CODE et par SESSION
+    limite_jure_code = Limiteur(5, 60.0)              # activations tentées sur un même passe
+    limite_jure_session = Limiteur(90, 60.0)          # requêtes d'une session de juré
 
     def traduire(e: ErreurMetier) -> HTTPException:
         return HTTPException(e.statut_http, str(e))
@@ -138,7 +162,10 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
                 raise traduire(e) from None
 
     def membre(x_pulse_session: Optional[str] = Header(None)) -> str:
-        return au_monde(lambda c: c.verifier_session(x_pulse_session or ""))
+        pid = au_monde(lambda c: c.verifier_session(x_pulse_session or ""))
+        if au_monde(lambda c: c.passes_jure.est_session_de_jure(x_pulse_session or "")):
+            limiter(limite_jure_session, f"jure-session|{x_pulse_session}")
+        return pid
 
     def console(request: Request, x_pulse_console: Optional[str] = Header(None)) -> None:
         if not x_pulse_console:
@@ -196,6 +223,19 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     def acces(a: Acces, request: Request) -> dict:
         limiter(limite_acces, f"acces|{request.client.host if request.client else '?'}")
         return au_monde(lambda c: c.activer_compte(a.code))
+
+    # ------------------------------------------------------------------ QR juré
+    @r.post("/console/jure", dependencies=[Depends(console)])
+    def passe_jure(p: PassJure, request: Request) -> dict:
+        res = au_monde(lambda c: c.emettre_pass_jure(p.persona, p.minutes))
+        import os
+        base = os.environ.get("HACKVS_URL_PUBLIQUE") or str(request.base_url).rstrip("/")
+        return {k: v for k, v in res.items() if k != "jeton"} | {"url": base + res["chemin"], "qr": qr_svg(base + res["chemin"])}
+
+    @r.post("/jure", response_model=None)
+    def activer_jure(a: ActivationJure) -> dict:
+        limiter(limite_jure_code, "jure-code|" + au_monde(lambda c: c.passes_jure.nonce(a.jeton)))
+        return au_monde(lambda c: c.utiliser_pass_jure(a.jeton))
 
     # ------------------------------------------------------------------ application du membre
     @r.get("/moi/date")
