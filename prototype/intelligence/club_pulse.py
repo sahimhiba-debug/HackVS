@@ -30,7 +30,7 @@ from plateforme.affirmations import Statut
 from plateforme.memoire import Evt, Memoire
 
 from . import memoire_club
-from .capacites import Claim, Instance, Registre, charger_patrons, choisir_asks, index_claims
+from .capacites import Claim, Instance, Registre, charger_patrons, choisir_asks, index_claims, pulse_diff
 from . import monde_demo as md
 from .acces import Sessions
 from .detection import Detecteur
@@ -226,6 +226,32 @@ class ClubPulse:
         return {self.coffre.pseudonyme(p) for p in self.coffre._personnes}
 
     # ------------------------------------------------------------------ registre des capacités
+    def au(self, seq: int) -> "ClubPulse":
+        """Une RÉPLIQUE en lecture de l'état tel qu'il était à la position `seq` du journal : les faits jusqu'à `seq`
+        sont REJOUÉS dans un journal en mémoire, par la même fonction qu'un redémarrage. Aucun fournisseur de langage
+        (le rejeu n'appelle jamais un modèle), rien n'est écrit dans le journal réel."""
+        import dataclasses
+        replique = ClubPulse(self.tax, ia=Intelligence(self.tax, None), reglages=dataclasses.replace(self.reglages, essais_db=":memory:"),
+                             neuf=True)
+        replique.journal.vider()
+        with replique.journal.transaction():
+            for e in self.journal.evenements():
+                if e.seq <= seq:
+                    replique.journal.ajouter(e)
+        replique._restaurer()
+        return replique
+
+    def pulse(self, depuis: int, jusqu_a: Optional[int] = None) -> dict:
+        """Le PULSE entre deux positions du journal, chacune calculée par rejeu (jamais stockée)."""
+        dernier = self.journal.evenements()[-1].seq
+        jusqu_a = dernier if jusqu_a is None else jusqu_a
+        if not 0 <= depuis <= jusqu_a <= dernier:
+            raise Invalide("positions hors du journal")
+        avant, apres = self.au(depuis), (self if jusqu_a == dernier else self.au(jusqu_a))
+        return pulse_diff(avant.capacites.projeter(), apres.capacites.projeter()) | {
+            "depuis": {"position": depuis, "date": avant.jour.isoformat()}, "jusqu_a": {"position": jusqu_a, "date": apres.jour.isoformat()},
+            "calcul": "par rejeu du journal, sans modèle de langage", "fictif": True}
+
     def claims(self) -> list[Claim]:
         """Index BI-TEMPOREL des faits déclarés (offres, compétences, intérêts) : projection du journal."""
         return index_claims(self.journal, self._profils_depart)

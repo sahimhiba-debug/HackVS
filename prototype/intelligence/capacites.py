@@ -255,6 +255,30 @@ def _texte_ask(p: Patron, e: Emplacement, c: Creneau) -> str:
             f"Usage jusqu'au {p.fenetre.jour.strftime('%d.%m')}.")
 
 
+def pulse_diff(avant: list[Instance], apres: list[Instance]) -> dict:
+    """Ce qui a changé dans ce que le Club PEUT faire entre deux projections (chacune obtenue par REJEU du journal) :
+    apparues (devenues actives), éteintes (actives avant, plus maintenant), recomposées (actives des deux côtés, autres
+    pièces), fragiles (actives avec au moins une pièce critique), à une pièce près (nouvellement). En titres et statuts
+    seulement — jamais une personne."""
+    a = {i.finalite: i for i in avant}
+    res: dict[str, list[dict]] = {"apparues": [], "eteintes": [], "recomposees": [], "fragiles": [], "a_une_piece": []}
+    for i in apres:
+        j = a.get(i.finalite)
+        ligne = {"finalite": i.finalite, "titre": i.titre, "avant": j.statut if j else None, "apres": i.statut}
+        actif_avant = j is not None and j.statut == "ACTIVE"
+        if i.statut == "ACTIVE" and not actif_avant:
+            res["apparues"].append(ligne)
+        if actif_avant and i.statut != "ACTIVE":
+            res["eteintes"].append(ligne)
+        if actif_avant and i.statut == "ACTIVE" and j is not None and j.liaisons != i.liaisons:
+            res["recomposees"].append(ligne)
+        if i.statut == "ACTIVE" and i.critiques:
+            res["fragiles"].append(ligne | {"pieces_critiques": len(i.critiques)})
+        if i.statut == "ONE_AWAY" and (j is None or j.statut != "ONE_AWAY"):
+            res["a_une_piece"].append(ligne)
+    return res
+
+
 def choisir_asks(instances: list[Instance], n: int) -> list[Instance]:
     """Les `n` demandes à montrer : le plus fort LEVIER d'abord (une pièce qui débloque plusieurs capacités), puis la
     plus proche de son expiration, puis un ordre stable. Jamais une personne choisie : une catégorie compatible."""

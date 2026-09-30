@@ -20,6 +20,10 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     def registre() -> dict:
         return au_monde(lambda c: c.vues_capacites.console())
 
+    @r.get("/console/pulse", dependencies=[Depends(console)])
+    def pulse(depuis: int = 0, jusqu_a: Optional[int] = None) -> dict:
+        return au_monde(lambda c: c.pulse(depuis, jusqu_a))
+
     @r.get("/moi/asks")
     def mes_asks(pid: str = Depends(membre)) -> list[dict]:
         return au_monde(lambda c: c.vues_capacites.asks(pid))
