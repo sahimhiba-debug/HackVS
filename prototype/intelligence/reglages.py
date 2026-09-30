@@ -24,6 +24,7 @@ class Reglages:
     asks_montrees: int = 1             # HACKVS_ASKS_MONTREES : demandes montrées à la fois à un membre
     plafond_jours: int = 7             # HACKVS_PLAFOND_JOURS : aucune nouvelle demande pendant N jours après une réponse
     budget_noeuds: int = 20_000        # HACKVS_BUDGET_NOEUDS : nœuds par recherche d'équipe ; au-delà, « recherche bornée » est DIT
+    budget_relance: int = 1_000_000    # HACKVS_BUDGET_RELANCE : budget d'une recherche relancée par l'animation
 
     @classmethod
     def depuis_env(cls, env: Optional[Mapping[str, str]] = None) -> "Reglages":
@@ -37,4 +38,5 @@ class Reglages:
                    essais_db=e.get("HACKVS_ESSAIS_DB") or ":memory:",
                    ancien_prototype=e.get("HACKVS_ANCIEN_PROTOTYPE", "") == "1",
                    asks_montrees=int(e.get("HACKVS_ASKS_MONTREES", "1")), plafond_jours=int(e.get("HACKVS_PLAFOND_JOURS", "7")),
-                   budget_noeuds=int(e.get("HACKVS_BUDGET_NOEUDS", "20000")))
+                   budget_noeuds=int(e.get("HACKVS_BUDGET_NOEUDS", "20000")),
+                   budget_relance=int(e.get("HACKVS_BUDGET_RELANCE", "1000000")))

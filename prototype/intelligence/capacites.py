@@ -248,6 +248,8 @@ class Instance(BaseModel):
     # pièces liées SANS lesquelles la capacité ne se compose plus (contrefactuel calculé : « si elle disparaît, tient-elle ? »)
     critiques: list[str] = Field(default_factory=list)
     recherche_bornee: bool = False                       # le budget de nœuds a coupé une recherche : l'état n'est pas garanti
+    recherche_relancee: Optional[int] = None             # budget de la relance décidée par l'animation (fait journalisé)
+    acquittee_le: Optional[date] = None                  # état incertain acquitté par l'animation, tant que le monde n'a pas changé
     hypothetique: bool = False                           # projection calculée sous une hypothèse (« et si ») : jamais un état
 
 
@@ -326,12 +328,52 @@ class Registre:
         hyp = ["disponibilités et attributs DÉCLARÉS par les membres, non vérifiés par le système"]
         if p.fenetre.jour < self._jour():
             return Instance(**base, statut="EXTINCT", distance=None, hypotheses=["la fenêtre de cette capacité est passée"])
-        tronquees = self.b.recherches_tronquees
-        inst = self._instance(p, base, hyp)
+        tronquees, budget, relance = self.b.recherches_tronquees, self.b.BUDGET_NOEUDS, self._relance(p.id)
+        if relance is not None and relance > budget:
+            self.b.BUDGET_NOEUDS = relance                    # pour CETTE capacité seulement, le temps de son calcul
+        try:
+            inst = self._instance(p, base, hyp)
+        finally:
+            self.b.BUDGET_NOEUDS = budget
+        inst.recherche_relancee = relance
         if self.b.recherches_tronquees != tronquees:
             inst.recherche_bornee = True
+            inst.acquittee_le = self._acquittee(p.id)
             inst.hypotheses.append("recherche bornée atteinte : une composition a pu échapper au calcul (absence non garantie)")
         return inst
+
+    # ------------------------------------------------------------------ état incertain : la file de l'animation
+    RELANCE, ACQUIT = "RECHERCHE_RELANCEE", "RECHERCHE_ACQUITTEE"
+
+    def _relance(self, finalite: str) -> Optional[int]:
+        budgets = [e.donnees["budget"] for e in self.b.m.evenements(self.RELANCE) if e.donnees["finalite"] == finalite]
+        return max(budgets) if budgets else None
+
+    def _acquittee(self, finalite: str) -> Optional[date]:
+        """Un acquittement vaut pour l'état VU : il tombe dès qu'un autre fait est écrit (le monde a changé depuis)."""
+        evs = self.b.m.evenements()
+        acq = [e for e in evs if e.type == self.ACQUIT and e.donnees["finalite"] == finalite]
+        if not acq or any(e.seq > acq[-1].seq and e.type not in (self.RELANCE, self.ACQUIT) for e in evs):
+            return None
+        return acq[-1].le
+
+    def _incertaine(self, finalite: str) -> Patron:
+        p = self.patron(finalite)
+        if not self.instance(p).recherche_bornee:
+            raise Conflit("la recherche de cette capacité n'a pas été coupée : rien à relancer ni à acquitter")
+        return p
+
+    def relancer(self, finalite: str, budget: int) -> Instance:
+        """Décision de l'animation : chercher CETTE capacité avec un budget plus élevé (journalisé, donc rejoué)."""
+        p = self._incertaine(finalite)
+        self.b._ecrire(self.RELANCE, [], finalite=p.id, budget=budget)
+        return self.instance(p)
+
+    def acquitter(self, finalite: str) -> Instance:
+        """Décision de l'animation : « vu, on vit avec cet état incertain » — il reste AFFICHÉ, il quitte la file."""
+        p = self._incertaine(finalite)
+        self.b._ecrire(self.ACQUIT, [], finalite=p.id)
+        return self.instance(p)
 
     def _instance(self, p: Patron, base: dict, hyp: list[str]) -> Instance:
         inst = self._composer(p, base, hyp)

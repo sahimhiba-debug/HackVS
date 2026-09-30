@@ -16,6 +16,10 @@ LIBELLES = {"ONE_AWAY": "il manque une pièce", "PROPOSED": "toutes les pièces 
             "EXTINCT": "la fenêtre est passée"}
 
 
+def _nombre(n: int) -> str:
+    return f"{n:,}".replace(",", " ")
+
+
 class VuesCapacites:
     def __init__(self, club: "ClubPulse"):
         self.c = club
@@ -33,8 +37,13 @@ class VuesCapacites:
         libelle = LIBELLES.get(i.statut or "", "")
         if i.recherche_bornee and i.statut is None:            # rien de composé ET recherche coupée : on ne sait pas
             libelle = "état incertain : recherche bornée atteinte"
+            if i.recherche_relancee:
+                libelle += f", même relancée (budget {_nombre(i.recherche_relancee)} nœuds)"
+            if i.acquittee_le:
+                libelle += f" (acquitté par l'animation le {i.acquittee_le.strftime('%d.%m')})"
         return {"finalite": i.finalite, "version": i.version, "titre": i.titre, "statut": i.statut,
-                "statut_libelle": libelle, "recherche_bornee": i.recherche_bornee, "distance": i.distance, "date": self.c.jour.isoformat(),
+                "statut_libelle": libelle, "recherche_bornee": i.recherche_bornee, "recherche_relancee": i.recherche_relancee,
+                "acquittee_le": i.acquittee_le.isoformat() if i.acquittee_le else None, "distance": i.distance, "date": self.c.jour.isoformat(),
                 "jour": p.fenetre.jour.isoformat(), "fenetre": f"{p.fenetre.jour.strftime('%d.%m')} {p.fenetre.debut}–{p.fenetre.fin}",
                 "creneau": i.creneau.texte() if i.creneau else None, "pieces": pieces,
                 "ask": {"texte": i.ask.texte, "expire": i.ask.expire.isoformat(), "levier": i.ask.levier, "debloque": i.ask.debloque,
@@ -51,14 +60,22 @@ class VuesCapacites:
         # une capacité sans statut n'est pas montrée… SAUF si sa recherche a été coupée : ce serait un « impossible » silencieux
         caps = [self.instance(i) for i in self.c.projection_capacites() if i.statut is not None or i.recherche_bornee]
         bientot = (self.c.jour + timedelta(days=2)).isoformat()
+        a_decider = [x for x in caps if x["recherche_bornee"] and not x["acquittee_le"]]   # la FILE : chaque entrée a ses actions
         return {"capacites": caps, "date": self.c.jour.isoformat(), "fictif": True,
                 "attention": {"bloque": [x["titre"] for x in caps if x["statut"] == "DEGRADED"],
                               "decision": [x["titre"] for x in caps if x["recomposition"] or x["sans_solution"]]
-                                          + [f"{x['titre']} (recherche bornée : à vérifier)" for x in caps if x["recherche_bornee"]],
+                                          + [f"{x['titre']} (recherche bornée : à vérifier)" for x in a_decider],
+                              "actions": [{"finalite": x["finalite"], "titre": x["titre"], "actions": self._actions(x)} for x in a_decider],
                               "expire": [f"{x['titre']} ({x['fenetre']})" for x in caps
                                          if x["statut"] not in ("ACTIVE", "EXTINCT") and x["jour"] <= bientot]},
                 "regle": "Une capacité n'existe que si chaque pièce est déclarée, valable à cette date et consentie pour "
                          "cette finalité. Rôles seulement : aucun nom."}
+
+    def _actions(self, carte: dict) -> list[dict]:
+        budget = self.c.reglages.budget_relance
+        relancer = [{"action": "relancer", "libelle": f"Relancer la recherche (budget {_nombre(budget)} nœuds)"}] \
+            if (carte["recherche_relancee"] or 0) < budget else []                     # déjà relancée à ce budget : inutile
+        return relancer + [{"action": "acquitter", "libelle": "Acquitter l'état incertain"}]
 
     def asks(self, pid: str) -> list[dict]:
         return [{"id": a, "titre": i.titre, "texte": i.ask.texte, "libelle": i.ask.libelle, "minimums": i.ask.minimums,  # type: ignore[union-attr]

@@ -308,6 +308,12 @@ class ClubPulse:
     def retirer_consentement(self, pid: str, finalite: str) -> Instance:
         return self.capacites.retirer(pid, finalite)
 
+    def relancer_recherche(self, finalite: str) -> Instance:
+        return self.capacites.relancer(finalite, self.reglages.budget_relance)
+
+    def acquitter_recherche(self, finalite: str) -> Instance:
+        return self.capacites.acquitter(finalite)
+
     # ------------------------------------------------------------------ accès et profil
     def session(self, pid: str) -> str:
         return self.sessions.emettre(pid)

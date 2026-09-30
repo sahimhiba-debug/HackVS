@@ -20,6 +20,14 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     def registre() -> dict:
         return au_monde(lambda c: c.vues_capacites.console())
 
+    @r.post("/console/capacites/{finalite}/relancer", dependencies=[Depends(console)])
+    def relancer(finalite: str) -> dict:
+        return au_monde(lambda c: c.vues_capacites.instance(c.relancer_recherche(finalite[:40])))
+
+    @r.post("/console/capacites/{finalite}/acquitter", dependencies=[Depends(console)])
+    def acquitter(finalite: str) -> dict:
+        return au_monde(lambda c: c.vues_capacites.instance(c.acquitter_recherche(finalite[:40])))
+
     @r.get("/console/pulse", dependencies=[Depends(console)])
     def pulse(depuis: int = 0, jusqu_a: Optional[int] = None) -> dict:
         return au_monde(lambda c: c.pulse(depuis, jusqu_a))

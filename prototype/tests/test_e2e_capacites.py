@@ -84,7 +84,8 @@ def test_la_capture_sur_echec_sauvegarde_les_pages_ouvertes(url, tmp_path, monke
 
 def test_budget_de_noeuds_atteint_l_etabli_le_montre():
     """Budget du compositeur forcé à 1 nœud (HACKVS_BUDGET_NOEUDS) : aucune recherche ne peut aboutir. L'Établi montre
-    quand même la capacité, dit « état incertain : recherche bornée atteinte », et la met à l'attention de l'animation."""
+    quand même la capacité, dit « état incertain : recherche bornée atteinte », et la met à l'attention de l'animation,
+    avec ses deux actions : relancer (la carte retrouve un vrai statut) ou acquitter (la carte le dit, la file se vide)."""
     pw = pytest.importorskip("playwright.sync_api")
     with serveur(HACKVS_BUDGET_NOEUDS="1") as base, pw.sync_playwright() as p:
         pg = _chromium(p).new_page(viewport={"width": 1440, "height": 900})
@@ -93,3 +94,11 @@ def test_budget_de_noeuds_atteint_l_etabli_le_montre():
         carte.locator("[data-role=statut]:has-text('état incertain : recherche bornée atteinte')").wait_for()
         assert "une composition a pu échapper au calcul (absence non garantie)" in carte.inner_text()
         assert "Accueillir une délégation d'acheteurs germanophones (recherche bornée : à vérifier)" in pg.inner_text("#attention")
+        # la FILE a des actions : relancer (budget élevé) une capacité, acquitter l'autre
+        pg.click("[data-file='delegation_acheteurs'] >> [data-action=relancer]")
+        carte.locator("[data-role=statut]:has-text('il manque une pièce')").wait_for()
+        assert pg.locator("[data-file='delegation_acheteurs']").count() == 0
+        autre = pg.locator("article[data-finalite='presentation_germanophone']")
+        pg.click("[data-file='presentation_germanophone'] >> [data-action=acquitter]")
+        autre.locator("[data-role=statut]:has-text('acquitté par l')").wait_for()
+        assert pg.locator("[data-file]").count() == 0 and "Rien." in pg.inner_text("#attention")

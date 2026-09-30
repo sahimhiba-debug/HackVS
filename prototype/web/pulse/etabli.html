@@ -37,6 +37,7 @@
     .attention { margin-top: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
     .attention div { background: var(--surface); border: 1px solid var(--ligne); border-radius: var(--rayon); padding: 10px 14px; font-size: 15px; }
     .attention ul, .passeport ul { margin: 6px 0 0; padding-left: 20px; }
+    .attention .file { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
     .passeport { margin-top: 20px; background: var(--surface); border: 2px solid var(--encre); border-radius: var(--rayon); padding: 16px 20px; }
     .passeport h2 { font-size: 24px; } .passeport h3 { font-size: 16px; margin-top: 12px; }
     .pulse { margin-top: 20px; }
@@ -119,11 +120,21 @@
       const a = r.attention;
       $("#attention").replaceChildren(
         h("div", {}, h("span", { class: "surtitre" }, "Bloque"), a.bloque.length ? h("ul", {}, a.bloque.map((x) => h("li", {}, x))) : h("p", { class: "note" }, "Rien.")),
-        h("div", {}, h("span", { class: "surtitre" }, "Attend une décision"), a.decision.length ? h("ul", {}, a.decision.map((x) => h("li", {}, x))) : h("p", { class: "note" }, "Rien.")),
+        h("div", {}, h("span", { class: "surtitre" }, "Attend une décision"), a.decision.length ? h("ul", {}, a.decision.map((x) => h("li", {}, x))) : h("p", { class: "note" }, "Rien."),
+          ...a.actions.map((x) => h("div", { class: "file", "data-file": x.finalite },
+            ...x.actions.map((y) => h("button", { class: "btn discret petit", "data-action": y.action, onclick: () => decider(x.finalite, y.action) }, y.libelle))))),
         h("div", {}, h("span", { class: "surtitre" }, "Expire bientôt"), a.expire.length ? h("ul", {}, a.expire.map((x) => h("li", {}, x))) : h("p", { class: "note" }, "Rien.")));
       $("#grille").replaceChildren(...r.capacites.map(carte));
       const c = r.capacites.find((x) => x.finalite === choisie);
       $("#passeport").replaceChildren(...(c ? [passeport(c)] : []));
+    }
+    async function decider(finalite, action) {           // la FILE de l'animation : relancer ou acquitter, puis relire
+      try {
+        const r = await fetch(`/api/pulse/console/capacites/${encodeURIComponent(finalite)}/${action}`,
+          { method: "POST", headers: { "X-Pulse-Console": jeton() } });
+        if (!r.ok) throw new Error(`serveur : ${r.status}`);
+      } catch (e) { $("#fraicheur").textContent = "action refusée : réessayez"; $("#fraicheur").className = "puce rouge"; }
+      await lire();
     }
     let enCours = false;
     async function lire() {
