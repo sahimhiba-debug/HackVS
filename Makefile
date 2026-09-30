@@ -6,7 +6,7 @@ PY ?= python
 P = prototype
 export HACKVS_SEMANTIQUE ?= 0
 
-.PHONY: setup browsers lint typecheck test e2e e2e-salle eval secrets audit coverage demo quality-check mutation
+.PHONY: setup browsers lint typecheck test e2e e2e-salle sonde-ia eval secrets audit coverage demo quality-check mutation
 
 setup:
 	cd $(P) && $(PY) -m pip install -r requirements-dev.txt -c constraints.txt
@@ -35,6 +35,10 @@ e2e:
 e2e-salle:
 	cd $(P) && sudo -E env "PATH=$$PATH" HACKVS_E2E_OBLIGATOIRE=1 unshare --net $(PY) scripts/mode_salle.py -- \
 	  $(PY) -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py tests/test_e2e_capacites.py tests/test_e2e_hermetique.py
+
+# Sonde du fournisseur de langage (clé en variable d'environnement APERTUS_API_KEY ; sans clé : UNKNOWN, dit)
+sonde-ia:
+	cd $(P) && $(PY) scripts/sonde_publicai.py
 
 eval:
 	cd $(P) && $(PY) -m eval.run_eval --verifier && $(PY) -m eval.eval_decisions --verifier \
