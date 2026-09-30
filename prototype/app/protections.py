@@ -13,13 +13,19 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import hmac
 import re
 from pathlib import Path
-from typing import Iterable
+from typing import Callable, Iterable, Optional
 
 from .observabilite import ASGIApp, Message, Receive, Scope, Send
 
 CORPS_MAX = 64 * 1024
+LOCALES = {"127.0.0.1", "::1", "localhost", "testclient"}      # « testclient » : client de test en processus
+# ce que le serveur de démonstration sert : Club Pulse, et rien d'autre (l'ancien prototype est derrière un drapeau)
+CLUB_PULSE_EXACTS = {"/app", "/app/", "/app/manifest.webmanifest", "/app/sw.js", "/console", "/projection", "/demo/regie",
+                     "/favicon.ico"}
+CLUB_PULSE_PREFIXES = ("/api/pulse/", "/static/pulse/")
 TROP_GROS = '{"detail": "Corps de requête trop volumineux (64 Kio au plus)."}'.encode()
 _SCRIPT = re.compile(r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>", re.S | re.I)
 
@@ -91,3 +97,40 @@ async def _refuser(send: Send, statut: int, corps: bytes) -> None:
     await send({"type": "http.response.start", "status": statut,
                 "headers": [(b"content-type", b"application/json"), *BASE.items()]})
     await send({"type": "http.response.body", "body": corps})
+
+
+def club_pulse(chemin: str) -> bool:
+    return chemin in CLUB_PULSE_EXACTS or chemin.startswith(CLUB_PULSE_PREFIXES)
+
+
+class Perimetre:
+    """Le serveur ne sert que Club Pulse. L'ANCIEN prototype (identité par en-tête `X-Membre`, réinitialisation sans
+    garde) n'existe que si `ancien_actif()` — et alors seulement pour cette machine, ou avec le jeton de console s'il
+    est défini. Hors de ce périmètre : 404 (rien n'en révèle l'existence) ; la racine mène à l'application du membre."""
+
+    def __init__(self, app: ASGIApp, ancien_actif: Callable[[], bool], jeton: Callable[[], Optional[str]]):
+        self.app, self._ancien, self._jeton = app, ancien_actif, jeton
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http" or club_pulse(scope.get("path", "")):
+            await self.app(scope, receive, send)
+            return
+        chemin = scope.get("path", "")
+        if not self._ancien():
+            if chemin == "/":
+                await send({"type": "http.response.start", "status": 307, "headers": [(b"location", b"/app"), *BASE.items()]})
+                await send({"type": "http.response.body", "body": b""})
+                return
+            await _refuser(send, 404, b'{"detail": "Not Found"}')
+            return
+        jeton = self._jeton()
+        if jeton:
+            fourni = dict(scope.get("headers") or []).get(b"x-pulse-console", b"").decode("latin-1")
+            permis = hmac.compare_digest(fourni, jeton)
+        else:
+            client = scope.get("client") or ("", 0)
+            permis = client[0] in LOCALES
+        if not permis:
+            await _refuser(send, 403, b'{"detail": "Ancien prototype : accessible seulement depuis cette machine ou avec le jeton de console."}')
+            return
+        await self.app(scope, receive, send)

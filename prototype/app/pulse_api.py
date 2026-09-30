@@ -27,11 +27,11 @@ from intelligence.erreurs import ErreurMetier, Limite
 from intelligence.politique import Spectateur
 
 from .essai_api import ajouter_routes as ajouter_routes_essai
+from .protections import LOCALES
 from .taxonomy import Taxonomie
 
 T = TypeVar("T")
 ANIMATRICE = Spectateur("animatrice")
-LOCALES = {"127.0.0.1", "::1", "localhost", "testclient"}      # « testclient » : client de test en processus
 
 
 # ---------------------------------------------------------------------- contrats d'entrée (tout est borné)

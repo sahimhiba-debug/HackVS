@@ -29,7 +29,7 @@ def test_l_application_demarre_depuis_les_seuls_fichiers_de_l_image(tmp_path):
     env |= {"HACKVS_MODE": "demo", "HACKVS_DB": str(tmp_path / "fil.db"), "HACKVS_CYCLE_DB": ":memory:",
             "HACKVS_DECISIONS_DB": ":memory:", "HACKVS_SEMANTIQUE": "0", "PYTHONDONTWRITEBYTECODE": "1"}
     script = ("from fastapi.testclient import TestClient\nimport app.main as m\nc = TestClient(m.app)\n"
-              "for chemin in ('/app', '/console', '/projection', '/api/pulse/etat', '/demo/stage', '/'):\n"
+              "for chemin in ('/app', '/console', '/projection', '/api/pulse/etat', '/demo/regie', '/'):\n"
               "    r = c.get(chemin, headers={'X-Pulse-Console': '1'})\n    assert r.status_code == 200, (chemin, r.status_code)\n"
               "assert c.post('/api/pulse/demo/aller/9', headers={'X-Pulse-Console': '1'}).status_code == 200\nprint('ok')\n")
     p = subprocess.run([sys.executable, "-c", script], cwd=tmp_path / "prototype", env=env, capture_output=True, text=True, timeout=300)

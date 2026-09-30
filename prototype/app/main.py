@@ -30,6 +30,7 @@ from . import observabilite as _observabilite
 from .baseline import rechercher_mots_cles
 from .matching import expliquer, rechercher
 from .models import Besoin, Profil
+from .protections import Perimetre as _Perimetre
 from .protections import Protections as _Protections
 from .protections import politique_contenu as _politique_contenu
 from .store import STATUTS_PUBLICS, ErreurMetier, Interdit, Magasin
@@ -38,10 +39,16 @@ from adaptateurs.club import cycle as cycle_club
 from adaptateurs.club import boucle as boucle_reseau
 from adaptateurs.club import diagnostic as diag_reseau
 from adaptateurs.club import interventions, reseau
+from intelligence.reglages import Reglages as _Reglages
 from plateforme.memoire import Memoire
 
 RACINE = Path(__file__).resolve().parent.parent
 MODE = os.environ.get("HACKVS_MODE", "demo")
+_REGLAGES = _Reglages.depuis_env()
+# L'ancien prototype (« Le Fil du Club ») n'est PAS servi par défaut : identité par en-tête X-Membre, réinitialisation
+# sans garde. HACKVS_ANCIEN_PROTOTYPE=1 le sert, à cette machine seulement (ou avec le jeton de console). Voir Perimetre.
+ANCIEN_PROTOTYPE = _REGLAGES.ancien_prototype
+_CONSOLE_JETON = _REGLAGES.console_jeton
 TAX = charger_taxonomie()
 
 
@@ -91,6 +98,7 @@ WEB_PULSE = Path(__file__).resolve().parent.parent / "web" / "pulse"
 _observabilite.configurer(_observabilite.niveau_depuis_env(os.environ))
 # ordre : la dernière ajoutée est la plus EXTÉRIEURE → l'identifiant de requête couvre aussi les refus 413
 app.add_middleware(_Protections, csp=_politique_contenu([WEB_PULSE / f for f in ("app.html", "console.html", "projection.html", "regie.html")]))
+app.add_middleware(_Perimetre, ancien_actif=lambda: ANCIEN_PROTOTYPE, jeton=lambda: _CONSOLE_JETON)
 app.add_middleware(_observabilite.MiddlewareRequete)
 
 
@@ -912,10 +920,8 @@ def page_cycle():
 if MODE == "demo":  # scène de présentation : monde ISOLÉ et déterministe (données de scène fictives)
     from .stage import creer_routeur as _routeur_scene
     app.include_router(_routeur_scene(TAX))
-    from intelligence.reglages import Reglages as _Reglages
-
     from .pulse_api import creer_routeur as _routeur_pulse
-    app.include_router(_routeur_pulse(TAX, console_jeton=_Reglages.depuis_env().console_jeton))
+    app.include_router(_routeur_pulse(TAX, console_jeton=_CONSOLE_JETON))
 
 
 @app.get("/app")
