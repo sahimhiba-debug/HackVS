@@ -120,7 +120,7 @@ class Limiteur:
 
 def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRouter:
     r = APIRouter(prefix="/api/pulse", tags=["club pulse"], responses=ERREURS)  # type: ignore[arg-type]
-    etat = {"demo": Demo(tax)}
+    etat = {"demo": Demo(tax, reprendre=True)}        # démarrage : l'état est repris du journal (jamais effacé)
     remplacement = threading.Lock()                   # réinitialiser / avancer la démo : une opération à la fois
     limite_acces = Limiteur(10, 60.0)                 # deviner un code d'invitation : 10 essais par minute et par client
     limite_ia = Limiteur(30, 60.0)                    # appels de langage (notes, demandes) : 30 par minute et par membre

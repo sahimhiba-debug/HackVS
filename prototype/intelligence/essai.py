@@ -1057,6 +1057,15 @@ class Banc:
         niveaux = [d[m]["niveau"] if m in d else "participants" for m in self.participants(eid)]
         return min(niveaux, key=lambda x: ordre[x]) if niveaux else "participants"
 
+    def etat_canonique(self) -> dict:
+        """L'état CALCULÉ du banc (offres et essais), sous une forme canonique : ce que `empreinte_etat` compare."""
+        return {"jour": self._jour().isoformat(),
+                "offres": {o.id: o.model_dump(mode="json") | {"etat": self.etat_offre(o.id), "reservees": self.reservations(o.id)}
+                           for o in self.offres()},
+                "essais": {eid: {"etat": self.etat(eid), "version": self.version(eid), "porteur": self.porteur(eid),
+                                 "protocole": self.protocole(eid).model_dump(mode="json"), "couverture": self.couverture(eid),
+                                 "projetable": self.projetable(eid), "droits": self.droits(eid)} for eid in self.essais()}}
+
     # ------------------------------------------------------------------ horloge
     def echeances(self) -> list[str]:
         """Rien ne se déduit du silence : sans accords à l'échéance → EXPIRE ; sans observation 14 j après → INCONNU."""

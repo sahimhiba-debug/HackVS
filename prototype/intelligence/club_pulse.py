@@ -17,11 +17,13 @@ Monde de démonstration FICTIF ; gestes humains joués dans la démonstration et
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import threading
 from datetime import date, timedelta
 from typing import Optional
 
-from app.models import Offre, Profil
+from app.models import Besoin, Offre, Profil
 from app.parser_rules import extraire_profil
 from app.taxonomy import Taxonomie
 from plateforme.affirmations import Statut
@@ -47,10 +49,21 @@ ErreurPulse = ErreurMetier             # nom historique : tout refus du service 
 # ce qu'on considérera comme RÉALISÉ : une suggestion que le porteur adopte ou remplace (jamais écrite à sa place)
 CRITERE_ACTION = ("La présentation a lieu au créneau convenu et la fiche promise est remise ; "
                   "je dirai ce que les acheteurs en ont retenu.")
+# Ce qu'un membre DÉCLARE dans son profil et qui est journalisé (événement PROFIL) : rien d'autre ne change un profil.
+DECLARATIFS = ("offre", "recherche", "secteurs", "disponible", "accepte_introductions", "maj")
+ETAT_MEMBRES = ("PROFIL", "BESOIN", "PREFERENCES", "HORLOGE")
 
 
 class ClubPulse:
-    def __init__(self, tax: Taxonomie, ia: Optional[Intelligence] = None, reglages: Optional[Reglages] = None):
+    def __init__(self, tax: Taxonomie, ia: Optional[Intelligence] = None, reglages: Optional[Reglages] = None,
+                 neuf: bool = False):
+        """`neuf=True` : un journal VIDE (nouvelle démonstration) ; sinon l'état est REPRIS du journal existant.
+
+        UN journal (`self.journal`, fichier si HACKVS_ESSAIS_DB) porte TOUT l'état métier : essais et offres, profils
+        déclarés (PROFIL), besoins publiés (BESOIN), préférences de visibilité (PREFERENCES), horloge (HORLOGE),
+        appels IA et textes rédigés. L'état en mémoire n'en est qu'un repli : `empreinte_etat()` est la même pour le même
+        journal. Hors journal, PAR CONCEPTION : le coffre d'identités et l'activation des comptes, les sessions, les
+        notes privées (visibles de leur seule autrice, jamais utilisées par une règle)."""
         self.tax = tax
         self.reglages = reglages or Reglages.depuis_env()
         # Un seul verrou par monde : chaque requête HTTP s'exécute entière dessous (pas de lecture-puis-écriture
@@ -61,6 +74,7 @@ class ClubPulse:
         self.sessions = Sessions(self.reglages.secret, self.reglages.duree_session_s)
         brut.profils = [self.coffre.pseudonymiser(p) for p in brut.profils]    # le moteur ne voit que des pseudonymes
         self.r = brut
+        self._semis = self._empreinte_semis()
         self.ia = ia or Intelligence.depuis_environnement(tax, journal=self._tracer_ia,
                                                           notes_privees_autorisees=self.reglages.notes_privees_vers_ia)
         self.ia.journal = self._tracer_ia
@@ -70,6 +84,7 @@ class ClubPulse:
         # Qui peut être sollicité pour qui : les règles DURES du réseau (langue commune, consentement, disponibilité,
         # profil récent, introduction déjà déclinée), lues dans l'état observé courant — une seule source de vérité.
         self.banc = Banc(Memoire(self.reglages.essais_db), lambda: self.jour, self.organisation_de, self._non_sollicitable)
+        self.journal = self.banc.m
         self.vues_essai = VuesEssai(self)
         self.notes: dict[str, list[dict]] = {}
         self.preferences: dict[str, dict] = {}
@@ -81,6 +96,61 @@ class ClubPulse:
         for pid in self.coffre._personnes:                   # tous ont activé leur compte, sauf la nouvelle venue
             if pid != md.SOPHIE:
                 self.coffre.actives.add(pid)
+        if neuf:
+            self.journal.vider()
+        self._restaurer()
+
+    # ------------------------------------------------------------------ journal : l'état est un repli
+    def _empreinte_semis(self) -> str:
+        """Ce qui identifie le monde de DÉPART (données préparées, sans identité) : un journal ne se rejoue que sur lui."""
+        return hashlib.sha256(json.dumps([self.r.nom, self.r.aujourd_hui.isoformat(), sorted(p.id for p in self.r.profils),
+                                          sorted(b.id for b in self.r.besoins)]).encode()).hexdigest()[:16]
+
+    def _restaurer(self) -> None:
+        semis = self.journal.evenements("SEMIS")
+        if not semis:
+            self.journal.ajouter(Evt(type="SEMIS", le=self.jour, statut=Statut.SYNTHETIQUE,
+                                     donnees={"monde": self.r.nom, "empreinte": self._semis}))
+            return
+        if semis[-1].donnees["empreinte"] != self._semis:
+            raise ValueError("ce journal appartient à un autre monde de démonstration : il ne peut pas être rejoué ici "
+                             "(videz-le, ou choisissez un autre HACKVS_ESSAIS_DB)")
+        for e in self.journal.evenements(*ETAT_MEMBRES):
+            self._appliquer(e)
+
+    def _appliquer(self, e: Evt) -> None:
+        """LE seul chemin qui modifie profils, besoins, préférences et horloge : en direct comme au rejeu."""
+        d = e.donnees
+        if e.type == "PROFIL":
+            p = self.profil(d["membre"])
+            self.r.profils = [Profil(**(p.model_dump() | d["champs"])) if q.id == p.id else q for q in self.r.profils]
+        elif e.type == "BESOIN":
+            b = d["besoin"]
+            self.r.besoins.append(BesoinActif(id=b["id"], auteur=b["auteur"], texte=b["texte"], le=date.fromisoformat(b["le"]),
+                                              besoin=Besoin(**b["besoin"]), anonyme=b["anonyme"]))
+        elif e.type == "PREFERENCES":
+            self.preferences[d["membre"]] = dict(d["preferences"])
+        elif e.type == "HORLOGE":
+            self.r.aujourd_hui = date.fromisoformat(d["jour"])
+        self._revision_profils += 1
+        self._scan = None
+
+    def _enregistrer(self, type_: str, acteurs: list[str], statut: Optional[Statut] = None, **donnees) -> None:
+        """Écrire un fait de l'état des membres puis l'appliquer (même fonction qu'au rejeu). Origine : celle du bloc
+        (`joue()` pour la console), DÉCLARÉ par défaut."""
+        self.banc._ecrire(type_, acteurs, statut, **donnees)
+        self._appliquer(self.journal.evenements(type_)[-1])
+
+    def empreinte_etat(self) -> str:
+        """Empreinte de l'état métier COMPLET, recalculé : horloge, profils (sans la clé d'organisation, dérivée du secret
+        du processus), besoins, préférences, offres et essais. Même journal → même empreinte."""
+        etat = {"jour": self.jour.isoformat(),
+                "profils": [p.model_dump(mode="json", exclude={"entreprise"}) for p in sorted(self.r.profils, key=lambda x: x.id)],
+                "besoins": [{"id": b.id, "auteur": b.auteur, "texte": b.texte, "le": b.le.isoformat(), "anonyme": b.anonyme,
+                             "besoin": b.besoin.model_dump(mode="json")} for b in self.r.besoins],
+                "preferences": {k: dict(sorted(v.items())) for k, v in sorted(self.preferences.items())},
+                "banc": self.banc.etat_canonique()}
+        return hashlib.sha256(json.dumps(etat, sort_keys=True, ensure_ascii=False, default=str).encode()).hexdigest()
 
     # ------------------------------------------------------------------ bases
     @property
@@ -93,7 +163,7 @@ class ClubPulse:
 
     def _tracer_ia(self, a: AppelIA) -> None:
         # la latence reste dans `ia.appels` (mesure) ; le journal garde un contenu déterministe, donc rejouable à l'octet
-        self.r.memoire.ajouter(Evt(type="APPEL_IA", le=self.jour, statut=Statut.SIMULE, donnees=a.model_dump(exclude={"latence_ms"})))
+        self.banc._ecrire("APPEL_IA", [], Statut.SIMULE, appel=a.model_dump(exclude={"latence_ms"}))
 
     def _identites(self) -> list[str]:
         per = list(self.coffre._personnes.values())
@@ -106,10 +176,18 @@ class ClubPulse:
             raise Introuvable("membre inconnu")
         return p
 
+    def _champs_declares(self, p: Profil) -> dict:
+        """Ce qui change entre le profil courant et `p` — seulement des champs DÉCLARATIFS (sinon : erreur de programmation)."""
+        avant, apres = self.profil(p.id).model_dump(mode="json"), p.model_dump(mode="json")
+        change = {k for k in apres if apres[k] != avant[k]}
+        if change - set(DECLARATIFS):
+            raise ValueError(f"champs non déclaratifs modifiés : {sorted(change - set(DECLARATIFS))}")
+        return {k: apres[k] for k in sorted(change)}
+
     def _remplacer_profil(self, p: Profil) -> None:
-        self.r.profils = [p if q.id == p.id else q for q in self.r.profils]
-        self._revision_profils += 1
-        self._scan = None
+        champs = self._champs_declares(p)
+        if champs:
+            self._enregistrer("PROFIL", [p.id], membre=p.id, champs=champs)
 
     def contexte(self) -> Contexte:
         """Faits de relation (journal du Club) et de CONSENTEMENT (accords donnés dans un essai) : le porteur et chaque
@@ -197,18 +275,16 @@ class ClubPulse:
             for k, v in visibilite.items():
                 if k not in MODIFIABLES or v not in MODIFIABLES[k]:
                     raise Invalide(f"visibilité non modifiable : {k} → {v}")
-        # Tout ou rien : l'état en mémoire (profils, préférences) est restauré si une validation échoue. Suspendre ses
-        # sollicitations vaut pour les NOUVELLES propositions (règles dures) ; un accord déjà donné dans un essai se
+        # Tout ou rien : les deux faits (préférences, profil) sont écrits dans UNE transaction, après validation. Suspendre
+        # ses sollicitations vaut pour les NOUVELLES propositions (règles dures) ; un accord déjà donné dans un essai se
         # retire explicitement dans cet essai (dit, daté), jamais en silence.
-        profils_avant, prefs_avant = self.r.profils, {k: dict(v) for k, v in self.preferences.items()}
-        try:
+        nouveau = Profil(**p.model_copy(update=maj).model_dump())              # validé AVANT toute écriture
+        champs = self._champs_declares(nouveau)
+        with self.journal.transaction():
             if visibilite:
-                self.preferences.setdefault(pid, {}).update(visibilite)
-            self._remplacer_profil(p.model_copy(update=maj))
-        except Exception:
-            self.r.profils, self.preferences = profils_avant, prefs_avant
-            self._revision_profils += 1
-            raise
+                self._enregistrer("PREFERENCES", [pid], membre=pid, preferences=self.preferences.get(pid, {}) | visibilite)
+            if champs:
+                self._enregistrer("PROFIL", [pid], membre=pid, champs=champs)
         return self.vues.vue_profil(pid)
 
     # ------------------------------------------------------------------ mémoire privée : capture d'une rencontre
@@ -271,8 +347,8 @@ class ClubPulse:
                 relu.avertissements.insert(0, "« " + ", ".join(c.extrait or c.libelle for c in exp)
                                            + " » lu comme votre activité (contexte), pas comme un besoin.")
                 b = relu
-        self.r.besoins.append(BesoinActif(id=f"bj{len(self.r.besoins):05d}", auteur=pid, texte=texte.strip(), le=self.jour, besoin=b))
-        self._scan = None
+        self._enregistrer("BESOIN", [pid], besoin={"id": f"bj{len(self.r.besoins):05d}", "auteur": pid, "texte": texte.strip(),
+                                                   "le": self.jour.isoformat(), "besoin": b.model_dump(mode="json"), "anonyme": False})
         scan = self.scanner()
         miennes = [o for o in scan["opportunites"] if o.beneficiaire == pid]    # seulement ce qui le concerne : où il est aidé
         bloques = [x for x in scan["bloques"] if x["auteur"] == pid]
@@ -341,16 +417,15 @@ class ClubPulse:
         Les lectures le relisent (`en_clair`) — une lecture ne déclenche jamais d'appel au modèle."""
         _, faits = self._faits_decouverte(oid, sp)
         rep = self.ia.expliquer(faits, self.pseudonymes())
-        self.r.memoire.ajouter(Evt(type="REDACTION", le=self.jour, statut=Statut.INFERE, donnees={
-            "objet": oid, "pour": sp.role + (sp.id or ""), "texte": rep.sortie["explication"],
-            "meta": rep.appel.model_dump(include={"fournisseur", "modele", "prompt", "statut", "repli", "trace"})}))
+        self.banc._ecrire("REDACTION", [], Statut.INFERE, objet=oid, pour=sp.role + (sp.id or ""), texte=rep.sortie["explication"],
+                          meta=rep.appel.model_dump(include={"fournisseur", "modele", "prompt", "statut", "repli", "trace"}))
         return self.en_clair(oid, sp)
 
     def en_clair(self, oid: str, sp: Spectateur) -> dict:
         """LECTURE : la reformulation journalisée si elle existe, sinon l'explication du moteur (sans modèle)."""
         _, faits = self._faits_decouverte(oid, sp)
         pour = sp.role + (sp.id or "")
-        e = next((x for x in reversed(self.r.memoire.evenements("REDACTION"))
+        e = next((x for x in reversed(self.journal.evenements("REDACTION"))
                   if x.donnees.get("objet") == oid and x.donnees.get("pour") == pour), None)
         texte, appel = (e.donnees["texte"], e.donnees["meta"]) if e else \
             (Intelligence.gabarit_explication(faits), {"fournisseur": "deterministe", "modele": None, "prompt": None, "statut": "OK",
@@ -416,9 +491,9 @@ class ClubPulse:
     def avancer(self, jours: int) -> list[str]:
         if not 1 <= jours <= 60:
             raise Invalide("avance de 1 à 60 jours")
-        self.r.aujourd_hui = self.jour + timedelta(days=jours)
-        self.r.memoire.ajouter(Evt(type="HORLOGE", le=self.jour, statut=Statut.SIMULE, donnees={"avance_jours": jours}))
-        self._scan = None
+        jour = self.jour + timedelta(days=jours)
+        self.banc._ecrire("HORLOGE", [], Statut.SIMULE, avance_jours=jours, jour=jour.isoformat())
+        self._appliquer(self.journal.evenements("HORLOGE")[-1])
         return self.banc.echeances()
 
     # ------------------------------------------------------------------ banc d'essai : ce qui passe par l'IA

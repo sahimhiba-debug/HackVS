@@ -77,18 +77,24 @@ def semer_offres(club: ClubPulse) -> None:
 class Demo:
     PERSONAS = (md.SOPHIE, md.LEA, md.PAULINE, md.MARKUS, NICOLAS, md.ANNA, CLAUDIA)
 
-    def __init__(self, tax: Taxonomie, ia: Optional[Intelligence] = None):
+    def __init__(self, tax: Taxonomie, ia: Optional[Intelligence] = None, reprendre: bool = False):
+        """`reprendre=True` (démarrage du serveur) : l'état est REPRIS du journal existant (HACKVS_ESSAIS_DB) au lieu
+        d'être effacé ; le scénario guidé ne peut alors pas continuer (son contexte n'est pas dans le journal)."""
         self.tax, self._ia = tax, ia
-        self.reinitialiser()
+        self.reinitialiser(reprendre)
 
-    def reinitialiser(self) -> None:
-        self.club = ClubPulse(self.tax, ia=Intelligence(self.tax, self._ia.f if self._ia else None) if self._ia else None)
-        self.club.banc.m.vider()                         # nouvelle démonstration : aucun essai d'une démonstration précédente
-        with self.club.banc.origine(Statut.SYNTHETIQUE):  # données PRÉPARÉES : jamais présentées comme déclarées
-            semer_offres(self.club)
-        self.etape = 0
+    def reinitialiser(self, reprendre: bool = False) -> None:
+        # nouvelle démonstration : un journal VIDE (aucun essai d'une démonstration précédente)
+        self.club = ClubPulse(self.tax, ia=Intelligence(self.tax, self._ia.f if self._ia else None) if self._ia else None,
+                              neuf=not reprendre)
+        repris = len(self.club.journal.evenements()) > 1          # au-delà du seul semis : un monde déjà vécu
+        if not repris:
+            with self.club.banc.origine(Statut.SYNTHETIQUE):  # données PRÉPARÉES : jamais présentées comme déclarées
+                semer_offres(self.club)
+        self.etape = len(self.ETAPES) if repris else 0
         self.ctx: dict = {}
-        self.traces: list[dict] = []
+        self.traces: list[dict] = [{"acte": "reprise", "legende": "état repris du journal ; « Nouvelle démonstration » pour "
+                                                                  "rejouer le scénario"}] if repris else []
 
     # --------------------------------------------------------------- utilitaires
     def _essai(self) -> tuple[str, int]:
