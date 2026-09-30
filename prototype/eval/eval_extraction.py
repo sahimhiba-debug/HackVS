@@ -81,8 +81,8 @@ def evaluer(split: str, hors_ligne: bool) -> dict:
     if not hors_ligne:
         try:
             fournisseur = Enregistreur(Apertus())
-        except NonConfigure as e:
-            raise SystemExit(f"modèle non configuré ({e}) : passe réelle impossible — rien n'est inventé") from None
+        except NonConfigure as manque:
+            raise SystemExit(f"modèle non configuré ({manque}) : passe réelle impossible — rien n'est inventé") from None
     ia = Intelligence(tax, fournisseur)
     roles = RolesIA(ia, tax)
     enonces = [e for e in json.loads(CORPUS.read_text(encoding="utf-8"))["enonces"] if e["split"] == split]
