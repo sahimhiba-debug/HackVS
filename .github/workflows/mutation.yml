@@ -7,6 +7,10 @@ on:
   schedule:
     - cron: "17 2 * * *"
   push:
+    # `tags` seul ne déclenche QUE sur les tags : sans `branches`, aucune poussée de branche ne lançait la campagne
+    # (constaté : 0 exécution après des poussées qui touchaient capacites.py). Le filtre de chemins s'applique aux
+    # poussées de branche ; un tag demo-* déclenche toujours.
+    branches: ["**"]
     tags: ["demo-*"]
     paths:
       - "prototype/intelligence/capacites.py"
@@ -15,6 +19,7 @@ on:
       - "prototype/tests/test_banc_finalite.py"
       - "prototype/setup.cfg"
       - "docs/audit/mutants_survivants.txt"
+      - ".github/workflows/mutation.yml"
 
 permissions:
   contents: read
