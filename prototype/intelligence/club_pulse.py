@@ -172,6 +172,13 @@ class ClubPulse:
         # la latence reste dans `ia.appels` (mesure) ; le journal garde un contenu déterministe, donc rejouable à l'octet
         self.banc._ecrire("APPEL_IA", [], Statut.SIMULE, appel=a.model_dump(exclude={"latence_ms"}))
 
+    def _net(self, texte: str) -> str:
+        """FRONTIÈRE DU MOTEUR : un texte libre d'un membre que le moteur LIT (profil, besoin, offre, réponse à une
+        demande) n'entre dans l'état et le journal que sans identité du coffre — noms, organisations, courriels,
+        téléphones —, la sienne comprise. Les textes échangés de personne à personne (question d'un essai, livrable,
+        observation) restent tels quels ; vers un modèle, ils passent par `Intelligence.proteger`."""
+        return nettoyer(texte, [x for x in self._identites() if x])
+
     def _identites(self) -> list[str]:
         per = list(self.coffre._personnes.values())
         return [p.nom for p in per] + [p.courriel for p in per] + [p.telephone for p in per if p.telephone] \
@@ -244,7 +251,8 @@ class ClubPulse:
     def repondre_ask(self, pid: str, ask_id: str, oui: bool, attributs: Optional[dict[str, int]] = None, quoi: Optional[str] = None) -> Instance:
         if ask_id not in {a for _, a in self.asks_pour(pid)}:
             raise Introuvable("demande inconnue ou plus d'actualité")
-        return self.capacites.repondre(pid, ask_id, oui, attributs, quoi, {o.concept for o in self.profil(pid).offre if o.concept})
+        return self.capacites.repondre(pid, ask_id, oui, attributs, self._net(quoi) if quoi else None,
+                                       {o.concept for o in self.profil(pid).offre if o.concept})
 
     def consentir_capacite(self, pid: str, finalite: str) -> Instance:
         return self.capacites.consentir(pid, finalite)
@@ -287,7 +295,7 @@ class ClubPulse:
                 if c is not None and c not in self.tax.concepts:
                     raise Invalide(f"capacité inconnue : {c}")
                 if str(x.get("texte", "")).strip():
-                    res.append(Offre(concept=c, texte=str(x["texte"]).strip()[:200]))
+                    res.append(Offre(concept=c, texte=self._net(str(x["texte"]).strip())[:200]))
             return res
         p = self.profil(pid)
         offres, recherches = items(aide), items(cherche)
@@ -304,6 +312,7 @@ class ClubPulse:
         if retirer_capacite:
             maj["offre"] = [o for o in p.offre if o.concept != retirer_capacite]
         if ajouter_recherche:
+            ajouter_recherche = self._net(ajouter_recherche)
             prop = extraire_profil(f"Nous cherchons {ajouter_recherche}", self.tax)["recherche"]
             c = prop[0]["concept"] if prop else None
             if not any(r.texte == ajouter_recherche for r in p.recherche):
@@ -371,6 +380,7 @@ class ClubPulse:
     def demander(self, pid: str, texte: str) -> dict:
         if not 3 <= len(texte.strip()) <= 600:
             raise Invalide("demande vide ou trop longue")
+        texte = self._net(texte)
         rep = self.ia.comprendre_demande(texte)
         b = besoin_de(rep)
         # sa PROPRE activité (« pour nos tisanes ») est du contexte, pas un besoin : on la retire et on relit le reste
@@ -623,13 +633,17 @@ class ClubPulse:
         """Une offre ne peut porter qu'une capacité que le membre DÉCLARE dans son profil (jamais une capacité supposée)."""
         if concept is not None and concept not in {o.concept for o in self.profil(pid).offre}:
             raise Invalide("capacité non déclarée dans votre profil : ajoutez-la d'abord à « je peux aider »")
-        return self.banc.publier_offre(pid, nature, quoi, capacite, du, au, duree_max_min=duree_max_min, conditions=conditions, concept=concept,
+        return self.banc.publier_offre(pid, nature, self._net(quoi), capacite, du, au, duree_max_min=duree_max_min,
+                                       conditions=self._net(conditions), concept=concept,
                                        plages=[Plage(**x) for x in plages or []])
 
     def modifier_offre(self, pid: str, oid: str, champs: dict) -> list[str]:
         """Le PROPRIÉTAIRE change ses conditions (dont ses horaires) ; les essais concernés sont réévalués pour tous."""
         if champs.get("plages") is not None:
             champs = champs | {"plages": [Plage(**x) for x in champs["plages"]]}
+        for k in ("quoi", "conditions"):
+            if champs.get(k):
+                champs = champs | {k: self._net(champs[k])}
         return self.banc.modifier_offre(pid, oid, **champs)
 
     def creer_essai(self, pid: str, champs: dict) -> str:
