@@ -241,10 +241,10 @@ class Registre:
             raise Introuvable("capacité inconnue")
         return self.patrons[finalite]
 
-    def _consentements(self, p: Patron) -> tuple[dict[str, OffreVolontaire], list[str]]:
-        """Par emplacement : l'offre qu'un consentement VALABLE met à disposition de cette finalité ; et la liste des
+    def _consentements(self, p: Patron) -> tuple[dict[str, list[OffreVolontaire]], list[str]]:
+        """Par emplacement : les offres qu'un consentement VALABLE met à disposition de cette finalité ; et la liste des
         consentements donnés qui ne valent plus (en rôles : emplacement et raison — jamais qui)."""
-        valables: dict[str, OffreVolontaire] = {}
+        valables: dict[str, list[OffreVolontaire]] = {}
         perdus = []
         for e in self.b.consentements_finalite(p.id):
             emp = e.donnees["emplacement"]
@@ -252,7 +252,7 @@ class Registre:
                 continue
             raison = self.b.raison_consentement(e, p.portee(emp))
             if raison is None:
-                valables.setdefault(emp, self.b.offre(e.donnees["offre"]))
+                valables.setdefault(emp, []).append(self.b.offre(e.donnees["offre"]))
             else:
                 perdus.append(f"{emp} : {raison}")
         return valables, perdus
@@ -263,11 +263,21 @@ class Registre:
         if p.fenetre.jour < self._jour():
             return Instance(**base, statut="EXTINCT", distance=None, hypotheses=["la fenêtre de cette capacité est passée"])
         valables, perdus = self._consentements(p)
-        garder: dict[str, Optional[OffreVolontaire]] = {e.id: valables.get(e.id) for e in p.emplacements}
-        sol = self.b.solutions(None, p.protocole(), maximum=1, garder=garder)
+        ids = {k: {o.id for o in v} for k, v in valables.items()}
+        garder: dict[str, Optional[OffreVolontaire]] = {e.id: valables[e.id][0] if valables.get(e.id) else None for e in p.emplacements}
+
+        def consentis(choix: dict[str, Optional[str]]) -> dict[str, Optional[str]]:
+            return {k: (None if v is not None and v in ids.get(k, set()) else
+                        "consentement à demander" if v is not None else "pièce manquante") for k, v in choix.items()}
+        # ACTIVE : existe-t-il une composition dont CHAQUE pièce est consentie pour cette finalité (à n'importe quel
+        # créneau de la fenêtre) ? Sinon : la composition libre qui garde le plus de consentements.
+        sol = self.b.solutions(None, p.protocole(), maximum=1, garder=garder, permis=ids) if len(ids) == len(p.emplacements) else []
+        if not sol:
+            toutes = self.b.solutions(None, p.protocole(), maximum=10_000, garder=garder)
+            sol = sorted(toutes, key=lambda x: -sum(1 for r in consentis(x["choix"]).values() if r is None))[:1]
         if sol:
             choix = sol[0]["choix"]
-            cons = {k: (None if valables.get(k) is not None and valables[k].id == v else "consentement à demander") for k, v in choix.items()}
+            cons = consentis(choix)
             n = sum(1 for x in cons.values() if x is None)
             statut: StatutCapacite = ("ACTIVE" if n == len(cons) else "DEGRADED" if perdus else "CONSENTED" if n else "PROPOSED")
             return Instance(**base, statut=statut, distance=0, creneau=sol[0]["creneau"], liaisons=choix, consentements=cons,
@@ -280,10 +290,8 @@ class Registre:
                           libelle=e.libelle, nature=e.nature, concept=e.concept, minimums=e.minimums, creneau=c, expire=p.fenetre.jour,
                           texte=_texte_ask(p, e, c))
                 choix = sous[0]["choix"] | {e.id: None}
-                cons = {k: (None if v is not None and valables.get(k) is not None and valables[k].id == v else
-                            "consentement à demander" if v is not None else "pièce manquante") for k, v in choix.items()}
                 return Instance(**base, statut="DEGRADED" if perdus else "ONE_AWAY", distance=1, creneau=c, liaisons=choix,
-                                consentements=cons, manquant=e.id, ask=ask, perdus=perdus, hypotheses=hyp)
+                                consentements=consentis(choix), manquant=e.id, ask=ask, perdus=perdus, hypotheses=hyp)
         return Instance(**base, statut="DEGRADED" if perdus else None, distance=None, perdus=perdus, hypotheses=hyp)
 
     def projeter(self) -> list[Instance]:

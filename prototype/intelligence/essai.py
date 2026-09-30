@@ -582,35 +582,50 @@ class Banc:
         return sorted(res, key=lambda o: (-len(mots & _mots(o.quoi)), -o.au.toordinal(), o.id))
 
     # ------------------------------------------------------------------ QUAND : recherche BORNÉE de créneaux
-    def _composer(self, eid: Optional[str], p: Protocole, c: Creneau, garder: dict[str, Optional[OffreVolontaire]]) -> Optional[dict]:
-        """Une équipe pour ce créneau : chaque geste garde son offre actuelle si elle le couvre, sinon la première offre
-        admissible d'une AUTRE personne. None si un geste reste sans offre (rien n'est inventé)."""
+    def _composer(self, eid: Optional[str], p: Protocole, c: Creneau, garder: dict[str, Optional[OffreVolontaire]],
+                  permis: Optional[dict[str, set[str]]] = None) -> Optional[dict]:
+        """Une équipe pour ce créneau : chaque geste garde son offre actuelle si elle le couvre, sinon une offre
+        admissible d'une AUTRE personne. None si aucune affectation ne couvre tous les gestes (rien n'est inventé).
+        Recherche COMPLÈTE par retour arrière (≤ 4 gestes) : le premier chemin essayé est le choix d'avant (l'offre
+        gardée, puis le premier candidat), donc la même équipe quand elle existait ; mais une équipe qui n'existe
+        qu'avec un autre choix n'est plus manquée (défaut trouvé par l'oracle en force brute du registre : une
+        personne à deux offres faisait échouer le choix glouton). Dans un essai, une personne gardée sur un geste n'est
+        pas proposée pour un autre ; `permis` (registre) restreint, par geste, les offres utilisables."""
         etapes = [e.model_copy(update={"duree_min": min(e.duree_min, c.duree_min)}) for e in p.etapes]   # variante courte : dite
         par_id = {e.id: e for e in etapes}
         gardees = {k: o for k, o in garder.items()
                    if o is not None and self.offre_couvre(o, par_id[k], p.echeance, sauf=eid, creneau=c) is None}
-        choix: dict[str, Optional[str]] = {}
-        auteurs: set[str] = set()
-        remplaces = []
-        for e in etapes:
+
+        def options(e: Etape, auteurs: set[str]) -> Iterator[tuple[Optional[OffreVolontaire], bool]]:
             if e.invitation and e.contributeur and garder.get(e.id) is None:
-                choix[e.id] = None                            # sur invitation, pas encore déclarée : à demander, jamais supposée
-                continue
+                yield None, False                             # sur invitation, pas encore déclarée : à demander, jamais supposée
+                return
             o = gardees.get(e.id)
-            if o is None or o.auteur in auteurs:
-                autres = auteurs | {x.auteur for k, x in gardees.items() if k != e.id}
-                cands = self.candidats(eid, e, p.echeance, c, autres=autres)
-                if not cands:
-                    return None
-                o = cands[0]
-                if e.contributeur:
-                    remplaces.append(e.id)
-            choix[e.id] = o.id
-            auteurs.add(o.auteur)
-        return {"creneau": c, "choix": choix, "remplaces": remplaces}
+            if o is not None and o.auteur not in auteurs:
+                yield o, False
+            autres = auteurs | ({x.auteur for k, x in gardees.items() if k != e.id} if eid is not None else set())
+            for x in self.candidats(eid, e, p.echeance, c, autres=autres):
+                if o is None or x.id != o.id:
+                    yield x, bool(e.contributeur)
+
+        def chercher(i: int, auteurs: set[str], choix: dict[str, Optional[str]], remplaces: list[str]) -> Optional[dict]:
+            if i == len(etapes):
+                return {"creneau": c, "choix": dict(choix), "remplaces": list(remplaces)}
+            e = etapes[i]
+            for o, remplace in options(e, auteurs):
+                if o is not None and permis is not None and o.id not in permis.get(e.id, set()):
+                    continue
+                choix[e.id] = o.id if o else None
+                res = chercher(i + 1, auteurs | ({o.auteur} if o else set()), choix, remplaces + ([e.id] if remplace else []))
+                if res is not None:
+                    return res
+            choix.pop(e.id, None)
+            return None
+        return chercher(0, set(), {}, [])
 
     def solutions(self, eid: Optional[str], p: Optional[Protocole] = None, maximum: int = 3,
-                  garder: Optional[dict[str, Optional[OffreVolontaire]]] = None) -> list[dict]:
+                  garder: Optional[dict[str, Optional[OffreVolontaire]]] = None,
+                  permis: Optional[dict[str, set[str]]] = None) -> list[dict]:
         """Créneaux où TOUS les gestes sont couverts, dans la fenêtre du porteur : recherche exhaustive au quart d'heure
         (bornée : fenêtre × durées × gestes × offres). Une variante plus courte n'est proposée que si le porteur a fixé
         une durée minimale acceptable — jamais en dessous. Ordre : le moins de personnes changées, la durée entière,
@@ -636,7 +651,7 @@ class Banc:
                 c = Creneau(jour=fen.jour, debut=heure(m), duree_min=d)
                 if p.creneau and c == p.creneau:
                     continue                                  # le créneau actuel n'est pas une adaptation
-                sol = self._composer(eid, p, c, garder)
+                sol = self._composer(eid, p, c, garder, permis)
                 if sol:
                     res.append(sol | {"plus_court": d < duree})
         ref = minutes(p.creneau.debut) if p.creneau else minutes(fen.debut)
