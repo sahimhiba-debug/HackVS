@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # 14 — Registre des preuves (généré, ne pas éditer à la main)
 
 Généré le 2026-09-29 par `prototype/scripts/validate_competition_claims.py` à partir de `competition/claims.json`.

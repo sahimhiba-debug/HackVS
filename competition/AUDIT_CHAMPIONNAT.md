@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # Audit contradictoire — Championship Sprint (29.09.2026)
 
 But : trouver toutes les raisons pour lesquelles un jury d'ingénieurs pourrait trouver la solution ordinaire, fragile,

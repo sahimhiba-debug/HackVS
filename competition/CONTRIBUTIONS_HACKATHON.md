@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # Avant / pendant Hack VS — ce que nous pouvons présenter comme réalisé pendant l'événement
 
 **Règles officielles** : non encore reçues (docs/ASSUMPTIONS.md, I4). Ce fichier applique par défaut la règle la plus

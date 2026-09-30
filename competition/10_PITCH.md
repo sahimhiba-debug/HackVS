@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # 10 — Pitch : récit, choix, storyboard
 
 ## Le récit (avant les diapositives)

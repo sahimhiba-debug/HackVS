@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # 08 — Confidentialité (par conception, par défaut)
 
 | Principe | Mise en œuvre | Test |

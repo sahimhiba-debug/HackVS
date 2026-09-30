@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # 13 — Questions difficiles du jury (45) : RÉPONSE · PREUVE · LIMITE
 
 Règle : répondre en une ou deux phrases, montrer la preuve si on la demande, dire la limite avant qu'on la trouve.

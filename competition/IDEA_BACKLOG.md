@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # Idées — protocole IDÉE / PROBLÈME / DIFFÉRENCIATION / MÉCANISME / PREUVE / COÛT / RISQUE / VERDICT
 
 Statuts : EXPLORE · PROTOTYPE · BUILD · TEST · KEEP · DEFER · REJECT. Une idée ne passe KEEP qu'avec une preuve exécutable.

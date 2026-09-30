@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # Mémo benchmarks (travail) — ce que chaque chiffre prouve, et ce qu'il ne prouve pas
 
 Tous les benchmarks ci-dessous tournent sur des données GÉNÉRÉES par nous (SYNTHETIC). Aucun ne dit ce que feraient de

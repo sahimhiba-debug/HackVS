@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # Entraînement aux questions
 
 Tirer 5 questions au hasard dans 13_QA_JURY.md ; répondre en 20 secondes maximum chacune ; structure :

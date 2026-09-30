@@ -82,6 +82,8 @@ def repetition() -> None:
 
 
 if __name__ == "__main__":
+    from quarantaine_competition import appliquer   # dossier en QUARANTAINE : la bannière survit à toute régénération
     video()
     repetition()
+    appliquer()
     print((COMP / "rehearsal" / "TIMING.md").read_text(encoding="utf-8"))

@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # Red team du jury (jurés SIMULÉS — archétypes, pas les vrais jurés)
 
 Nous ne connaissons pas les opinions des vrais jurés. Ces trois profils servent à préparer les objections.

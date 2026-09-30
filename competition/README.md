@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # Dossier de compétition — Hack VS 2026 (préparé AVANT l'événement)
 
 Tout ce dossier raconte la même histoire que le code. Garde-fous :

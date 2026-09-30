@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # Mémo architecture (travail) — décisions prises pendant les cycles techniques
 
 1. **Une règle, un endroit.** L'état d'une relation est calculé par une seule fonction (`reseau._etat`) ; le graphe

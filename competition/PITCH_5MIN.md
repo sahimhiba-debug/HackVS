@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # Pitch — 5 minutes (texte exact ; plus de place pour la méthode et le déploiement)
 
 **[0:00]** À la Foire, on échange une carte. On se dit « on se rappelle ». Un mois plus tard, on ne sait plus pourquoi.

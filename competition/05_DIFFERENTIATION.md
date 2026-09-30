@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # 05 — Différenciation
 
 Ce qui n'en est PAS : mise en relation par IA, communauté toute l'année, rendez-vous 1:1 (existent chez d'autres,

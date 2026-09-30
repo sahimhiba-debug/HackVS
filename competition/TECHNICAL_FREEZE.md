@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # Gel technique — preuves par critère
 
 **Statut : GEL CONFIRMÉ au commit `7cfd076`** (CI verte : run 33 ; document : run 34). Après le gel, seuls sont

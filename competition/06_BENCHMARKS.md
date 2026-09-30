@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # 06 — Benchmarks (SYNTHETIC_BENCHMARK — aucune donnée du Club)
 
 Tous les résultats sont reproductibles par une commande, et rejoués à l'octet en CI (job « reproductibilite »).

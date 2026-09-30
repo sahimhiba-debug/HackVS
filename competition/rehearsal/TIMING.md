@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # Minutage des pitchs (mesuré sur le texte)
 
 > Généré par `prototype/scripts/generer_competition.py`. Débit supposé : 140 mots/min (à recaler au chronomètre pendant la répétition).

@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # Annexe technique (pour un jury d'ingénieurs)
 
 Tout est vérifiable dans le dépôt. Chiffres : prototype, données FICTIVES ou GÉNÉRÉES, une machine.

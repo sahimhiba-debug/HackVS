@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # 01 — Thèse produit
 
 **La Foire crée les moments où les gens se rencontrent. Nous construisons l'intelligence qui fait vivre ces relations

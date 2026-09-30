@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # Mémo red team (travail) — attaques menées pendant les cycles techniques 1 à 8 et le sprint d'innovation
 
 | Cycle | Attaque | Résultat | Preuve |

@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # Club Pulse — thèse produit
 
 > **Le Club ne se contente plus de connaître ses membres. Il apprend ce que son réseau peut accomplir.**

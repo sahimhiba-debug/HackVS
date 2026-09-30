@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # IA générative : où multiplie-t-elle la valeur du moteur ? — pré-inscription
 
 Écrit AVANT toute exécution d'un modèle. État de l'environnement au moment de l'écriture : **aucun modèle génératif

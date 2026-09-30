@@ -22,6 +22,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from quarantaine_competition import avec_banniere  # noqa: E402  (dossier en QUARANTAINE)
+
 RACINE = Path(__file__).resolve().parents[2]
 PROTO = RACINE / "prototype"
 COMP = RACINE / "competition"
@@ -171,7 +174,7 @@ def main() -> None:
               "Statuts : REAL (vrai du prototype, contrôlé), SYNTHETIC (données générées), INFERRED (hypothèse), UNVERIFIED (non vérifié par nous).", "",
               "| ID | Affirmation | Type | Contrôle (date : " + jour + ") | Preuve | Peut-on le dire ? | Où le montrer |", "|---|---|---|---|---|---|---|"]
     if not a.verifier:
-        (COMP / "14_PROOF_LEDGER.md").write_text("\n".join(entete + lignes) + "\n", encoding="utf-8")
+        (COMP / "14_PROOF_LEDGER.md").write_text(avec_banniere("\n".join(entete + lignes) + "\n"), encoding="utf-8")
     # chiffres des textes de pitch
     deck = PROTO / "web" / "presentation.html"                          # le deck projeté : même exigence que le pitch
     for f in sorted(COMP.glob("PITCH_*.md")) + [COMP / "10_PITCH.md", COMP / "video" / "VOICEOVER.md", deck]:
@@ -220,7 +223,7 @@ def main() -> None:
     resume += [f"- [{c['type']}] {c['texte']} — {c['demo']}" for c in reg["affirmations"] if c["type"] in ("INFERRED", "UNVERIFIED")]
     resume += ["", "Chiffres autorisés dans le pitch : " + ", ".join(sorted(autorises, key=lambda x: (len(x), x))), ""]
     if not a.verifier:
-        (COMP / "15_CLAIMS.md").write_text("\n".join(resume), encoding="utf-8")
+        (COMP / "15_CLAIMS.md").write_text(avec_banniere("\n".join(resume)), encoding="utf-8")
     print("\n".join(echecs) if echecs else "Toutes les affirmations contrôlables sont vérifiées ; aucun chiffre non prouvé dans le pitch.")
     sys.exit(1 if echecs else 0)
 

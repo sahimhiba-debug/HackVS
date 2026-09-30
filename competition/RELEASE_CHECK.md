@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # Vérification de publication (campagne finale, 29.09.2026)
 
 Règle : une étape n'est verte que si le CODE DE SORTIE de son processus est 0 (jamais celui d'un `tail` ou d'un tube).

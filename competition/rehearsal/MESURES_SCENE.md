@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # Mesures de la scène (1280×720, navigateur réel)
 
 Produit par `scripts/mesurer_scene.py`. Lecture à voix haute ≈ 200 mots/min : au-delà de ~90 mots, le public lit.

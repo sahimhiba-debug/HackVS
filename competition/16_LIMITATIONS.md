@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # 16 — Limites (à dire avant qu'on nous les demande)
 
 - Aucune donnée réelle ; aucun test avec de vrais membres ; utilité non mesurée.

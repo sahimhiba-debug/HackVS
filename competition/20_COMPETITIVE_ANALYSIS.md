@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # 20 — Analyse concurrentielle (factuelle, sans dénigrement)
 
 Sources consultées le 2026-09-28 (recherche web ; les pages des éditeurs n'étaient pas toutes accessibles depuis notre

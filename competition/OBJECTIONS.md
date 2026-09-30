@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # Objections difficiles — et réponses vérifiables
 
 Règle : chaque réponse renvoie à quelque chose que le jury peut exécuter ou lire. Si nous ne savons pas, nous le disons.

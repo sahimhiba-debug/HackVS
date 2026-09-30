@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # PRODUCT_DECISION — pourquoi « débloquer des demandes », et ce que nous avons éliminé
 
 Date : 29.09.2026. Données : toutes fictives. Ce document est un raisonnement, pas une preuve de valeur.

@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # Audit technique — cartographie (mémo de travail, mis à jour à chaque cycle)
 
 Règle : chaque ligne cite une preuve exécutable. « Partiel » et « absent » sont des états normaux, pas des fautes à cacher.

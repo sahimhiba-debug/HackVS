@@ -1,3 +1,5 @@
+> ⛔ **OBSOLÈTE — produit d'avant le pivot, ne pas présenter.** Ce dossier décrit l'ancien produit (« intelligence relationnelle »), pas le registre des capacités. La réécriture du pitch est en cours (équipe) ; voir `TODO-DEMO.md`.
+
 # Décisions d'architecture (défendables devant un jury technique)
 
 Format : PROBLÈME · OPTIONS · CHOIX · POURQUOI · COMPROMIS · RÉSULTAT. Chaque résultat renvoie à une preuve exécutable.

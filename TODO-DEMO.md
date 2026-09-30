@@ -15,7 +15,7 @@ Aux dates actuelles (horloge au mardi **06.10.2026**, action collective le jeudi
 
 | Artefact | État | Pourquoi ce n'est pas mécanique |
 |---|---|---|
-| **`competition/*`** (dossier de pitch, `competition/video/demo.webm`, captions, timeline) | décrit le produit **d'AVANT le pivot** (« intelligence relationnelle », « Sophie rejoint le Club », vidéo de l'ancien prototype par `scripts/enregistrer_video.py`) | le réécrire pour le registre des capacités est un choix de récit et de pitch, pas une régénération ; **ne pas le présenter tel quel** |
+| **`competition/*`** (dossier de pitch, `competition/video/demo.webm`, captions, timeline) — **EN QUARANTAINE** : bannière « OBSOLÈTE — produit d'avant le pivot, ne pas présenter » en tête de chaque fichier Markdown (et `OBSOLETE.md` dans chaque dossier non-Markdown), gardée par `tests/test_quarantaine_competition.py` et réécrite par les générateurs ; **la réécriture du pitch est faite par l'équipe** | décrit le produit **d'AVANT le pivot** (« intelligence relationnelle », « Sophie rejoint le Club », vidéo de l'ancien prototype par `scripts/enregistrer_video.py`) | le réécrire pour le registre des capacités est un choix de récit et de pitch, pas une régénération ; **ne pas le présenter tel quel** |
 | Captures du registre (Établi, passeport, QR juré, interrupteur IA) | aucune capture versionnée ; seuls les E2E les vérifient | à produire avec le récit ci-dessus |
 | `…/captures/essai-*.png` | ancien scénario « étiquette » | à vérifier, sans doute à archiver |
 
