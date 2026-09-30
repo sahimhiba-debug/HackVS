@@ -553,10 +553,17 @@ class Banc:
         return touches
 
     # ------------------------------------------------------------------ alternatives (déterministes, jamais inventées)
-    def candidats(self, eid: str, e: Etape, echeance: date, creneau: Optional[Creneau] = None,
+    def candidats(self, eid: Optional[str], e: Etape, echeance: date, creneau: Optional[Creneau] = None,
                   autres: Optional[set[str]] = None) -> list[OffreVolontaire]:
         """Offres ADMISSIBLES pour ce geste : publiées, actives, couvrantes, capacité restante ; ni le porteur, ni sa
-        propre organisation, ni quelqu'un qui a déjà décliné cet essai, ni quelqu'un déjà engagé sur un autre geste."""
+        propre organisation, ni quelqu'un qui a déjà décliné cet essai, ni quelqu'un déjà engagé sur un autre geste.
+        `eid=None` : hors de tout essai (registre des capacités) — pas de porteur, donc seules les règles de l'offre et
+        « une personne, un geste » (`autres`) s'appliquent."""
+        if eid is None:
+            exclus = {x for x in (autres or set()) if x}
+            res = [o for o in self.offres(publiques=True) if o.auteur not in exclus and self.offre_couvre(o, e, echeance, creneau=creneau) is None]
+            mots = _mots(e.geste)
+            return sorted(res, key=lambda o: (-len(mots & _mots(o.quoi)), -o.au.toordinal(), o.id))
         porteur = self.porteur(eid)
         retraits = {x.acteurs[0] for x in self._evs(eid, "RETRAIT")}
         deja = autres if autres is not None else {x.contributeur for x in self.protocole(eid).etapes if x.contributeur and x.id != e.id}
@@ -567,7 +574,7 @@ class Banc:
         return sorted(res, key=lambda o: (-len(mots & _mots(o.quoi)), -o.au.toordinal(), o.id))
 
     # ------------------------------------------------------------------ QUAND : recherche BORNÉE de créneaux
-    def _composer(self, eid: str, p: Protocole, c: Creneau, garder: dict[str, Optional[OffreVolontaire]]) -> Optional[dict]:
+    def _composer(self, eid: Optional[str], p: Protocole, c: Creneau, garder: dict[str, Optional[OffreVolontaire]]) -> Optional[dict]:
         """Une équipe pour ce créneau : chaque geste garde son offre actuelle si elle le couvre, sinon la première offre
         admissible d'une AUTRE personne. None si un geste reste sans offre (rien n'est inventé)."""
         etapes = [e.model_copy(update={"duree_min": min(e.duree_min, c.duree_min)}) for e in p.etapes]   # variante courte : dite
@@ -594,21 +601,27 @@ class Banc:
             auteurs.add(o.auteur)
         return {"creneau": c, "choix": choix, "remplaces": remplaces}
 
-    def solutions(self, eid: str, p: Optional[Protocole] = None, maximum: int = 3) -> list[dict]:
+    def solutions(self, eid: Optional[str], p: Optional[Protocole] = None, maximum: int = 3,
+                  garder: Optional[dict[str, Optional[OffreVolontaire]]] = None) -> list[dict]:
         """Créneaux où TOUS les gestes sont couverts, dans la fenêtre du porteur : recherche exhaustive au quart d'heure
         (bornée : fenêtre × durées × gestes × offres). Une variante plus courte n'est proposée que si le porteur a fixé
         une durée minimale acceptable — jamais en dessous. Ordre : le moins de personnes changées, la durée entière,
-        le plus proche du créneau actuel."""
-        p = p or self.protocole(eid)
+        le plus proche du créneau actuel. `eid=None` (registre) : `p` est obligatoire ; `garder` donne, par geste,
+        l'offre à conserver si elle couvre (sinon : aucune)."""
+        if eid is None and p is None:
+            raise ValueError("hors essai, le protocole à composer est obligatoire")
+        p = p or self.protocole(eid)  # type: ignore[arg-type]
         fen = p.fenetre
         if fen is None or not p.etapes:
             return []
         duree = p.creneau.duree_min if p.creneau else max(e.duree_min for e in p.etapes)
         plancher = p.duree_min_acceptable or duree           # jamais sous le minimum que le porteur a fixé
         durees = list(range(duree, plancher - 1, -PAS_MIN)) or [duree]
-        partis = self.refus(eid) | {x.acteurs[0] for x in self._evs(eid, "RETRAIT")}
-        # on ne GARDE jamais quelqu'un qui a décliné ou s'est retiré (défaut trouvé : « même équipe » gardait un refus)
-        garder = {e.id: self.offre_de(eid, e) if e.contributeur and e.contributeur not in partis else None for e in p.etapes}
+        if garder is None and eid is not None:
+            partis = self.refus(eid) | {x.acteurs[0] for x in self._evs(eid, "RETRAIT")}
+            # on ne GARDE jamais quelqu'un qui a décliné ou s'est retiré (défaut trouvé : « même équipe » gardait un refus)
+            garder = {e.id: self.offre_de(eid, e) if e.contributeur and e.contributeur not in partis else None for e in p.etapes}
+        garder = garder or {e.id: None for e in p.etapes}
         res = []
         for d in durees:
             for m in range(minutes(fen.debut), minutes(fen.fin) - d + 1, PAS_MIN):
