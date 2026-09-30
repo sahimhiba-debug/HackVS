@@ -570,7 +570,7 @@ class Registre:
             else:
                 raison = self.b.raison_consentement(accord, p.portee(emp.id))
             res.append({"finalite": p.id, "titre": p.titre, "version": accord.donnees["portee"]["version"], "accord": compte[cle],
-                        "piece": emp.libelle if emp else accord.donnees["portee"]["emplacement"]["libelle"],
+                        "piece": accord.donnees["portee"]["emplacement"]["libelle"],   # le libellé CONSENTI, jamais réécrit
                         "offre": self.b.offre(accord.donnees["offre"]).quoi, "donne_le": accord.le.isoformat(),
                         "jusqu_au": accord.donnees["jusqu_au"], "fenetre": accord.donnees["portee"]["fenetre"],
                         "partage": accord.donnees["portee"]["partage"], "reference": accord.donnees["empreinte"][:12] + f"-{accord.seq}",

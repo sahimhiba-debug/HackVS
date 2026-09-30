@@ -62,3 +62,16 @@ def test_retirer_ne_retire_pas_deux_fois_une_piece_deja_retiree(club):
     club.banc.retirer_offre(md.PAULINE, oid)                  # retirée directement, le consentement court encore
     club.retirer_consentement(md.PAULINE, A)
     assert [e.donnees["offre"] for e in club.journal.evenements("OFFRE_RETIREE")].count(oid) == 1
+
+
+def test_le_recu_nomme_la_piece_telle_qu_elle_a_ete_consentie(club):
+    """Un reçu est la trace de ce qu'on a ACCEPTÉ : si le patron renomme la pièce ensuite (nouvelle version), l'ancien
+    reçu garde le libellé consenti — jamais réécrit après coup."""
+    from intelligence.capacites import Patron
+    club.repondre_ask(md.PAULINE, club.asks_pour(md.PAULINE)[0][1], True, {"places": 14})
+    p = club.capacites.patron(A)
+    d = p.model_dump()
+    d["version"] = p.version + 1
+    d["emplacements"] = [e | ({"libelle": "Un véhicule de 12 places ou plus"} if e["id"] == "minibus" else {}) for e in d["emplacements"]]
+    club.capacites.patrons[A] = Patron(**d)
+    assert club.capacites.recus(md.PAULINE)[0]["piece"] == "Un minibus de 12 places ou plus"
