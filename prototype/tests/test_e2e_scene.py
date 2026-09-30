@@ -2,6 +2,7 @@
 
 Ignoré seulement si aucun Chromium n'est disponible (la CI l'installe : job « reproductibilite »).
 """
+import json
 import os
 import socket
 import subprocess
@@ -24,9 +25,11 @@ def _chromium(p):
 
 
 def _lancer(p):
+    from tests.capture_e2e import REGLES_RESOLUTION
     chemin = "/opt/pw-browsers/chromium"
+    options = {"args": [REGLES_RESOLUTION]} | ({"executable_path": chemin} if os.path.exists(chemin) else {})
     try:
-        return p.chromium.launch(executable_path=chemin) if os.path.exists(chemin) else p.chromium.launch()
+        return p.chromium.launch(**options)
     except Exception as e:  # navigateur absent : on le dit, on n'invente pas un succès
         if os.environ.get("HACKVS_E2E_OBLIGATOIRE"):
             raise                                   # en CI, un navigateur absent est un échec, pas un saut
@@ -49,6 +52,13 @@ def url():
             break
         except OSError:
             time.sleep(0.25)
+    if os.environ.get("HACKVS_MODE_SALLE"):                 # scripts/mode_salle.py : on le PROUVE, on ne le suppose pas
+        with socket.socket() as s:
+            s.settimeout(2)
+            assert s.connect_ex(("1.1.1.1", 443)) != 0, "mode salle : l'extérieur est joignable"
+        requete = urllib.request.Request(base + "/api/pulse/etat", headers={"X-Pulse-Console": "1"})
+        ia = json.load(urllib.request.urlopen(requete, timeout=5))["ia"]
+        assert ia["configure"] is False and ia["fournisseur"] == "deterministe", ia
     yield base
     srv.terminate()
 

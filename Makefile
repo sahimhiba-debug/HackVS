@@ -6,7 +6,7 @@ PY ?= python
 P = prototype
 export HACKVS_SEMANTIQUE ?= 0
 
-.PHONY: setup browsers lint typecheck test e2e eval secrets audit coverage demo quality-check mutation
+.PHONY: setup browsers lint typecheck test e2e e2e-salle eval secrets audit coverage demo quality-check mutation
 
 setup:
 	cd $(P) && $(PY) -m pip install -r requirements-dev.txt -c constraints.txt
@@ -23,11 +23,18 @@ lint:
 typecheck:
 	cd $(P) && $(PY) -m mypy app adaptateurs plateforme intelligence
 
+E2E = tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py tests/test_e2e_capacites.py tests/test_e2e_hermetique.py
+
 test:
-	cd $(P) && $(PY) -m pytest -q --ignore=tests/test_e2e_scene.py --ignore=tests/test_e2e_pulse.py --ignore=tests/test_e2e_action.py --ignore=tests/test_e2e_capacites.py
+	cd $(P) && $(PY) -m pytest -q $(addprefix --ignore=,$(E2E))
 
 e2e:
-	cd $(P) && HACKVS_E2E_OBLIGATOIRE=1 $(PY) -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py tests/test_e2e_capacites.py
+	cd $(P) && HACKVS_E2E_OBLIGATOIRE=1 $(PY) -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py tests/test_e2e_capacites.py tests/test_e2e_hermetique.py
+
+# Mode salle : les mêmes E2E, réseau LOCAL seul (espace réseau vide, extérieur injoignable vérifié) et IA OFF
+e2e-salle:
+	cd $(P) && sudo -E env "PATH=$$PATH" HACKVS_E2E_OBLIGATOIRE=1 unshare --net $(PY) scripts/mode_salle.py -- \
+	  $(PY) -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py tests/test_e2e_capacites.py tests/test_e2e_hermetique.py
 
 eval:
 	cd $(P) && $(PY) -m eval.run_eval --verifier && $(PY) -m eval.eval_decisions --verifier \
