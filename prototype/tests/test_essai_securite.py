@@ -249,7 +249,8 @@ def test_mutation_sans_session_ou_avec_session_falsifiee():
     h = _sessions()
     eid, v = _essai(h)
     assert client.post(f"/api/pulse/moi/essais/{eid}/decision", json={"version": v, "accepte": True}).status_code == 401
-    faux = {"X-Pulse-Session": h[M]["X-Pulse-Session"][:-2] + "00"}
+    vrai = h[M]["X-Pulse-Session"]
+    faux = {"X-Pulse-Session": vrai[:-1] + ("1" if vrai[-1] == "0" else "0")}   # TOUJOURS différent du vrai (avant : « 00 », égal 1 fois sur 256)
     assert client.post(f"/api/pulse/moi/essais/{eid}/decision", headers=faux, json={"version": v, "accepte": True}).status_code == 401
     # pas de cookie : un formulaire intersite ne peut pas porter l'en-tête X-Pulse-Session (pas de CSRF membre possible)
     r = client.post(f"/api/pulse/moi/essais/{eid}/decision", data={"version": v, "accepte": "true"},
