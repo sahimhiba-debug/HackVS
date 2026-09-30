@@ -22,7 +22,7 @@ LIBELLES = {"BROUILLON": "brouillon (visible de vous seul)", "PROPOSE": "propos�
             "AUTORISE": "autorisé : tous les accords couvrent cette version", "A_ADAPTER": "une condition a changé : à adapter",
             "EN_COURS": "en cours", "CONTRIBUTION_RECUE": "contributions reçues (aucun résultat en découle)",
             "OBSERVEE": "observation déclarée", "ANNULE": "annulé", "EXPIRE": "expiré sans lancement",
-            "IMPOSSIBLE": "impossible en l'état", "RESULTAT_INCONNU": "résultat inconnu"}
+            "IMPOSSIBLE": "bloqué : aucune adaptation admissible aujourd'hui", "RESULTAT_INCONNU": "résultat inconnu"}
 QUALIF = {"positif": "positif", "negatif": "négatif", "mitige": "mitigé", "non_concluant": "non concluant"}
 
 

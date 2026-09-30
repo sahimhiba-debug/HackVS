@@ -30,7 +30,7 @@ import re
 from datetime import date, timedelta
 from typing import Callable, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from plateforme.affirmations import Statut
 from plateforme.memoire import Evt, Memoire
@@ -52,8 +52,11 @@ TRANSITIONS: dict[str, set[str]] = {
     "EN_COURS": {"CONTRIBUTION_RECUE", "A_ADAPTER", "IMPOSSIBLE", "ANNULE", "RESULTAT_INCONNU"},
     "CONTRIBUTION_RECUE": {"OBSERVEE", "RESULTAT_INCONNU"},
     "RESULTAT_INCONNU": {"OBSERVEE"},               # une observation tardive reste possible, et datée comme telle
+    # BLOQUÉ, pas terminé : un fait nouveau sur une offre peut rouvrir une ADAPTATION — jamais un lancement direct. Le
+    # porteur choisit, les personnes concernées reconfirment. À l'échéance, l'essai expire.
+    "IMPOSSIBLE": {"A_ADAPTER", "ANNULE", "EXPIRE"},
 }
-FINAUX = {"ANNULE", "EXPIRE", "IMPOSSIBLE", "OBSERVEE"}
+FINAUX = {"ANNULE", "EXPIRE", "OBSERVEE"}
 MAX_GESTES = 4                                         # un essai reste petit : au plus 4 gestes, donc 4 personnes sollicitées
 AVANT_LANCEMENT = {"BROUILLON", "PROPOSE", "AUTORISE", "A_ADAPTER"}
 # une part À REDEMANDER (réponse attendue, portée changée) n'est pas une part PERDUE (refus, retrait, offre qui ne
@@ -66,6 +69,52 @@ DELAI_OBSERVATION_JOURS = 14                          # sans observation 14 j ap
 _journal = logging.getLogger("intelligence.essai")
 PARTAGE = ("Si vous acceptez : votre nom et votre organisation sont communiqués au porteur et aux autres participants "
            "qui ont accepté ; l'observation reste entre participants, sauf droit de réutilisation donné par CHACUN.")
+
+
+# ---------------------------------------------------------------------- le temps (créneaux au quart d'heure)
+HEURE = r"^([01]\d|2[0-3]):[0-5]\d$"
+PAS_MIN = 15                                           # recherche de créneaux : au quart d'heure
+
+
+def minutes(h: str) -> int:
+    return int(h[:2]) * 60 + int(h[3:])
+
+
+def heure(m: int) -> str:
+    return f"{m // 60:02d}:{m % 60:02d}"
+
+
+class Plage(BaseModel):
+    """Une disponibilité DÉCLARÉE : ce jour, de `debut` à `fin` (heure locale du Club)."""
+    jour: date
+    debut: str = Field(pattern=HEURE)
+    fin: str = Field(pattern=HEURE)
+
+    @model_validator(mode="after")
+    def _ordre(self) -> "Plage":
+        if minutes(self.fin) <= minutes(self.debut):
+            raise ValueError("une plage se termine après avoir commencé")
+        return self
+
+    def contient(self, c: "Creneau") -> bool:
+        return self.jour == c.jour and minutes(self.debut) <= minutes(c.debut) and minutes(c.debut) + c.duree_min <= minutes(self.fin)
+
+    def texte(self) -> str:
+        return f"{self.jour.strftime('%d.%m')} {self.debut}–{self.fin}"
+
+
+class Creneau(BaseModel):
+    """LE moment où l'action collective a lieu. Il fait partie de ce que chacun accepte : le déplacer redemande l'accord."""
+    jour: date
+    debut: str = Field(pattern=HEURE)
+    duree_min: int = Field(ge=5, le=240)
+
+    @property
+    def fin(self) -> str:
+        return heure(minutes(self.debut) + self.duree_min)
+
+    def texte(self) -> str:
+        return f"{self.jour.strftime('%d.%m')} {self.debut}–{self.fin}"
 
 
 # ---------------------------------------------------------------------- objets (validés à la frontière)
@@ -83,6 +132,9 @@ class Etape(BaseModel):
     # déclare cette capacité peut le porter ou le remplacer (on ne remplace pas un conseil export par une fiduciaire).
     # None : un geste libre (« quelques minutes de regard neuf ») — toute offre de même nature convient.
     concept: Optional[str] = Field(default=None, max_length=64)
+    # un résultat CONCRET que la personne transmet (ex. « Fiche produit en allemand ») ; reçu seulement quand le
+    # destinataire (le porteur) en confirme la réception — jamais parce qu'il a été envoyé
+    livrable: Optional[str] = Field(default=None, max_length=120)
 
 
 class Protocole(BaseModel):
@@ -94,6 +146,20 @@ class Protocole(BaseModel):
     etapes: list[Etape] = Field(default_factory=list, max_length=MAX_GESTES)
     # d'où vient cet essai (opportunité détectée : identifiant, type, capacités) — sert la MÉMOIRE, jamais une décision
     origine: Optional[dict] = None
+    # QUAND : la fenêtre acceptable pour le porteur, le créneau retenu (engageant), et la durée en dessous de laquelle
+    # le résultat annoncé ne tient plus (une variante plus courte n'est jamais proposée sous ce seuil)
+    fenetre: Optional[Plage] = None
+    creneau: Optional[Creneau] = None
+    duree_min_acceptable: Optional[int] = Field(default=None, ge=5, le=240)
+
+    @model_validator(mode="after")
+    def _coherence(self) -> "Protocole":
+        if self.creneau is not None:
+            if self.creneau.jour > self.echeance:
+                raise ValueError("le créneau tombe après l'échéance")
+            if any(e.duree_min > self.creneau.duree_min for e in self.etapes):
+                raise ValueError("un geste dure plus longtemps que le créneau")
+        return self
 
 
 class OffreVolontaire(BaseModel):
@@ -110,6 +176,7 @@ class OffreVolontaire(BaseModel):
     pour_essai: Optional[str] = None                                  # offre personnelle déclarée EN acceptant un essai
     pour_etape: Optional[str] = None
     concept: Optional[str] = Field(default=None, max_length=64)       # capacité déclarée que l'offre met à disposition
+    plages: list[Plage] = Field(default_factory=list, max_length=8)   # horaires DÉCLARÉS (vide : aucun horaire connu)
 
 
 def _mots(t: str) -> set[str]:
@@ -127,7 +194,8 @@ def portee(p: Protocole, porteur: str, membre: str) -> dict:
     if membre == porteur:
         return {"porteur": True, **p.model_dump(mode="json", exclude={"pourquoi"})}
     return {"question": p.question, "objet": p.objet, "critere": p.critere, "echeance": p.echeance.isoformat(), "partage": PARTAGE,
-            "gestes": [e.model_dump(mode="json", include={"nature", "geste", "duree_min", "offre_id", "invitation", "concept"})
+            "creneau": p.creneau.model_dump(mode="json") if p.creneau else None,
+            "gestes": [e.model_dump(mode="json", include={"nature", "geste", "duree_min", "offre_id", "invitation", "concept", "livrable"})
                        for e in p.etapes if e.contributeur == membre]}
 
 
@@ -153,14 +221,18 @@ class Banc:
     # ------------------------------------------------------------------ offres volontaires
     def publier_offre(self, auteur: str, nature: str, quoi: str, capacite: int, du: date, au: date,
                       duree_max_min: Optional[int] = None, conditions: str = "", pour: Optional[tuple[str, str]] = None,
-                      concept: Optional[str] = None) -> str:
+                      concept: Optional[str] = None, plages: Optional[list[Plage]] = None) -> str:
         if au < du:
             raise Invalide("la période de l'offre se termine avant de commencer")
         oid = "of-" + _empreinte([auteur, quoi, len(self.m.evenements())])[:8]
         o = OffreVolontaire(id=oid, auteur=auteur, nature=nature, quoi=quoi, capacite=capacite, du=du, au=au,  # type: ignore[arg-type]
                             duree_max_min=duree_max_min, conditions=conditions,
-                            pour_essai=pour[0] if pour else None, pour_etape=pour[1] if pour else None, concept=concept)
-        self._ecrire("OFFRE", [auteur], offre=o.model_dump(mode="json"))
+                            pour_essai=pour[0] if pour else None, pour_etape=pour[1] if pour else None, concept=concept,
+                            plages=plages or [])
+        with self.m.transaction():
+            self._ecrire("OFFRE", [auteur], offre=o.model_dump(mode="json"))
+            if not pour:                                      # une offre publique nouvelle peut débloquer un essai bloqué
+                self._revoir_essais_de_l_offre(oid, f"{self._nom_offre(o)} : nouvelle offre publiée")
         return oid
 
     def offre(self, oid: str) -> OffreVolontaire:
@@ -228,12 +300,14 @@ class Banc:
                 if o is None or o.id != oid or e.contributeur is None:
                     continue
                 recue = any(x.donnees["etape"] == e.id for x in self._evs(eid, "CONTRIBUTION"))
-                if recue or (etat not in FINAUX and self._accord_donne(eid, e.contributeur, p, porteur)):
+                if recue or (etat not in FINAUX and etat != "IMPOSSIBLE" and self._accord_donne(eid, e.contributeur, p, porteur)):
                     n += 1
         return n
 
-    def offre_couvre(self, o: OffreVolontaire, e: Etape, echeance: date, sauf: Optional[str] = None) -> Optional[str]:
-        """Pourquoi cette offre NE couvre PAS ce geste (None : elle le couvre). Aucune disponibilité n'est supposée."""
+    def offre_couvre(self, o: OffreVolontaire, e: Etape, echeance: date, sauf: Optional[str] = None,
+                     creneau: Optional[Creneau] = None) -> Optional[str]:
+        """Pourquoi cette offre NE couvre PAS ce geste (None : elle le couvre). Aucune disponibilité n'est supposée : avec
+        un créneau, l'offre doit DÉCLARER une plage horaire qui le contient."""
         etat = self.etat_offre(o.id)
         if etat != "active":
             return {"retiree": "offre retirée", "expiree": "offre expirée", "a_venir": "offre pas encore ouverte"}[etat]
@@ -245,6 +319,11 @@ class Banc:
             return f"demande {e.duree_min} min, l'offre en accepte {o.duree_max_min}"
         if echeance > o.au:
             return f"l'essai se termine le {echeance.isoformat()}, l'offre le {o.au.isoformat()}"
+        if creneau is not None:
+            if not o.plages:
+                return "aucun horaire déclaré"
+            if not any(pl.contient(creneau) for pl in o.plages):
+                return f"pas disponible {creneau.texte()} (déclaré : {', '.join(pl.texte() for pl in o.plages)})"
         if self.reservations(o.id, sauf=sauf) >= o.capacite:
             return "capacité de l'offre atteinte"
         return None
@@ -337,7 +416,7 @@ class Banc:
                 res[e.id] = "sa part a changé depuis son accord"
             else:
                 o = self.offre_de(eid, e)
-                raison = self.offre_couvre(o, e, p.echeance, sauf=eid) if o else "aucune disponibilité déclarée"
+                raison = self.offre_couvre(o, e, p.echeance, sauf=eid, creneau=p.creneau) if o else "aucune disponibilité déclarée"
                 vues = a.donnees.get("offres")               # absent : accord écrit avant ce contrôle (journal ancien)
                 if raison:
                     res[e.id] = f"son offre ne couvre plus ce geste : {raison}"
@@ -390,6 +469,13 @@ class Banc:
             return
         cov = self.couverture(eid)
         perdus = {k: v for k, v in cov.items() if v and v not in A_REDEMANDER}
+        if etat == "IMPOSSIBLE":                              # bloqué : seulement ROUVRIR une adaptation, que le porteur choisira
+            alternatives = self.alternatives(eid)
+            if alternatives:
+                self._ecrire("ADAPTATION", [], Statut.PROPOSE, essai=eid, version=self.version(eid), cause=cause, perdus=perdus,
+                             alternatives=alternatives)
+                self._transition(eid, "A_ADAPTER", "", f"{cause} : une adaptation redevient possible (à choisir, puis à reconfirmer)")
+            return
         if not perdus:
             if all(v is None for v in cov.values()):
                 if etat in ("PROPOSE", "A_ADAPTER"):
@@ -408,10 +494,11 @@ class Banc:
             self._transition(eid, "A_ADAPTER", "", cause)
 
     def _revoir_essais_de_l_offre(self, oid: str, cause: str) -> list[str]:
+        """Les essais qui reposent sur cette offre — et les essais BLOQUÉS, qu'une offre changée peut débloquer."""
         touches = []
         for eid in self.essais():
-            if self.etat(eid) in FINAUX or not any((o := self.offre_de(eid, e)) is not None and o.id == oid
-                                                   for e in self.protocole(eid).etapes):
+            if self.etat(eid) in FINAUX or (self.etat(eid) != "IMPOSSIBLE" and not any(
+                    (o := self.offre_de(eid, e)) is not None and o.id == oid for e in self.protocole(eid).etapes)):
                 continue
             avant = self.etat(eid)
             self._reevaluer(eid, cause)
@@ -420,16 +507,88 @@ class Banc:
         return touches
 
     # ------------------------------------------------------------------ alternatives (déterministes, jamais inventées)
-    def candidats(self, eid: str, e: Etape, echeance: date) -> list[OffreVolontaire]:
+    def candidats(self, eid: str, e: Etape, echeance: date, creneau: Optional[Creneau] = None,
+                  autres: Optional[set[str]] = None) -> list[OffreVolontaire]:
         """Offres ADMISSIBLES pour ce geste : publiées, actives, couvrantes, capacité restante ; ni le porteur, ni sa
         propre organisation, ni quelqu'un qui a déjà décliné cet essai, ni quelqu'un déjà engagé sur un autre geste."""
         porteur = self.porteur(eid)
         retraits = {x.acteurs[0] for x in self._evs(eid, "RETRAIT")}
-        exclus = self.refus(eid) | retraits | {porteur} | {x.contributeur for x in self.protocole(eid).etapes if x.contributeur and x.id != e.id}
+        deja = autres if autres is not None else {x.contributeur for x in self.protocole(eid).etapes if x.contributeur and x.id != e.id}
+        exclus = self.refus(eid) | retraits | {porteur} | {x for x in deja if x}
         res = [o for o in self.offres(publiques=True) if o.auteur not in exclus and self._org(o.auteur) != self._org(porteur)
-               and self._eligibilite(porteur, o.auteur) is None and self.offre_couvre(o, e, echeance, sauf=eid) is None]
+               and self._eligibilite(porteur, o.auteur) is None and self.offre_couvre(o, e, echeance, sauf=eid, creneau=creneau) is None]
         mots = _mots(e.geste)                                   # l'offre la plus proche du geste, puis la plus durable
         return sorted(res, key=lambda o: (-len(mots & _mots(o.quoi)), -o.au.toordinal(), o.id))
+
+    # ------------------------------------------------------------------ QUAND : recherche BORNÉE de créneaux
+    def _composer(self, eid: str, p: Protocole, c: Creneau, garder: dict[str, Optional[OffreVolontaire]]) -> Optional[dict]:
+        """Une équipe pour ce créneau : chaque geste garde son offre actuelle si elle le couvre, sinon la première offre
+        admissible d'une AUTRE personne. None si un geste reste sans offre (rien n'est inventé)."""
+        gardees = {k: o for k, o in garder.items()
+                   if o is not None and self.offre_couvre(o, next(x for x in p.etapes if x.id == k), p.echeance, sauf=eid, creneau=c) is None}
+        choix: dict[str, Optional[str]] = {}
+        auteurs: set[str] = set()
+        remplaces = []
+        for e in p.etapes:
+            if e.invitation and e.contributeur and garder.get(e.id) is None:
+                choix[e.id] = None                            # sur invitation, pas encore déclarée : à demander, jamais supposée
+                continue
+            o = gardees.get(e.id)
+            if o is None or o.auteur in auteurs:
+                autres = auteurs | {x.auteur for k, x in gardees.items() if k != e.id}
+                cands = self.candidats(eid, e, p.echeance, c, autres=autres)
+                if not cands:
+                    return None
+                o = cands[0]
+                if e.contributeur:
+                    remplaces.append(e.id)
+            choix[e.id] = o.id
+            auteurs.add(o.auteur)
+        return {"creneau": c, "choix": choix, "remplaces": remplaces}
+
+    def solutions(self, eid: str, p: Optional[Protocole] = None, maximum: int = 3) -> list[dict]:
+        """Créneaux où TOUS les gestes sont couverts, dans la fenêtre du porteur : recherche exhaustive au quart d'heure
+        (bornée : fenêtre × durées × gestes × offres). Une variante plus courte n'est proposée que si le porteur a fixé
+        une durée minimale acceptable — jamais en dessous. Ordre : le moins de personnes changées, la durée entière,
+        le plus proche du créneau actuel."""
+        p = p or self.protocole(eid)
+        fen = p.fenetre
+        if fen is None or not p.etapes:
+            return []
+        duree = p.creneau.duree_min if p.creneau else max(e.duree_min for e in p.etapes)
+        plancher = max([p.duree_min_acceptable or duree, *(e.duree_min for e in p.etapes)])
+        durees = list(range(duree, plancher - 1, -PAS_MIN)) or [duree]
+        garder = {e.id: self.offre_de(eid, e) if e.contributeur else None for e in p.etapes}
+        res = []
+        for d in durees:
+            for m in range(minutes(fen.debut), minutes(fen.fin) - d + 1, PAS_MIN):
+                c = Creneau(jour=fen.jour, debut=heure(m), duree_min=d)
+                if p.creneau and c == p.creneau:
+                    continue                                  # le créneau actuel n'est pas une adaptation
+                sol = self._composer(eid, p, c, garder)
+                if sol:
+                    res.append(sol | {"plus_court": d < duree})
+        ref = minutes(p.creneau.debut) if p.creneau else minutes(fen.debut)
+        res.sort(key=lambda x: (len(x["remplaces"]), x["plus_court"], abs(minutes(x["creneau"].debut) - ref), x["creneau"].debut))
+        return res[:maximum]
+
+    def assembler(self, porteur: str, eid: str) -> dict:
+        """Ce qui rend la demande RÉALISABLE, sans rien écrire : pour chaque exigence, les offres qui existent (et leurs
+        horaires déclarés) ; le premier créneau où elles se recouvrent toutes ; sinon, ce qui manque. Aucune offre
+        isolée n'est présentée comme suffisante : la proposition n'existe que si chaque geste est couvert."""
+        self._exiger_porteur(eid, porteur)
+        p = self.protocole(eid)
+        exigences: list[dict] = []
+        for e in p.etapes:
+            offres = self.candidats(eid, e, p.echeance, None, autres=set())
+            if p.fenetre:
+                offres = [o for o in offres if any(pl.jour == p.fenetre.jour for pl in o.plages)]
+            exigences.append({"etape": e.id, "offres": [o.id for o in offres]})
+        sol = self.solutions(eid, p, maximum=1)
+        manque: list[str] = [str(x["etape"]) for x in exigences if not x["offres"]]
+        return {"exigences": exigences, "solution": sol[0] if sol else None, "manque": manque,
+                "blocage": None if sol else ("personne n'offre : " + ", ".join(manque) if manque else
+                                             "les disponibilités déclarées ne se recouvrent sur aucun créneau de la fenêtre")}
 
     def alternatives(self, eid: str) -> list[dict]:
         p = self.protocole(eid)
@@ -440,12 +599,12 @@ class Banc:
             if raison is None or raison in A_REDEMANDER:
                 continue
             o_ = self.offre_de(eid, e) if e.contributeur else None
-            if o_ is not None and raison.startswith(CONDITIONS_CHANGEES) and self.offre_couvre(o_, e, p.echeance, sauf=eid) is None:
+            if o_ is not None and raison.startswith(CONDITIONS_CHANGEES) and self.offre_couvre(o_, e, p.echeance, sauf=eid, creneau=p.creneau) is None:
                 res.append({"id": f"conditions:{e.id}:{o_.id}:{o_.version}", "type": "accepter_conditions", "etape": e.id,
                             "membre": e.contributeur, "offre": o_.id,
                             "texte": f"Garder la même personne AUX NOUVELLES CONDITIONS : « {o_.conditions or o_.quoi} ». Vérifiez "
                                      "qu'elles permettent encore ce geste ; elle devra reconfirmer.", "a_decider": ["porteur", e.contributeur]})
-            for o in self.candidats(eid, e, p.echeance)[:2]:
+            for o in self.candidats(eid, e, p.echeance, p.creneau)[:2]:
                 res.append({"id": f"remplacer:{e.id}:{o.id}", "type": "remplacer", "etape": e.id, "offre": o.id, "membre": o.auteur,
                             "texte": f"Garder l'essai tel quel ; demander ce geste à une autre personne qui l'offre : « {o.quoi} »"
                                      + (f" ({o.duree_max_min} min au plus)" if o.duree_max_min else ""),
@@ -459,6 +618,21 @@ class Banc:
                                 "texte": f"Garder la même personne ; raccourcir ce geste de {e.duree_min} à {o.duree_max_min} min. "
                                          "L'objectif reste le vôtre : vérifiez que le critère reste mesurable.",
                                 "a_decider": ["porteur", e.contributeur]})
+        if not any(r is not None and r not in A_REDEMANDER for r in raisons.values()) and self.etat(eid) in ("A_ADAPTER", "IMPOSSIBLE"):
+            res.append({"id": f"reprendre:v{self.version(eid)}", "type": "reprendre", "texte": "Plus rien ne bloque : reprendre l'essai tel "
+                        "quel. Chaque accord encore valable est conservé ; les autres sont redemandés.", "a_decider": ["porteur"]})
+        if p.creneau and any(r is not None and r not in A_REDEMANDER for r in raisons.values()):
+            for sol in self.solutions(eid, p):                # déplacer le moment commun : TOUT le monde reconfirme
+                c = sol["creneau"]
+                qui = [x for x in sol["remplaces"]]
+                res.append({"id": f"decaler:{c.jour.isoformat()}:{c.debut}:{c.duree_min}:" + ",".join(f"{k}={v}" for k, v in sol["choix"].items()),
+                            "type": "decaler", "creneau": c.model_dump(mode="json"), "choix": sol["choix"], "remplaces": qui,
+                            "plus_court": sol["plus_court"],
+                            "texte": (f"Déplacer à {c.texte()}" + (f" — variante plus courte ({c.duree_min} min, au-dessus de votre minimum)"
+                                                                    if sol["plus_court"] else "")
+                                      + (" — même équipe" if not qui else f" — {len(qui)} geste(s) confié(s) à une autre personne")
+                                      + ". Le moment change : chaque participant reconfirme."),
+                            "a_decider": ["porteur", "chaque participant"]})
         return res
 
     def _manques(self, eid: str) -> list[str]:
@@ -486,7 +660,8 @@ class Banc:
         with self.m.transaction():
             return self._nouvelle_version(eid, p, porteur, "brouillon corrigé par le porteur")
 
-    def proposer(self, porteur: str, eid: str, attendue: int, choix: Optional[dict[str, str]] = None) -> int:
+    def proposer(self, porteur: str, eid: str, attendue: int, choix: Optional[dict[str, str]] = None,
+                 creneau: Optional[Creneau] = None) -> int:
         """Le porteur publie SA proposition. Pour chaque geste, il CHOISIT une offre parmi les offres admissibles
         (`choix` : geste → offre) ; à défaut, la première admissible est proposée. Une offre non admissible est refusée,
         jamais substituée. Sa publication vaut son accord sur CETTE version."""
@@ -495,6 +670,10 @@ class Banc:
         if self.etat(eid) != "BROUILLON":
             raise Conflit("déjà proposé")
         p = self.protocole(eid)
+        if creneau is not None:
+            if p.fenetre and not p.fenetre.contient(creneau):
+                raise Invalide("le créneau choisi sort de la fenêtre que vous avez fixée")
+            p = Protocole(**(p.model_dump() | {"creneau": creneau.model_dump()}))
         if len(p.critere.strip()) < 3 or not p.etapes:
             raise Invalide("un critère d'observation et au moins un geste sont nécessaires")
         if p.echeance < self._jour():
@@ -508,7 +687,7 @@ class Banc:
                 if raison:
                     raise Conflit(f"la personne proposée pour « {e.geste} » ne peut pas être sollicitée : {raison}")
             if not e.contributeur:
-                c = [o for o in self.candidats(eid, e, p.echeance) if o.auteur not in {x.contributeur for x in etapes}]
+                c = [o for o in self.candidats(eid, e, p.echeance, p.creneau) if o.auteur not in {x.contributeur for x in etapes}]
                 if not c:
                     manquants.append(f"{NATURES[e.nature]} pour « {e.geste} » ({e.duree_min} min)")
                     continue
@@ -553,7 +732,7 @@ class Banc:
         gens = {e.contributeur for e in apres.etapes if e.contributeur}
         a_redemander = sorted(m for m in gens if _empreinte(portee(avant, porteur, m)) != _empreinte(portee(apres, porteur, m)))
         return {"a_redemander": a_redemander, "preserves": sorted(gens - set(a_redemander)),
-                "champs": sorted(k for k in ("question", "objet", "pourquoi", "critere", "echeance")
+                "champs": sorted(k for k in ("question", "objet", "pourquoi", "critere", "echeance", "creneau")
                                  if getattr(avant, k) != getattr(apres, k))}
 
     def choisir_alternative(self, porteur: str, eid: str, attendue: int, alternative: str) -> dict:
@@ -568,13 +747,18 @@ class Banc:
         avant = self.protocole(eid)
         etapes = []
         for e in avant.etapes:
-            if e.id == alt["etape"]:
+            if alt["type"] != "reprendre" and e.id == alt.get("etape"):
                 e = (e.model_copy(update={"contributeur": alt["membre"], "offre_id": alt["offre"], "invitation": False})
                      if alt["type"] == "remplacer"
                      else e.model_copy(update={"duree_min": alt["duree"]}) if alt["type"] == "raccourcir"
                      else e)                                  # accepter_conditions : même geste, nouvelle version à reconfirmer
+            if alt["type"] == "decaler" and alt["choix"].get(e.id) and (self.offre_de(eid, e) is None or self.offre_de(eid, e).id != alt["choix"][e.id]):  # type: ignore[union-attr]
+                o = self.offre(alt["choix"][e.id])
+                e = e.model_copy(update={"contributeur": o.auteur, "offre_id": o.id, "invitation": False})
             etapes.append(e)
         apres = avant.model_copy(update={"etapes": etapes})
+        if alt["type"] == "decaler":
+            apres = Protocole(**(apres.model_dump() | {"creneau": alt["creneau"]}))   # revalidé (durées, échéance)
         with self.m.transaction():
             self._nouvelle_version(eid, apres, porteur, f"adaptation choisie par le porteur : {alt['texte']}")
             self._accord(eid, porteur, True)
@@ -599,18 +783,50 @@ class Banc:
         if manque:                                            # la réévaluation est écrite ; le lancement, lui, est refusé
             raise Conflit("un accord ne couvre plus l'essai : " + " ; ".join(v for v in manque.values() if v))
 
+    def livraisons(self, eid: str, etape: str) -> list[Evt]:
+        return [x for x in self._evs(eid, "LIVRAISON") if x.donnees["etape"] == etape]
+
+    def livrer(self, membre: str, eid: str, etape: str, contenu: str) -> int:
+        """La personne TRANSMET le résultat concret de son geste (ex. la fiche en allemand). Transmis n'est pas reçu : le
+        destinataire confirme. Tant que ce n'est pas confirmé, une version corrigée peut être transmise."""
+        if membre not in self.personnes(eid):
+            raise Introuvable("essai inconnu")
+        e = next((x for x in self.protocole(eid).etapes if x.id == etape), None)
+        if e is None or e.contributeur != membre:
+            raise Interdit("ce geste ne vous est pas confié")
+        if not e.livrable:
+            raise Conflit("ce geste n'a rien à transmettre")
+        if self.etat(eid) != "EN_COURS":
+            raise Conflit("l'action n'est pas engagée : rien ne se transmet avant que tous les accords soient réunis et l'essai lancé")
+        if any(x.donnees["etape"] == etape for x in self._evs(eid, "CONTRIBUTION")):
+            raise Conflit("réception déjà confirmée")
+        if not 3 <= len(contenu.strip()) <= 3000:
+            raise Invalide("contenu vide ou trop long")
+        rev = len(self.livraisons(eid, etape)) + 1
+        self._ecrire("LIVRAISON", [membre], essai=eid, etape=etape, revision=rev, contenu=contenu.strip(), empreinte=_empreinte(contenu.strip()))
+        return rev
+
     def constater(self, porteur: str, eid: str, etape: str) -> None:
-        """Le porteur CONSTATE qu'une contribution a été reçue. Ce n'est pas un résultat, encore moins un succès."""
+        """Le porteur CONSTATE qu'une contribution a été reçue — pour un livrable, qu'il a REÇU la dernière version
+        transmise ; pour une présence au créneau, pas avant le jour du créneau. Ce n'est pas un résultat, encore moins
+        un succès."""
         self._exiger_porteur(eid, porteur)
         if self.etat(eid) != "EN_COURS":
             raise Conflit("l'essai n'est pas en cours")
-        e = next((x for x in self.protocole(eid).etapes if x.id == etape), None)
+        p = self.protocole(eid)
+        e = next((x for x in p.etapes if x.id == etape), None)
         if e is None:
             raise Introuvable("geste inconnu")
         if any(x.donnees["etape"] == etape for x in self._evs(eid, "CONTRIBUTION")):
             raise Conflit("contribution déjà constatée")
+        livres = self.livraisons(eid, etape)
+        if e.livrable and not livres:
+            raise Conflit("rien n'a encore été transmis pour ce geste")
+        if not e.livrable and p.creneau and self._jour() < p.creneau.jour:
+            raise Conflit(f"le créneau ({p.creneau.texte()}) n'a pas encore eu lieu : rien ne peut être constaté")
         with self.m.transaction():
-            self._ecrire("CONTRIBUTION", [porteur], essai=eid, etape=etape, contributeur=e.contributeur)
+            self._ecrire("CONTRIBUTION", [porteur], essai=eid, etape=etape, contributeur=e.contributeur,
+                         livraison=livres[-1].donnees["revision"] if livres else None)
             recues = {x.donnees["etape"] for x in self._evs(eid, "CONTRIBUTION")}
             if recues >= {x.id for x in self.protocole(eid).etapes}:
                 self._transition(eid, "CONTRIBUTION_RECUE", porteur, "toutes les contributions sont reçues (aucun résultat en découle)")
@@ -672,9 +888,10 @@ class Banc:
                     if o is None and e.invitation:            # accepter une invitation = déclarer SA disponibilité
                         oid = self.publier_offre(membre, e.nature, e.geste, 1, self._jour(), p.echeance, duree_max_min=e.duree_min,
                                                  conditions=f"déclarée en acceptant l'essai « {p.question[:80]} »", pour=(eid, e.id),
-                                                 concept=e.concept)
+                                                 concept=e.concept,
+                                                 plages=[Plage(jour=p.creneau.jour, debut=p.creneau.debut, fin=p.creneau.fin)] if p.creneau else None)
                         o = self.offre(oid)
-                    raison = self.offre_couvre(o, e, p.echeance, sauf=eid) if o else "aucune offre"
+                    raison = self.offre_couvre(o, e, p.echeance, sauf=eid, creneau=p.creneau) if o else "aucune offre"
                     if raison:
                         raise Conflit(f"votre disponibilité déclarée ne couvre pas ce geste : {raison} — mettez-la à jour d'abord")
             self._accord(eid, membre, accepte)
@@ -735,7 +952,7 @@ class Banc:
         j = self._jour()
         for eid in self.essais():
             etat, p = self.etat(eid), self.protocole(eid)
-            if etat in ("PROPOSE", "AUTORISE", "A_ADAPTER") and p.echeance < j:
+            if etat in ("PROPOSE", "AUTORISE", "A_ADAPTER", "IMPOSSIBLE") and p.echeance < j:
                 self._transition(eid, "EXPIRE", "", "échéance passée sans lancement : aucun accord n'est supposé")
                 touches.append(eid)
             elif etat in ("EN_COURS", "CONTRIBUTION_RECUE") and p.echeance + timedelta(days=DELAI_OBSERVATION_JOURS) < j:

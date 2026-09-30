@@ -22,7 +22,7 @@ from intelligence.passerelle import CRITERE_SUGGERE, brouillon
 from plateforme.memoire import Memoire
 
 TAX = charger_taxonomie()
-ARRET = {"ANNULE", "EXPIRE", "IMPOSSIBLE"}
+ARRET = {"ANNULE", "EXPIRE"}                          # IMPOSSIBLE est un blocage, pas un arrêt
 PORTEURS = ("s01", "d01", "s10", "s02")
 OFFRES = [  # (auteur, nature, quoi, durée max, capacité, jours de validité, capacité déclarée) — fictives
     ("s15", "competence", "Conseil pour un lancement de produit en Allemagne", 60, 2, 30, "export_allemagne"),

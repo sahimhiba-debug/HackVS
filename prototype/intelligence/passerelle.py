@@ -58,4 +58,4 @@ def brouillon(o: Opportunite, r: Reseau, tax: Taxonomie, jour: date, duree_min: 
 def essai_existant(essais: list[tuple[str, Optional[dict], str]], oid: str) -> Optional[str]:
     """Un essai encore vivant issu de la même opportunité (évite de solliciter deux fois pour la même chose)."""
     return next((eid for eid, origine, etat in essais if (origine or {}).get("opportunite") == oid
-                 and etat not in ("ANNULE", "EXPIRE", "IMPOSSIBLE", "OBSERVEE")), None)
+                 and etat not in ("ANNULE", "EXPIRE", "OBSERVEE")), None)
