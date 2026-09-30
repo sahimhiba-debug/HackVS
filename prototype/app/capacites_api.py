@@ -15,6 +15,14 @@ class Reponse(BaseModel):
     quoi: Optional[str] = Field(default=None, min_length=3, max_length=200)
 
 
+class Proposition(BaseModel):
+    texte: str = Field(min_length=3, max_length=400)
+
+
+class Interrupteur(BaseModel):
+    actif: bool
+
+
 def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: Callable) -> None:
     @r.get("/console/capacites", dependencies=[Depends(console)])
     def registre() -> dict:
@@ -28,6 +36,18 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     def acquitter(finalite: str) -> dict:
         return au_monde(lambda c: c.vues_capacites.instance(c.acquitter_recherche(finalite[:40])))
 
+    @r.post("/console/capacites/{finalite}/recit", dependencies=[Depends(console)])
+    def recit(finalite: str) -> dict:
+        return au_monde(lambda c: c.vues_capacites.recit(*c.raconter_capacite(finalite[:40])))
+
+    @r.get("/console/ia", dependencies=[Depends(console)])
+    def etat_ia() -> dict:
+        return au_monde(lambda c: c.ia.etat())
+
+    @r.post("/console/ia", dependencies=[Depends(console)])
+    def basculer_ia(x: Interrupteur) -> dict:
+        return au_monde(lambda c: c.basculer_ia(x.actif))
+
     @r.get("/console/pulse", dependencies=[Depends(console)])
     def pulse(depuis: int = 0, jusqu_a: Optional[int] = None) -> dict:
         return au_monde(lambda c: c.pulse(depuis, jusqu_a))
@@ -39,6 +59,10 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     @r.post("/moi/asks/{ask_id}/reponse")
     def repondre(ask_id: str, x: Reponse, pid: str = Depends(membre)) -> dict:
         return au_monde(lambda c: c.vues_capacites.apres_reponse(c.repondre_ask(pid, ask_id[:120], x.oui, x.attributs, x.quoi)))
+
+    @r.post("/moi/asks/{ask_id}/proposition")
+    def proposer(ask_id: str, x: Proposition, pid: str = Depends(membre)) -> dict:
+        return au_monde(lambda c: c.vues_capacites.proposition(*c.proposer_reponse(pid, ask_id[:120], x.texte)))
 
     @r.get("/moi/consentements")
     def recus(pid: str = Depends(membre)) -> list[dict]:

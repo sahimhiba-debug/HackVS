@@ -15,6 +15,8 @@
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import logging
 import os
@@ -65,6 +67,12 @@ class AppelIA(BaseModel):
     politique: Optional[str] = None  # raison d'un traitement LOCAL imposé (ex. note privée)
     controle: Optional[dict] = None
     issue: Optional[Issue] = None    # déduite si absente : repli ou aucun modèle → FALLBACK_FORM, sinon MODEL_CALLED
+    # tâches REJOUABLES seulement (sorties sans donnée personnelle, validées) : de quoi rejouer sans rappeler le modèle
+    cle: Optional[str] = None        # HMAC (secret du processus) de la version du prompt et du message protégé
+    sortie: Optional[dict] = None    # la sortie ACCEPTÉE (jamais une sortie brute ni rejetée)
+    rejoue: Optional[str] = None     # CACHE_REPLAY : la trace de l'appel rejoué
+    tentatives: int = 0              # appels au modèle pour cette sortie (1 nouvel essai au plus après un rejet)
+    rejets: list[str] = []           # raisons des sorties rejetées (jamais leur contenu)
 
     @model_validator(mode="after")
     def _issue(self) -> "AppelIA":
@@ -258,6 +266,11 @@ class Intelligence:
         # identités réelles (coffre) à retirer de TOUT message avant envoi : défense centrale, quelle que soit la tâche
         # ou l'appelant (défaut trouvé à l'audit : `comprendre_demande` recevait un nom réel non nettoyé)
         self.identites: Callable[[], list[str]] = lambda: []
+        # INTERRUPTEUR visible (console) : IA éteinte → la forme déterministe partout, dite comme telle
+        self.actif = True
+        # REJEU : clé secrète des empreintes, et recherche d'un appel ACCEPTÉ déjà enregistré (branchées par Club Pulse)
+        self.secret_empreinte: bytes = os.urandom(32)
+        self.rejeu: Callable[[str], Optional[dict]] = lambda cle: None
         self._echecs_consecutifs = 0
         self._ferme_jusqu_a = 0.0
 
@@ -272,7 +285,9 @@ class Intelligence:
     def etat(self) -> dict:
         derniers = [a for a in self.appels if a.fournisseur == "apertus"]
         return {"fournisseur": self.f.nom if self.f else "deterministe", "modele": self.f.modele if self.f else None,
-                "configure": self.f is not None, "appels_apertus_reussis": sum(1 for a in derniers if a.statut == "OK" and not a.repli),
+                "configure": self.f is not None, "actif": self.actif,
+                "issues": {k: sum(1 for a in self.appels if a.issue == k) for k in ("MODEL_CALLED", "CACHE_REPLAY", "FALLBACK_FORM")},
+                "appels_apertus_reussis": sum(1 for a in derniers if a.statut == "OK" and not a.repli),
                 "appels_apertus_echoues": sum(1 for a in derniers if a.repli)}
 
     # ------------------------------------------------------------------ mécanique commune
@@ -292,7 +307,7 @@ class Intelligence:
 
     def _executer(self, tache: str, nom_prompt: Optional[str], message: str, schema: Optional[dict],
                   valider_sortie: Callable[[str], tuple[dict, Optional[dict]]], repli: Callable[[], dict],
-                  local_seulement: Optional[str] = None) -> Reponse:
+                  local_seulement: Optional[str] = None, rejouable: bool = False) -> Reponse:
         """entrée → fournisseur → sortie BRUTE (non fiable) → validation (schéma, vocabulaire, extraits, faits, données
         personnelles) → acceptée, ou rejetée au profit du repli déterministe. Chaque issue est tracée."""
         # identifiant d'appel SANS lien avec le contenu : une empreinte du message (ancienne version) permettait, à qui
@@ -300,6 +315,10 @@ class Intelligence:
         trace = f"ia-{len(self.appels) + 1:06d}"
         t0 = time.perf_counter()
         ms = lambda: round((time.perf_counter() - t0) * 1000, 1)  # noqa: E731
+        if not self.actif and not local_seulement:
+            local_seulement = "IA éteinte par l'animation (interrupteur)"
+        if rejouable and not local_seulement:
+            return self._rejouable(tache, nom_prompt, message, schema, valider_sortie, repli, trace, t0)
         if self.f is None or local_seulement:
             sortie = repli()
             a = AppelIA(trace=trace, tache=tache, fournisseur="deterministe", latence_ms=ms(), politique=local_seulement,
@@ -337,6 +356,61 @@ class Intelligence:
             a = AppelIA(trace=trace, tache=tache, fournisseur=self.f.nom, modele=self.f.modele, prompt=version,
                         latence_ms=round((time.perf_counter() - t0) * 1000, 1), statut="REJETE", repli=True,
                         erreur=str(e).splitlines()[0][:200])
+        self._tracer(a)
+        return Reponse(sortie=sortie, appel=a)
+
+    def empreinte(self, version: str, message_protege: str) -> str:
+        return hmac.new(self.secret_empreinte, f"{version}\n{message_protege}".encode(), hashlib.sha256).hexdigest()[:32]
+
+    def _rejouable(self, tache: str, nom_prompt: Optional[str], message: str, schema: Optional[dict],
+                   valider_sortie: Callable[[str], tuple[dict, Optional[dict]]], repli: Callable[[], dict],
+                   trace: str, t0: float) -> Reponse:
+        """Tâches du registre : (1) un appel ACCEPTÉ déjà enregistré pour la même entrée est REJOUÉ, sans rappeler le
+        modèle (même hors ligne) ; (2) sinon le modèle, et UN nouvel essai si sa sortie est rejetée (la raison du rejet
+        lui est dite, jamais la sortie d'un autre) ; (3) sinon la forme déterministe. La sortie acceptée est gardée."""
+        texte_prompt, version = prompt(nom_prompt or tache)
+        protege = self.proteger(message)
+        cle = self.empreinte(version, protege)
+        ms = lambda: round((time.perf_counter() - t0) * 1000, 1)  # noqa: E731
+        ancien = self.rejeu(cle)
+        if ancien is not None:
+            a = AppelIA(trace=trace, tache=tache, fournisseur=ancien["fournisseur"], modele=ancien.get("modele"), prompt=version,
+                        latence_ms=ms(), statut="OK", issue="CACHE_REPLAY", cle=cle, sortie=ancien["sortie"], rejoue=ancien["trace"])
+            self._tracer(a)
+            return Reponse(sortie=dict(ancien["sortie"]), appel=a)
+        rejets: list[str] = []
+        erreur: Optional[str] = None
+        disjoncte = self._horloge() < self._ferme_jusqu_a
+        if self.f is not None and not disjoncte:
+            consigne = protege
+            for _ in range(2):
+                try:
+                    brut = self.f.completer(texte_prompt, consigne, schema)
+                    self._echecs_consecutifs = 0
+                except ErreurFournisseur as e:
+                    self._echecs_consecutifs += 1
+                    if self._echecs_consecutifs >= self.SEUIL_DISJONCTEUR:
+                        self._ferme_jusqu_a = self._horloge() + self.PAUSE_DISJONCTEUR_S
+                    erreur = e.cause[:120]
+                    break
+                try:
+                    if _DONNEES_PERSONNELLES.search(brut):
+                        raise ValueError("la sortie contient une donnée personnelle (courriel, téléphone ou adresse web)")
+                    sortie, controle = valider_sortie(brut)
+                    a = AppelIA(trace=trace, tache=tache, fournisseur=self.f.nom, modele=self.f.modele, prompt=version, latence_ms=ms(),
+                                statut="OK", controle=controle, cle=cle, sortie=sortie, tentatives=len(rejets) + 1, rejets=rejets)
+                    self._tracer(a)
+                    return Reponse(sortie=sortie, appel=a)
+                except (ValueError, ValidationError, KeyError, TypeError, AttributeError) as e:
+                    rejets.append(str(e).splitlines()[0][:160])
+                    consigne = protege + "\n\nTa sortie précédente a été REJETÉE : " + rejets[-1] + ". Corrige-la en respectant le schéma."
+        elif disjoncte:
+            erreur = "disjoncteur ouvert après pannes répétées"
+        sortie = repli()
+        a = AppelIA(trace=trace, tache=tache, fournisseur=self.f.nom if self.f else "deterministe", modele=self.f.modele if self.f else None,
+                    prompt=version, latence_ms=ms(), statut="REJETE" if rejets else ("INDISPONIBLE" if erreur else "OK"), repli=True,
+                    issue="FALLBACK_FORM", erreur=erreur, cle=cle, tentatives=len(rejets) + (1 if erreur and self.f and not disjoncte else 0),
+                    rejets=rejets)
         self._tracer(a)
         return Reponse(sortie=sortie, appel=a)
 

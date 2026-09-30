@@ -7,6 +7,7 @@ from datetime import timedelta
 from typing import TYPE_CHECKING, Optional
 
 from .capacites import Instance
+from .ia import AppelIA
 
 if TYPE_CHECKING:
     from .club_pulse import ClubPulse
@@ -76,6 +77,27 @@ class VuesCapacites:
         relancer = [{"action": "relancer", "libelle": f"Relancer la recherche (budget {_nombre(budget)} nœuds)"}] \
             if (carte["recherche_relancee"] or 0) < budget else []                     # déjà relancée à ce budget : inutile
         return relancer + [{"action": "acquitter", "libelle": "Acquitter l'état incertain"}]
+
+    # ------------------------------------------------------------------ ce qu'a fait le modèle, dit tel quel
+    @staticmethod
+    def ia(a: Optional[AppelIA]) -> Optional[dict]:
+        """Le statut VÉRIDIQUE d'une sortie : jamais « simulé », jamais un « propulsé par » sans appel réel."""
+        if a is None:
+            return None
+        pourquoi = a.politique or ("sortie du modèle rejetée deux fois" if a.rejets else None) or \
+            (f"modèle indisponible : {a.erreur}" if a.erreur else None) or ("aucun modèle configuré" if a.fournisseur == "deterministe" else None)
+        libelle = {"MODEL_CALLED": f"proposé par le modèle « {a.modele} », vérifié par le code",
+                   "CACHE_REPLAY": f"rejoué d'un enregistrement du modèle « {a.modele} », sans le rappeler",
+                   "FALLBACK_FORM": "forme déterministe, sans IA" + (f" — {pourquoi}" if pourquoi else "")}[a.issue or "FALLBACK_FORM"]
+        return {"issue": a.issue, "libelle": libelle, "fournisseur": a.fournisseur, "modele": a.modele, "tentatives": a.tentatives,
+                "rejets": len(a.rejets), "trace": a.trace}
+
+    def proposition(self, sortie: dict, extraction: AppelIA, normalisation: Optional[AppelIA]) -> dict:
+        return sortie | {"ia": self.ia(extraction), "ia_concept": self.ia(normalisation),
+                         "regle": "Une proposition : rien n'est déclaré ni consenti tant que vous ne confirmez pas."}
+
+    def recit(self, sortie: dict, appel: AppelIA) -> dict:
+        return sortie | {"ia": self.ia(appel)}
 
     def asks(self, pid: str) -> list[dict]:
         return [{"id": a, "titre": i.titre, "texte": i.ask.texte, "libelle": i.ask.libelle, "minimums": i.ask.minimums,  # type: ignore[union-attr]

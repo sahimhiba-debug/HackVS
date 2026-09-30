@@ -37,6 +37,7 @@ from .detection import Detecteur
 from .erreurs import Conflit, ErreurMetier, Interdit, Introuvable, Invalide, NonAuthentifie
 from .essai import Banc, Etape, Plage, Protocole
 from .ia import AppelIA, Intelligence, besoin_de
+from .roles_ia import RolesIA
 from .identite import AdhesionsSynthetiques, Coffre, nettoyer
 from .modele import BesoinActif, Opportunite
 from .observateur import Etat, observer
@@ -82,6 +83,9 @@ class ClubPulse:
                                                           notes_privees_autorisees=self.reglages.notes_privees_vers_ia)
         self.ia.journal = self._tracer_ia
         self.ia.identites = self._identites                   # rien du coffre ne part vers un modèle (défense centrale)
+        self.ia.secret_empreinte = self.reglages.secret        # empreintes de rejeu : non confirmables sans le secret
+        self.ia.rejeu = self._rejeu_ia                        # un appel accepté déjà journalisé est rejoué, pas rappelé
+        self.roles_ia = RolesIA(self.ia, tax)                 # EXTRACT, NORMALIZE, NARRATE (registre des capacités)
         self.vues = VuesIntelligence(self)
         # ACTIVATION ENGINE : son propre journal — fichier si HACKVS_ESSAIS_DB (survit au redémarrage), sinon en mémoire.
         # Qui peut être sollicité pour qui : les règles DURES du réseau (langue commune, consentement, disponibilité,
@@ -174,6 +178,10 @@ class ClubPulse:
         # la latence reste dans `ia.appels` (mesure) ; le journal garde un contenu déterministe, donc rejouable à l'octet.
         # Un appel est un fait OBSERVÉ par le système (jamais « simulé ») ; son `issue` dit ce qui a produit la sortie.
         self.banc._ecrire("APPEL_IA", [], Statut.OBSERVE, appel=a.model_dump(exclude={"latence_ms"}))
+
+    def _rejeu_ia(self, cle: str) -> Optional[dict]:
+        return next((e.donnees["appel"] for e in reversed(self.journal.evenements("APPEL_IA"))
+                     if e.donnees["appel"].get("cle") == cle and e.donnees["appel"].get("issue") == "MODEL_CALLED"), None)
 
     def _net(self, texte: str) -> str:
         """FRONTIÈRE DU MOTEUR : un texte libre d'un membre que le moteur LIT (profil, besoin, offre, réponse à une
@@ -308,6 +316,31 @@ class ClubPulse:
 
     def retirer_consentement(self, pid: str, finalite: str) -> Instance:
         return self.capacites.retirer(pid, finalite)
+
+    # ------------------------------------------------------------------ le modèle, en PROPOSITION seulement
+    def proposer_reponse(self, pid: str, ask_id: str, texte: str) -> tuple[dict, AppelIA, Optional[AppelIA]]:
+        """EXTRACT (et NORMALIZE si la pièce est une compétence) sur le texte d'un membre, pour SA demande : une
+        proposition qu'il confirme ou corrige dans le formulaire. Rien n'est déclaré ni consenti ici."""
+        ask = next((i.ask for i in self.projection_capacites() if i.ask and i.ask.id == ask_id), None)
+        if ask is None or ask_id not in {a for _, a in self.asks_pour(pid)}:
+            raise Introuvable("demande inconnue ou plus d'actualité")
+        texte = self._net(texte)
+        ext = self.roles_ia.extraire(texte, ask.minimums)
+        nor = self.roles_ia.normaliser(texte) if ask.concept else None
+        return {"attributs": ext.sortie["attributs"], "incertitudes": ext.sortie["incertitudes"],
+                "concept": nor.sortie["concept"] if nor else None, "concept_attendu": ask.concept}, ext.appel, nor.appel if nor else None
+
+    def raconter_capacite(self, finalite: str) -> tuple[dict, AppelIA]:
+        carte = next((x for x in self.vues_capacites.console()["capacites"] if x["finalite"] == finalite), None)
+        if carte is None:
+            raise Introuvable("capacité inconnue ou sans état à raconter")
+        faits = RolesIA.faits(carte)
+        rep = self.roles_ia.raconter(faits)
+        return {"faits": faits, "phrases": rep.sortie["phrases"]}, rep.appel
+
+    def basculer_ia(self, actif: bool) -> dict:
+        self.ia.actif = actif
+        return self.ia.etat()
 
     def relancer_recherche(self, finalite: str) -> Instance:
         return self.capacites.relancer(finalite, self.reglages.budget_relance)
