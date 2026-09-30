@@ -39,7 +39,7 @@ from app.models import Profil
 from plateforme.memoire import Memoire
 
 from .erreurs import Conflit, Introuvable, Invalide
-from .essai import HEURE, NATURES, Banc, Creneau, Etape, Nature, OffreVolontaire, Plage, Protocole
+from .essai import HEURE, Banc, Creneau, Etape, Nature, OffreVolontaire, Plage, Protocole
 
 DOSSIER_PATRONS = Path(__file__).resolve().parents[1] / "data" / "patrons"
 StatutCapacite = Literal["ONE_AWAY", "PROPOSED", "CONSENTED", "ACTIVE", "DEGRADED", "EXTINCT"]
@@ -343,7 +343,3 @@ class Registre:
             return inst                                        # déjà consenti : idempotent
         self.b.consentir_finalite(membre, p.id, emp, inst.liaisons[emp], p.portee(emp), p.fenetre.jour)  # type: ignore[arg-type]
         return self.instance(p)
-
-
-def libelle_nature(n: str) -> str:
-    return NATURES.get(n, n)

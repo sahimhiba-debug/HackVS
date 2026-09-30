@@ -7,3 +7,4 @@ prototype/var/
 competition/video/_brut/
 .coverage
 htmlcov/
+mutants/

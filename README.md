@@ -1,22 +1,32 @@
-# Club Pulse — une action collective qu'aucun membre ne pouvait faire seul (Hack VS 2026)
+# Club Pulse — le registre vivant de ce que le Club peut faire ensemble (Hack VS 2026)
 
-> **État actuel (2026-09-30).** Une personne décrit avec ses mots ce qu'elle ne peut pas faire seule (ex. présenter
-> son produit à des acheteurs germanophones pendant la Foire). D'autres membres ont publié des offres avec leurs
-> horaires ; le serveur trouve le créneau où elles se recouvrent, chacun accepte SA part sur SON téléphone, et si une
-> condition change (le jury choisit une heure), le système dit ce qui tombe, ce qui tient, ce qui reste possible — ou
-> qu'il est bloqué. Le résultat concret (une fiche en allemand) est transmis puis reçu ; l'écran commun ne montre que
-> des rôles, et jamais un état plus fort que sa preuve.
-> **Données fictives, gestes des absents joués (affiché), besoin non validé auprès des membres.** Apertus : branché
-> mais **jamais appelé** ici (aucun identifiant) ; la démo tourne en « règles simples », affiché comme tel.
->
-> - Lancer : `make setup && make demo` → `/projection` (écran commun), `/app` (téléphones), `/console`, `/demo/regie` · tout vérifier : `make quality-check`
-> - Démonstration : [DEMO_SCRIPT](docs/audit/club-pulse-pivot/DEMO_SCRIPT.md) (storyboard, scripts 60 s / 2 min / 5 min, secours) ·
->   vidéo d'une exécution réelle : `docs/audit/club-pulse-pivot/captures/action/demo_action.webm` · dossier d'audit :
->   [HANDOFF_FOR_CODEX](docs/audit/club-pulse-pivot/HANDOFF_FOR_CODEX.md), [ACCEPTANCE_MATRIX](docs/audit/club-pulse-pivot/ACCEPTANCE_MATRIX.md),
->   [REVUE_JURY](docs/audit/club-pulse-pivot/REVUE_JURY.md)
-> - Architecture : [ARCHITECTURE](docs/ARCHITECTURE.md) · menaces : [THREAT_MODEL](docs/THREAT_MODEL.md) · décisions : [ADR](docs/ADR/README.md)
->
-> La suite de ce fichier décrit le **prototype précédent** (« Le Fil du Club »), toujours servi mais hors du parcours.
+**IA → moteur déterministe → décision humaine.** Un modèle de langage peut seulement *proposer* (comprendre une
+formulation, rédiger un texte) ; un moteur déterministe compose, vérifie et invalide ; une personne décide et consent.
+Aucune capacité, aucun consentement, aucun destinataire n'est jamais choisi par un modèle.
+
+> **Pivot en cours (Phase 1 livrée le 2026-09-30).** Une *capacité* du Club (ex. « Accueillir une délégation
+> d'acheteurs germanophones ») est un assemblage de pièces déclarées par des membres — une salle ≥ 15 places, un
+> minibus ≥ 12 places, une interprétation FR–DE — valables à une date et consenties pour cette finalité. S'il en
+> manque une seule, le système formule une demande minimale (Ask) à une catégorie de membres ; une réponse la rend
+> ACTIVE. Plan et état : [PIVOT_INSPECTION](docs/audit/PIVOT_INSPECTION.md) · [PHASE_1](docs/audit/PHASE_1.md).
+> L'action collective précédente (Sophie, jeudi 08.10) reste le parcours démontré et n'est pas modifiée.
+
+| Statut | Ce qui l'est |
+|---|---|
+| **RÉEL** | le code et ses tests ; le registre (patrons, composition, distance 0/1, Ask, consentement de finalité), l'action collective, le journal rejouable |
+| **SYNTHÉTIQUE** | tous les membres, entreprises, offres, horaires et patrons (marqués FICTIF, statut `SYNTHETIQUE` dans le journal) |
+| **SIMULÉ / JOUÉ** | l'horloge de démonstration ; les gestes des personnages absents, joués depuis la console (statut `JOUE`, affiché) |
+| **NON IMPLÉMENTÉ** | levier, composants critiques, plafond d'Ask, retrait de consentement de finalité, Pulse (Phase 2) ; IA dans le registre, parité IA ON/OFF, QR juré (Phase 3) ; écrans « Établi » et « Passeport » ; Apertus jamais appelé (aucun identifiant) |
+
+- Lancer : `make setup && make demo` → `/projection` (écran commun), `/app` (téléphones), `/console`, `/demo/regie` · tout vérifier : `make quality-check`
+- Registre (API) : `GET /api/pulse/console/capacites` · `GET /api/pulse/moi/asks` · `POST /api/pulse/moi/asks/{id}/reponse`
+- Le serveur ne sert **que** Club Pulse. L'ancien prototype (« Le Fil du Club », identité par en-tête) n'est servi
+  qu'avec `HACKVS_ANCIEN_PROTOTYPE=1`, et alors à cette machine seulement (ou avec `HACKVS_CONSOLE_JETON`).
+- Démonstration de l'action collective : [DEMO_SCRIPT](docs/audit/club-pulse-pivot/DEMO_SCRIPT.md) — ⚠️ vidéo et captures
+  aux anciennes dates, à régénérer en fin de Phase 3 ([TODO-DEMO](TODO-DEMO.md)).
+- Architecture : [ARCHITECTURE](docs/ARCHITECTURE.md) · menaces : [THREAT_MODEL](docs/THREAT_MODEL.md) · décisions : [ADR](docs/ADR/README.md)
+
+> La suite de ce fichier décrit le **prototype précédent** (« Le Fil du Club »), conservé mais **non servi** par défaut.
 
 ---
 
