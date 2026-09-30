@@ -205,8 +205,16 @@ def portee(p: Protocole, porteur: str, membre: str) -> dict:
                        | ({"minimums": e.minimums} if e.minimums else {}) for e in p.etapes if e.contributeur == membre]}
 
 
+class _BudgetEpuise(Exception):
+    pass
+
+
 class Banc:
     """Commandes (atomiques) et lectures (replis purs) du banc d'essai. Aucune règle d'accès aux NOMS ici : les vues."""
+    # Recherche d'une équipe (un créneau) : au plus 4 gestes × les offres admissibles de chacun, en profondeur, ordre
+    # stable. En pratique quelques dizaines de nœuds ; au-delà de ce budget la recherche s'arrête, le compte
+    # `recherches_tronquees` augmente et le registre le DIT (une absence de composition n'est alors pas garantie).
+    BUDGET_NOEUDS = 20_000
 
     def __init__(self, memoire: Memoire, aujourd_hui: Callable[[], date], organisation: Callable[[str], str],
                  eligibilite: Optional[Callable[[str, str], Optional[str]]] = None):
@@ -216,6 +224,7 @@ class Banc:
         self.m, self._jour, self._org = memoire, aujourd_hui, organisation
         self._eligibilite = eligibilite or (lambda porteur, candidat: None)
         self._origine: Statut = Statut.DECLARE
+        self.recherches_tronquees = 0
 
     # ------------------------------------------------------------------ journal
     @contextmanager
@@ -603,12 +612,22 @@ class Banc:
             o = gardees.get(e.id)
             if o is not None and o.auteur not in auteurs:
                 yield o, False
-            autres = auteurs | ({x.auteur for k, x in gardees.items() if k != e.id} if eid is not None else set())
-            for x in self.candidats(eid, e, p.echeance, c, autres=autres):
+            gardes_ailleurs = {x.auteur for k, x in gardees.items() if k != e.id}
+            if eid is not None:                               # essai : une personne gardée ne change pas de geste
+                cands = self.candidats(eid, e, p.echeance, c, autres=auteurs | gardes_ailleurs)
+            else:                                             # registre : elle passe EN DERNIER (même premier chemin qu'avant)
+                tous = self.candidats(eid, e, p.echeance, c, autres=auteurs)
+                cands = [x for x in tous if x.auteur not in gardes_ailleurs] + [x for x in tous if x.auteur in gardes_ailleurs]
+            for x in cands:
                 if o is None or x.id != o.id:
                     yield x, bool(e.contributeur)
 
+        noeuds = [0]
+
         def chercher(i: int, auteurs: set[str], choix: dict[str, Optional[str]], remplaces: list[str]) -> Optional[dict]:
+            noeuds[0] += 1
+            if noeuds[0] > self.BUDGET_NOEUDS:              # garde : jamais une recherche sans fin ; compté et DIT
+                raise _BudgetEpuise
             if i == len(etapes):
                 return {"creneau": c, "choix": dict(choix), "remplaces": list(remplaces)}
             e = etapes[i]
@@ -621,7 +640,11 @@ class Banc:
                     return res
             choix.pop(e.id, None)
             return None
-        return chercher(0, set(), {}, [])
+        try:
+            return chercher(0, set(), {}, [])
+        except _BudgetEpuise:
+            self.recherches_tronquees += 1
+            return None
 
     def solutions(self, eid: Optional[str], p: Optional[Protocole] = None, maximum: int = 3,
                   garder: Optional[dict[str, Optional[OffreVolontaire]]] = None,

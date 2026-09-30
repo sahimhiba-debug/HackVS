@@ -262,6 +262,13 @@ class Registre:
         hyp = ["disponibilités et attributs DÉCLARÉS par les membres, non vérifiés par le système"]
         if p.fenetre.jour < self._jour():
             return Instance(**base, statut="EXTINCT", distance=None, hypotheses=["la fenêtre de cette capacité est passée"])
+        tronquees = self.b.recherches_tronquees
+        inst = self._instance(p, base, hyp)
+        if self.b.recherches_tronquees != tronquees:
+            inst.hypotheses.append("recherche bornée atteinte : une composition a pu échapper au calcul (absence non garantie)")
+        return inst
+
+    def _instance(self, p: Patron, base: dict, hyp: list[str]) -> Instance:
         valables, perdus = self._consentements(p)
         ids = {k: {o.id for o in v} for k, v in valables.items()}
         garder: dict[str, Optional[OffreVolontaire]] = {e.id: valables[e.id][0] if valables.get(e.id) else None for e in p.emplacements}
