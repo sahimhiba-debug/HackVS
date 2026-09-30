@@ -26,6 +26,7 @@ def test_etabli_telephones_reponse_recu_retrait_anonyme(url):  # noqa: F811
         carte.locator("[data-role=statut]:has-text('il manque une pièce')").wait_for()
         assert "vendredi 09.10" in carte.inner_text()                                  # la carte dit son jour
         assert "date du Club (simulée) : mardi 06.10" in etabli.inner_text("header")   # l'écran dit sa date
+        etabli.locator("[data-role=ia]:has-text('IA : aucun modèle configuré — forme déterministe')").wait_for()   # dit, jamais « propulsé par »
         vide = carte.locator(".piece.vide")
         assert "Un minibus de 12 places ou plus" in vide.inner_text() and "Débloquerait 1 capacité" in vide.inner_text()
 
@@ -33,6 +34,10 @@ def test_etabli_telephones_reponse_recu_retrait_anonyme(url):  # noqa: F811
         pauline.click("nav.onglets >> text=Demandes")
         pauline.wait_for_selector("[data-ask]")
         assert "mardi 06.10" in pauline.inner_text("main")                             # le téléphone dit sa date
+        pauline.fill("#ask-mots", "Mon minibus a 14 places, libre vendredi après-midi.")
+        pauline.click("#ask-proposer")                                                 # aucun modèle ici : la forme déterministe, dite
+        pauline.locator("#ask-ia:has-text('forme déterministe, sans IA — aucun modèle configuré')").wait_for()
+        assert "Remplissez le formulaire vous-même" in pauline.inner_text("#ask-ia")
         pauline.fill("#att-places", "14")
         pauline.click("#ask-oui")
         pauline.wait_for_selector("[data-recu='delegation_acheteurs']")
@@ -44,6 +49,12 @@ def test_etabli_telephones_reponse_recu_retrait_anonyme(url):  # noqa: F811
         etabli.wait_for_selector("section[aria-label='Passeport de capacité']")
         passeport = etabli.inner_text("section[aria-label='Passeport de capacité']")
         assert "fournie par une personne du Club, consentement donné" in passeport and "Pièces critiques" in passeport
+        etabli.click("#rediger-recit")                                                 # NARRATE : ici, le gabarit des faits, dit
+        etabli.locator("[data-role=recit-ia]:has-text('forme déterministe, sans IA')").wait_for()
+        assert "[F1]" in etabli.inner_text("#recit") and "État : le Club peut le faire." in etabli.inner_text("#recit")
+        etabli.click("#ia-bascule")                                                    # l'interrupteur, visible
+        etabli.locator("[data-role=ia]:has-text('IA : éteinte')").wait_for()
+        etabli.click("#ia-bascule")
 
         assert carte.locator("[data-role=statut]").inner_text() == "le Club peut le faire"   # l'état AVANT le retrait
         with etabli.expect_response(lambda r: "/console/capacites" in r.url and "DEGRADED" in r.text()) as lu:

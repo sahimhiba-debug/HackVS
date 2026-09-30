@@ -48,7 +48,8 @@
   <header class="haut">
     <span class="marque"><span class="pouls-point" aria-hidden="true"></span>Club Pulse · Établi</span>
     <span class="puce fictif">monde fictif</span>
-    <span class="droite"><span class="puce" id="date">date…</span><span class="puce" id="fraicheur">…</span>
+    <span class="droite"><span class="puce" id="ia" data-role="ia">IA…</span>
+      <button class="btn discret petit" id="ia-bascule">…</button><span class="puce" id="date">date…</span><span class="puce" id="fraicheur">…</span>
       <button class="btn discret petit" id="voir-pulse">Ce qui a changé</button></span>
   </header>
   <div class="page">
@@ -112,6 +113,8 @@
         ...(c.sans_solution ? liste("Aucune solution sûre — ce qu'on sait, ce qu'on ignore, ce qui débloquerait",
           [...c.sans_solution.cause, ...c.sans_solution.sait, ...c.sans_solution.ignore, ...c.sans_solution.debloquerait.map((x) => "débloquerait : " + x)]) : []),
         ...liste("Résultats passés", [c.resultats]),
+        h("h3", {}, "Récit (chaque phrase cite ses faits)"), h("div", { id: "recit" }, recits[c.finalite] ? recit(recits[c.finalite]) : h("p", { class: "note" }, "—")),
+        h("button", { class: "btn discret petit", id: "rediger-recit", onclick: () => rediger(c.finalite) }, "Rédiger le récit"),
         h("p", { class: "note", style: "margin-top:10px" }, "Chaque personne peut retirer son consentement depuis son téléphone ; la capacité est alors recalculée. Aucun nom n'est affiché ici."));
     }
     function rendre(r) {
@@ -128,6 +131,34 @@
       const c = r.capacites.find((x) => x.finalite === choisie);
       $("#passeport").replaceChildren(...(c ? [passeport(c)] : []));
     }
+    const recits = {};
+    function recit(r) {
+      return [h("ul", {}, r.phrases.map((p) => h("li", {}, `${p.texte} `, h("span", { class: "note" }, `[${p.faits.join(", ")}]`)))),
+        h("p", { class: "note", "data-role": "recit-ia" }, r.ia.libelle),
+        h("details", {}, h("summary", {}, "Les faits cités"), h("ul", {}, r.faits.map((f) => h("li", {}, `${f.id} — ${f.texte}`))))];
+    }
+    async function rediger(finalite) {
+      try {
+        const r = await fetch(`/api/pulse/console/capacites/${encodeURIComponent(finalite)}/recit`, { method: "POST", headers: { "X-Pulse-Console": jeton() } });
+        if (!r.ok) throw new Error(`serveur : ${r.status}`);
+        recits[finalite] = await r.json(); rendre(derniere);
+      } catch (e) { $("#fraicheur").textContent = "récit indisponible : réessayez"; $("#fraicheur").className = "puce rouge"; }
+    }
+    let ia = null;
+    async function lireIA() {
+      try {
+        const r = await fetch("/api/pulse/console/ia", { headers: { "X-Pulse-Console": jeton() } });
+        ia = await r.json();
+        $("#ia").textContent = !ia.actif ? "IA : éteinte — forme déterministe" : ia.configure ? `IA : allumée — modèle « ${ia.modele} »` : "IA : aucun modèle configuré — forme déterministe";
+        $("#ia").className = "puce" + (ia.actif && ia.configure ? " vert" : "");
+        $("#ia-bascule").textContent = ia.actif ? "Éteindre l'IA" : "Allumer l'IA";
+      } catch (e) { $("#ia").textContent = "IA : état inconnu"; }
+    }
+    $("#ia-bascule").addEventListener("click", async () => {
+      await fetch("/api/pulse/console/ia", { method: "POST", headers: { "X-Pulse-Console": jeton(), "Content-Type": "application/json" },
+        body: JSON.stringify({ actif: !(ia && ia.actif) }) });
+      await lireIA();
+    });
     async function decider(finalite, action) {           // la FILE de l'animation : relancer ou acquitter, puis relire
       try {
         const r = await fetch(`/api/pulse/console/capacites/${encodeURIComponent(finalite)}/${action}`,
@@ -161,8 +192,8 @@
           h("div", { class: "attention" }, bloc("Fragiles", p.fragiles), bloc("À une pièce près", p.a_une_piece), h("div", {}, h("p", { class: "note" }, p.calcul)))));
       } catch (e) { $("#pulse").replaceChildren(h("p", { class: "note" }, "Pulse indisponible : réessayez.")); }
     });
-    lire();
-    setInterval(lire, 1000);
+    lire(); lireIA();
+    setInterval(lire, 1000); setInterval(lireIA, 5000);
   </script>
 </body>
 </html>

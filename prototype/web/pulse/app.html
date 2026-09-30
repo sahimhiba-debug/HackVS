@@ -422,10 +422,22 @@
       const carteAsk = (a) => {
         const champs = Object.entries(a.minimums).map(([k, v]) => h("div", { class: "champ" }, h("label", { for: `att-${k}` }, `${k} (au moins ${v})`),
           h("input", { id: `att-${k}`, type: "number", min: 0, max: 1000, "data-attribut": k })));
+        // avec ses mots : le modèle PROPOSE (s'il y en a un, et s'il est allumé), le membre confirme — ou remplit lui-même
+        const mots = h("textarea", { id: "ask-mots", rows: 2, maxlength: 400, placeholder: "Décrivez votre pièce avec vos mots (facultatif)" });
+        const statutIA = h("p", { class: "note", id: "ask-ia", "aria-live": "polite" });
+        const proposer = h("button", { class: "btn discret petit", id: "ask-proposer", onclick: async () => {
+          try {
+            const p = await api(`/api/pulse/moi/asks/${encodeURIComponent(a.id)}/proposition`, { corps: { texte: mots.value } });
+            for (const [k, v] of Object.entries(p.attributs)) { const i = $(`#att-${k}`); if (i) i.value = v; }
+            statutIA.textContent = `${p.ia.libelle}. ${Object.keys(p.attributs).length ? "Vérifiez, puis répondez." : "Remplissez le formulaire vous-même."}`;
+          } catch (e) { statutIA.textContent = "Proposition indisponible : remplissez le formulaire vous-même."; }
+        } }, "Proposer à partir de mon texte");
         const repondre = (oui) => agir(() => api(`/api/pulse/moi/asks/${encodeURIComponent(a.id)}/reponse`, { corps: { oui,
+          ...(oui && mots.value.trim().length >= 3 ? { quoi: mots.value.trim() } : {}),
           attributs: Object.fromEntries(champs.map((c) => { const i = c.querySelector("input"); return [i.dataset.attribut, Number(i.value || 0)]; })) } }),
           oui ? "Merci : votre pièce est enregistrée, avec votre consentement pour cette seule capacité." : "Noté. Personne d'autre ne le saura.");
         return h("div", { class: "carte", "data-ask": a.id }, h("span", { class: "surtitre" }, a.titre), h("p", { class: "creneau", style: "font-size:19px" }, a.texte),
+          h("div", { class: "champ" }, mots), proposer, statutIA,
           ...champs, h("div", { class: "actions", style: "margin-top:10px" }, h("button", { class: "btn plein", id: "ask-oui", onclick: repondre(true) }, "Oui"),
             h("button", { class: "btn discret", onclick: repondre(false) }, "Non"), h("button", { class: "btn discret", onclick: repondre(false) }, "Pas cette fois")),
           h("p", { class: "note", style: "margin-top:8px" }, "Vous pouvez refuser sans vous justifier. Oui = vous déclarez cette pièce pour ce créneau, et vous consentez à son usage pour cette capacité seulement."));
