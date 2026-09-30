@@ -859,6 +859,15 @@ class Banc:
         evs = self._evs(eid, "PROJECTION")
         return bool(evs) and bool(evs[-1].donnees["oui"])
 
+    def enregistrer_redaction(self, eid: str, version: int, pour: str, texte: str, meta: dict) -> None:
+        """Un texte RÉDIGÉ pour une personne (message d'invitation) : écrit une fois, par une commande ; les lectures et
+        le rejeu le RELISENT — aucun modèle n'est rappelé en lisant."""
+        self._ecrire("REDACTION", [], essai=eid, version=version, pour=pour, texte=texte, meta=meta)
+
+    def redaction(self, eid: str, version: int, pour: str) -> Optional[Evt]:
+        return next((x for x in reversed(self._evs(eid, "REDACTION"))
+                     if x.donnees["version"] == version and x.donnees["pour"] == pour), None)
+
     def receptions(self, eid: str, etape: str) -> list[Evt]:
         return [x for x in self._evs(eid, "RECEPTION") if x.donnees["etape"] == etape]
 

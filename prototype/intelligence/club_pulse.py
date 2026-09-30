@@ -64,6 +64,7 @@ class ClubPulse:
         self.ia = ia or Intelligence.depuis_environnement(tax, journal=self._tracer_ia,
                                                           notes_privees_autorisees=self.reglages.notes_privees_vers_ia)
         self.ia.journal = self._tracer_ia
+        self.ia.identites = self._identites                   # rien du coffre ne part vers un modèle (défense centrale)
         self.vues = VuesIntelligence(self)
         # ACTIVATION ENGINE : son propre journal — fichier si HACKVS_ESSAIS_DB (survit au redémarrage), sinon en mémoire.
         # Qui peut être sollicité pour qui : les règles DURES du réseau (langue commune, consentement, disponibilité,
@@ -72,8 +73,6 @@ class ClubPulse:
         self.vues_essai = VuesEssai(self)
         self.notes: dict[str, list[dict]] = {}
         self.preferences: dict[str, dict] = {}
-        self.explications: dict[tuple[str, str], dict] = {}
-        self.messages: dict[tuple[str, int, str], dict] = {}   # (essai, version, invité) → message d'invitation rédigé
         self.joues: list[dict] = []                            # gestes JOUÉS par l'équipe depuis la console (démonstration)
         self._scan: Optional[dict] = None
         self._etat: Optional[Etat] = None
@@ -96,6 +95,11 @@ class ClubPulse:
     def _tracer_ia(self, a: AppelIA) -> None:
         # la latence reste dans `ia.appels` (mesure) ; le journal garde un contenu déterministe, donc rejouable à l'octet
         self.r.memoire.ajouter(Evt(type="APPEL_IA", le=self.jour, statut=Statut.SIMULE, donnees=a.model_dump(exclude={"latence_ms"})))
+
+    def _identites(self) -> list[str]:
+        per = list(self.coffre._personnes.values())
+        return [p.nom for p in per] + [p.courriel for p in per] + [p.telephone for p in per if p.telephone] \
+            + [o.nom for o in self.coffre.orgs.values()]
 
     def profil(self, pid: str) -> Profil:
         p = self.r.par_id().get(pid)
@@ -326,42 +330,75 @@ class ClubPulse:
             raise Introuvable("découverte inconnue (ou plus d'actualité)")
         return o
 
-    def en_clair(self, oid: str, sp: Spectateur) -> dict:
-        """L'IA reformule le « pourquoi » à partir de faits PSEUDONYMISÉS ; le texte est contrôlé puis rendu pour le
-        spectateur. C'est une reformulation : la source reste l'explication structurée."""
+    def _faits_decouverte(self, oid: str, sp: Spectateur) -> tuple[Opportunite, dict]:
         o = self.trouver_opportunite(oid)
         if sp.role == "membre" and sp.id != o.beneficiaire:
             raise Interdit("cette découverte ne vous concerne pas")
-        cle = (oid, sp.role + (sp.id or ""))
-        if cle not in self.explications:
-            faits = {"titre": o.titre, "raisonnement": o.raisonnement, "manque": o.manque, "action": o.action,
-                     "risques": o.risques, "personnes_a_solliciter": o.personnes_a_solliciter}
-            rep = self.ia.expliquer(faits, self.pseudonymes())
-            self.explications[cle] = {"texte": rep.sortie["explication"], "appel": rep.appel.model_dump(
-                include={"fournisseur", "modele", "prompt", "statut", "repli", "latence_ms", "trace"})}
-        x = self.explications[cle]
-        return {"texte": self.rendu().texte(sp, x["texte"]), "ia": x["appel"],
-                "source": ("Apertus (texte contrôlé : fidèle aux faits)" if x["appel"]["fournisseur"] == "apertus" and not x["appel"]["repli"]
+        return o, {"titre": o.titre, "raisonnement": o.raisonnement, "manque": o.manque, "action": o.action,
+                   "risques": o.risques, "personnes_a_solliciter": o.personnes_a_solliciter}
+
+    def narrer_decouverte(self, oid: str, sp: Spectateur) -> dict:
+        """COMMANDE : l'IA reformule le « pourquoi » à partir de faits PSEUDONYMISÉS ; le texte contrôlé est journalisé.
+        Les lectures le relisent (`en_clair`) — une lecture ne déclenche jamais d'appel au modèle."""
+        _, faits = self._faits_decouverte(oid, sp)
+        rep = self.ia.expliquer(faits, self.pseudonymes())
+        self.r.memoire.ajouter(Evt(type="REDACTION", le=self.jour, statut=Statut.INFERE, donnees={
+            "objet": oid, "pour": sp.role + (sp.id or ""), "texte": rep.sortie["explication"],
+            "meta": rep.appel.model_dump(include={"fournisseur", "modele", "prompt", "statut", "repli", "trace"})}))
+        return self.en_clair(oid, sp)
+
+    def en_clair(self, oid: str, sp: Spectateur) -> dict:
+        """LECTURE : la reformulation journalisée si elle existe, sinon l'explication du moteur (sans modèle)."""
+        _, faits = self._faits_decouverte(oid, sp)
+        pour = sp.role + (sp.id or "")
+        e = next((x for x in reversed(self.r.memoire.evenements("REDACTION"))
+                  if x.donnees.get("objet") == oid and x.donnees.get("pour") == pour), None)
+        texte, appel = (e.donnees["texte"], e.donnees["meta"]) if e else \
+            (Intelligence.gabarit_explication(faits), {"fournisseur": "deterministe", "modele": None, "prompt": None, "statut": "OK",
+                                                        "repli": False, "trace": None})
+        return {"texte": self.rendu().texte(sp, texte), "ia": appel,
+                "source": ("Apertus (texte contrôlé : fidèle aux faits)" if appel["fournisseur"] == "apertus" and not appel["repli"]
                            else "règles du moteur (aucun modèle génératif utilisé)")}
 
-    def message_invitation(self, eid: str, pid: str) -> Optional[dict]:
-        """Le message que lit une personne INVITÉE (geste sur invitation) : rédigé UNE fois par (essai, version, personne)
-        — IA contrôlée si configurée, sinon gabarit déclaré — puis mémorisé : relire la page ne rappelle pas le modèle."""
+    def _faits_invitation(self, eid: str, pid: str) -> Optional[tuple[dict, list[str]]]:
         p = self.banc.protocole(eid)
         e = next((x for x in p.etapes if x.contributeur == pid and x.invitation), None)
         if e is None:
             return None
-        cle = (eid, self.banc.version(eid), pid)
-        if cle not in self.messages:
-            porteur = self.banc.porteur(eid)
-            prof, per = self.r.par_id().get(porteur), self.coffre.identite(porteur)
-            faits = {"capacite_declaree": self.tax.libelle(e.concept) if e.concept else e.geste, "demande": p.question,
-                     "secteur_demandeur": self.tax.libelle(prof.secteurs[0]) if prof and prof.secteurs else "non précisé",
-                     "partage": "votre nom et votre organisation à cette personne seulement si vous acceptez"}
-            rep = self.ia.rediger_sollicitation(faits, [per.nom if per else "", self.coffre.pseudonyme(porteur)])
-            self.messages[cle] = {"texte": rep.sortie["message"],
-                                  "ia": rep.appel.model_dump(include={"fournisseur", "modele", "statut", "repli"})}
-        return self.messages[cle]
+        porteur = self.banc.porteur(eid)
+        prof, per = self.r.par_id().get(porteur), self.coffre.identite(porteur)
+        faits = {"capacite_declaree": self.tax.libelle(e.concept) if e.concept else e.geste, "demande": p.question,
+                 "secteur_demandeur": self.tax.libelle(prof.secteurs[0]) if prof and prof.secteurs else "non précisé",
+                 "partage": "votre nom et votre organisation à cette personne seulement si vous acceptez"}
+        return faits, [per.nom if per else "", self.coffre.pseudonyme(porteur)]
+
+    def rediger_invitations(self, eid: str) -> int:
+        """COMMANDE (après une écriture) : rédige UNE fois, par (essai, version, invité), le message d'invitation — IA
+        contrôlée si configurée, sinon gabarit déclaré — et le JOURNALISE. Renvoie le nombre de messages rédigés."""
+        v, n = self.banc.version(eid), 0
+        if self.banc.etat(eid) == "BROUILLON":                   # rien n'est envoyé avant publication
+            return 0
+        for e in self.banc.protocole(eid).etapes:
+            if not (e.invitation and e.contributeur) or self.banc.redaction(eid, v, e.contributeur):
+                continue
+            faits, interdits = self._faits_invitation(eid, e.contributeur) or ({}, [])
+            rep = self.ia.rediger_sollicitation(faits, interdits)
+            self.banc.enregistrer_redaction(eid, v, e.contributeur, rep.sortie["message"],
+                                            rep.appel.model_dump(include={"fournisseur", "modele", "statut", "repli"}))
+            n += 1
+        return n
+
+    def message_invitation(self, eid: str, pid: str) -> Optional[dict]:
+        """LECTURE : le message qu'une personne INVITÉE lit — celui rédigé et journalisé, sinon le gabarit (sans modèle).
+        Une lecture, un rafraîchissement ou un rejeu ne rappellent JAMAIS le modèle."""
+        fi = self._faits_invitation(eid, pid)
+        if fi is None:
+            return None
+        r = self.banc.redaction(eid, self.banc.version(eid), pid)
+        if r is not None:
+            return {"texte": r.donnees["texte"], "ia": r.donnees["meta"]}
+        return {"texte": Intelligence.gabarit_sollicitation(fi[0]), "ia": {"fournisseur": "deterministe", "modele": None,
+                                                                            "statut": "OK", "repli": False}}
 
     # ------------------------------------------------------------------ PASSERELLE : la personne aidée demande un essai
     def proposer_essai(self, pid: str, oid: str) -> str:

@@ -245,6 +245,9 @@ class Intelligence:
         self.appels: list[AppelIA] = []
         self.notes_privees_autorisees = notes_privees_autorisees
         self._horloge = horloge
+        # identités réelles (coffre) à retirer de TOUT message avant envoi : défense centrale, quelle que soit la tâche
+        # ou l'appelant (défaut trouvé à l'audit : `comprendre_demande` recevait un nom réel non nettoyé)
+        self.identites: Callable[[], list[str]] = lambda: []
         self._echecs_consecutifs = 0
         self._ferme_jusqu_a = 0.0
 
@@ -272,6 +275,11 @@ class Intelligence:
         if self.journal:
             self.journal(a)
 
+    def proteger(self, message: str) -> str:
+        """Ce qui quitte le serveur vers un modèle : sans nom, organisation, courriel ni téléphone du coffre."""
+        from .identite import nettoyer
+        return nettoyer(message, [x for x in self.identites() if x])
+
     def _executer(self, tache: str, nom_prompt: Optional[str], message: str, schema: Optional[dict],
                   valider_sortie: Callable[[str], tuple[dict, Optional[dict]]], repli: Callable[[], dict],
                   local_seulement: Optional[str] = None) -> Reponse:
@@ -296,7 +304,7 @@ class Intelligence:
             self._tracer(a)
             return Reponse(sortie=sortie, appel=a)
         try:
-            brut = self.f.completer(texte_prompt, message, schema)
+            brut = self.f.completer(texte_prompt, self.proteger(message), schema)
             self._echecs_consecutifs = 0
         except ErreurFournisseur as e:                            # panne du FOURNISSEUR seulement : repli VISIBLE
             self._echecs_consecutifs += 1
@@ -488,7 +496,7 @@ class Intelligence:
                               "note privée : traitée localement (APERTUS_NOTES_PRIVEES non activé)")
 
     def expliquer(self, faits: dict, pseudonymes: set[str]) -> Reponse:
-        repli = {"explication": " ".join(faits.get("raisonnement", [])[:4]), "statut": "OK"}
+        repli = {"explication": self.gabarit_explication(faits), "statut": "OK"}
 
         def valide(brut: str) -> tuple[dict, Optional[dict]]:
             t = json.loads(_json_de(brut))["explication"].strip()
@@ -501,11 +509,20 @@ class Intelligence:
         return self._executer("expliquer_opportunite", "expliquer_opportunite", json.dumps(faits, ensure_ascii=False),
                               SCHEMA_TEXTE["explication"], valide, lambda: repli)
 
+    @staticmethod
+    def gabarit_sollicitation(faits: dict) -> str:
+        """Le message d'invitation SANS modèle (repli déclaré) : aussi ce qu'une LECTURE montre si rien n'a été rédigé."""
+        return (f"Vous avez déclaré pouvoir aider sur : « {faits['capacite_declaree']} ». "
+                f"Une personne du Club ({faits['secteur_demandeur']}) aurait besoin de : {faits['demande']}. "
+                f"Si vous acceptez : {faits['partage']}. Vous pouvez refuser sans vous justifier ; "
+                "ni le Club ni personne d'autre que la personne qui vous invite ne le saura.")
+
+    @staticmethod
+    def gabarit_explication(faits: dict) -> str:
+        return " ".join(faits.get("raisonnement", [])[:4])
+
     def rediger_sollicitation(self, faits: dict, interdits: list[str]) -> Reponse:
-        repli = {"message": (f"Vous avez déclaré pouvoir aider sur : « {faits['capacite_declaree']} ». "
-                             f"Une personne du Club ({faits['secteur_demandeur']}) aurait besoin de : {faits['demande']}. "
-                             f"Si vous acceptez : {faits['partage']}. Vous pouvez refuser sans vous justifier ; "
-                             "ni le Club ni personne d'autre que la personne qui vous invite ne le saura."), "statut": "OK"}
+        repli = {"message": self.gabarit_sollicitation(faits), "statut": "OK"}
 
         def valide(brut: str) -> tuple[dict, Optional[dict]]:
             t = json.loads(_json_de(brut))["message"].strip()

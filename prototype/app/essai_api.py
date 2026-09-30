@@ -225,6 +225,7 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     def commande(eid: str, pid: str, action: Callable[[ClubPulse], object]) -> dict:
         def f(c: ClubPulse) -> dict:
             retour = action(c)
+            c.rediger_invitations(eid)                          # écriture : les messages d'invitation, jamais à la lecture
             return vue(c, eid, pid) | ({"effet": retour} if isinstance(retour, dict) else {})
         return au_monde(f)
 

@@ -242,6 +242,12 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     def decouverte(oid: str, pid: str = Depends(membre)) -> dict:
         return au_monde(lambda c: c.vues.decouverte_de(pid, oid))
 
+    @r.post("/moi/decouvertes/{oid}/en-clair")
+    def narrer(oid: str, pid: str = Depends(membre)) -> dict:
+        """COMMANDE : demander la reformulation (IA contrôlée si configurée) ; la lecture GET la relit sans appel."""
+        limiter(limite_ia, f"ia|{pid}")
+        return au_monde(lambda c: c.narrer_decouverte(oid, Spectateur("membre", pid)))
+
     @r.get("/moi/decouvertes/{oid}/en-clair")
     def en_clair(oid: str, pid: str = Depends(membre)) -> dict:
         limiter(limite_ia, f"ia|{pid}")
