@@ -226,6 +226,15 @@ class ClubPulse:
         return {self.coffre.pseudonyme(p) for p in self.coffre._personnes}
 
     # ------------------------------------------------------------------ registre des capacités
+    def projection_capacites(self) -> list[Instance]:
+        """La projection des capacités, MISE EN CACHE par ce dont elle dépend (journal, profils, horloge, patrons) : les
+        écrans la relisent souvent ; le calcul n'est refait que si l'état a changé. Toujours recalculable."""
+        cle = (len(self.journal.evenements()), self._revision_profils, self.jour,
+               tuple((p.id, p.version) for p in self.capacites.patrons.values()))
+        if getattr(self, "_cache_capacites", (None,))[0] != cle:
+            self._cache_capacites = (cle, self.capacites.projeter())
+        return [i.model_copy(deep=True) for i in self._cache_capacites[1]]
+
     def au(self, seq: int) -> "ClubPulse":
         """Une RÉPLIQUE en lecture de l'état tel qu'il était à la position `seq` du journal : les faits jusqu'à `seq`
         sont REJOUÉS dans un journal en mémoire, par la même fonction qu'un redémarrage. Aucun fournisseur de langage
@@ -274,7 +283,7 @@ class ClubPulse:
             return []
         declarees = {o.concept for o in self.profil(pid).offre if o.concept}
         res = []
-        for inst in self.capacites.projeter():
+        for inst in self.projection_capacites():
             if inst.ask is None:
                 continue
             deja = {self.banc.offre(v).auteur for v in inst.liaisons.values() if v}

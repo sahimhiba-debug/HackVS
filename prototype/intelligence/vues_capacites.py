@@ -3,6 +3,7 @@ désigner quelqu'un — « le stand de la distillerie »), ni qui a consenti ou 
 l'emplacement (« salle : consentement retiré »), jamais par la personne."""
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import TYPE_CHECKING, Optional
 
 from .capacites import Instance
@@ -26,22 +27,31 @@ class VuesCapacites:
             v, cons = i.liaisons.get(e.id), i.consentements.get(e.id)
             pieces.append({"emplacement": e.id, "role": e.role, "libelle": e.libelle, "presente": v is not None,
                            "consentement": None if v is None else ("donné" if cons is None else "à demander"),
-                           "manquante": i.manquant == e.id})
+                           "manquante": i.manquant == e.id, "critique": e.id in i.critiques,
+                           "fournie_par": "une personne du Club" if v is not None else None})     # pseudonymisé : jamais un nom
         roles = {e.id: e.role for e in p.emplacements}
         return {"finalite": i.finalite, "version": i.version, "titre": i.titre, "statut": i.statut,
                 "statut_libelle": LIBELLES.get(i.statut or "", ""), "distance": i.distance, "date": self.c.jour.isoformat(),
                 "jour": p.fenetre.jour.isoformat(), "fenetre": f"{p.fenetre.jour.strftime('%d.%m')} {p.fenetre.debut}–{p.fenetre.fin}",
                 "creneau": i.creneau.texte() if i.creneau else None, "pieces": pieces,
-                "ask": {"texte": i.ask.texte, "expire": i.ask.expire.isoformat()} if i.ask else None,
+                "ask": {"texte": i.ask.texte, "expire": i.ask.expire.isoformat(), "levier": i.ask.levier, "debloque": i.ask.debloque,
+                        "libelle": i.ask.libelle} if i.ask else None,
+                "critiques": [roles[k] for k in i.critiques], "resultats": "aucun résultat déclaré pour cette capacité",
                 # une pièce perdue est dite par son RÔLE, sans la raison : ni qui, ni pourquoi (retrait jamais attribué)
                 "perdus": [f"{roles.get(x.split(' : ', 1)[0], x.split(' : ', 1)[0])} : ce composant n'est plus disponible" for x in i.perdus],
                 "recomposition": {k: v for k, v in i.recomposition.items() if k != "pieces"} if i.recomposition else None,
                 "sans_solution": i.sans_solution, "hypotheses": i.hypotheses, "fictif": i.fictif}
 
     def console(self) -> dict:
-        """Le registre : ce que le Club PEUT faire (distance 0) et ce qu'il lui manque une pièce pour faire (distance 1)."""
-        return {"capacites": [self.instance(i) for i in self.c.capacites.projeter() if i.statut is not None],
-                "date": self.c.jour.isoformat(), "fictif": True,
+        """Le registre : ce que le Club PEUT faire (distance 0) et ce qu'il lui manque une pièce pour faire (distance 1) —
+        et, pour l'animation, SEULEMENT ce qui bloque, ce qui exige une décision, ce qui expire."""
+        caps = [self.instance(i) for i in self.c.projection_capacites() if i.statut is not None]
+        bientot = (self.c.jour + timedelta(days=2)).isoformat()
+        return {"capacites": caps, "date": self.c.jour.isoformat(), "fictif": True,
+                "attention": {"bloque": [x["titre"] for x in caps if x["statut"] == "DEGRADED"],
+                              "decision": [x["titre"] for x in caps if x["recomposition"] or x["sans_solution"]],
+                              "expire": [f"{x['titre']} ({x['fenetre']})" for x in caps
+                                         if x["statut"] not in ("ACTIVE", "EXTINCT") and x["jour"] <= bientot]},
                 "regle": "Une capacité n'existe que si chaque pièce est déclarée, valable à cette date et consentie pour "
                          "cette finalité. Rôles seulement : aucun nom."}
 

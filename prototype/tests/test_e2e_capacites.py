@@ -1,0 +1,79 @@
+"""LE REGISTRE DES CAPACITÉS dans un VRAI navigateur : l'Établi (écran commun) et deux téléphones.
+Vendredi 09.10 (scène du registre ; l'action collective, elle, se joue le jeudi 08.10) : l'Établi montre « Accueillir une
+délégation… » à une pièce près (le minibus, en pointillés, avec sa demande) → Pauline répond Oui sur SON téléphone →
+l'Établi passe à « le Club peut le faire » → le reçu est sur son téléphone → elle retire son consentement en un geste →
+l'Établi dit « ce composant n'est plus disponible », sans jamais la nommer → la demande part vers Markus, pas vers elle.
+Chaque écran affiche sa date. Sur échec, les pages sont capturées (tests/capture_e2e.py). Données FICTIVES."""
+import pytest
+
+from tests.test_e2e_pulse import _api, _sans_debordement, _telephone
+from tests.test_e2e_scene import _chromium, url  # noqa: F401  (serveur démo isolé partagé)
+
+CARTE = "article[data-finalite='delegation_acheteurs']"
+
+
+def test_etabli_telephones_reponse_recu_retrait_anonyme(url):  # noqa: F811
+    pw = pytest.importorskip("playwright.sync_api")
+    _api(url, "/api/pulse/demo/reinitialiser", {})
+    codes = {p["id"]: p["code"] for p in _api(url, "/api/pulse/console/personas")}
+    erreurs: list[str] = []
+    with pw.sync_playwright() as p:
+        b = _chromium(p)
+        etabli = b.new_context(viewport={"width": 1440, "height": 900}).new_page()
+        etabli.on("pageerror", lambda e: erreurs.append(str(e)))
+        etabli.goto(url + "/etabli")
+        carte = etabli.locator(CARTE)
+        carte.locator("[data-role=statut]:has-text('il manque une pièce')").wait_for()
+        assert "vendredi 09.10" in carte.inner_text()                                  # la carte dit son jour
+        assert "date du Club (simulée) : mardi 06.10" in etabli.inner_text("header")   # l'écran dit sa date
+        vide = carte.locator(".piece.vide")
+        assert "Un minibus de 12 places ou plus" in vide.inner_text() and "Débloquerait 1 capacité" in vide.inner_text()
+
+        _, pauline = _telephone(b, url, codes["s01"], (390, 844), erreurs)
+        pauline.click("nav.onglets >> text=Demandes")
+        pauline.wait_for_selector("[data-ask]")
+        assert "mardi 06.10" in pauline.inner_text("main")                             # le téléphone dit sa date
+        pauline.fill("#att-places", "14")
+        pauline.click("#ask-oui")
+        pauline.wait_for_selector("[data-recu='delegation_acheteurs']")
+        assert "valable" in pauline.inner_text("[data-recu='delegation_acheteurs']")
+        carte.locator("[data-role=statut]:has-text('le Club peut le faire')").wait_for()
+        assert carte.locator(".piece.vide").count() == 0
+
+        carte.click()                                                                  # le passeport
+        etabli.wait_for_selector("section[aria-label='Passeport de capacité']")
+        passeport = etabli.inner_text("section[aria-label='Passeport de capacité']")
+        assert "fournie par une personne du Club, consentement donné" in passeport and "Pièces critiques" in passeport
+
+        pauline.click("#retirer-delegation_acheteurs")                                 # retrait, en un geste
+        carte.locator("[data-role=statut]:has-text('un consentement ne vaut plus')").wait_for()
+        texte = etabli.inner_text("body")
+        assert "transport : ce composant n'est plus disponible" in texte
+        for x in ("Pauline", "Darbellay", "retiré", "s'est retir", "Minibus de 14"):      # ni qui, ni l'événement
+            assert x not in texte, x
+
+        _, markus = _telephone(b, url, codes["s14"], (412, 915), erreurs)
+        markus.click("nav.onglets >> text=Demandes")
+        markus.wait_for_selector("[data-ask]")                                         # la demande repart… vers un autre
+        pauline.click("nav.onglets >> text=Demandes")
+        pauline.wait_for_selector("text=Aucune demande pour vous en ce moment.")       # …jamais vers la personne retirée
+        for pg in (pauline, markus):
+            assert _sans_debordement(pg)
+        pauline.click("text=Mes données : ce que le Club sait de moi")
+        pauline.wait_for_selector("h1:has-text('Mes données')")
+        assert "consentement retiré" in pauline.inner_text("main")
+    assert not [e for e in erreurs if "favicon" not in e], erreurs
+
+
+def test_la_capture_sur_echec_sauvegarde_les_pages_ouvertes(url, tmp_path, monkeypatch):  # noqa: F811
+    pw = pytest.importorskip("playwright.sync_api")
+    from tests import capture_e2e
+    monkeypatch.setattr(capture_e2e, "DOSSIER", tmp_path)
+    with pytest.raises(AssertionError):
+        with pw.sync_playwright() as p:
+            b = _chromium(p)
+            pg = b.new_page()
+            pg.goto(url + "/etabli")
+            raise AssertionError("échec volontaire")
+    fichiers = sorted(x.suffix for x in tmp_path.rglob("*") if x.is_file())
+    assert ".png" in fichiers and ".html" in fichiers

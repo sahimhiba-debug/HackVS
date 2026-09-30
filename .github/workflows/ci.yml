@@ -75,7 +75,14 @@ jobs:
       - name: Bout en bout dans un vrai navigateur (scène, console Club Pulse, application mobile, action collective, pannes réseau, CSP)
         env:
           HACKVS_E2E_OBLIGATOIRE: "1"
-        run: python -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py
+        run: python -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py tests/test_e2e_capacites.py
+      - name: Captures des pages en cas d'échec de bout en bout
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-echecs
+          path: prototype/var/e2e_echecs/
+          if-no-files-found: ignore
       - name: Rejouer les benchmarks du sprint
         run: python scripts/reproduire_sprint.py
       - name: Les résultats publiés sont identiques à l'octet

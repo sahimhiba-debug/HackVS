@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Club Pulse · Établi</title>
+  <meta name="description" content="Club Pulse — l'établi : ce que le Club peut faire ensemble, et la pièce qui lui manque. Des rôles, jamais des noms. Monde de démonstration fictif.">
+  <link rel="icon" href="/static/pulse/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/pulse/pulse.css">
+  <style>
+    body { background: var(--papier); }
+    header.haut { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 24px; border-bottom: 1px solid var(--ligne); background: var(--surface); }
+    header.haut .droite { margin-left: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .page { max-width: 1500px; margin: 0 auto; padding: 18px 24px 40px; }
+    h1.titre { font-size: clamp(26px, 2.4vw, 40px); font-weight: 750; letter-spacing: -0.03em; }
+    .sous { color: var(--encre-2); margin-top: 6px; font-size: 17px; }
+    .grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 430px), 1fr)); gap: 18px; margin-top: 18px; }
+    .capacite { background: var(--surface); border: 1px solid var(--ligne); border-radius: var(--rayon); padding: 16px 18px; cursor: pointer; transition: border-color .5s ease; }
+    .capacite:focus-visible { outline: 3px solid var(--encre); }
+    .capacite[data-statut="ACTIVE"] { border-color: var(--vert); border-width: 2px; }
+    .capacite[data-statut="DEGRADED"] { border-color: var(--rouge); border-width: 2px; }
+    .capacite h2 { font-size: 21px; line-height: 1.2; }
+    .quand { font-size: 14px; color: var(--encre-3); margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .pieces { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .piece { flex: 1 1 120px; min-height: 86px; border-radius: 12px; padding: 10px 12px; background: #e3ecf8; color: #1d4580; transition: background .6s ease, border-color .6s ease; }
+    .piece b { display: block; font-size: 15px; } .piece small { display: block; font-size: 13px; margin-top: 4px; }
+    .piece.consentie { background: var(--vert-pale); color: var(--vert); }
+    .piece.critique { box-shadow: inset 0 0 0 2px currentColor; }
+    .piece.vide { background: transparent; border: 3px dashed var(--rouge); color: var(--rouge); }
+    .piece.vide .demande { font-size: 14px; color: var(--encre); margin-top: 6px; }
+    .chip { font-size: 14px; font-weight: 700; padding: 3px 11px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--ligne); white-space: nowrap; }
+    .chip.vert { background: var(--vert-pale); color: var(--vert); border-color: transparent; }
+    .chip.rouge { background: var(--rouge-pale); color: var(--rouge); border-color: transparent; }
+    .chip.ambre { background: var(--ambre-pale); color: var(--ambre); border-color: transparent; }
+    .chip.bleu { background: #e3ecf8; color: #1d4580; border-color: transparent; }
+    .perdu { margin-top: 10px; color: var(--rouge); font-weight: 600; }
+    .attention { margin-top: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .attention div { background: var(--surface); border: 1px solid var(--ligne); border-radius: var(--rayon); padding: 10px 14px; font-size: 15px; }
+    .attention ul, .passeport ul { margin: 6px 0 0; padding-left: 20px; }
+    .passeport { margin-top: 20px; background: var(--surface); border: 2px solid var(--encre); border-radius: var(--rayon); padding: 16px 20px; }
+    .passeport h2 { font-size: 24px; } .passeport h3 { font-size: 16px; margin-top: 12px; }
+    .pulse { margin-top: 20px; }
+    @media (max-width: 760px) { .attention { grid-template-columns: 1fr; } .page { padding: 14px 16px 30px; } }
+  </style>
+</head>
+<body>
+  <header class="haut">
+    <span class="marque"><span class="pouls-point" aria-hidden="true"></span>Club Pulse · Établi</span>
+    <span class="puce fictif">monde fictif</span>
+    <span class="droite"><span class="puce" id="date">date…</span><span class="puce" id="fraicheur">…</span>
+      <button class="btn discret petit" id="voir-pulse">Ce qui a changé</button></span>
+  </header>
+  <div class="page">
+    <h1 class="titre">Ce que le Club peut faire ensemble</h1>
+    <p class="sous">Chaque capacité est un assemblage de pièces déclarées par des membres, valables à sa date et consenties pour elle. La pièce manquante porte la demande.</p>
+    <div class="attention" id="attention"></div>
+    <div class="grille" id="grille"></div>
+    <div id="passeport"></div>
+    <div id="pulse" class="pulse"></div>
+  </div>
+  <script type="module">
+    const $ = (s) => document.querySelector(s);
+    function h(tag, attrs = {}, ...enfants) {
+      const el = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs || {})) {
+        if (v === null || v === undefined || v === false) continue;
+        if (k === "class") el.className = v; else if (k.startsWith("on")) el.addEventListener(k.slice(2), v); else el.setAttribute(k, v === true ? "" : v);
+      }
+      for (const e of enfants.flat(Infinity)) if (e !== null && e !== undefined && e !== false) el.append(e instanceof Node ? e : document.createTextNode(String(e)));
+      return el;
+    }
+    const jeton = () => { try { return sessionStorage.getItem("console-jeton") || "1"; } catch { return "1"; } };
+    const JOURS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+    const jour = (iso) => { const d = new Date(iso + "T12:00:00"); return `${JOURS[d.getDay()]} ${iso.slice(8, 10)}.${iso.slice(5, 7)}`; };
+    const COULEURS = { ACTIVE: "vert", DEGRADED: "rouge", ONE_AWAY: "ambre", CONSENTED: "bleu", PROPOSED: "bleu", EXTINCT: "" };
+    let choisie = null, derniere = null;
+
+    function piece(p, c) {
+      if (!p.presente) {
+        return h("div", { class: "piece vide", "data-piece": p.emplacement }, h("b", {}, p.role), h("small", {}, p.libelle),
+          c.ask ? h("p", { class: "demande" }, c.ask.texte) : null,
+          c.ask ? h("small", {}, `Débloquerait ${c.ask.levier} capacité${c.ask.levier > 1 ? "s" : ""} · demande valable jusqu'au ${jour(c.ask.expire)}`) : null);
+      }
+      return h("div", { class: "piece" + (p.consentement === "donné" ? " consentie" : "") + (p.critique ? " critique" : ""), "data-piece": p.emplacement },
+        h("b", {}, p.role), h("small", {}, p.libelle), h("small", {}, p.consentement === "donné" ? "✓ consentie pour cette capacité" : "consentement à demander"),
+        p.critique ? h("small", {}, "pièce critique : aucune autre ne la remplace") : null);
+    }
+    function carte(c) {
+      const el = h("article", { class: "capacite", "data-statut": c.statut, "data-finalite": c.finalite, tabindex: 0, role: "button",
+        onclick: () => { choisie = c.finalite; rendre(derniere); $("#passeport").scrollIntoView({ behavior: "smooth" }); } },
+        h("div", { style: "display:flex;justify-content:space-between;gap:10px;align-items:flex-start" }, h("h2", {}, c.titre),
+          h("span", { class: "chip " + (COULEURS[c.statut] || ""), "data-role": "statut" }, c.statut_libelle)),
+        h("p", { class: "quand" }, `${jour(c.jour)} · fenêtre ${c.fenetre}${c.creneau ? " · créneau " + c.creneau : ""}`),
+        h("div", { class: "pieces" }, c.pieces.map((p) => piece(p, c))),
+        c.perdus.map((x) => h("p", { class: "perdu" }, x)),
+        c.recomposition ? h("p", { class: "quand" }, "Recomposition proposée : " + c.recomposition.texte) : null,
+        c.sans_solution ? h("p", { class: "perdu" }, "Aucune solution sûre aujourd'hui.") : null);
+      return el;
+    }
+    function passeport(c) {
+      const liste = (titre, items) => [h("h3", {}, titre), items.length ? h("ul", {}, items.map((x) => h("li", {}, x))) : h("p", { class: "note" }, "—")];
+      return h("section", { class: "passeport", "aria-label": "Passeport de capacité" },
+        h("span", { class: "surtitre" }, "Passeport de capacité"), h("h2", {}, c.titre),
+        h("p", { class: "quand" }, `${jour(c.jour)} · ${c.fenetre} · ${c.statut_libelle} · version ${c.version} du patron`),
+        ...liste("Pièces et consentements", c.pieces.map((p) => `${p.role} — ${p.libelle} : ${p.presente ? `fournie par ${p.fournie_par}, consentement ${p.consentement}` : "manquante"}`)),
+        ...liste("Pièces critiques (calculé : sans elles, la capacité ne tient plus)", c.critiques),
+        ...liste("Hypothèses restantes", c.hypotheses),
+        ...liste("Ce qui ne vaut plus", c.perdus),
+        ...liste("Alternatives", c.recomposition ? [c.recomposition.texte] : []),
+        ...(c.sans_solution ? liste("Aucune solution sûre — ce qu'on sait, ce qu'on ignore, ce qui débloquerait",
+          [...c.sans_solution.cause, ...c.sans_solution.sait, ...c.sans_solution.ignore, ...c.sans_solution.debloquerait.map((x) => "débloquerait : " + x)]) : []),
+        ...liste("Résultats passés", [c.resultats]),
+        h("p", { class: "note", style: "margin-top:10px" }, "Chaque personne peut retirer son consentement depuis son téléphone ; la capacité est alors recalculée. Aucun nom n'est affiché ici."));
+    }
+    function rendre(r) {
+      if (!r) return;
+      $("#date").textContent = `date du Club (simulée) : ${jour(r.date)}`;
+      const a = r.attention;
+      $("#attention").replaceChildren(
+        h("div", {}, h("span", { class: "surtitre" }, "Bloque"), a.bloque.length ? h("ul", {}, a.bloque.map((x) => h("li", {}, x))) : h("p", { class: "note" }, "Rien.")),
+        h("div", {}, h("span", { class: "surtitre" }, "Attend une décision"), a.decision.length ? h("ul", {}, a.decision.map((x) => h("li", {}, x))) : h("p", { class: "note" }, "Rien.")),
+        h("div", {}, h("span", { class: "surtitre" }, "Expire bientôt"), a.expire.length ? h("ul", {}, a.expire.map((x) => h("li", {}, x))) : h("p", { class: "note" }, "Rien.")));
+      $("#grille").replaceChildren(...r.capacites.map(carte));
+      const c = r.capacites.find((x) => x.finalite === choisie);
+      $("#passeport").replaceChildren(...(c ? [passeport(c)] : []));
+    }
+    let enCours = false;
+    async function lire() {
+      if (enCours) return; enCours = true;
+      const t = performance.now();
+      try {
+        const r = await fetch("/api/pulse/console/capacites", { headers: { "X-Pulse-Console": jeton() } });
+        if (!r.ok) throw new Error(`serveur : ${r.status}`);
+        derniere = await r.json(); rendre(derniere);
+        $("#fraicheur").textContent = `lu en ${Math.round(performance.now() - t)} ms`; $("#fraicheur").className = "puce";
+      } catch (e) {
+        $("#fraicheur").textContent = "hors ligne : écran figé"; $("#fraicheur").className = "puce rouge";   // jamais un état inventé
+      } finally { enCours = false; }
+    }
+    $("#voir-pulse").addEventListener("click", async () => {
+      try {
+        const r = await fetch("/api/pulse/console/pulse?depuis=0", { headers: { "X-Pulse-Console": jeton() } });
+        const p = await r.json();
+        const bloc = (titre, items) => h("div", {}, h("span", { class: "surtitre" }, titre),
+          items.length ? h("ul", {}, items.map((x) => h("li", {}, `${x.titre} (${x.avant || "—"} → ${x.apres || "—"})`))) : h("p", { class: "note" }, "Rien."));
+        $("#pulse").replaceChildren(h("section", { class: "passeport", "aria-label": "Pulse" }, h("span", { class: "surtitre" }, "Pulse"),
+          h("h2", {}, `Depuis l'ouverture (${jour(p.depuis.date)}) jusqu'à maintenant (${jour(p.jusqu_a.date)})`),
+          h("div", { class: "attention" }, bloc("Apparues", p.apparues), bloc("Éteintes", p.eteintes), bloc("Recomposées", p.recomposees)),
+          h("div", { class: "attention" }, bloc("Fragiles", p.fragiles), bloc("À une pièce près", p.a_une_piece), h("div", {}, h("p", { class: "note" }, p.calcul)))));
+      } catch (e) { $("#pulse").replaceChildren(h("p", { class: "note" }, "Pulse indisponible : réessayez.")); }
+    });
+    lire();
+    setInterval(lire, 1000);
+  </script>
+</body>
+</html>

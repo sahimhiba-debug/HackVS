@@ -19,7 +19,7 @@
     main { padding-top: 18px; }
     .grand { font-size: clamp(24px, 6.5vw, 32px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; }
     nav.onglets { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--ligne); z-index: 6;
-      display: grid; grid-template-columns: repeat(4, 1fr); padding-bottom: env(safe-area-inset-bottom); }
+      display: grid; grid-template-columns: repeat(5, 1fr); padding-bottom: env(safe-area-inset-bottom); }
     nav.onglets a { text-decoration: none; font-size: 12px; font-weight: 600; color: var(--encre-3); display: grid; justify-items: center; gap: 2px; padding: 9px 2px 10px; min-height: 56px; }
     nav.onglets a span { font-size: 19px; line-height: 1; }
     nav.onglets a[aria-current="page"] { color: var(--encre); }
@@ -58,6 +58,7 @@
     <a href="#action" data-o="action"><span aria-hidden="true">⧉</span>Agir à plusieurs</a>
     <a href="#nouveau" data-o="nouveau"><span aria-hidden="true">＋</span>Proposer un essai</a>
     <a href="#souvenirs" data-o="souvenirs"><span aria-hidden="true">◈</span>Souvenirs et accords</a>
+    <a href="#demandes" data-o="demandes"><span aria-hidden="true">✦</span>Demandes</a>
   </nav>
   <div id="toasts" aria-live="assertive"></div>
   <script type="module">
@@ -411,6 +412,43 @@
           capacite: 1, au: au.value } }), "Offre publiée.") }, "Publier"));
     }
 
+    // ------------------------------------------------------------------ E. demandes du Club, consentements, mes données
+    const JOURS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+    const jourDe = (iso) => { const d = new Date(iso + "T12:00:00"); return `${JOURS[d.getDay()]} ${iso.slice(8, 10)}.${iso.slice(5, 7)}`; };
+    async function ecranDemandes() {
+      const [asks, d] = await Promise.all([api("/api/pulse/moi/asks"), api("/api/pulse/moi/donnees")]);
+      const carteAsk = (a) => {
+        const champs = Object.entries(a.minimums).map(([k, v]) => h("div", { class: "champ" }, h("label", { for: `att-${k}` }, `${k} (au moins ${v})`),
+          h("input", { id: `att-${k}`, type: "number", min: 0, max: 1000, "data-attribut": k })));
+        const repondre = (oui) => agir(() => api(`/api/pulse/moi/asks/${encodeURIComponent(a.id)}/reponse`, { corps: { oui,
+          attributs: Object.fromEntries(champs.map((c) => { const i = c.querySelector("input"); return [i.dataset.attribut, Number(i.value || 0)]; })) } }),
+          oui ? "Merci : votre pièce est enregistrée, avec votre consentement pour cette seule capacité." : "Noté. Personne d'autre ne le saura.");
+        return h("div", { class: "carte", "data-ask": a.id }, h("span", { class: "surtitre" }, a.titre), h("p", { class: "creneau", style: "font-size:19px" }, a.texte),
+          ...champs, h("div", { class: "actions", style: "margin-top:10px" }, h("button", { class: "btn plein", id: "ask-oui", onclick: repondre(true) }, "Oui"),
+            h("button", { class: "btn discret", onclick: repondre(false) }, "Non"), h("button", { class: "btn discret", onclick: repondre(false) }, "Pas cette fois")),
+          h("p", { class: "note", style: "margin-top:8px" }, "Vous pouvez refuser sans vous justifier. Oui = vous déclarez cette pièce pour ce créneau, et vous consentez à son usage pour cette capacité seulement."));
+      };
+      const recu = (r) => h("div", { class: "carte", "data-recu": r.finalite }, h("div", { class: "ligne" }, h("b", {}, r.titre),
+        h("span", { class: "puce" + (r.etat === "valable" ? " vert" : "") }, r.etat)),
+        h("p", { class: "note" }, `Votre pièce : ${r.offre} (${r.piece}) · donné le ${jourDe(r.donne_le)} · jusqu'au ${jourDe(r.jusqu_au)} · référence ${r.reference}`),
+        h("p", { class: "note" }, r.partage),
+        r.revocable ? h("button", { class: "btn discret petit", id: `retirer-${r.finalite}`, style: "margin-top:8px",
+          onclick: agir(() => api(`/api/pulse/moi/capacites/${r.finalite}/retrait`, { corps: {} }), "Consentement retiré. Personne ne saura que c'est vous.") }, "Retirer mon consentement") : null);
+      afficher(h("h1", { class: "grand" }, "Demandes du Club"), h("p", { class: "note", style: "margin-top:4px" }, `Aujourd'hui (date simulée) : ${jourDe(d.date)}`),
+        section("Une pièce qui manque", asks.length ? asks.map(carteAsk) : vide("Aucune demande pour vous en ce moment.")),
+        section("Mes consentements (reçus)", d.consentements.length ? d.consentements.map(recu) : vide("Aucun.")),
+        h("p", { style: "margin-top:14px" }, h("a", { href: "#donnees" }, "Mes données : ce que le Club sait de moi, pourquoi, jusqu'à quand")));
+    }
+    async function ecranDonnees() {
+      const d = await api("/api/pulse/moi/donnees");
+      afficher(h("h1", { class: "grand" }, "Mes données"), h("p", { class: "note", style: "margin-top:4px" }, `Au ${jourDe(d.date)} (date simulée)`),
+        section("Ce que j'ai déclaré", d.declarations.length ? d.declarations.map((x) => h("div", { class: "carte" }, h("div", { class: "ligne" }, h("b", {}, x.type), h("span", { class: "puce" }, x.etat)),
+          h("p", {}, x.texte), h("p", { class: "note" }, `Jusqu'au : ${x.valable_jusqu_au} · pourquoi : ${x.pourquoi}`))) : vide("Rien.")),
+        section("Mes consentements", d.consentements.length ? d.consentements.map((r) => h("p", {}, `${r.titre} — ${r.etat}`)) : vide("Aucun.")),
+        section("Mes réponses aux demandes", d.reponses_aux_demandes.length ? d.reponses_aux_demandes.map((r) => h("p", {}, `${jourDe(r.le)} : ${r.reponse}`)) : vide("Aucune.")),
+        section("Ailleurs", h("p", {}, d.hors_du_journal), h("p", { class: "note" }, `Notes privées : ${d.notes_privees} (vous seul·e)`)));
+    }
+
     // ------------------------------------------------------------------ routeur
     async function route(silencieux = false) {
       const g = ++generation;
@@ -419,13 +457,13 @@
       if (!session && nom !== "acces") { location.hash = "#acces"; return; }
       $("#onglets").hidden = nom === "acces";
       $("#qui").textContent = session ? (lire("pulse-nom") || "") : "";
-      document.querySelectorAll("#onglets a").forEach((a) => a.setAttribute("aria-current", a.dataset.o === nom || (nom === "essai" && a.dataset.o === "actions") ? "page" : "false"));
+      document.querySelectorAll("#onglets a").forEach((a) => a.setAttribute("aria-current", a.dataset.o === nom || (nom === "essai" && a.dataset.o === "actions") || (nom === "donnees" && a.dataset.o === "demandes") ? "page" : "false"));
       const ecran = $("#ecran");
       ecran.setAttribute("aria-busy", "true");
       const attente = silencieux ? null : setTimeout(() => { if (g === generation) ecran.replaceChildren(h("p", { class: "note", role: "status" }, "Chargement…")); }, 250);
       try {
         await ({ acces: ecranAcces, actions: ecranActions, action: ecranAction, nouveau: () => (id ? ecranCorriger(id) : ecranNouveau()), essai: () => ecranEssai(id),
-          souvenirs: ecranSouvenirs }[nom] || ecranActions)();
+          souvenirs: ecranSouvenirs, demandes: ecranDemandes, donnees: ecranDonnees }[nom] || ecranActions)();
       } catch (e) {
         if (e instanceof Perime || g !== generation) return;
         ecran.replaceChildren(h("div", { class: "carte", role: "alert" }, h("span", { class: "surtitre" }, "Impossible d'afficher cet écran"),
@@ -441,7 +479,7 @@
       const nom = (location.hash.slice(1) || "actions").split("/")[0];
       const saisie = document.activeElement && document.activeElement.matches("input, textarea, select");
       const ouvert = document.querySelector("details[open]");
-      if (session && document.visibilityState === "visible" && !saisie && !ouvert && ["actions", "essai"].includes(nom)) route(true);
+      if (session && document.visibilityState === "visible" && !saisie && !ouvert && ["actions", "essai", "demandes"].includes(nom)) route(true);
     }, 4000);
     window.addEventListener("hashchange", () => route());
     window.addEventListener("online", () => toast("De retour en ligne."));

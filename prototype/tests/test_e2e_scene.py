@@ -17,6 +17,13 @@ INTERDITS = ("null", "undefined", "NaN", "[object")
 
 
 def _chromium(p):
+    """Chromium du poste (ou celui de Playwright). Enregistré pour la CAPTURE SUR ÉCHEC (tests/capture_e2e.py) : si le
+    test échoue, chaque page encore ouverte est sauvegardée (capture d'écran + HTML) avant la fermeture du navigateur."""
+    from tests.capture_e2e import enregistrer
+    return enregistrer(_lancer(p))
+
+
+def _lancer(p):
     chemin = "/opt/pw-browsers/chromium"
     try:
         return p.chromium.launch(executable_path=chemin) if os.path.exists(chemin) else p.chromium.launch()
