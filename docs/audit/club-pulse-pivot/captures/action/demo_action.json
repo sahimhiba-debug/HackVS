@@ -1,0 +1,85 @@
+{
+ "commit": "6dc7322",
+ "heure_jury": "17:00",
+ "duree_s": 78.1,
+ "etapes": [
+  {
+   "t_s": 1.1,
+   "titre": "Avant",
+   "texte": "Jeudi, pendant la Foire : des membres ont proposé leur voix, leur stand, leurs contacts — chacun avec ses horaires. Personne n'a rien demandé.",
+   "joue": false
+  },
+  {
+   "t_s": 8.1,
+   "titre": "1. Le besoin",
+   "texte": "Sophie a le produit. Elle écrit, avec ses mots, ce qu'elle ne peut pas faire seule.",
+   "joue": false
+  },
+  {
+   "t_s": 12.4,
+   "titre": "2. Ce qu'il faudrait réunir",
+   "texte": "Trois exigences proposées (une voix allemande qui remet une fiche, un lieu, un public) — des règles simples, pas un modèle : c'est affiché. Sophie confirme.",
+   "joue": false
+  },
+  {
+   "t_s": 19.4,
+   "titre": "3. La proposition",
+   "texte": "Aucune offre ne suffit seule. Le serveur cherche le moment où les disponibilités DÉCLARÉES se recouvrent : jeudi 16:00–16:45. Rien n'est encore envoyé.",
+   "joue": false
+  },
+  {
+   "t_s": 27.6,
+   "titre": "4. Chacun décide",
+   "texte": "Léa reçoit SA part sur SON téléphone : présenter en allemand et remettre une fiche. Elle accepte.",
+   "joue": false
+  },
+  {
+   "t_s": 31.5,
+   "titre": "4. Chacun décide",
+   "texte": "Pauline (lieu) et Markus (public) ne sont pas sur scène : leurs accords sont JOUÉS depuis la console, et l'écran commun l'affiche. Coopération prête : pas encore réalisée.",
+   "joue": true
+  },
+  {
+   "t_s": 38.5,
+   "titre": "5. Le jury change une condition",
+   "texte": "« Léa n'est disponible qu'à partir de 17:00. » Elle le déclare sur SON téléphone.",
+   "joue": false
+  },
+  {
+   "t_s": 40.5,
+   "titre": "6. Ce qui change",
+   "texte": "Visible sur l'écran commun en 944 ms : la voix allemande ne couvre plus le créneau ; le lieu et le public restaient valables pour l'ancien créneau. Adaptations calculées par le serveur ; aucun lancement possible.",
+   "joue": false
+  },
+  {
+   "t_s": 49.7,
+   "titre": "7. Sophie choisit, chacun reconfirme",
+   "texte": "Déplacer à 17:00–17:45 dans un autre lieu (une autre personne). Le moment change : TOUS reconfirment — personne n'est reconfirmé à sa place.",
+   "joue": false
+  },
+  {
+   "t_s": 54.9,
+   "titre": "7. Sophie choisit, chacun reconfirme",
+   "texte": "Nouveaux accords réunis sur la nouvelle version (joués pour les rôles absents).",
+   "joue": true
+  },
+  {
+   "t_s": 58.0,
+   "titre": "8. Un résultat concret",
+   "texte": "Sophie engage l'action. Léa écrit la fiche en allemand et la transmet.",
+   "joue": false
+  },
+  {
+   "t_s": 65.3,
+   "titre": "8. Un résultat concret",
+   "texte": "La fiche apparaît sur le téléphone de Sophie. Transmise ≠ reçue : c'est Sophie qui confirme.",
+   "joue": false
+  },
+  {
+   "t_s": 69.2,
+   "titre": "Fin",
+   "texte": "Réception confirmée par la destinataire. La présentation, elle, est engagée pour jeudi 17:00 — pas encore tenue : l'écran ne dit rien de plus que ce qui est prouvé.",
+   "joue": false
+  }
+ ]
+}
