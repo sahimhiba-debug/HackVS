@@ -27,6 +27,8 @@ GRAINE = 2026
 
 
 FOIRE = "Foire du Valais 2026 (fictive)"
+FOIRE_DEBUT, FOIRE_FIN = date(2026, 10, 2), date(2026, 10, 11)       # la période de la démonstration (dates de la Foire)
+JOUR_SCENE = date(2026, 10, 8)                                          # le jeudi de la Foire où se joue l'action collective
 RECHERCHES_SOPHIE = [Offre(concept="traduction", texte="Traduire nos étiquettes en allemand"),
                      Offre(concept=None, texte="Faire valider la conformité de nos étiquettes pour le marché allemand")]
 # scène de la boucle complète : UN besoin, déclaré dans le profil de Sophie (fictif)
@@ -61,7 +63,7 @@ def construire(sophie_profilee: bool = True, recherches: list[Offre] | None = No
                  offre=[Offre(concept="traduction", texte="Traduction et relecture français–allemand, étiquettes et emballages")],
                  langues=["de", "fr"], zones_service=["Valais"], accepte_introductions=True,
                  creneaux=["jeu-apres-midi", "ven-matin"], maj=(AUJOURD_HUI - timedelta(days=45)).isoformat(),
-                 note_disponibilite="disponible à partir du 12 novembre")
+                 note_disponibilite="disponible à partir du 15 octobre")
     for pid, extra in (recherches_autres or {}).items():
         scene = [p.model_copy(update={"recherche": list(p.recherche) + list(extra)}) if p.id == pid else p for p in scene]
     fond, _ = generer(TAILLE - len(scene) - 2, GRAINE)
@@ -71,7 +73,7 @@ def construire(sophie_profilee: bool = True, recherches: list[Offre] | None = No
         m.ajouter(Evt(type="RENCONTRE", le=date.fromisoformat(r["le"]), acteurs=sorted([r["a"], r["b"]]),
                       statut=Statut.SIMULE, donnees={"evenement": r["evenement"], "raisons": []}))
     m.ajouter(Evt(type="RENCONTRE", le=AUJOURD_HUI - timedelta(days=31), acteurs=sorted([SOPHIE, MARKUS]),
-                  statut=Statut.SIMULE, donnees={"evenement": FOIRE, "raisons": []}))
+                  statut=Statut.SIMULE, donnees={"evenement": "Apéritif du Club de septembre (fictif)", "raisons": []}))
     salon = Evenement(id=SALON, nom="Salon Bio de Munich (fictif)", le=AUJOURD_HUI + timedelta(days=12),
                       themes=("export_allemagne",), participants=tuple(sorted({SOPHIE, MARKUS, "s02", "s03"})))
     return Reseau(profils=profils, besoins=list(fond.besoins), evenements=[salon, *fond.evenements], memoire=m,

@@ -60,13 +60,14 @@ def test_p1_un_changement_numerique_encore_couvrant_ne_redemande_rien():
 
 def test_p1_par_l_api_la_modification_des_conditions_bloque_le_lancement():
     from app.main import app
+    from intelligence.club_synthetique import AUJOURD_HUI
     c = TestClient(app)                                                      # console : cette machine seulement
     console = {"X-Pulse-Console": "1"}
     assert c.post("/api/pulse/demo/reinitialiser", headers=console).status_code == 200
     per = {p["id"]: p["session"] for p in c.get("/api/pulse/console/personas", headers=console).json()}
     s, p = {"X-Pulse-Session": per[LEA]}, {"X-Pulse-Session": per[PAULINE]}      # Léa porte, Pauline prête son lieu
     e = c.post("/api/pulse/moi/essais", headers=s, json={"question": "Le présentoir attire-t-il ?", "critere": "combien s'arrêtent",
-                                                           "echeance": (J + timedelta(days=5)).isoformat(),
+                                                           "echeance": (AUJOURD_HUI + timedelta(days=5)).isoformat(),   # horloge du monde servi
                                                            "etapes": [{"nature": "lieu", "geste": PRESENCE.geste, "duree_min": 10}]}).json()
     v = c.post(f"/api/pulse/moi/essais/{e['id']}/publier", headers=s, json={"version": e["version"]}).json()["version"]
     assert c.post(f"/api/pulse/moi/essais/{e['id']}/decision", headers=p, json={"version": v, "accepte": True}).status_code == 200

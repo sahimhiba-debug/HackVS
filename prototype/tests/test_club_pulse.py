@@ -75,7 +75,7 @@ def test_la_boucle_complete_est_rejouable_a_l_identique():
     assert c.banc.etat(eid) == "OBSERVEE"
     etats = [e.donnees["vers"] for e in c.banc._evs(eid, "ESSAI_ETAT")]
     assert etats.index("A_ADAPTER") < etats.index("EN_COURS")                                     # perturbation AVANT l'engagement
-    assert a.traces[1]["creneau"] == "05.11 16:00–16:45" and c.banc.protocole(eid).creneau.debut == "17:00"
+    assert a.traces[1]["creneau"] == "08.10 16:00–16:45" and c.banc.protocole(eid).creneau.debut == "17:00"
     assert len(a.traces[5]["alternatives"]) >= 2                                                 # au moins deux adaptations
     assert [t["joue"] for t in a.traces].count(True) == 8                                        # les gestes humains sont marqués
     s = memoire_club.souvenirs(c.banc)[0]

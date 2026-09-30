@@ -1,6 +1,6 @@
 {
  "_avertissement": "RÉSEAU DE SCÈNE FICTIF (SYNTHÉTIQUE) : personnes, entreprises, besoins et rencontres inventés pour la démonstration. Aucune donnée du Club des Affaires.",
- "debut": "2026-11-03",
+ "debut": "2026-10-06",
  "profils": [
   {
    "id": "s01",
@@ -35,7 +35,7 @@
     "mar-matin",
     "jeu-apres-midi"
    ],
-   "maj": "2026-09-10"
+   "maj": "2026-08-13"
   },
   {
    "id": "s02",
@@ -66,7 +66,7 @@
     "Valais"
    ],
    "accepte_introductions": true,
-   "maj": "2026-08-22"
+   "maj": "2026-07-25"
   },
   {
    "id": "s03",
@@ -97,7 +97,7 @@
     "Valais"
    ],
    "accepte_introductions": true,
-   "maj": "2026-07-01"
+   "maj": "2026-06-03"
   },
   {
    "id": "s04",
@@ -128,7 +128,7 @@
     "Valais"
    ],
    "accepte_introductions": true,
-   "maj": "2026-06-15"
+   "maj": "2026-05-18"
   },
   {
    "id": "s05",
@@ -154,7 +154,7 @@
     "Valais"
    ],
    "accepte_introductions": true,
-   "maj": "2026-03-02"
+   "maj": "2026-02-02"
   },
   {
    "id": "s06",
@@ -187,7 +187,7 @@
     "Suisse romande"
    ],
    "accepte_introductions": true,
-   "maj": "2026-09-01"
+   "maj": "2026-08-04"
   },
   {
    "id": "s07",
@@ -219,7 +219,7 @@
     "Suisse romande"
    ],
    "accepte_introductions": true,
-   "maj": "2026-08-30"
+   "maj": "2026-08-02"
   },
   {
    "id": "s08",
@@ -245,7 +245,7 @@
     "Valais"
    ],
    "accepte_introductions": true,
-   "maj": "2026-05-20"
+   "maj": "2026-04-22"
   },
   {
    "id": "s09",
@@ -272,7 +272,7 @@
     "Suisse romande"
    ],
    "accepte_introductions": true,
-   "maj": "2026-09-05"
+   "maj": "2026-08-08"
   },
   {
    "id": "s10",
@@ -306,7 +306,7 @@
     "Suisse alémanique"
    ],
    "accepte_introductions": true,
-   "maj": "2026-09-18"
+   "maj": "2026-08-21"
   },
   {
    "id": "s11",
@@ -334,7 +334,7 @@
     "Suisse romande"
    ],
    "accepte_introductions": true,
-   "maj": "2026-09-12"
+   "maj": "2026-08-15"
   },
   {
    "id": "s12",
@@ -365,7 +365,7 @@
     "Valais"
    ],
    "accepte_introductions": true,
-   "maj": "2026-09-02"
+   "maj": "2026-08-05"
   },
   {
    "id": "s13",
@@ -391,7 +391,7 @@
     "Valais"
    ],
    "accepte_introductions": true,
-   "maj": "2026-08-01"
+   "maj": "2026-07-04"
   },
   {
    "id": "s14",
@@ -428,7 +428,7 @@
     "mar-matin",
     "ven-matin"
    ],
-   "maj": "2026-10-20"
+   "maj": "2026-09-22"
   },
   {
    "id": "s15",
@@ -460,7 +460,7 @@
     "Valais"
    ],
    "accepte_introductions": true,
-   "maj": "2026-09-20"
+   "maj": "2026-08-23"
   },
   {
    "id": "s16",
@@ -486,111 +486,111 @@
     "Suisse alémanique"
    ],
    "accepte_introductions": false,
-   "maj": "2026-09-30"
+   "maj": "2026-09-02"
   }
  ],
  "rencontres_passees": [
   {
    "a": "s01",
    "b": "s02",
-   "le": "2026-09-15",
-   "evenement": "Soirée du Club de septembre (fictive)"
+   "le": "2026-08-18",
+   "evenement": "Soirée du Club d'août (fictive)"
   },
   {
    "a": "s02",
    "b": "s03",
-   "le": "2026-09-15",
-   "evenement": "Soirée du Club de septembre (fictive)"
+   "le": "2026-08-18",
+   "evenement": "Soirée du Club d'août (fictive)"
   },
   {
    "a": "s01",
    "b": "s04",
-   "le": "2026-09-15",
-   "evenement": "Soirée du Club de septembre (fictive)"
+   "le": "2026-08-18",
+   "evenement": "Soirée du Club d'août (fictive)"
   },
   {
    "a": "s03",
    "b": "s04",
-   "le": "2026-09-15",
-   "evenement": "Soirée du Club de septembre (fictive)"
+   "le": "2026-08-18",
+   "evenement": "Soirée du Club d'août (fictive)"
   },
   {
    "a": "s04",
    "b": "s05",
-   "le": "2026-05-12",
-   "evenement": "Soirée du Club de mai (fictive)"
+   "le": "2026-04-14",
+   "evenement": "Soirée du Club d'avril (fictive)"
   },
   {
    "a": "s01",
    "b": "s05",
-   "le": "2026-05-12",
-   "evenement": "Soirée du Club de mai (fictive)"
+   "le": "2026-04-14",
+   "evenement": "Soirée du Club d'avril (fictive)"
   },
   {
    "a": "s02",
    "b": "s06",
-   "le": "2026-09-15",
-   "evenement": "Soirée du Club de septembre (fictive)"
+   "le": "2026-08-18",
+   "evenement": "Soirée du Club d'août (fictive)"
   },
   {
    "a": "s06",
    "b": "s07",
-   "le": "2026-09-15",
-   "evenement": "Soirée du Club de septembre (fictive)"
+   "le": "2026-08-18",
+   "evenement": "Soirée du Club d'août (fictive)"
   },
   {
    "a": "s07",
    "b": "s08",
-   "le": "2026-09-15",
-   "evenement": "Soirée du Club de septembre (fictive)"
+   "le": "2026-08-18",
+   "evenement": "Soirée du Club d'août (fictive)"
   },
   {
    "a": "s06",
    "b": "s09",
-   "le": "2026-09-15",
-   "evenement": "Soirée du Club de septembre (fictive)"
+   "le": "2026-08-18",
+   "evenement": "Soirée du Club d'août (fictive)"
   },
   {
    "a": "s08",
    "b": "s09",
-   "le": "2026-09-15",
-   "evenement": "Soirée du Club de septembre (fictive)"
+   "le": "2026-08-18",
+   "evenement": "Soirée du Club d'août (fictive)"
   },
   {
    "a": "s10",
    "b": "s11",
-   "le": "2026-10-06",
-   "evenement": "Petit-déjeuner du Club d'octobre (fictif)"
+   "le": "2026-09-08",
+   "evenement": "Petit-déjeuner du Club de septembre (fictif)"
   },
   {
    "a": "s11",
    "b": "s12",
-   "le": "2026-10-06",
-   "evenement": "Petit-déjeuner du Club d'octobre (fictif)"
+   "le": "2026-09-08",
+   "evenement": "Petit-déjeuner du Club de septembre (fictif)"
   },
   {
    "a": "s12",
    "b": "s13",
-   "le": "2026-10-06",
-   "evenement": "Petit-déjeuner du Club d'octobre (fictif)"
+   "le": "2026-09-08",
+   "evenement": "Petit-déjeuner du Club de septembre (fictif)"
   },
   {
    "a": "s10",
    "b": "s14",
-   "le": "2026-10-06",
-   "evenement": "Petit-déjeuner du Club d'octobre (fictif)"
+   "le": "2026-09-08",
+   "evenement": "Petit-déjeuner du Club de septembre (fictif)"
   },
   {
    "a": "s11",
    "b": "s14",
-   "le": "2026-10-06",
-   "evenement": "Petit-déjeuner du Club d'octobre (fictif)"
+   "le": "2026-09-08",
+   "evenement": "Petit-déjeuner du Club de septembre (fictif)"
   },
   {
    "a": "s13",
    "b": "s15",
-   "le": "2026-10-06",
-   "evenement": "Petit-déjeuner du Club d'octobre (fictif)"
+   "le": "2026-09-08",
+   "evenement": "Petit-déjeuner du Club de septembre (fictif)"
   }
  ],
  "sophie": {

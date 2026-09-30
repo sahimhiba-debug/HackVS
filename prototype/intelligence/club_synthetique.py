@@ -27,7 +27,7 @@ from plateforme.memoire import Evt, Memoire
 
 from .modele import BesoinActif, Evenement, Reseau
 
-AUJOURD_HUI = date(2026, 11, 3)
+AUJOURD_HUI = date(2026, 10, 6)   # mardi, PENDANT la Foire du Valais 2026 (2–11 octobre) : le monde de démonstration y vit
 FOND = ["transport_frigorifique", "logistique", "fiduciaire", "droit_affaires", "cybersecurite", "informatique",
         "developpement_web", "marketing", "traduction", "energie_solaire", "efficacite_energetique", "emballage",
         "export_suisse_alemanique", "export_allemagne", "sante_securite_travail"]
@@ -113,7 +113,7 @@ def generer(n: int = 150, graine: int = 2026, plantes: bool = True) -> tuple[Res
                       statut=Statut.SYNTHETIQUE, donnees={"evenement": "soirée du Club"}))
     evenements = [Evenement(id=f"ev{k}", nom=nom, le=AUJOURD_HUI + timedelta(days=j), themes=tuple(th),
                             participants=tuple(sorted(rnd.sample(ids, min(len(ids), max(2, n // 6))))) if ids else ())
-                  for k, (nom, j, th) in enumerate([("Foire du Valais — journée PME (fictive)", 9, ["export_suisse_alemanique"]),
+                  for k, (nom, j, th) in enumerate([("Foire du Valais 2026 — journée PME (fictive)", 3, ["export_suisse_alemanique"]),
                                                     ("Soirée énergie du Club (fictive)", 16, ["energie_solaire"]),
                                                     ("Petit-déjeuner numérique (fictif)", 23, ["cybersecurite"])])]
     if plantes:

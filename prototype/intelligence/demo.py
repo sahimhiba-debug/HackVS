@@ -35,7 +35,8 @@ HEURE_JURY = ("17:00", "19:00")          # la valeur par défaut du rejeu ; en d
 
 
 def jour_foire(club: ClubPulse):
-    return club.jour + timedelta(days=2)                 # jeudi 05.11 (le monde fictif est au mardi 03.11)
+    """Le jeudi de la Foire du Valais 2026 (08.10) ; le monde fictif commence au mardi 06.10, pendant la Foire."""
+    return md.JOUR_SCENE
 
 
 def offres_scene(club: ClubPulse) -> list[tuple]:

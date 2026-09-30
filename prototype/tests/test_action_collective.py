@@ -38,12 +38,12 @@ def _jouer(eid, qui, accepte=True):
 
 def _action(h) -> str:
     prop = client.post("/api/pulse/moi/actions/preparer", headers=h[S], json={"texte": BESOIN_SOPHIE}).json()
-    assert {x["role"] for x in prop["exigences"]} == {"voix", "lieu", "public"} and prop["fenetre"]["jour"] == "2026-11-05"
+    assert {x["role"] for x in prop["exigences"]} == {"voix", "lieu", "public"} and prop["fenetre"]["jour"] == "2026-10-08"
     assert prop["ia"]["fournisseur"] in ("deterministe", "apertus")                      # l'origine de la compréhension est dite
     v = client.post("/api/pulse/moi/actions/nouvelle", headers=h[S], json={
         "question": "Présenter nos tisanes à des acheteurs germanophones", "objet": prop["objet"], "critere": prop["critere_suggere"],
         "exigences": prop["exigences"], "fenetre": prop["fenetre"], "duree_min_acceptable": 30}).json()
-    assert v["etat"] == "BROUILLON" and v["assemblage"]["creneau"]["texte"] == "05.11 16:00–16:45"
+    assert v["etat"] == "BROUILLON" and v["assemblage"]["creneau"]["texte"] == "08.10 16:00–16:45"
     assert client.post(f"/api/pulse/moi/essais/{v['id']}/projection", headers=h[S], json={"oui": True}).status_code == 200  # SON choix
     return v["id"]
 
@@ -53,7 +53,7 @@ def test_parcours_complet_decisions_depuis_des_sessions_distinctes():
     eid = _action(h)
     assert client.get(f"/api/pulse/moi/essais/{eid}", headers=h[L]).status_code == 404            # brouillon : Léa ne voit rien
     v = client.post(f"/api/pulse/moi/essais/{eid}/publier-proposition", headers=h[S], json={"version": 0}).json()
-    assert v["etat"] == "PROPOSE" and v["creneau"]["texte"] == "05.11 16:00–16:45"
+    assert v["etat"] == "PROPOSE" and v["creneau"]["texte"] == "08.10 16:00–16:45"
     lea = _essai(h, L, eid)
     assert lea["role"] == "contributeur" and lea["votre_part"]["gestes"][0]["livrable"] == "Fiche produit en allemand"
     assert client.post(f"/api/pulse/moi/essais/{eid}/decision", headers=h[L], json={"version": lea["version"], "accepte": True}).status_code == 200
@@ -64,7 +64,7 @@ def test_parcours_complet_decisions_depuis_des_sessions_distinctes():
 
     # ---- perturbation : Léa, sur SON espace, n'est disponible qu'à partir de 17 h
     oid = _essai(h, L, eid)["votre_part"]["gestes"][0]["offre_id"]
-    r = client.patch(f"/api/pulse/moi/offres/{oid}", headers=h[L], json={"plages": [{"jour": "2026-11-05", "debut": "17:00", "fin": "19:00"}]})
+    r = client.patch(f"/api/pulse/moi/offres/{oid}", headers=h[L], json={"plages": [{"jour": "2026-10-08", "debut": "17:00", "fin": "19:00"}]})
     assert r.status_code == 200 and eid in r.json()["essais_a_adapter"]
     proj = client.get("/api/pulse/console/projection", headers=CONSOLE).json()
     assert proj["etat"] == "A_ADAPTER" and proj["adaptation"]["tombe"] == ["Voix en allemand"]
@@ -118,10 +118,10 @@ def test_sans_solution_bloque_et_le_dit_puis_rouvre_sur_un_fait_nouveau():
     lea = _essai(h, L, eid)
     client.post(f"/api/pulse/moi/essais/{eid}/decision", headers=h[L], json={"version": lea["version"], "accepte": True})
     oid = _essai(h, L, eid)["votre_part"]["gestes"][0]["offre_id"]
-    client.patch(f"/api/pulse/moi/offres/{oid}", headers=h[L], json={"plages": [{"jour": "2026-11-05", "debut": "18:45", "fin": "20:00"}]})
+    client.patch(f"/api/pulse/moi/offres/{oid}", headers=h[L], json={"plages": [{"jour": "2026-10-08", "debut": "18:45", "fin": "20:00"}]})
     proj = client.get("/api/pulse/console/projection", headers=CONSOLE).json()
     assert proj["etat"] == "IMPOSSIBLE" and proj["adaptation"]["bloque"] and proj["adaptation"]["alternatives"] == []
-    client.patch(f"/api/pulse/moi/offres/{oid}", headers=h[L], json={"plages": [{"jour": "2026-11-05", "debut": "16:30", "fin": "19:00"}]})
+    client.patch(f"/api/pulse/moi/offres/{oid}", headers=h[L], json={"plages": [{"jour": "2026-10-08", "debut": "16:30", "fin": "19:00"}]})
     assert _essai(h, S, eid)["etat"] == "A_ADAPTER"                              # rouvert ; rien n'est relancé tout seul
 
 
@@ -141,7 +141,7 @@ def test_perturbation_jouee_par_l_equipe_est_affichee_comme_telle_et_refusee_pou
     offres = client.get("/api/pulse/console/essais", headers=CONSOLE).json()["offres"]
     lieu = next(o["id"] for o in offres if o["quoi"].startswith("Présentoir éclairé sur mon stand (halle 2)"))
     voix = next(o["id"] for o in offres if o["quoi"].startswith("Présenter un produit en allemand"))
-    plage = [{"jour": "2026-11-05", "debut": "14:00", "fin": "16:30"}]
+    plage = [{"jour": "2026-10-08", "debut": "14:00", "fin": "16:30"}]
     assert client.post("/api/pulse/console/jouer/disponibilite", headers=CONSOLE, json={"membre": L, "offre": voix, "plages": plage}).status_code == 403
     r = client.post("/api/pulse/console/jouer/disponibilite", headers=CONSOLE, json={"membre": P, "offre": lieu, "plages": plage})
     assert r.status_code == 200 and r.json()["joue"] and r.json()["essais_a_adapter"]
@@ -160,7 +160,7 @@ def test_le_creneau_propose_n_est_dit_seul_que_s_il_l_est():
     assert client.get("/api/pulse/console/projection", headers=CONSOLE).json()["creneau"]["recouvrement"] == r
     lieu = next(o["id"] for o in client.get("/api/pulse/console/essais", headers=CONSOLE).json()["offres"]
                 if o["quoi"].startswith("Présentoir éclairé sur mon stand (halle 2)"))
-    plage = [{"jour": "2026-11-05", "debut": "14:00", "fin": "16:45"}]
+    plage = [{"jour": "2026-10-08", "debut": "14:00", "fin": "16:45"}]
     assert client.post("/api/pulse/console/jouer/disponibilite", headers=CONSOLE, json={"membre": P, "offre": lieu, "plages": plage}).status_code == 200
     assert _essai(h, S, eid)["assemblage"]["creneau"]["recouvrement"] == {"debut": "16:00", "fin": "16:45", "unique": True}
 
@@ -189,7 +189,7 @@ def test_trente_jours_plus_tard_rien_n_est_reconduit_et_le_resultat_reste_inconn
     r = client.post("/api/pulse/moi/actions/nouvelle", headers=h[S], json={
         "question": "Recommencer le mois suivant", "objet": prop["objet"], "critere": prop["critere_suggere"],
         "exigences": prop["exigences"], "fenetre": prop["fenetre"], "duree_min_acceptable": 30})
-    assert r.status_code == 200 and prop["fenetre"]["jour"] > "2026-11-05"
+    assert r.status_code == 200 and prop["fenetre"]["jour"] > "2026-10-08"
     assert r.json()["assemblage"]["creneau"] is None and r.json()["assemblage"]["blocage"]         # rien n'est reconduit ni supposé
 
 
@@ -230,7 +230,7 @@ def test_rien_n_est_projete_sans_l_accord_de_la_porteuse_et_jamais_le_texte_d_un
     client.post(f"/api/pulse/moi/essais/{eid}/publier-proposition", headers=h[S], json={"version": 0})
     client.post(f"/api/pulse/moi/essais/{eid}/decision", headers=h[L], json={"version": _essai(h, L, eid)["version"], "accepte": True})
     oid = _essai(h, L, eid)["votre_part"]["gestes"][0]["offre_id"]
-    client.patch(f"/api/pulse/moi/offres/{oid}", headers=h[L], json={"plages": [{"jour": "2026-11-05", "debut": "17:00", "fin": "19:00"}]})
+    client.patch(f"/api/pulse/moi/offres/{oid}", headers=h[L], json={"plages": [{"jour": "2026-10-08", "debut": "17:00", "fin": "19:00"}]})
     brut = json.dumps(client.get("/api/pulse/console/projection", headers=CONSOLE).json(), ensure_ascii=False)
     offres = client.get("/api/pulse/console/essais", headers=CONSOLE).json()["offres"]
     for o in offres:                                                          # aucun texte d'offre, ni ses conditions
@@ -254,11 +254,11 @@ def test_la_valeur_choisie_par_le_jury_n_est_pas_fixee_d_avance(debut, fin, etat
     for qui in (P, M):
         _jouer(eid, qui)
     oid = _essai(h, L, eid)["votre_part"]["gestes"][0]["offre_id"]
-    client.patch(f"/api/pulse/moi/offres/{oid}", headers=h[L], json={"plages": [{"jour": "2026-11-05", "debut": debut, "fin": fin}]})
+    client.patch(f"/api/pulse/moi/offres/{oid}", headers=h[L], json={"plages": [{"jour": "2026-10-08", "debut": debut, "fin": fin}]})
     proj = client.get("/api/pulse/console/projection", headers=CONSOLE).json()
     assert proj["etat"] == etat
     alts = (proj["adaptation"] or {}).get("alternatives", [])
     assert len(alts) >= n_min and (etat != "IMPOSSIBLE" or alts == [])
     for a in alts:                                      # chaque adaptation proposée tient dans la NOUVELLE disponibilité
-        d = a["texte"].split("Déplacer à 05.11 ")[1][:5]
+        d = a["texte"].split("Déplacer à 08.10 ")[1][:5]
         assert debut <= d and a["texte"].split("–")[1][:5] <= fin

@@ -124,7 +124,7 @@ def deroule(x, base, pg, proj, s, lea, etape, jouer) -> None:
         s.locator("text=Une condition a changé").first.wait_for()
         alt = s.locator("button.alt").filter(has_text="45")                  # garder 45 min si une adaptation le permet
         (alt.first if alt.count() else s.locator("button.alt").first).click()
-        s.locator("text=Créneau : 05.11 16:00").wait_for(state="detached")
+        s.locator("text=Créneau : 08.10 16:00").wait_for(state="detached")
         s.locator("#creneau").wait_for()
         creneau = s.locator("#creneau").inner_text().replace("Créneau : ", "")
         etape("7. Sophie choisit, chacun reconfirme", f"Nouveau créneau : {creneau}. Le moment change : TOUS reconfirment — "

@@ -68,7 +68,7 @@ def test_action_collective_deux_telephones_et_ecran_commun(url):  # noqa: F811
         _capture(s, "a1_sophie_exigences")
         s.click("#chercher")
         s.wait_for_selector("text=Proposition complète")
-        assert "05.11 16:00–16:45" in s.inner_text("main")
+        assert "08.10 16:00–16:45" in s.inner_text("main")
         _capture(s, "a2_sophie_proposition")
         assert _sans_debordement(s)
         assert "contributions proposées, dispersées" in proj.inner_text("main")    # rien n'est projeté sans son accord
@@ -112,7 +112,7 @@ def test_action_collective_deux_telephones_et_ecran_commun(url):  # noqa: F811
 
         # --- 6. adaptation choisie par Sophie ; tout le monde reconfirme
         s.click("button:has-text('17:00–17:45')")
-        s.wait_for_selector("text=Créneau : 05.11 17:00–17:45")
+        s.wait_for_selector("text=Créneau : 08.10 17:00–17:45")
         lea.reload()
         lea.wait_for_selector("#accepter")
         lea.click("#accepter")

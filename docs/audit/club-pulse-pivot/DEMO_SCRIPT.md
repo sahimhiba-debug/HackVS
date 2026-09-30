@@ -17,8 +17,10 @@ ce qui est encore possible — ou qu'il est bloqué.
 
 ## 2. État initial reproductible
 - `make demo` (ou `cd prototype && HACKVS_MODE=demo … uvicorn app.main:app`), puis console → « Nouvelle démonstration »
-  (ou `POST /api/pulse/demo/reinitialiser`). Date simulée : mardi 03.11.2026 ; la Foire : jeudi 05.11.
-- Aucune action n'existe ; l'écran commun (`/projection`) montre « Jeudi 05.11 : 6 contributions proposées, dispersées ».
+  (ou `POST /api/pulse/demo/reinitialiser`). Date simulée : mardi 06.10.2026, pendant la Foire du Valais (2–11 octobre 2026) ; la scène : jeudi 08.10.
+  ⚠️ La vidéo `captures/action/demo_action.webm` et les captures ont été enregistrées au commit `dd75a7c`, avec les
+  anciennes dates (03.11 / 05.11) : à réenregistrer (`scripts/enregistrer_demo.py`).
+- Aucune action n'existe ; l'écran commun (`/projection`) montre « Jeudi 08.10 : 6 contributions proposées, dispersées ».
 - Téléphone 1 = Sophie (code affiché dans la console), téléphone 2 = Léa (voix allemande). Régie de tournage :
   `/demo/regie` (écran commun + deux téléphones côte à côte ; aucun code affiché).
 
