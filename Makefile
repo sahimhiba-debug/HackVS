@@ -24,10 +24,10 @@ typecheck:
 	cd $(P) && $(PY) -m mypy app adaptateurs plateforme intelligence
 
 test:
-	cd $(P) && $(PY) -m pytest -q --ignore=tests/test_e2e_scene.py --ignore=tests/test_e2e_pulse.py
+	cd $(P) && $(PY) -m pytest -q --ignore=tests/test_e2e_scene.py --ignore=tests/test_e2e_pulse.py --ignore=tests/test_e2e_action.py
 
 e2e:
-	cd $(P) && HACKVS_E2E_OBLIGATOIRE=1 $(PY) -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py
+	cd $(P) && HACKVS_E2E_OBLIGATOIRE=1 $(PY) -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py
 
 eval:
 	cd $(P) && $(PY) -m eval.run_eval --verifier && $(PY) -m eval.eval_decisions --verifier \

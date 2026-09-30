@@ -72,10 +72,10 @@ jobs:
         run: pip install -r requirements-dev.txt -c constraints.txt
       - name: Navigateur pour les tests de bout en bout
         run: python -m playwright install --with-deps chromium
-      - name: Bout en bout dans un vrai navigateur (scène, console Club Pulse, application mobile, pannes réseau, CSP)
+      - name: Bout en bout dans un vrai navigateur (scène, console Club Pulse, application mobile, action collective, pannes réseau, CSP)
         env:
           HACKVS_E2E_OBLIGATOIRE: "1"
-        run: python -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py
+        run: python -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py
       - name: Rejouer les benchmarks du sprint
         run: python scripts/reproduire_sprint.py
       - name: Les résultats publiés sont identiques à l'octet
