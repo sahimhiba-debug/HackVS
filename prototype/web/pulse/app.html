@@ -49,6 +49,7 @@
     <header class="haut">
       <span class="marque"><span class="pouls-point" aria-hidden="true"></span>Club Pulse</span>
       <span class="puce fictif" title="Monde de démonstration : personnes, entreprises et dates inventées">fictif</span>
+      <span class="puce" id="date-club" title="Date du Club (simulée en démonstration)" hidden></span>
       <span class="qui" id="qui"></span>
     </header>
     <main id="ecran" aria-live="polite"></main>
@@ -73,6 +74,7 @@
       for (const e of enfants.flat(Infinity)) if (e !== null && e !== undefined && e !== false) el.append(e instanceof Node ? e : document.createTextNode(String(e)));
       return el;
     }
+    const jourCourt = (iso) => `${["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."][new Date(iso + "T12:00:00").getDay()]} ${iso.slice(8, 10)}.${iso.slice(5, 7)}`;
     const lire = (k) => { try { return sessionStorage.getItem(k); } catch { return null; } };
     const ecrire = (k, v) => { try { v === null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch { /* stockage indisponible */ } };
     const params = new URLSearchParams(location.search);
@@ -457,6 +459,7 @@
       if (!session && nom !== "acces") { location.hash = "#acces"; return; }
       $("#onglets").hidden = nom === "acces";
       $("#qui").textContent = session ? (lire("pulse-nom") || "") : "";
+      if (session) api("/api/pulse/moi/date").then((d) => { const e = $("#date-club"); e.textContent = jourCourt(d.date); e.hidden = false; }).catch(() => {});
       document.querySelectorAll("#onglets a").forEach((a) => a.setAttribute("aria-current", a.dataset.o === nom || (nom === "essai" && a.dataset.o === "actions") || (nom === "donnees" && a.dataset.o === "demandes") ? "page" : "false"));
       const ecran = $("#ecran");
       ecran.setAttribute("aria-busy", "true");

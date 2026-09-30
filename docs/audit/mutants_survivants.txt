@@ -13,44 +13,79 @@ x_index_claims__mutmut_81 | profil(pid, p.model_dump(include={"offre", "recherch
 x_index_claims__mutmut_82 | profil(pid, p.model_dump(mode="json", ), 0, "SYNTHETIQUE")
 x_index_claims__mutmut_83 | profil(pid, p.model_dump(mode="XXjsonXX", include={"offre", "recherche"}), 0, "SYNTHETIQUE")
 x_index_claims__mutmut_84 | profil(pid, p.model_dump(mode="JSON", include={"offre", "recherche"}), 0, "SYNTHETIQUE")
-xǁPatronǁportee__mutmut_10 | return {"finalite": self.id, "version": self.version, "titre": self.titre, "XXemplacementXX": e.model_dump(mode="json"),
-xǁPatronǁportee__mutmut_11 | return {"finalite": self.id, "version": self.version, "titre": self.titre, "EMPLACEMENT": e.model_dump(mode="json"),
+x_pulse_diff__mutmut_23 | ligne = {"finalite": i.finalite, "titre": i.titre, "avant": j.statut if (j) or True else None, "apres": i.statut}
+x_pulse_diff__mutmut_47 | if actif_avant and i.statut == "ACTIVE" and j is not None or j.liaisons != i.liaisons:
+x_pulse_diff__mutmut_48 | if actif_avant and i.statut == "ACTIVE" or j is not None and j.liaisons != i.liaisons:
+x_pulse_diff__mutmut_49 | if actif_avant or i.statut == "ACTIVE" and j is not None and j.liaisons != i.liaisons:
+x_pulse_diff__mutmut_66 | res["fragiles"].append(ligne | {"XXpieces_critiquesXX": len(i.critiques)})
+x_pulse_diff__mutmut_67 | res["fragiles"].append(ligne | {"PIECES_CRITIQUES": len(i.critiques)})
+xǁHypotheticalClaimǁoffre__mutmut_21 | return OffreVolontaire(id=f"hyp-{n}", auteur=f"HYPOTHESE-{n}", nature=self.nature, quoi=self.quoi, capacite=2, du=self.du,
 xǁPatronǁportee__mutmut_12 | return {"finalite": self.id, "version": self.version, "titre": self.titre, "emplacement": e.model_dump(mode=None),
 xǁPatronǁportee__mutmut_13 | return {"finalite": self.id, "version": self.version, "titre": self.titre, "emplacement": e.model_dump(mode="XXjsonXX"),
 xǁPatronǁportee__mutmut_14 | return {"finalite": self.id, "version": self.version, "titre": self.titre, "emplacement": e.model_dump(mode="JSON"),
-xǁPatronǁportee__mutmut_15 | "XXfenetreXX": self.fenetre.model_dump(mode="json"), "duree_min": self.duree_min, "partage": PARTAGE_FINALITE}
-xǁPatronǁportee__mutmut_16 | "FENETRE": self.fenetre.model_dump(mode="json"), "duree_min": self.duree_min, "partage": PARTAGE_FINALITE}
 xǁPatronǁportee__mutmut_17 | "fenetre": self.fenetre.model_dump(mode=None), "duree_min": self.duree_min, "partage": PARTAGE_FINALITE}
 xǁPatronǁportee__mutmut_18 | "fenetre": self.fenetre.model_dump(mode="XXjsonXX"), "duree_min": self.duree_min, "partage": PARTAGE_FINALITE}
 xǁPatronǁportee__mutmut_19 | "fenetre": self.fenetre.model_dump(mode="JSON"), "duree_min": self.duree_min, "partage": PARTAGE_FINALITE}
 xǁPatronǁportee__mutmut_20 | "fenetre": self.fenetre.model_dump(mode="json"), "XXduree_minXX": self.duree_min, "partage": PARTAGE_FINALITE}
 xǁPatronǁportee__mutmut_21 | "fenetre": self.fenetre.model_dump(mode="json"), "DUREE_MIN": self.duree_min, "partage": PARTAGE_FINALITE}
-xǁPatronǁportee__mutmut_22 | "fenetre": self.fenetre.model_dump(mode="json"), "duree_min": self.duree_min, "XXpartageXX": PARTAGE_FINALITE}
-xǁPatronǁportee__mutmut_23 | "fenetre": self.fenetre.model_dump(mode="json"), "duree_min": self.duree_min, "PARTAGE": PARTAGE_FINALITE}
 xǁPatronǁportee__mutmut_4 | return {"XXfinaliteXX": self.id, "version": self.version, "titre": self.titre, "emplacement": e.model_dump(mode="json"),
 xǁPatronǁportee__mutmut_5 | return {"FINALITE": self.id, "version": self.version, "titre": self.titre, "emplacement": e.model_dump(mode="json"),
-xǁPatronǁportee__mutmut_6 | return {"finalite": self.id, "XXversionXX": self.version, "titre": self.titre, "emplacement": e.model_dump(mode="json"),
-xǁPatronǁportee__mutmut_7 | return {"finalite": self.id, "VERSION": self.version, "titre": self.titre, "emplacement": e.model_dump(mode="json"),
 xǁPatronǁportee__mutmut_8 | return {"finalite": self.id, "version": self.version, "XXtitreXX": self.titre, "emplacement": e.model_dump(mode="json"),
 xǁPatronǁportee__mutmut_9 | return {"finalite": self.id, "version": self.version, "TITRE": self.titre, "emplacement": e.model_dump(mode="json"),
 xǁPatronǁprotocole__mutmut_15 | etapes = [Etape(id=e.id, nature=e.nature, geste=e.geste, duree_min=self.duree_min, concept=e.concept, minimums=e.minimums) for e in self.emplacements if e.id !=
 xǁPatronǁprotocole__mutmut_17 | etapes = [Etape(id=e.id, nature=e.nature, geste=e.geste, duree_min=self.duree_min, concept=e.concept, role=e.role[:25],
 xǁPatronǁprotocole__mutmut_8 | etapes = [Etape(id=e.id, nature=e.nature, geste=e.geste, duree_min=self.duree_min, concept=e.concept, role=None,
+xǁRegistreǁ_composer__mutmut_118 | sous = self.b.solutions(None, p.protocole(sans=e.id), maximum=None, garder={k: v for k, v in garder.items() if k != e.id},
+xǁRegistreǁ_composer__mutmut_123 | sous = self.b.solutions(None, p.protocole(sans=e.id), garder={k: v for k, v in garder.items() if k != e.id},
+xǁRegistreǁ_composer__mutmut_127 | sous = self.b.solutions(None, p.protocole(sans=e.id), maximum=2, garder={k: v for k, v in garder.items() if k != e.id},
+xǁRegistreǁ_composer__mutmut_129 | permis=self._permis(None, exclus, [x.id for x in p.emplacements if x.id != e.id]))
+xǁRegistreǁ_composer__mutmut_131 | permis=self._permis(p, exclus, None))
+xǁRegistreǁ_composer__mutmut_134 | permis=self._permis(p, exclus, ))
+xǁRegistreǁ_composer__mutmut_29 | sol = self.b.solutions(None, p.protocole(), maximum=1, garder=garder, permis=ids) if (len(ids) == len(p.emplacements)) or True else []
+xǁRegistreǁ_composer__mutmut_31 | sol = self.b.solutions(None, p.protocole(), maximum=None, garder=garder, permis=ids) if len(ids) == len(p.emplacements) else []
+xǁRegistreǁ_composer__mutmut_32 | sol = self.b.solutions(None, p.protocole(), maximum=1, garder=None, permis=ids) if len(ids) == len(p.emplacements) else []
+xǁRegistreǁ_composer__mutmut_36 | sol = self.b.solutions(None, p.protocole(), garder=garder, permis=ids) if len(ids) == len(p.emplacements) else []
+xǁRegistreǁ_composer__mutmut_37 | sol = self.b.solutions(None, p.protocole(), maximum=1, permis=ids) if len(ids) == len(p.emplacements) else []
+xǁRegistreǁ_composer__mutmut_39 | sol = self.b.solutions(None, p.protocole(), maximum=2, garder=garder, permis=ids) if len(ids) == len(p.emplacements) else []
+xǁRegistreǁ_composer__mutmut_44 | toutes = self.b.solutions(None, p.protocole(), maximum=None, garder=garder, permis=self._permis(p, exclus))
+xǁRegistreǁ_composer__mutmut_52 | toutes = self.b.solutions(None, p.protocole(), maximum=10001, garder=garder, permis=self._permis(p, exclus))
+xǁRegistreǁ_composer__mutmut_65 | sol = sorted(toutes, key=lambda x: -sum(2 for r in consentis(x["choix"]).values() if r is None))[:1]
+xǁRegistreǁ_composer__mutmut_70 | sol = sorted(toutes, key=lambda x: -sum(1 for r in consentis(x["choix"]).values() if r is None))[:2]
+xǁRegistreǁ_consentements__mutmut_33 | return valables, sorted(perdus, key=lambda x: ordre.index(x.split(None, 1)[0]))
+xǁRegistreǁ_consentements__mutmut_36 | return valables, sorted(perdus, key=lambda x: ordre.index(x.split(" : ", )[0]))
+xǁRegistreǁ_consentements__mutmut_37 | return valables, sorted(perdus, key=lambda x: ordre.index(x.rsplit(" : ", 1)[0]))
+xǁRegistreǁ_consentements__mutmut_39 | return valables, sorted(perdus, key=lambda x: ordre.index(x.split(" : ", 2)[0]))
+xǁRegistreǁ_critiques__mutmut_14 | if not self.b.solutions(None, p.protocole(), maximum=None, permis=permis):
+xǁRegistreǁ_critiques__mutmut_18 | if not self.b.solutions(None, p.protocole(), permis=permis):
+xǁRegistreǁ_critiques__mutmut_20 | if not self.b.solutions(None, p.protocole(), maximum=2, permis=permis):
+xǁRegistreǁ_critiques__mutmut_4 | tous = {o.id for o in self.b.offres(publiques=None) if o.auteur not in exclus}
+xǁRegistreǁ_critiques__mutmut_5 | tous = {o.id for o in self.b.offres(publiques=False) if o.auteur not in exclus}
+xǁRegistreǁ_critiques__mutmut_9 | break
+xǁRegistreǁ_permis__mutmut_3 | ids = {o.id for o in self.b.offres(publiques=None) if o.auteur not in exclus}
+xǁRegistreǁ_permis__mutmut_4 | ids = {o.id for o in self.b.offres(publiques=False) if o.auteur not in exclus}
+xǁRegistreǁ_recomposer__mutmut_102 | or ["XXdes disponibilités qui se recouvrent sur un même créneauXX"]}
+xǁRegistreǁ_recomposer__mutmut_103 | or ["DES DISPONIBILITÉS QUI SE RECOUVRENT SUR UN MÊME CRÉNEAU"]}
+xǁRegistreǁ_recomposer__mutmut_26 | "texte": "Une autre pièce existe pour : " + "XX, XX".join(libelle[k] for k in pieces)
+xǁRegistreǁ_recomposer__mutmut_46 | "texte": f"Il manque de nouveau : {libelle[inst.manquant or 'XXXX']}. Une demande est adressée "
+xǁRegistreǁ_recomposer__mutmut_54 | seules = {e.id: bool(self.b.solutions(None, p.protocole(garder_seul=e.id), maximum=None, permis=self._permis(p, exclus, [e.id])))
+xǁRegistreǁ_recomposer__mutmut_58 | seules = {e.id: bool(self.b.solutions(None, p.protocole(garder_seul=e.id), permis=self._permis(p, exclus, [e.id])))
+xǁRegistreǁ_recomposer__mutmut_61 | seules = {e.id: bool(self.b.solutions(None, p.protocole(garder_seul=e.id), maximum=2, permis=self._permis(p, exclus, [e.id])))
+xǁRegistreǁ_recomposer__mutmut_62 | seules = {e.id: bool(self.b.solutions(None, p.protocole(garder_seul=e.id), maximum=1, permis=self._permis(None, exclus, [e.id])))
+xǁRegistreǁ_recomposer__mutmut_64 | seules = {e.id: bool(self.b.solutions(None, p.protocole(garder_seul=e.id), maximum=1, permis=self._permis(p, exclus, None)))
+xǁRegistreǁ_recomposer__mutmut_67 | seules = {e.id: bool(self.b.solutions(None, p.protocole(garder_seul=e.id), maximum=1, permis=self._permis(p, exclus, )))
+xǁRegistreǁ_recomposer__mutmut_73 | "cause": [f"{role[x.split(None, 1)[0]]} : ce composant n'est plus disponible" for x in inst.perdus],
+xǁRegistreǁ_recomposer__mutmut_76 | "cause": [f"{role[x.split(' : ', )[0]]} : ce composant n'est plus disponible" for x in inst.perdus],
+xǁRegistreǁ_recomposer__mutmut_77 | "cause": [f"{role[x.rsplit(' : ', 1)[0]]} : ce composant n'est plus disponible" for x in inst.perdus],
+xǁRegistreǁ_recomposer__mutmut_79 | "cause": [f"{role[x.split(' : ', 2)[0]]} : ce composant n'est plus disponible" for x in inst.perdus],
+xǁRegistreǁ_recomposer__mutmut_92 | "ignore": ["si d'autres membres pourraient fournir " + (", ".join(manquent) or "XXles pièces restantes au même momentXX")
+xǁRegistreǁ_recomposer__mutmut_93 | "ignore": ["si d'autres membres pourraient fournir " + (", ".join(manquent) or "LES PIÈCES RESTANTES AU MÊME MOMENT")
 xǁRegistreǁconsentir__mutmut_17 | raise Introuvable("XXaucune de vos offres ne compose cette capacité aujourd'huiXX")
-xǁRegistreǁinstance__mutmut_134 | sous = self.b.solutions(None, p.protocole(sans=e.id), maximum=None, garder={k: v for k, v in garder.items() if k != e.id})
-xǁRegistreǁinstance__mutmut_138 | sous = self.b.solutions(None, p.protocole(sans=e.id), garder={k: v for k, v in garder.items() if k != e.id})
-xǁRegistreǁinstance__mutmut_141 | sous = self.b.solutions(None, p.protocole(sans=e.id), maximum=2, garder={k: v for k, v in garder.items() if k != e.id})
-xǁRegistreǁinstance__mutmut_51 | sol = self.b.solutions(None, p.protocole(), maximum=1, garder=garder, permis=ids) if (len(ids) == len(p.emplacements)) or True else []
-xǁRegistreǁinstance__mutmut_53 | sol = self.b.solutions(None, p.protocole(), maximum=None, garder=garder, permis=ids) if len(ids) == len(p.emplacements) else []
-xǁRegistreǁinstance__mutmut_54 | sol = self.b.solutions(None, p.protocole(), maximum=1, garder=None, permis=ids) if len(ids) == len(p.emplacements) else []
-xǁRegistreǁinstance__mutmut_58 | sol = self.b.solutions(None, p.protocole(), garder=garder, permis=ids) if len(ids) == len(p.emplacements) else []
-xǁRegistreǁinstance__mutmut_59 | sol = self.b.solutions(None, p.protocole(), maximum=1, permis=ids) if len(ids) == len(p.emplacements) else []
-xǁRegistreǁinstance__mutmut_61 | sol = self.b.solutions(None, p.protocole(), maximum=2, garder=garder, permis=ids) if len(ids) == len(p.emplacements) else []
-xǁRegistreǁinstance__mutmut_66 | toutes = self.b.solutions(None, p.protocole(), maximum=None, garder=garder)
-xǁRegistreǁinstance__mutmut_72 | toutes = self.b.solutions(None, p.protocole(), maximum=10001, garder=garder)
-xǁRegistreǁinstance__mutmut_81 | sol = sorted(toutes, key=lambda x: -sum(2 for r in consentis(x["choix"]).values() if r is None))[:1]
-xǁRegistreǁinstance__mutmut_86 | sol = sorted(toutes, key=lambda x: -sum(1 for r in consentis(x["choix"]).values() if r is None))[:2]
+xǁRegistreǁlevier__mutmut_11 | h = HypotheticalClaim(nature=ask.nature, concept=ask.concept, attributs=dict(ask.minimums),  # type: ignore[arg-type]
+xǁRegistreǁlevier__mutmut_24 | avant = {i.finalite: i.distance for i in self._projeter(levier=None)}
 xǁRegistreǁpatron__mutmut_3 | raise Introuvable("XXcapacité inconnueXX")
+xǁRegistreǁrecus__mutmut_21 | and x.donnees.get("finalite") == p.id and x.donnees["emplacement"] == e.donnees["emplacement"]), )
+xǁRegistreǁrecus__mutmut_40 | break
+xǁRegistreǁrecus__mutmut_64 | "piece": emp.libelle if (emp) and False else accord.donnees["portee"]["emplacement"]["libelle"],
 xǁRegistreǁrepondre__mutmut_122 | raise Conflit(None)
 xǁRegistreǁrepondre__mutmut_123 | raise Conflit("XXvotre réponse ne complète pas cette capacité (horaire ou attributs) : rien n'a été enregistréXX")
 xǁRegistreǁrepondre__mutmut_124 | raise Conflit("VOTRE RÉPONSE NE COMPLÈTE PAS CETTE CAPACITÉ (HORAIRE OU ATTRIBUTS) : RIEN N'A ÉTÉ ENREGISTRÉ")
@@ -62,3 +97,9 @@ xǁRegistreǁrepondre__mutmut_59 | raise Invalide("ne couvre pas la demande : " 
 xǁRegistreǁrepondre__mutmut_8 | finalite = ask_id.split(":", 2)[0]
 xǁRegistreǁrepondre__mutmut_83 | oid = self.b.publier_offre(membre, e.nature, (quoi or e.libelle)[:201], 1, self._jour(), p.fenetre.jour, concept=e.concept,
 xǁRegistreǁrepondre__mutmut_85 | conditions=f"déclarée en réponse à une demande pour « {p.titre[:81]} »", attributs=attributs,
+xǁRegistreǁretirer__mutmut_13 | raise Introuvable("XXaucun consentement en cours pour cette capacitéXX")
+xǁRegistreǁstatus_if__mutmut_14 | res = [i.model_copy(update={"hypothetique": True}) for i in self._projeter(levier=None)]
+xǁRegistreǁstatus_if__mutmut_17 | assert self.b.m.empreinte() == avant, "XXune hypothèse a écrit dans le journalXX"
+xǁRegistreǁstatus_if__mutmut_18 | assert self.b.m.empreinte() == avant, "UNE HYPOTHÈSE A ÉCRIT DANS LE JOURNAL"
+xǁRegistreǁstatus_if__mutmut_7 | with self.b.hypothese([h.offre(i) for i, h in enumerate(hypotheses, )]):
+xǁRegistreǁstatus_if__mutmut_8 | with self.b.hypothese([h.offre(i) for i, h in enumerate(hypotheses, start=2)]):

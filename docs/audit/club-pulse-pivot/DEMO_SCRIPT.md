@@ -5,6 +5,21 @@
 > l'écran commun l'affiche. **Simulé** : l'horloge quand on l'avance. **Non testé** : de vrais téléphones sur le réseau
 > d'une salle, un jury réel, Apertus réel.
 
+## 0. Calendrier des scènes (chaque écran affiche sa date)
+
+Horloge de démonstration (simulée, affichée sur chaque écran) : **mardi 06.10.2026**, pendant la Foire du Valais
+(02–11.10.2026). Chaque scène vit un jour distinct : les mondes de démonstration sont isolés, jamais regroupés.
+
+| Scène | Jour de la scène | Où | Ce qui se passe |
+|---|---|---|---|
+| Action collective (Sophie, Léa, jury) | **jeudi 08.10** | `/projection`, téléphones « Agir à plusieurs » | le créneau commun, la perturbation, l'adaptation, la fiche |
+| Registre — scénario A (une pièce manque) | **vendredi 09.10** | `/etabli`, téléphone « Demandes » | minibus demandé → réponse → « le Club peut le faire » |
+| Registre — retrait (Phase 2) | **vendredi 09.10** | `/etabli`, téléphones | retrait en un geste → « ce composant n'est plus disponible » → la demande repart vers un autre membre |
+| Après l'événement | **+30 jours (simulé)** | console | ce qui reste : reçu, résultat inconnu, capacités éteintes |
+
+**Règle de scène : après tout redémarrage du serveur, console → « Nouvelle démonstration »** (le journal est repris,
+le scénario guidé non ; voir `TODO-DEMO.md`).
+
 ## 1. Scénario du pitch
 Sophie (fictive) produit des tisanes. Pendant la Foire, jeudi après-midi, elle veut les présenter à des acheteurs
 germanophones. Elle n'a ni stand ni personne qui parle allemand, et veut leur laisser une fiche en allemand.

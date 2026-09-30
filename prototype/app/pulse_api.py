@@ -198,6 +198,11 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
         return au_monde(lambda c: c.activer_compte(a.code))
 
     # ------------------------------------------------------------------ application du membre
+    @r.get("/moi/date")
+    def date_du_club(pid: str = Depends(membre)) -> dict:
+        """La date du monde (simulée en démonstration) : chaque écran du téléphone l'affiche."""
+        return au_monde(lambda c: {"date": c.jour.isoformat(), "simulee": True})
+
     @r.get("/moi/profil")
     def profil(pid: str = Depends(membre)) -> dict:
         return au_monde(lambda c: c.vues.vue_profil(pid))
