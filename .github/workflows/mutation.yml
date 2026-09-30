@@ -36,6 +36,7 @@ concurrency:
 jobs:
   mutation:
     runs-on: ubuntu-latest
+    timeout-minutes: 150         # campagne complète ≈ 1 à 2 h sur un exécuteur GitHub ; au-delà, c'est une panne
     defaults:
       run:
         working-directory: prototype

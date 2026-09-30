@@ -35,6 +35,7 @@ xǁPatronǁportee__mutmut_9 | return {"finalite": self.id, "version": self.versi
 xǁPatronǁprotocole__mutmut_15 | etapes = [Etape(id=e.id, nature=e.nature, geste=e.geste, duree_min=self.duree_min, concept=e.concept, minimums=e.minimums) for e in self.emplacements if e.id !=
 xǁPatronǁprotocole__mutmut_17 | etapes = [Etape(id=e.id, nature=e.nature, geste=e.geste, duree_min=self.duree_min, concept=e.concept, role=e.role[:25],
 xǁPatronǁprotocole__mutmut_8 | etapes = [Etape(id=e.id, nature=e.nature, geste=e.geste, duree_min=self.duree_min, concept=e.concept, role=None,
+xǁRegistreǁ_acquittee__mutmut_12 | if not acq or any(e.seq >= acq[-1].seq and e.type not in (self.RELANCE, self.ACQUIT) for e in evs):
 xǁRegistreǁ_composer__mutmut_118 | sous = self.b.solutions(None, p.protocole(sans=e.id), maximum=None, garder={k: v for k, v in garder.items() if k != e.id},
 xǁRegistreǁ_composer__mutmut_123 | sous = self.b.solutions(None, p.protocole(sans=e.id), garder={k: v for k, v in garder.items() if k != e.id},
 xǁRegistreǁ_composer__mutmut_127 | sous = self.b.solutions(None, p.protocole(sans=e.id), maximum=2, garder={k: v for k, v in garder.items() if k != e.id},
@@ -58,11 +59,12 @@ xǁRegistreǁ_consentements__mutmut_39 | return valables, sorted(perdus, key=lam
 xǁRegistreǁ_critiques__mutmut_14 | if not self.b.solutions(None, p.protocole(), maximum=None, permis=permis):
 xǁRegistreǁ_critiques__mutmut_18 | if not self.b.solutions(None, p.protocole(), permis=permis):
 xǁRegistreǁ_critiques__mutmut_20 | if not self.b.solutions(None, p.protocole(), maximum=2, permis=permis):
-xǁRegistreǁ_critiques__mutmut_4 | tous = {o.id for o in self.b.offres(publiques=None) if o.auteur not in exclus}
-xǁRegistreǁ_critiques__mutmut_5 | tous = {o.id for o in self.b.offres(publiques=False) if o.auteur not in exclus}
+xǁRegistreǁ_critiques__mutmut_4 | tous = {o.id for o in self.b.offres(publiques=None) if o.id not in exclus}
+xǁRegistreǁ_critiques__mutmut_5 | tous = {o.id for o in self.b.offres(publiques=False) if o.id not in exclus}
 xǁRegistreǁ_critiques__mutmut_9 | break
-xǁRegistreǁ_permis__mutmut_3 | ids = {o.id for o in self.b.offres(publiques=None) if o.auteur not in exclus}
-xǁRegistreǁ_permis__mutmut_4 | ids = {o.id for o in self.b.offres(publiques=False) if o.auteur not in exclus}
+xǁRegistreǁ_incertaine__mutmut_6 | raise Conflit("XXla recherche de cette capacité n'a pas été coupée : rien à relancer ni à acquitterXX")
+xǁRegistreǁ_permis__mutmut_3 | ids = {o.id for o in self.b.offres(publiques=None) if o.id not in exclus}
+xǁRegistreǁ_permis__mutmut_4 | ids = {o.id for o in self.b.offres(publiques=False) if o.id not in exclus}
 xǁRegistreǁ_recomposer__mutmut_102 | or ["XXdes disponibilités qui se recouvrent sur un même créneauXX"]}
 xǁRegistreǁ_recomposer__mutmut_103 | or ["DES DISPONIBILITÉS QUI SE RECOUVRENT SUR UN MÊME CRÉNEAU"]}
 xǁRegistreǁ_recomposer__mutmut_26 | "texte": "Une autre pièce existe pour : " + "XX, XX".join(libelle[k] for k in pieces)
@@ -80,12 +82,10 @@ xǁRegistreǁ_recomposer__mutmut_79 | "cause": [f"{role[x.split(' : ', 2)[0]]} :
 xǁRegistreǁ_recomposer__mutmut_92 | "ignore": ["si d'autres membres pourraient fournir " + (", ".join(manquent) or "XXles pièces restantes au même momentXX")
 xǁRegistreǁ_recomposer__mutmut_93 | "ignore": ["si d'autres membres pourraient fournir " + (", ".join(manquent) or "LES PIÈCES RESTANTES AU MÊME MOMENT")
 xǁRegistreǁconsentir__mutmut_17 | raise Introuvable("XXaucune de vos offres ne compose cette capacité aujourd'huiXX")
+xǁRegistreǁinstance__mutmut_29 | if relance is not None and relance >= budget:
 xǁRegistreǁlevier__mutmut_11 | h = HypotheticalClaim(nature=ask.nature, concept=ask.concept, attributs=dict(ask.minimums),  # type: ignore[arg-type]
 xǁRegistreǁlevier__mutmut_24 | avant = {i.finalite: i.distance for i in self._projeter(levier=None)}
 xǁRegistreǁpatron__mutmut_3 | raise Introuvable("XXcapacité inconnueXX")
-xǁRegistreǁrecus__mutmut_21 | and x.donnees.get("finalite") == p.id and x.donnees["emplacement"] == e.donnees["emplacement"]), )
-xǁRegistreǁrecus__mutmut_40 | break
-xǁRegistreǁrecus__mutmut_64 | "piece": emp.libelle if (emp) and False else accord.donnees["portee"]["emplacement"]["libelle"],
 xǁRegistreǁrepondre__mutmut_122 | raise Conflit(None)
 xǁRegistreǁrepondre__mutmut_123 | raise Conflit("XXvotre réponse ne complète pas cette capacité (horaire ou attributs) : rien n'a été enregistréXX")
 xǁRegistreǁrepondre__mutmut_124 | raise Conflit("VOTRE RÉPONSE NE COMPLÈTE PAS CETTE CAPACITÉ (HORAIRE OU ATTRIBUTS) : RIEN N'A ÉTÉ ENREGISTRÉ")
