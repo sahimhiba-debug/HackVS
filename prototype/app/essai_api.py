@@ -67,6 +67,10 @@ class Action(BaseModel):
     duree_min_acceptable: Optional[int] = Field(default=None, ge=5, le=240)
 
 
+class Projection(BaseModel):
+    oui: bool
+
+
 class Livraison(BaseModel):
     contenu: str = Field(min_length=3, max_length=3000)
 
@@ -248,6 +252,14 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     def lancer(eid: str, v: Version, pid: str = Depends(membre)) -> dict:
         return commande(eid, pid, lambda c: c.banc.lancer(pid, eid, v.version))
 
+    @r.post("/moi/essais/{eid}/projection")
+    def projeter(eid: str, x: Projection, pid: str = Depends(membre)) -> dict:
+        return commande(eid, pid, lambda c: c.banc.autoriser_projection(pid, eid, x.oui))
+
+    @r.post("/moi/essais/{eid}/receptions/{etape}")
+    def recevoir(eid: str, etape: str, pid: str = Depends(membre)) -> dict:
+        return commande(eid, pid, lambda c: c.banc.recevoir(pid, eid, etape))
+
     @r.post("/moi/essais/{eid}/contributions/{etape}")
     def constater(eid: str, etape: str, pid: str = Depends(membre)) -> dict:
         return commande(eid, pid, lambda c: c.banc.constater(pid, eid, etape))
@@ -290,9 +302,9 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
 
     @r.get("/console/projection", dependencies=[Depends(console)])
     def projection() -> dict:
-        """L'écran commun : l'action collective la plus récente, en RÔLES (jamais de noms)."""
+        """L'écran commun : l'action collective la plus récente QUE SA PORTEUSE A ACCEPTÉ DE MONTRER, en RÔLES (jamais de noms)."""
         def f(c: ClubPulse) -> dict:
-            eid = next((x for x in reversed(c.banc.essais()) if c.banc.protocole(x).fenetre), None)
+            eid = next((x for x in reversed(c.banc.essais()) if c.banc.protocole(x).fenetre and c.banc.projetable(x)), None)
             return c.vues_essai.projection(eid, c.joues) if eid else c.vues_essai.offres_dispersees()
         return au_monde(f)
 

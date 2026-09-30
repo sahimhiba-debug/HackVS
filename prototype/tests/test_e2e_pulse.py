@@ -103,10 +103,10 @@ def test_banc_d_essai_deux_telephones_perturbation_et_resultat_negatif(url):  # 
 
         # 7. l'essai a lieu : contributions CONSTATÉES (ce n'est pas un résultat)
         s.click("#lancer")
-        s.wait_for_selector("button:has-text('Contribution reçue')")
-        s.click("button:has-text('Contribution reçue') >> nth=0")
-        s.wait_for_function("() => [...document.querySelectorAll('button')].filter((x) => x.textContent === 'Contribution reçue').length === 1")
-        s.click("button:has-text('Contribution reçue')")
+        s.wait_for_selector('button:has-text("J\'ai constaté sa contribution")')
+        s.click('button:has-text("J\'ai constaté sa contribution") >> nth=0')
+        s.wait_for_function("() => [...document.querySelectorAll('button')].filter((x) => x.textContent === \"J'ai constaté sa contribution\").length === 1")
+        s.click('button:has-text("J\'ai constaté sa contribution")')
         s.wait_for_selector("#observer")
         assert "Aucun résultat n'en découle" in s.inner_text("main")
 

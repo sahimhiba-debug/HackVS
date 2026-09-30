@@ -91,13 +91,14 @@ def deroule(x, base, pg, proj, s, lea, etape, jouer) -> None:
         s.locator("#besoin").type(BESOIN_SOPHIE, delay=18)
         s.locator("#comprendre").click()
         s.locator("#exigences .exigence >> nth=2").wait_for()
-        etape("2. Ce qu'il faudrait réunir", "Trois exigences proposées (une voix allemande qui remet une fiche, un lieu, un public) — "
-              "des règles simples, pas un modèle : c'est affiché. Sophie confirme.", pause=6)
+        etape("2. Ce qu'il faudrait réunir", "Trois exigences reprises de SES mots (une voix allemande qui remet la fiche demandée, un lieu, un "
+              "public) — des règles simples, pas un modèle : c'est affiché. Sophie confirme.", pause=6)
         s.locator("button:has-text('Reprendre la suggestion')").click()
         s.locator("#chercher").click()
-        proj.locator("text=le seul moment où les 3 disponibilités se recouvrent").wait_for()
-        etape("3. La proposition", "Aucune offre ne suffit seule. Le serveur cherche le moment où les disponibilités DÉCLARÉES se "
-              "recouvrent : jeudi 16:00–16:45. Rien n'est encore envoyé.", pause=8)
+        s.locator("#projeter").click()                        # SON choix : montrer son action sur l'écran commun (rôles, sans noms)
+        proj.locator("text=les 3 disponibilités se recouvrent de 16:00 à 17:30").wait_for()
+        etape("3. La proposition", "Sophie choisit de la montrer sur l'écran commun. Aucune offre ne suffit seule : les disponibilités "
+              "DÉCLARÉES se recouvrent de 16:00 à 17:30 ; le serveur retient le premier créneau, 16:00–16:45. Rien n'est encore envoyé.", pause=8)
         s.locator("#publier-proposition").click()
         s.locator("#creneau").wait_for()
         eid = s.locator("body").evaluate("() => location.hash.split('/')[1]")
@@ -121,14 +122,13 @@ def deroule(x, base, pg, proj, s, lea, etape, jouer) -> None:
         etape("6. Ce qui change", f"Visible sur l'écran commun en {delai} ms : la voix allemande ne couvre plus le créneau ; le lieu et le "
               "public restaient valables pour l'ancien créneau. Adaptations calculées par le serveur ; aucun lancement possible.", pause=9)
         s.locator("text=Une condition a changé").first.wait_for()
-        alt = s.locator("button.alt").filter(has_text="17:00–17:45")
-        if alt.count():
-            alt.first.click()
-        else:
-            s.locator("button.alt").first.click()
-        s.locator("text=Créneau : 05.11 17").wait_for()
-        etape("7. Sophie choisit, chacun reconfirme", "Déplacer à 17:00–17:45 dans un autre lieu (une autre personne). Le moment change : "
-              "TOUS reconfirment — personne n'est reconfirmé à sa place.", pause=2)
+        alt = s.locator("button.alt").filter(has_text="45")                  # garder 45 min si une adaptation le permet
+        (alt.first if alt.count() else s.locator("button.alt").first).click()
+        s.locator("text=Créneau : 05.11 16:00").wait_for(state="detached")
+        s.locator("#creneau").wait_for()
+        creneau = s.locator("#creneau").inner_text().replace("Créneau : ", "")
+        etape("7. Sophie choisit, chacun reconfirme", f"Nouveau créneau : {creneau}. Le moment change : TOUS reconfirment — "
+              "personne n'est reconfirmé à sa place.", pause=2)
         lea.locator("#accepter").click()
         pg.wait_for_timeout(1200)
         for qui in ("s14", "s04", "s01"):                    # rôles absents de la scène : rejoués s'ils sont dans la nouvelle version
@@ -147,9 +147,14 @@ def deroule(x, base, pg, proj, s, lea, etape, jouer) -> None:
         s.locator("#fiche-e1").wait_for()
         etape("8. Un résultat concret", "La fiche apparaît sur le téléphone de Sophie. Transmise ≠ reçue : c'est Sophie qui confirme.", pause=3)
         s.locator("#recu-e1").click()
-        proj.locator(".exig[data-palier='reçu']").wait_for()
-        etape("Fin", "Réception confirmée par la destinataire. La présentation, elle, est engagée pour jeudi 17:00 — pas encore tenue : "
-              "l'écran ne dit rien de plus que ce qui est prouvé.", pause=8)
+        proj.locator(".exig[data-palier='livrable reçu']").wait_for()
+        etape("8. Un résultat concret", f"Réception de la fiche confirmée par la destinataire. La présentation, elle, est engagée pour "
+              f"{creneau} — pas encore tenue : l'écran ne dit rien de plus que ce qui est prouvé.", pause=7)
+        api(base, "/api/pulse/console/temps", {"jours": 30})
+        proj.locator("text=aucun résultat n'a été déclaré").wait_for()
+        etape("9. Trente jours plus tard (horloge SIMULÉE)", "La fiche reçue le reste. Personne n'a déclaré ce que la présentation a "
+              "donné : le résultat reste inconnu — le silence n'est pas un succès. Les disponibilités étaient datées : rien n'est reconduit.",
+              joue=True, pause=8)
 
 
 if __name__ == "__main__":

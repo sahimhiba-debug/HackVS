@@ -254,24 +254,27 @@
         h("div", { class: "ligne" }, h("b", {}, g.geste), h("span", { class: "puce" }, `${g.duree_min} min`), e.creneau ? h("span", { class: `palier ${g.palier}` }, g.palier) : null),
         g.livrable ? h("p", { class: "note" }, `À remettre : ${g.livrable}`) : null,
         g.plages && g.plages.length ? h("p", { class: "note" }, `Disponibilité déclarée : ${g.plages.join(", ")}`) : null,
-        g.livraison && g.livraison.contenu ? h("div", {}, h("p", { class: "note" }, `Transmis le ${g.livraison.le} (version ${g.livraison.revision})${g.livraison.recue ? " · réception confirmée" : " · réception à confirmer"}`),
+        g.livraison && g.livraison.contenu ? h("div", {}, h("p", { class: "note" }, `Transmis le ${g.livraison.le} (version ${g.livraison.revision})${g.livraison.recue ? " · réception de la fiche confirmée" : " · réception à confirmer"}`),
           h("div", { class: "fiche", id: `fiche-${g.id}` }, g.livraison.contenu)) : null,
         e.role === "porteur" && A.has("confirmer_reception") && g.livraison && !g.livraison.recue ? h("button", { class: "btn plein petit", id: `recu-${g.id}`, style: "margin-top:6px",
-          onclick: post(`contributions/${g.id}`, {}, "Réception confirmée.") }, "J'ai bien reçu") : null,
+          onclick: post(`receptions/${g.id}`, {}, "Réception de la fiche confirmée. Le geste au créneau reste à constater.") }, `J'ai bien reçu : ${g.livrable}`) : null,
         h("p", { class: "note" }, `${g.nature} · ${g.vous ? "vous" : g.qui} · ${g.statut}`),
         g.offre ? h("p", { class: "note" }, `Offre : « ${g.offre.quoi} »${g.offre.duree_max_min ? ` · ${g.offre.duree_max_min} min au plus` : ""}${g.offre.conditions ? " · " + g.offre.conditions : ""} · jusqu'au ${g.offre.jusqu_au}`) : null,
         g.offres_admissibles ? (g.offres_admissibles.length ? h("fieldset", { class: "radios" }, h("legend", { class: "note" }, "Offres admissibles (vous choisissez) :"),
           g.offres_admissibles.map((o, i) => h("label", { style: "display:flex" }, h("input", { type: "radio", name: `choix-${g.id}`, value: o.id, checked: i === 0 }),
             `« ${o.quoi} »${o.duree_max_min ? ` · ${o.duree_max_min} min au plus` : ""}${o.conditions ? " · " + o.conditions : ""}`)))
           : h("p", { class: "encadre" }, "Personne n'offre ce geste aujourd'hui : modifiez-le ou retirez-le.")) : null,
-        e.role === "porteur" && A.has("constater") && g.statut !== "contribution reçue" ? h("button", { class: "btn discret petit", style: "margin-top:6px",
-          onclick: post(`contributions/${g.id}`, {}, "Contribution constatée (ce n'est pas un résultat).") }, "Contribution reçue") : null));
+        e.role === "porteur" && g.constatable ? h("button", { class: "btn discret petit", id: `constater-${g.id}`, style: "margin-top:6px",
+          onclick: post(`contributions/${g.id}`, {}, "Contribution constatée (ce n'est pas un résultat).") }, "J'ai constaté sa contribution") : null));
       const blocs = [
         h("p", { class: "surtitre" }, `Essai · version ${e.version} · ${e.mode}`), h("h1", { class: "grand" }, e.question),
         h("p", { style: "margin-top:8px" }, h("span", { class: "puce" + (e.etat === "A_ADAPTER" || e.etat === "IMPOSSIBLE" ? " rouge" : "") }, e.etat_libelle)),
         h("p", { class: "note", style: "margin-top:6px" }, `Porteur : ${e.porteur}${e.objet ? " · objet : " + e.objet : ""} · échéance : ${e.echeance}`),
         e.creneau ? h("p", { class: "creneau", id: "creneau" }, `Créneau : ${e.creneau.texte}`) : null,
-        section("Prochaine décision", h("p", { class: "encadre" }, e.prochaine))];
+        section("Prochaine décision", h("p", { class: "encadre" }, e.prochaine)),
+        e.role === "porteur" && e.projetee !== null && !e.final ? h("p", {}, h("button", { class: "btn discret petit", id: "projeter",
+          onclick: post("projection", { oui: !e.projetee }, e.projetee ? "Retirée de l'écran commun." : "Montrée sur l'écran commun : des rôles, jamais des noms.") },
+          e.projetee ? "Ne plus montrer sur l'écran commun" : "Montrer sur l'écran commun (rôles, sans noms)")) : null];
       const details = [e.pourquoi ? section("Pourquoi", h("p", {}, e.pourquoi)) : null,
         section("Critère d'observation", h("p", {}, e.critere || "—")),
         section("Qui fait quoi", gestes),
@@ -281,7 +284,8 @@
         const ad = e.adaptation;
         blocs.push(section("Une condition a changé", h("p", {}, ad.cause),
           ad.ne_couvre_plus.length ? h("p", { class: "encadre" }, "Ne couvre plus : " + ad.ne_couvre_plus.join(" · ")) : null,
-          ad.reste_valable.length ? h("p", { class: "note" }, "Reste valable (rien à redonner) : " + ad.reste_valable.join(", ")) : null,
+          ad.reste_valable.length ? h("p", { class: "note" }, (e.creneau ? "Reste valable pour le créneau actuel : " + ad.reste_valable.join(", ") + " — si le moment change, chacun reconfirme."
+                                                     : "Reste valable (rien à redonner) : " + ad.reste_valable.join(", "))) : null,
           ad.alternatives.map((x) => h("button", { class: "btn discret alt", onclick: post("adapter", { version: e.version, alternative: x.id }, "Nouvelle version : les personnes concernées choisissent.") }, x.texte)),
           e.role === "porteur" ? h("p", { class: "note" }, "Le système ne remplace personne et ne change pas votre objectif sans votre choix.") : null));
       }

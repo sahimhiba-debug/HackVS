@@ -325,9 +325,29 @@ class Banc:
                 return "aucun horaire déclaré"
             if not any(pl.contient(creneau) for pl in o.plages):
                 return f"pas disponible {creneau.texte()} (déclaré : {', '.join(pl.texte() for pl in o.plages)})"
+            if any(self._chevauche(c, creneau) for c in self.occupations(o.auteur, sauf=sauf)):
+                return "la personne est déjà engagée sur un créneau qui chevauche"
         if self.reservations(o.id, sauf=sauf) >= o.capacite:
             return "capacité de l'offre atteinte"
         return None
+
+    def occupations(self, auteur: str, sauf: Optional[str] = None) -> list[Creneau]:
+        """Créneaux où cette personne est DÉJÀ engagée (accord valable dans un autre essai vivant). On n'est pas à deux
+        endroits à la fois, quelle que soit la capacité déclarée de l'offre (défaut trouvé par la revue « jury » : une
+        offre de capacité 2 laissait autoriser deux actions au même créneau)."""
+        res = []
+        for eid in self.essais():
+            if eid == sauf or self.etat(eid) in FINAUX or self.etat(eid) == "IMPOSSIBLE":
+                continue
+            p = self.protocole(eid)
+            if p.creneau is not None and any(e.contributeur == auteur for e in p.etapes) \
+                    and self._accord_donne(eid, auteur, p, self.porteur(eid)):
+                res.append(p.creneau)
+        return res
+
+    @staticmethod
+    def _chevauche(a: Creneau, b: Creneau) -> bool:
+        return a.jour == b.jour and minutes(a.debut) < minutes(b.fin) and minutes(b.debut) < minutes(a.fin)
 
     # ------------------------------------------------------------------ lecture d'un essai (repli pur)
     def essais(self) -> list[str]:
@@ -398,6 +418,12 @@ class Banc:
         recues = {x.donnees["etape"] for x in self._evs(eid, "CONTRIBUTION")}
         acc_porteur = self._dernier_accord(eid, porteur)
         vues_porteur = (acc_porteur.donnees.get("offres") or {}) if acc_porteur and acc_porteur.type == "ACCORD" else {}
+        etat = self.etat(eid)
+        # APRÈS le moment de l'action (créneau passé, ou action close), l'état ACTUEL d'une offre ne requalifie plus un
+        # accord : une disponibilité datée qui expire ensuite n'est pas un désistement (défaut trouvé : +30 jours
+        # affichait « ne couvre plus » pour un lieu accepté et engagé)
+        passe = etat not in AVANT_LANCEMENT | {"EN_COURS", "IMPOSSIBLE"} or (
+            etat == "EN_COURS" and p.creneau is not None and p.creneau.jour < self._jour())
         res: dict[str, Optional[str]] = {}
         for e in p.etapes:
             if not e.contributeur:
@@ -415,6 +441,8 @@ class Banc:
                 res[e.id] = "a décliné"
             elif not self._accord_donne(eid, e.contributeur, p, porteur):
                 res[e.id] = "sa part a changé depuis son accord"
+            elif passe:
+                res[e.id] = None                              # accord valable au moment engagé : il le reste
             else:
                 o = self.offre_de(eid, e)
                 raison = self.offre_couvre(o, e, p.echeance, sauf=eid, creneau=p.creneau) if o else "aucune disponibilité déclarée"
@@ -807,7 +835,7 @@ class Banc:
             raise Conflit("ce geste n'a rien à transmettre")
         if self.etat(eid) != "EN_COURS":
             raise Conflit("l'action n'est pas engagée : rien ne se transmet avant que tous les accords soient réunis et l'essai lancé")
-        if any(x.donnees["etape"] == etape for x in self._evs(eid, "CONTRIBUTION")):
+        if self.receptions(eid, etape):
             raise Conflit("réception déjà confirmée")
         if not 3 <= len(contenu.strip()) <= 3000:
             raise Invalide("contenu vide ou trop long")
@@ -815,10 +843,60 @@ class Banc:
         self._ecrire("LIVRAISON", [membre], essai=eid, etape=etape, revision=rev, contenu=contenu.strip(), empreinte=_empreinte(contenu.strip()))
         return rev
 
+    def autoriser_projection(self, porteur: str, eid: str, oui: bool) -> None:
+        """Le porteur, et lui seul, accepte que son action soit montrée sur un écran COMMUN (en rôles, sans noms) — ou
+        le retire. Sans ce choix, rien n'est projeté : pas même un brouillon (défaut trouvé par la revue « jury »)."""
+        self._exiger_porteur(eid, porteur)
+        if self.etat(eid) in FINAUX and oui:
+            raise Conflit("essai terminé")
+        self._ecrire("PROJECTION", [porteur], essai=eid, oui=oui)
+
+    def projetable(self, eid: str) -> bool:
+        evs = self._evs(eid, "PROJECTION")
+        return bool(evs) and bool(evs[-1].donnees["oui"])
+
+    def receptions(self, eid: str, etape: str) -> list[Evt]:
+        return [x for x in self._evs(eid, "RECEPTION") if x.donnees["etape"] == etape]
+
+    def recevoir(self, porteur: str, eid: str, etape: str) -> None:
+        """Le destinataire confirme avoir REÇU le livrable transmis (sa dernière version). C'est un fait sur le LIVRABLE
+        seulement : le geste au créneau (présenter, prêter, amener) n'est pas constaté pour autant, et un retrait
+        ultérieur de la personne garde tout son effet (défaut trouvé : « reçu » valait pour la présentation entière)."""
+        self._exiger_porteur(eid, porteur)
+        if self.etat(eid) != "EN_COURS":
+            raise Conflit("l'essai n'est pas en cours")
+        e = next((x for x in self.protocole(eid).etapes if x.id == etape), None)
+        if e is None or not e.livrable:
+            raise Introuvable("aucun livrable pour ce geste")
+        livres = self.livraisons(eid, etape)
+        if not livres:
+            raise Conflit("rien n'a encore été transmis pour ce geste")
+        if self.receptions(eid, etape):
+            raise Conflit("réception déjà confirmée")
+        self._ecrire("RECEPTION", [porteur], essai=eid, etape=etape, contributeur=e.contributeur,
+                     revision=livres[-1].donnees["revision"], empreinte=livres[-1].donnees["empreinte"])
+
+    def constatable(self, eid: str, etape: str) -> Optional[str]:
+        """Pourquoi la contribution de ce geste ne peut PAS encore être constatée (None : elle le peut)."""
+        p = self.protocole(eid)
+        e = next((x for x in p.etapes if x.id == etape), None)
+        if e is None:
+            return "geste inconnu"
+        if self.etat(eid) != "EN_COURS":
+            return "l'essai n'est pas en cours"
+        if any(x.donnees["etape"] == etape for x in self._evs(eid, "CONTRIBUTION")):
+            return "contribution déjà constatée"
+        if e.livrable and not self.livraisons(eid, etape):
+            return "rien n'a encore été transmis pour ce geste"
+        if e.livrable and not self.receptions(eid, etape):
+            return "la réception du livrable n'est pas encore confirmée"
+        if p.creneau and self._jour() < p.creneau.jour:
+            return f"le créneau ({p.creneau.texte()}) n'a pas encore eu lieu : rien ne peut être constaté"
+        return None
+
     def constater(self, porteur: str, eid: str, etape: str) -> None:
-        """Le porteur CONSTATE qu'une contribution a été reçue — pour un livrable, qu'il a REÇU la dernière version
-        transmise ; pour une présence au créneau, pas avant le jour du créneau. Ce n'est pas un résultat, encore moins
-        un succès."""
+        """Le porteur CONSTATE qu'une contribution a eu lieu : pour un geste au créneau, pas avant le jour du créneau ;
+        pour un geste avec livrable, après en avoir confirmé la réception. Ce n'est pas un résultat, encore moins un succès."""
         self._exiger_porteur(eid, porteur)
         if self.etat(eid) != "EN_COURS":
             raise Conflit("l'essai n'est pas en cours")
@@ -826,13 +904,10 @@ class Banc:
         e = next((x for x in p.etapes if x.id == etape), None)
         if e is None:
             raise Introuvable("geste inconnu")
-        if any(x.donnees["etape"] == etape for x in self._evs(eid, "CONTRIBUTION")):
-            raise Conflit("contribution déjà constatée")
+        pourquoi = self.constatable(eid, etape)
+        if pourquoi:
+            raise Conflit(pourquoi)
         livres = self.livraisons(eid, etape)
-        if e.livrable and not livres:
-            raise Conflit("rien n'a encore été transmis pour ce geste")
-        if not e.livrable and p.creneau and self._jour() < p.creneau.jour:
-            raise Conflit(f"le créneau ({p.creneau.texte()}) n'a pas encore eu lieu : rien ne peut être constaté")
         with self.m.transaction():
             self._ecrire("CONTRIBUTION", [porteur], essai=eid, etape=etape, contributeur=e.contributeur,
                          livraison=livres[-1].donnees["revision"] if livres else None)

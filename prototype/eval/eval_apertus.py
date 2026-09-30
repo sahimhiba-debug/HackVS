@@ -82,8 +82,10 @@ JOUR_ACTION = dt.date(2026, 11, 3)
 ACTIONS = [
     ("On aimerait faire goûter notre fromage d'alpage à des importateurs italiens demain matin, sur une table à la Foire.",
      {"voix", "lieu", "public"}, "2026-11-04", ("08:00", "12:00")),
+    # attente CORRIGÉE le 2026-09-30 après revue contradictoire : « tenir NOTRE stand » = le lieu existe ; les acheteurs
+    # « passent » d'eux-mêmes = aucun public à amener. L'ancienne attente (voix, lieu, public) récompensait une invention.
     ("Besoin de quelqu'un qui parle allemand pour tenir notre stand vendredi entre 15h et 17h, des acheteurs de Zurich passent.",
-     {"voix", "lieu", "public"}, "2026-11-06", ("15:00", "17:00")),
+     {"voix"}, "2026-11-06", ("15:00", "17:00")),
     ("Nous voulons montrer nos vins à des clients anglophones samedi soir.", {"voix", "public"}, "2026-11-07", ("17:00", "20:00")),
     ("Ich möchte unseren Käse am Donnerstag deutschen Einkäufern vorstellen.", {"voix", "public"}, "2026-11-05", None),
     ("Aidez-moi pour la Foire.", set(), None, None),
@@ -92,11 +94,11 @@ ACTIONS = [
 
 
 def _action_juste(sortie: dict, roles: set, jour: Optional[str], heures: Optional[tuple]) -> bool:
-    """Juste = les rôles attendus sont proposés (et aucun si rien n'est demandé), le jour et les heures attendus sont lus.
-    Une action sans exigence attendue ne doit RIEN proposer et doit poser au moins une question (`manquant`)."""
+    """Juste = EXACTEMENT les rôles attendus (une exigence inventée est une erreur : revue contradictoire du 2026-09-30),
+    le jour et les heures attendus. Une action sans exigence attendue ne doit RIEN proposer et doit poser une question."""
     trouves = {x["role"] for x in sortie["exigences"]}
     f = sortie["fenetre"]
-    ok_roles = roles <= trouves if roles else (not trouves and bool(sortie["manquant"]))   # rien d'inventé, une question posée
+    ok_roles = roles == trouves if roles else (not trouves and bool(sortie["manquant"]))   # rien d'inventé, une question posée
     ok_jour = jour is None or f.get("jour") == jour
     ok_heures = heures is None or (f.get("debut"), f.get("fin")) == heures
     return ok_roles and ok_jour and ok_heures
@@ -136,6 +138,7 @@ def executer(fournisseur: Optional[Fournisseur]) -> dict:
         justes.append(_action_juste(rep.sortie, roles, jour, heures))
         reps.append(rep)
     tache("comprendre_action", reps, justes)
+    res["comprendre_action"]["echecs"] = [t for (t, *_), j in zip(ACTIONS, justes, strict=True) if not j]
     return res
 
 
@@ -165,8 +168,9 @@ def rapport(det: dict, apertus: Optional[dict], modele: Optional[str]) -> str:
                "« structurer_essai » en secours = FORMULAIRE : texte recopié, objet reconnu dans une courte liste, AUCUN geste "
                "proposé — le membre complète. Temps et corrections humaines : non mesurés (aucun utilisateur).",
                "« comprendre_action » en secours = RÈGLES : mots-clés de langue, lieu, public, jour, moment (français surtout). "
-               "Son échec est attendu et montré : un texte en allemand (jour non lu). C'est là, et sur les tournures libres, "
-               "qu'un modèle (Apertus) serait utile — à vérifier par un appel réel, NON EXÉCUTÉ ici."]
+               "Notation EXACTE : une exigence non demandée est une erreur. Échecs du repli : "
+               + "; ".join(f"« {t} »" for t in det.get("comprendre_action", {}).get("echecs", [])) + ". C'est là qu'un modèle "
+               "(Apertus) pourrait être utile — à vérifier par un appel réel, NON EXÉCUTÉ ici."]
     return "\n".join(lignes) + "\n"
 
 

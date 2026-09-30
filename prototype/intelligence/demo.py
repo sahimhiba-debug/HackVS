@@ -22,7 +22,8 @@ from .essai import Plage
 from .ia import Intelligence
 
 CLAUDIA, STEFAN, NICOLAS = "s15", "s16", md.NICOLAS
-BESOIN_SOPHIE = "Je voudrais présenter nos tisanes à des acheteurs germanophones pendant la Foire, jeudi après-midi."
+BESOIN_SOPHIE = ("Je voudrais présenter nos tisanes à des acheteurs germanophones pendant la Foire, jeudi après-midi. Je n'ai ni "
+                 "stand ni personne qui parle allemand, et j'aimerais leur laisser une fiche en allemand.")
 FICHE_DE = ("Kräutertees aus dem Val d'Entremont — Bio-Kräuter aus 1 200 m Höhe, von Hand geerntet.\n"
             "Sorten: Alpenminze, Melisse, Thymian-Zitrone. 20 Beutel à 1,5 g.\n"
             "Ideal für Bioläden und Hofläden. Muster auf Anfrage am Stand.")
@@ -111,8 +112,10 @@ class Demo:
                                           "critere": CRITERE_ACTION, "exigences": prop["exigences"], "fenetre": prop["fenetre"],
                                           "duree_min_acceptable": 30})
         self.ctx["essai"] = eid
+        c.banc.autoriser_projection(md.SOPHIE, eid, True)
         return {"acte": "Besoin", "legende": f"Sophie écrit avec ses mots : « {BESOIN_SOPHIE} » Elle a le produit ; il lui manque "
-                "une voix allemande, un lieu et un public. Elle confirme ces trois exigences et sa fenêtre (jeudi 14 h–18 h).",
+                "une voix allemande (avec la fiche), un lieu et un public. Elle confirme ces trois exigences et sa fenêtre (jeudi 14 h–18 h), "
+                "et accepte de montrer son action sur l'écran commun (en rôles, sans noms).",
                 "joue": True, "ia": prop["ia"], "ecran": {"app": md.SOPHIE, "vue": "essai", "cible": eid}}
 
     def _e2_proposition(self) -> dict:
@@ -175,7 +178,7 @@ class Demo:
         eid, _ = self._essai()
         e = next(x for x in c.banc.protocole(eid).etapes if x.livrable)
         c.banc.livrer(e.contributeur or "", eid, e.id, FICHE_DE)
-        c.banc.constater(md.SOPHIE, eid, e.id)
+        c.banc.recevoir(md.SOPHIE, eid, e.id)                 # la FICHE est reçue ; la présentation reste à tenir
         return {"acte": "Résultat", "legende": "Léa écrit la fiche en allemand et la transmet. Elle apparaît sur le téléphone de Sophie, "
                 "qui en confirme la réception. Transmise, puis reçue : deux faits distincts.", "joue": True,
                 "ecran": {"app": md.SOPHIE, "vue": "essai", "cible": eid}}

@@ -18,7 +18,7 @@ from .politique import Spectateur
 if TYPE_CHECKING:
     from .club_pulse import ClubPulse
 
-LIBELLES = {"BROUILLON": "brouillon (visible de vous seul)", "PROPOSE": "proposé : en attente de choix",
+LIBELLES = {"BROUILLON": "brouillon : rien n'est encore envoyé à personne", "PROPOSE": "proposé : en attente de choix",
             "AUTORISE": "autorisé : tous les accords couvrent cette version", "A_ADAPTER": "une condition a changé : à adapter",
             "EN_COURS": "en cours", "CONTRIBUTION_RECUE": "contributions reçues (aucun résultat en découle)",
             "OBSERVEE": "observation déclarée", "ANNULE": "annulé", "EXPIRE": "expiré sans lancement",
@@ -95,13 +95,14 @@ class VuesEssai:
                            "offre": ({"quoi": o.quoi, "conditions": o.conditions, "duree_max_min": o.duree_max_min,
                                       "jusqu_au": o.au.isoformat(), "plages": [pl.model_dump(mode="json") for pl in o.plages]} if o else None),
                            "statut": statut, "vous": e.contributeur == pid,
-                           "palier": self.palier(eid, e, raisons[e.id], e.id in recues, bool(livres)),
+                           "palier": self.palier(eid, e, raisons[e.id], e.id in recues, bool(livres), bool(b.receptions(eid, e.id))),
+                           "constatable": pid == porteur and not console and b.constatable(eid, e.id) is None,
                            "role": e.role, "livrable": e.livrable,
                            "plages": [pl.texte() for pl in o.plages] if o else [],
                            "livraison": ({"revision": livres[-1].donnees["revision"], "contenu": livres[-1].donnees["contenu"],
-                                          "le": livres[-1].le.isoformat(), "recue": e.id in recues}
+                                          "le": livres[-1].le.isoformat(), "recue": bool(b.receptions(eid, e.id))}
                                          if livres and (pid == porteur or e.contributeur == pid) else
-                                         {"recue": e.id in recues} if livres else None),
+                                         {"recue": bool(b.receptions(eid, e.id))} if livres else None),
                            "invitation": e.invitation,
                            "offre_id": o.id if o and e.contributeur == pid else None})   # sa PROPRE offre seulement
         role = "porteur" if pid == porteur else ("console" if console else "contributeur")
@@ -114,7 +115,8 @@ class VuesEssai:
              "historique": self._historique(eid, pid, console), "mode": "monde de démonstration FICTIF",
              "creneau": {"texte": p.creneau.texte(), **p.creneau.model_dump(mode="json")} if p.creneau else None,
              "fenetre": {"texte": p.fenetre.texte(), **p.fenetre.model_dump(mode="json")} if p.fenetre else None,
-             "duree_min_acceptable": p.duree_min_acceptable}
+             "duree_min_acceptable": p.duree_min_acceptable,
+             "projetee": b.projetable(eid) if pid == porteur and not console else None}
         if etat == "A_ADAPTER":
             v["adaptation"] = self._adaptation(eid, pid, console)
         if etat == "BROUILLON" and pid == porteur and p.fenetre:  # une ACTION à créneau : le serveur assemble, le porteur lit
@@ -135,21 +137,23 @@ class VuesEssai:
             v["reutilisation"] = {"vous": b.droits(eid).get(pid or ""), "niveau_effectif": b.niveau_partage(eid)}
         return v
 
-    def palier(self, eid: str, e, raison: Optional[str], recue: bool, livree: bool) -> str:
-        """Le palier d'une contribution, JAMAIS plus fort que sa preuve : manquant → proposé → accepté → transmis → reçu."""
+    def palier(self, eid: str, e, raison: Optional[str], recue: bool, livree: bool, livrable_recu: bool = False) -> str:
+        """Le palier d'une contribution, JAMAIS plus fort que sa preuve : manquant → proposé → accepté → transmis →
+        livrable reçu → reçu (contribution constatée). Un livrable reçu ne vaut pas le geste au créneau ; une part
+        perdue ensuite (retrait, disponibilité) se voit, même après une transmission."""
         if recue:
             return "reçu"
-        if livree:
-            return "transmis"
         if not e.contributeur:
             return "manquant"
-        if raison is None:
-            return "accepté"
         if raison in ("en attente de sa réponse",):
             return "proposé"
         if raison in A_REDEMANDER:
             return "à reconfirmer"
-        return "ne couvre plus"
+        if raison is not None:
+            return "ne couvre plus"
+        if livrable_recu:
+            return "livrable reçu"
+        return "transmis" if livree else "accepté"
 
     def _offre_anonyme(self, o) -> dict:
         per = self.c.coffre.identite(o.auteur)
@@ -165,10 +169,23 @@ class VuesEssai:
         sol = a["solution"]
         return {"exigences": [{"etape": x["etape"], "offres": [self._offre_anonyme(b.offre(o)) for o in x["offres"]],
                                "retenue": (sol["choix"].get(x["etape"]) if sol else None)} for x in a["exigences"]],
-                "creneau": {"texte": sol["creneau"].texte(), **sol["creneau"].model_dump(mode="json")} if sol else None,
+                "creneau": {"texte": sol["creneau"].texte(), **sol["creneau"].model_dump(mode="json"),
+                            "recouvrement": self._recouvrement(eid, sol)} if sol else None,
                 "blocage": a["blocage"], "fenetre": p.fenetre.texte() if p.fenetre else None,
                 "explication": ("Aucune offre ne couvre seule toutes les exigences ; la proposition n'existe qu'au créneau où les "
                                 "disponibilités déclarées se recouvrent." if sol else None)}
+
+    def _recouvrement(self, eid: str, sol: dict) -> dict:
+        """Où les disponibilités RETENUES se recouvrent autour du créneau proposé (dans la fenêtre du porteur) : le
+        créneau n'est que le premier quart d'heure admissible de ce recouvrement — l'écran ne dit « le seul » que s'il l'est."""
+        b, c = self.b, sol["creneau"]
+        p = b.protocole(eid)
+        debut, fin = minutes(p.fenetre.debut) if p.fenetre else 0, minutes(p.fenetre.fin) if p.fenetre else 24 * 60
+        for oid in filter(None, sol["choix"].values()):
+            pl = next((x for x in b.offre(oid).plages if x.contient(c)), None)
+            if pl is not None:
+                debut, fin = max(debut, minutes(pl.debut)), min(fin, minutes(pl.fin))
+        return {"debut": heure(debut), "fin": heure(fin), "unique": fin - debut == c.duree_min}
 
     # ------------------------------------------------------------------ E. écran commun (projection devant un public)
     def offres_dispersees(self) -> dict:
@@ -187,7 +204,8 @@ class VuesEssai:
                 genre = self.c.tax.libelle(o.concept) if o.concept else NATURES[o.nature]
                 lignes.append({"genre": genre, "quoi": o.quoi, "fenetres": f})
         lignes.sort(key=lambda x: (x["genre"], x["fenetres"][0]["debut"]))
-        return {"vide": True, "jour": j.strftime("%d.%m"), "offres": lignes, "fictif": True,
+        return {"vide": True, "jour": j.strftime("%d.%m"), "jour_libelle": f"{JOURS[j.weekday()].capitalize()} {j.strftime('%d.%m')}",
+                "offres": [{"genre": x["genre"], "fenetres": x["fenetres"]} for x in lignes], "fictif": True,
                 "regle": "Offres déclarées par des membres, chacune avec ses horaires. Personne n'a encore rien demandé."}
 
 
@@ -203,12 +221,17 @@ class VuesEssai:
         for e in p.etapes:
             o = b.offre_de(eid, e) if e.contributeur else None
             livres = b.livraisons(eid, e.id)
-            palier = self.palier(eid, e, raisons[e.id], e.id in recues, bool(livres))
+            palier = self.palier(eid, e, raisons[e.id], e.id in recues, bool(livres), bool(b.receptions(eid, e.id)))
             raison = raisons[e.id]
             jour = p.creneau.jour if p.creneau else (p.fenetre.jour if p.fenetre else None)
-            autres = [self._offre_anonyme(x) for x in b.candidats(eid, e, p.echeance, None, autres=set())
-                      if (not o or x.id != o.id) and any(pl.jour == jour for pl in x.plages)] if etat != "BROUILLON" else \
-                (next((x["offres"] for x in prop["exigences"] if x["etape"] == e.id), []) if prop else [])
+            if etat == "BROUILLON":                           # la proposition du serveur : l'offre retenue, puis les autres
+                ex = next((x for x in prop["exigences"] if x["etape"] == e.id), None) if prop else None
+                o = b.offre(ex["retenue"]) if ex and ex["retenue"] else None
+                autres_o = [b.offre(x["id"]) for x in ex["offres"]] if ex else []
+            else:
+                autres_o = b.candidats(eid, e, p.echeance, None, autres=set())
+            autres = [{"id": x.id, "fenetres": [{"debut": pl.debut, "fin": pl.fin} for pl in x.plages if pl.jour == jour]}
+                      for x in autres_o if (not o or x.id != o.id) and any(pl.jour == jour for pl in x.plages)]
             pourquoi = ("n'a pas encore répondu" if raison == "en attente de sa réponse" else
                         "une personne a décliné" if raison == "a décliné" else
                         "une personne s'est retirée" if raison == "a retiré sa participation" else
@@ -216,10 +239,12 @@ class VuesEssai:
                          f"{p.creneau.debut}–{p.creneau.fin}") if o and p.creneau and raison and "pas disponible" in raison else
                         "le moment a changé : à reconfirmer" if raison == "sa part a changé depuis son accord" else
                         raison if palier in ("ne couvre plus", "à reconfirmer") else None)
-            exigences.append({"id": e.id, "role": e.role or NATURES[e.nature], "geste": e.geste, "livrable": e.livrable,
+            exigences.append({"id": e.id, "role": e.role or NATURES[e.nature], "libelle": _libelle(e), "geste": e.geste, "livrable": e.livrable,
                               "palier": palier if etat != "BROUILLON" else ("disponible" if prop and prop["creneau"] else "manquant"),
-                              "offre": {"quoi": o.quoi, "fenetres": [{"debut": pl.debut, "fin": pl.fin} for pl in o.plages]} if o else None,
-                              "candidats": autres, "pourquoi": pourquoi})
+                              # des HORAIRES, jamais le texte d'une offre : « le stand de la distillerie, halle 3 » désigne quelqu'un
+                              "offre": {"fenetres": [{"debut": pl.debut, "fin": pl.fin} for pl in o.plages if pl.jour == jour]} if o else None,
+                              "candidats": [{"fenetres": x["fenetres"]} for x in autres],
+                              "pourquoi": pourquoi})
         ad = b._evs(eid, "ADAPTATION")
         adaptation = None
         if etat in ("A_ADAPTER", "IMPOSSIBLE") and ad:
@@ -228,11 +253,12 @@ class VuesEssai:
             for x, e in zip(exigences, p.etapes, strict=True):  # la cause, en RÔLE (le texte d'offre peut désigner quelqu'un)
                 o = b.offre_de(eid, e) if e.contributeur else None
                 if o and f"« {o.quoi} »" in cause:
-                    cause = f"{x['role'].capitalize()} : " + ("disponibilité ou conditions modifiées par son propriétaire" if "modifiées" in cause
+                    cause = f"{x['libelle']} : " + ("disponibilité ou conditions modifiées par son propriétaire" if "modifiées" in cause
                                                               else "offre retirée par son propriétaire" if "retirée" in cause else "a changé")
-            adaptation = {"cause": cause, "tient": [x["role"] for x in exigences if x["palier"] in ("accepté", "transmis", "reçu")],
-                          "tombe": [x["role"] for x in exigences if x["palier"] == "ne couvre plus"],
-                          "alternatives": [{"type": a["type"], "texte": a["texte"]} for a in b.alternatives(eid)],
+            libelles = {e.id: _libelle(e) for e in p.etapes}
+            adaptation = {"cause": cause, "tient": [x["libelle"] for x in exigences if x["palier"] in ("accepté", "transmis", "livrable reçu", "reçu")],
+                          "tombe": [x["libelle"] for x in exigences if x["palier"] == "ne couvre plus"],
+                          "alternatives": [{"type": a["type"], "texte": _en_roles(a, libelles, p.duree_min_acceptable)} for a in b.alternatives(eid)],
                           "bloque": etat == "IMPOSSIBLE"}
         journal = []
         for ev in b._evs(eid, "ESSAI_ETAT")[-6:]:
@@ -241,7 +267,8 @@ class VuesEssai:
                 "fenetre": {"texte": p.fenetre.texte(), "debut": p.fenetre.debut, "fin": p.fenetre.fin} if p.fenetre else None,
                 "creneau": ({"texte": p.creneau.texte(), "debut": p.creneau.debut, "fin": p.creneau.fin} if p.creneau else
                             {"texte": prop["creneau"]["texte"], "debut": prop["creneau"]["debut"],
-                             "fin": _fin(prop["creneau"]["debut"], prop["creneau"]["duree_min"]), "propose": True}
+                             "fin": _fin(prop["creneau"]["debut"], prop["creneau"]["duree_min"]), "propose": True,
+                             "recouvrement": prop["creneau"]["recouvrement"]}
                             if prop and prop["creneau"] else None),
                 "exigences": exigences, "adaptation": adaptation, "blocage": prop["blocage"] if prop else None,
                 "journal": journal, "date": self.c.jour.isoformat(),
@@ -293,12 +320,14 @@ class VuesEssai:
         a: list[str] = []
         if role == "porteur" and etat == "BROUILLON" and self.b.protocole(eid).fenetre:
             return ["publier_proposition", "annuler"]
-        if role == "porteur" and etat == "EN_COURS" and any(self.b.livraisons(eid, e.id) and not any(
-                x.donnees["etape"] == e.id for x in self.b._evs(eid, "CONTRIBUTION")) for e in self.b.protocole(eid).etapes):
+        etapes = self.b.protocole(eid).etapes
+        if role == "porteur" and etat == "EN_COURS" and any(self.b.livraisons(eid, e.id) and not self.b.receptions(eid, e.id) for e in etapes):
             a.append("confirmer_reception")
+        if role == "porteur" and etat == "EN_COURS" and any(self.b.constatable(eid, e.id) is None for e in etapes):
+            a.append("constater")
         if role == "porteur":
             a += {"BROUILLON": ["corriger", "publier", "annuler"], "PROPOSE": ["modifier", "annuler"], "AUTORISE": ["lancer", "modifier", "annuler"],
-                  "A_ADAPTER": ["choisir_adaptation", "annuler"], "EN_COURS": ["constater", "annuler"],
+                  "A_ADAPTER": ["choisir_adaptation", "annuler"], "EN_COURS": ["annuler"],
                   "CONTRIBUTION_RECUE": ["observer"], "RESULTAT_INCONNU": ["observer"], "OBSERVEE": ["corriger_observation", "reutilisation"]}.get(etat, [])
         else:
             # choisir n'a de sens que pour une part À REDEMANDER : si son offre ne couvre plus le geste, c'est au porteur
@@ -307,8 +336,7 @@ class VuesEssai:
                 a += ["accepter", "decliner"]
             if etat not in FINAUX and self.b._dernier_accord(eid, pid or "") is not None:
                 a += ["retirer"]
-            if etat == "EN_COURS" and any(e.contributeur == pid and e.livrable and not any(
-                    x.donnees["etape"] == e.id for x in self.b._evs(eid, "CONTRIBUTION")) for e in self.b.protocole(eid).etapes):
+            if etat == "EN_COURS" and any(e.contributeur == pid and e.livrable and not self.b.receptions(eid, e.id) for e in etapes):
                 a += ["livrer"]
             if etat == "OBSERVEE" and pid in self.b.participants(eid):
                 a += ["confirmer", "contester", "reutilisation"]
@@ -442,3 +470,32 @@ class VuesEssai:
 
 def _fin(debut: str, duree: int) -> str:
     return heure(minutes(debut) + duree)
+
+
+JOURS = ("lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche")
+
+
+def _libelle(e) -> str:
+    """Le rôle d'un geste pour un écran commun, DÉRIVÉ de ce geste (jamais « allemand » écrit en dur)."""
+    import re
+    base = {"voix": "Voix", "lieu": "Lieu", "public": "Public"}.get(e.role or "", NATURES[e.nature].capitalize())
+    m = re.search(r"\ben (\w+)$", e.geste) if e.role == "voix" else re.search(r"acheteurs (\w+?)s?$", e.geste) if e.role == "public" else None
+    return f"{base} en {m.group(1)}" if m and e.role == "voix" else f"{base} {m.group(1)}" if m else base
+
+
+def _en_roles(a: dict, libelles: dict[str, str], minimum: Optional[int]) -> str:
+    """Une adaptation dite en RÔLES pour l'écran commun : ni nom, ni texte d'offre."""
+    t = a["type"]
+    if t == "decaler":
+        c = a["creneau"]
+        return (f"Déplacer à {c['jour'][8:10]}.{c['jour'][5:7]} {c['debut']}–{_fin(c['debut'], c['duree_min'])}"
+                + (f" — variante plus courte ({c['duree_min']} min ; minimum de la porteuse : {minimum} min)" if a.get("plus_court") else "")
+                + (" — même équipe" if not a["remplaces"] else " — " + ", ".join(f"{libelles[k].lower()} : une autre personne" for k in a["remplaces"]))
+                + ". Le moment change : chaque participant reconfirme.")
+    if t == "remplacer":
+        return f"Garder le moment ; demander « {libelles[a['etape']].lower()} » à une autre personne qui l'offre."
+    if t == "raccourcir":
+        return f"Garder la même personne ; raccourcir « {libelles[a['etape']].lower()} » à {a['duree']} min."
+    if t == "accepter_conditions":
+        return f"Garder la même personne pour « {libelles[a['etape']].lower()} » aux nouvelles conditions ; elle reconfirme."
+    return a["texte"]

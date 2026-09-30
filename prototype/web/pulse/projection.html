@@ -31,6 +31,7 @@
       transition: left .8s ease, width .8s ease; }
     .bande { position: absolute; top: 44px; bottom: 16px; border-radius: 10px; border: 3px solid var(--vert); background: rgba(20,105,59,.06);
       transition: left .8s ease, width .8s ease, border-color .6s ease, background .6s ease; pointer-events: none; z-index: 2; }
+    .recouvre { position: absolute; top: 44px; bottom: 16px; background: rgba(20,105,59,.07); border-left: 2px dotted var(--vert); border-right: 2px dotted var(--vert); }
     .bande.attente { border-color: var(--ambre); background: rgba(122,82,0,.10); }
     .bande.alerte { border-color: var(--rouge); background: rgba(200,32,26,.10); border-style: dashed; }
     .bande b { position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%); font-size: 17px; white-space: nowrap; background: var(--surface); padding: 2px 8px; border-radius: 6px; }
@@ -83,22 +84,28 @@
     }
     const jeton = () => { try { return sessionStorage.getItem("console-jeton") || "1"; } catch { return "1"; } };
     const min = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
-    const ROLES = { voix: "Voix allemande", lieu: "Lieu", public: "Public germanophone", autre: "Contribution" };
-    const PUCES = { "reçu": "vert", "apporté": "vert", "accepté": "bleu", "disponible": "bleu", "transmis": "ambre", "proposé": "ambre",
+    const PUCES = { "reçu": "vert", "livrable reçu": "vert", "apporté": "vert", "accepté": "bleu", "disponible": "bleu", "transmis": "ambre", "proposé": "ambre",
                     "à reconfirmer": "ambre", "ne couvre plus": "rouge", "manquant": "rouge" };
     function phrase(p) {
       const c = p.creneau ? p.creneau.texte : "";
       const n = p.exigences.length, acc = p.exigences.filter((x) => ["accepté", "transmis", "reçu"].includes(x.palier)).length;
       switch (p.etat) {
-        case "BROUILLON": return p.creneau ? ["ok", `Proposition complète : ${c} — le seul moment où les ${n} disponibilités se recouvrent.`]
+        case "BROUILLON": return p.creneau ? ["ok", `Proposition complète : ${c} — ` + (!p.creneau.recouvrement || p.creneau.recouvrement.unique
+                                             ? `le seul moment où les ${n} disponibilités se recouvrent.`
+                                             : `les ${n} disponibilités se recouvrent de ${p.creneau.recouvrement.debut} à ${p.creneau.recouvrement.fin} ; premier créneau retenu.`)]
                                            : ["alerte", `Pas de proposition complète : ${p.blocage || "des exigences restent sans offre."}`];
         case "PROPOSE": return ["attente", `Proposé à chacun, sur son téléphone : ${acc} accord(s) sur ${n}. Rien n'est supposé.`];
         case "AUTORISE": return ["ok", `Coopération prête : les ${n} accords couvrent ${c}.`];
-        case "A_ADAPTER": return ["alerte", `Une condition a changé : ${p.adaptation ? p.adaptation.alternatives.length : 0} adaptation(s) admissible(s).`];
+        case "A_ADAPTER": return ["alerte", `Une condition a changé : ${p.adaptation ? p.adaptation.alternatives.length : 0} adaptation(s) proposée(s), les plus proches d'abord.`];
         case "IMPOSSIBLE": return ["alerte", "Bloqué : aucune combinaison d'offres réelles ne tient. Rien n'est inventé."];
-        case "EN_COURS": return ["ok", `Action engagée pour ${c}.`];
+        case "EN_COURS": {
+          const lr = p.exigences.filter((x) => x.palier === "livrable reçu").map((x) => x.livrable);
+          return ["ok", `Action engagée pour ${c} : pas encore réalisée.` + (lr.length ? ` ${lr.join(", ")} : reçu par la porteuse ; le reste se constate au créneau.` : "")];
+        }
         case "CONTRIBUTION_RECUE": return ["ok", "Toutes les contributions sont reçues."];
-        case "OBSERVEE": return ["ok", "Résultat déclaré par la porteuse, confirmé par les participants."];
+        case "OBSERVEE": return ["ok", "Résultat DÉCLARÉ par la porteuse : une déclaration, pas une mesure."];
+        case "RESULTAT_INCONNU": return ["attente", `Date simulée ${p.date} : ce qui a été reçu le reste ; aucun résultat n'a été déclaré — il reste inconnu. `
+                                         + "Les disponibilités étaient datées : rien n'est reconduit."];
         default: return ["attente", p.etat_libelle];
       }
     }
@@ -117,8 +124,8 @@
       for (let m = t0; m <= t1; m += 60) axe.append(h("span", { style: `left:${((m - t0) / (t1 - t0)) * 100}%` }, `${String(m / 60).padStart(2, "0")}:00`));
       const pistes = p.offres.map((o) => h("div", { class: "piste" }, h("div", { class: "nom" }, o.genre, h("small", {}, "une personne du Club")),
         h("div", { class: "zone" }, o.fenetres.map((f) => h("div", { class: "barre", style: `left:${pos(f.debut)};width:${larg(f.debut, f.fin)};background:#6b7a90` }, `${f.debut}–${f.fin}`)))));
-      $("#page").replaceChildren(h("h1", { class: "titre" }, `Jeudi ${p.jour} : ${p.offres.length} contributions proposées, dispersées`),
-        h("p", { class: "phrase attente" }, "Des offres éparses, chacune avec ses horaires. Personne n'a encore rien demandé."),
+      $("#page").replaceChildren(h("h1", { class: "titre" }, `${p.jour_libelle} : ${p.offres.length} contributions proposées, dispersées`),
+        h("p", { class: "phrase attente" }, "Des offres éparses, chacune avec ses horaires. Aucune action n'est montrée ici sans l'accord de sa porteuse."),
         h("div", { class: "ligne-temps large", style: "margin-top:22px" }, axe, ...pistes),
         h("p", { class: "legende" }, p.regle));
     }
@@ -143,31 +150,35 @@
         h("div", { class: "zone" }, p.fenetre ? h("div", { class: "barre", style: `left:${pct(p.fenetre.debut)};width:${larg(p.fenetre.debut, p.fenetre.fin)};background:var(--vert)` }, `fenêtre ${p.fenetre.debut}–${p.fenetre.fin}`) : null))];
       for (const x of p.exigences) {
         const zone = h("div", { class: "zone" });
-        const retenue = x.offre ? [x.offre] : (x.candidats.length && p.etat === "BROUILLON" ? [x.candidats[0]] : []);
-        for (const o of x.candidats) if (!retenue.includes(o) && (!x.offre || o.quoi !== x.offre.quoi))
-          o.fenetres.forEach((f) => zone.append(h("div", { class: "barre autre", style: `left:${pct(f.debut)};width:${larg(f.debut, f.fin)}`, title: o.quoi }, `autre offre ${f.debut}–${f.fin}`)));
+        const retenue = x.offre ? [x.offre] : [];
+        for (const o of x.candidats)
+          o.fenetres.forEach((f) => zone.append(h("div", { class: "barre autre", style: `left:${pct(f.debut)};width:${larg(f.debut, f.fin)}` }, `autre offre ${f.debut}–${f.fin}`)));
         for (const o of retenue) o.fenetres.forEach((f) => zone.append(h("div", { class: "barre" + (x.palier === "ne couvre plus" ? " tombe" : ""),
           style: `left:${pct(f.debut)};width:${larg(f.debut, f.fin)}` }, `${f.debut}–${f.fin}`)));
-        pistes.push(h("div", { class: "piste", "data-id": x.id }, h("div", { class: "nom" }, ROLES[x.role] || x.role), zone));
+        pistes.push(h("div", { class: "piste", "data-id": x.id }, h("div", { class: "nom" }, x.libelle), zone));
       }
       const lt = h("div", { class: "ligne-temps" }, axe, ...pistes);
+      const r = p.creneau && p.creneau.recouvrement;
+      if (r && !r.unique)                                 // le recouvrement réel, pour qu'on voie d'où vient le créneau
+        lt.append(h("div", { class: "recouvre", style: `left:calc(170px + 20px + (100% - 210px) * ${(min(r.debut) - t0) / (t1 - t0)});width:calc((100% - 210px) * ${(min(r.fin) - min(r.debut)) / (t1 - t0)})` }));
       if (p.creneau) {
         const cl = p.etat === "A_ADAPTER" || p.etat === "IMPOSSIBLE" ? "alerte" : (["PROPOSE", "BROUILLON"].includes(p.etat) ? "attente" : "");
         lt.append(h("div", { class: `bande ${cl}`, style: `left:calc(170px + 20px + (100% - 210px) * ${(min(p.creneau.debut) - t0) / (t1 - t0)});width:calc((100% - 210px) * ${(min(p.creneau.fin) - min(p.creneau.debut)) / (t1 - t0)})` },
           h("b", {}, p.creneau.texte)));
       }
       const cartes = h("div", { class: "cartes" },
-        h("div", { class: "exig", "data-palier": "apporté" }, h("h3", {}, "Produit", h("span", { class: "chip vert" }, "apporté")), h("p", {}, "La porteuse a le produit ; il lui manque le reste.")),
+        h("div", { class: "exig", "data-palier": "déclaré" }, h("h3", {}, "Produit", h("span", { class: "chip" }, "sa part")), h("p", {}, "La porteuse apporte le produit (déclaré) ; il lui manque le reste.")),
         ...p.exigences.map((x) => h("div", { class: "exig", "data-palier": x.palier },
-          h("h3", {}, ROLES[x.role] || x.role, h("span", { class: `chip ${PUCES[x.palier] || ""}` }, x.palier)),
+          h("h3", {}, x.libelle, h("span", { class: `chip ${PUCES[x.palier] || ""}` }, x.palier)),
           h("p", {}, x.geste + (x.livrable ? ` · à remettre : ${x.livrable}` : "")),
+          x.palier === "livrable reçu" ? h("p", { style: "color:var(--vert);font-weight:600" }, `${x.livrable} : reçu par la porteuse · le geste au créneau reste à constater`) : null,
           x.pourquoi ? h("p", { style: "color:var(--rouge);font-weight:600" }, x.pourquoi) : null)));
       const blocs = [h("h1", { class: "titre" }, p.titre), h("p", { class: `phrase ${ton}` }, texte), h("div", { class: "grille" }, lt, cartes),
-        h("p", { class: "legende" }, "Barres pleines : disponibilités DÉCLARÉES par leurs propriétaires · pointillés : autres offres réelles · cadre : le créneau calculé par le serveur.")];
+        h("p", { class: "legende" }, "Barres pleines : disponibilités DÉCLARÉES par leurs propriétaires · pointillés : autres offres réelles · cadre : le créneau calculé par le serveur" + (r && !r.unique ? " · zone pointillée : où les disponibilités retenues se recouvrent." : "."))];
       if (p.adaptation) blocs.push(h("div", { class: "change" }, h("h2", {}, p.adaptation.bloque ? "Bloqué — ce qui manque est dit" : "Ce qui vient de changer"),
         h("ul", {}, h("li", {}, p.adaptation.cause),
-          p.adaptation.tombe.length ? h("li", {}, "Ne couvre plus : ", h("b", {}, p.adaptation.tombe.map((r) => ROLES[r] || r).join(", "))) : null,
-          p.adaptation.tient.length ? h("li", {}, "Reste valable pour l'ancien créneau : ", p.adaptation.tient.map((r) => ROLES[r] || r).join(", ")) : null,
+          p.adaptation.tombe.length ? h("li", {}, "Ne couvre plus : ", h("b", {}, p.adaptation.tombe.join(", "))) : null,
+          p.adaptation.tient.length ? h("li", {}, "Reste valable pour l'ancien créneau : ", p.adaptation.tient.join(", ")) : null,
           ...p.adaptation.alternatives.map((a) => h("li", {}, "Adaptation possible : ", a.texte)),
           h("li", {}, "La porteuse choisit sur son téléphone ; chaque participant concerné reconfirme sur le sien."))));
       blocs.push(h("div", { class: "bas" },

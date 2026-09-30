@@ -1,4 +1,4 @@
-"""Une action COLLECTIVE bornée dans le temps : quatre exigences, quatre personnes, et le seul moment où leurs
+"""Une action COLLECTIVE bornée dans le temps : quatre exigences, quatre personnes, et le moment où leurs
 disponibilités DÉCLARÉES se recouvrent. Une condition change (une heure de disponibilité) : ce qui est invalidé, ce qui
 peut s'adapter, qui doit reconfirmer ; sans solution, l'action reste bloquée — puis se débloque sur un fait nouveau,
 jamais toute seule. Personnes, textes et horaires volontairement DIFFÉRENTS de la démonstration (aucune règle ne
@@ -144,10 +144,15 @@ def test_livrable_transmis_n_est_pas_recu_et_la_presence_n_est_pas_constatee_ava
         s.b.livrer(LIEU, eid, "e1", "faux")                                   # pas son geste
     s.b.livrer(VOIX, eid, "e1", "Scheda prodotto — formaggio d'alpeggio, 12 mesi.")
     assert s.b.etat(eid) == "EN_COURS"                                        # transmis ≠ reçu
-    s.b.constater(PORTEUR, eid, "e1")
+    with pytest.raises(Conflit):
+        s.b.constater(PORTEUR, eid, "e1")                                     # réception du livrable non confirmée
+    s.b.recevoir(PORTEUR, eid, "e1")                                          # la FICHE est reçue…
+    with pytest.raises(Conflit):
+        s.b.constater(PORTEUR, eid, "e1")                                     # … la présentation, elle, n'a pas eu lieu
     with pytest.raises(Conflit):
         s.b.constater(PORTEUR, eid, "e2")                                     # la présence au créneau : pas avant le jour
     s.jour = JOUR
+    s.b.constater(PORTEUR, eid, "e1")
     s.b.constater(PORTEUR, eid, "e2")
     s.b.constater(PORTEUR, eid, "e3")
     assert s.b.etat(eid) == "CONTRIBUTION_RECUE"
@@ -172,3 +177,22 @@ def test_un_refus_n_est_jamais_garde_dans_une_adaptation():
     for a in s.b.alternatives(eid):
         assert PUBLIC not in {s.b.offre(o).auteur for o in (a.get("choix") or {}).values() if o}, a["texte"]
     assert s.b.etat(eid) == "IMPOSSIBLE"                                      # aucun autre public déclaré : bloqué, dit
+
+
+def test_une_personne_n_est_jamais_engagee_deux_fois_au_meme_moment_quelle_que_soit_la_capacite():
+    """Défaut trouvé par la revue « jury » : la capacité comptait des ESSAIS, pas des heures — une offre de capacité 2
+    laissait autoriser deux actions au même créneau pour la même personne."""
+    s = Scene()
+    b = s.b
+    b.modifier_offre(VOIX, s.voix, capacite=2)
+    b.modifier_offre(LIEU, s.lieu, capacite=2)
+    b.modifier_offre(PUBLIC, s.public, capacite=2)
+    eid_a, _ = s.publier()                                                    # la voix est engagée 09:30–10:00
+    autre = "p8"
+    eid_b = b.brouillon(autre, s.protocole())
+    sol = b.assembler(autre, eid_b)["solution"]
+    assert sol is None or sol["choix"]["e1"] != s.voix or not b._chevauche(sol["creneau"], b.protocole(eid_a).creneau)
+    with pytest.raises(Conflit):                                              # on force le même créneau, même personne
+        b.proposer(autre, eid_b, 0, {"e1": s.voix, "e2": s.lieu, "e3": s.public}, b.protocole(eid_a).creneau)
+    b.retirer(VOIX, eid_a)                                                    # libérée : elle peut de nouveau s'engager
+    assert b.occupations(VOIX) == []

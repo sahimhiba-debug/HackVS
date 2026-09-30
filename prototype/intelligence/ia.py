@@ -433,11 +433,14 @@ class Intelligence:
         exig = []
         if langue:
             nom = self.LANGUES[langue][0]
+            # un LIVRABLE seulement s'il est demandé : la fiche n'est pas ajoutée d'office (défaut trouvé par la revue « jury »)
+            ecrit = re.search(r"fiche|document|flyer|brochure|depliant|texte|traduire|traduction", n)
             exig.append({"role": "voix", "nature": "competence", "concept": "traduction", "geste": f"Présenter le produit en {nom}",
-                         "duree_min": min(duree, 120), "livrable": f"Fiche produit en {nom}"})
-        # un lieu : nommé, ou impliqué par « présenter / montrer » PENDANT un salon — « aidez-moi pour la Foire » seul ne dit rien
-        if re.search(r"stand|presentoir|lieu|salle|table|degustation|demonstration|vitrine|gouter|deguster", n) or (
-                re.search(r"presenter|montrer", n) and re.search(r"foire|salon", n)):
+                         "duree_min": min(duree, 120), "livrable": f"Fiche produit en {nom}" if ecrit else None})
+            if ecrit:
+                reconnu.append(f"un écrit : fiche en {nom}")
+        # un lieu : NOMMÉ seulement — « présenter pendant la Foire » ne dit pas qu'il manque un lieu (on ne le suppose plus)
+        if re.search(r"stand|presentoir|lieu|salle|table|degustation|demonstration|vitrine|gouter|deguster", n):
             reconnu.append("un lieu")
             exig.append({"role": "lieu", "nature": "lieu", "concept": None, "geste": "Prêter un lieu adapté (présentoir, table, stand)",
                          "duree_min": min(duree, 120), "livrable": None})

@@ -2,7 +2,8 @@
 commun. Pauline, Markus et Nicolas sont JOUÉS par la console (marqué). Le parcours : Sophie écrit son besoin → confirme
 les exigences → le serveur trouve le créneau → elle publie → Léa accepte sur SON téléphone → Léa change SA disponibilité
 (17 h) → l'écran commun montre ce qui tombe et les adaptations → Sophie choisit → Léa reconfirme → Sophie engage →
-Léa transmet la fiche → elle apparaît chez Sophie, qui confirme la réception. On mesure aussi le délai entre un geste sur
+Léa transmet la fiche → elle apparaît chez Sophie, qui confirme la réception (de la fiche : la présentation
+reste à tenir) → +30 jours simulés : rien n'est reconduit, le résultat reste inconnu sans déclaration. On mesure aussi le délai entre un geste sur
 un téléphone et sa visibilité sur l'écran commun. Captures dans HACKVS_CAPTURES si défini.
 Ignoré seulement si aucun Chromium n'est disponible ; obligatoire en CI."""
 import json
@@ -69,8 +70,9 @@ def test_action_collective_deux_telephones_et_ecran_commun(url):  # noqa: F811
         assert "05.11 16:00–16:45" in s.inner_text("main")
         _capture(s, "a2_sophie_proposition")
         assert _sans_debordement(s)
-        t0 = time.perf_counter()
-        proj.wait_for_selector("text=le seul moment où les 3 disponibilités se recouvrent")
+        assert "contributions proposées, dispersées" in proj.inner_text("main")    # rien n'est projeté sans son accord
+        s.click("#projeter")                                                   # SON choix : montrer, en rôles
+        proj.wait_for_selector("text=les 3 disponibilités se recouvrent de 16:00 à 17:30")
         _capture(proj, "p1_proposition")
         s.click("#publier-proposition")
         s.wait_for_selector("#creneau")
@@ -100,7 +102,7 @@ def test_action_collective_deux_telephones_et_ecran_commun(url):  # noqa: F811
         lea.click("#changer-dispo")
         delais["perturbation → écran commun"] = _delai_projection(proj, "Ce qui vient de changer", t0)
         texte = proj.inner_text("main")
-        assert "Ne couvre plus : Voix allemande" in texte and "17:00–17:45" in texte
+        assert "Ne couvre plus : Voix en allemand" in texte and "17:00–17:45" in texte
         _capture(proj, "p3_perturbation")
         s.reload()
         s.wait_for_selector("text=Une condition a changé")
@@ -132,9 +134,17 @@ def test_action_collective_deux_telephones_et_ecran_commun(url):  # noqa: F811
         assert "Kräutertees" in s.inner_text("#fiche-e1")
         _capture(s, "a4_sophie_fiche_recue")
         s.click("#recu-e1")
-        s.wait_for_selector("text=réception confirmée")
-        proj.wait_for_selector(".exig[data-palier='reçu']")
+        s.wait_for_selector("text=réception de la fiche confirmée")
+        assert s.locator("#constater-e1").count() == 0                        # la présentation n'a pas eu lieu : rien à constater
+        proj.wait_for_selector(".exig[data-palier='livrable reçu']")
+        assert "pas encore réalisée" in proj.inner_text("main")
         _capture(proj, "p5_fiche_recue")
+
+        # --- 9. continuité : horloge de démonstration +30 jours (SIMULÉE) — rien n'est reconduit, rien n'est supposé
+        _api(url, "/api/pulse/console/temps", {"jours": 30})
+        proj.wait_for_selector("text=aucun résultat n'a été déclaré")
+        assert proj.locator(".exig[data-palier='livrable reçu']").count() == 1   # la fiche reçue le reste
+        _capture(proj, "p6_trente_jours")
 
         brut = proj.inner_text("body")
         assert not [n for n in NOMS if n in brut], "l'écran commun ne nomme personne"
