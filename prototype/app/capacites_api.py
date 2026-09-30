@@ -28,6 +28,18 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     def repondre(ask_id: str, x: Reponse, pid: str = Depends(membre)) -> dict:
         return au_monde(lambda c: c.vues_capacites.apres_reponse(c.repondre_ask(pid, ask_id[:120], x.oui, x.attributs, x.quoi)))
 
+    @r.get("/moi/consentements")
+    def recus(pid: str = Depends(membre)) -> list[dict]:
+        return au_monde(lambda c: c.capacites.recus(pid))
+
+    @r.post("/moi/capacites/{finalite}/retrait")
+    def retirer(finalite: str, pid: str = Depends(membre)) -> dict:
+        return au_monde(lambda c: c.vues_capacites.instance(c.retirer_consentement(pid, finalite[:40])))
+
+    @r.get("/moi/donnees")
+    def donnees(pid: str = Depends(membre)) -> dict:
+        return au_monde(lambda c: c.vues_capacites.mes_donnees(pid))
+
     @r.post("/moi/capacites/{finalite}/consentement")
     def consentir(finalite: str, pid: str = Depends(membre)) -> dict:
         return au_monde(lambda c: c.vues_capacites.instance(c.consentir_capacite(pid, finalite[:40])))

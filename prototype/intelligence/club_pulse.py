@@ -246,7 +246,8 @@ class ClubPulse:
             if inst.ask is None:
                 continue
             deja = {self.banc.offre(v).auteur for v in inst.liaisons.values() if v}
-            if pid in deja or (inst.ask.concept is not None and inst.ask.concept not in declarees):
+            if pid in deja or pid in self.capacites.retires(inst.finalite) or (
+                    inst.ask.concept is not None and inst.ask.concept not in declarees):
                 continue
             res.append((inst, inst.ask.id))
         return res
@@ -259,6 +260,9 @@ class ClubPulse:
 
     def consentir_capacite(self, pid: str, finalite: str) -> Instance:
         return self.capacites.consentir(pid, finalite)
+
+    def retirer_consentement(self, pid: str, finalite: str) -> Instance:
+        return self.capacites.retirer(pid, finalite)
 
     # ------------------------------------------------------------------ accès et profil
     def session(self, pid: str) -> str:

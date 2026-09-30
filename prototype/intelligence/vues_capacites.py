@@ -27,11 +27,16 @@ class VuesCapacites:
             pieces.append({"emplacement": e.id, "role": e.role, "libelle": e.libelle, "presente": v is not None,
                            "consentement": None if v is None else ("donné" if cons is None else "à demander"),
                            "manquante": i.manquant == e.id})
+        roles = {e.id: e.role for e in p.emplacements}
         return {"finalite": i.finalite, "version": i.version, "titre": i.titre, "statut": i.statut,
-                "statut_libelle": LIBELLES.get(i.statut or "", ""), "distance": i.distance,
+                "statut_libelle": LIBELLES.get(i.statut or "", ""), "distance": i.distance, "date": self.c.jour.isoformat(),
+                "jour": p.fenetre.jour.isoformat(), "fenetre": f"{p.fenetre.jour.strftime('%d.%m')} {p.fenetre.debut}–{p.fenetre.fin}",
                 "creneau": i.creneau.texte() if i.creneau else None, "pieces": pieces,
                 "ask": {"texte": i.ask.texte, "expire": i.ask.expire.isoformat()} if i.ask else None,
-                "perdus": i.perdus, "hypotheses": i.hypotheses, "fictif": i.fictif}
+                # une pièce perdue est dite par son RÔLE, sans la raison : ni qui, ni pourquoi (retrait jamais attribué)
+                "perdus": [f"{roles.get(x.split(' : ', 1)[0], x.split(' : ', 1)[0])} : ce composant n'est plus disponible" for x in i.perdus],
+                "recomposition": {k: v for k, v in i.recomposition.items() if k != "pieces"} if i.recomposition else None,
+                "sans_solution": i.sans_solution, "hypotheses": i.hypotheses, "fictif": i.fictif}
 
     def console(self) -> dict:
         """Le registre : ce que le Club PEUT faire (distance 0) et ce qu'il lui manque une pièce pour faire (distance 1)."""
@@ -44,6 +49,26 @@ class VuesCapacites:
         return [{"id": a, "titre": i.titre, "texte": i.ask.texte, "libelle": i.ask.libelle, "minimums": i.ask.minimums,  # type: ignore[union-attr]
                  "expire": i.ask.expire.isoformat(), "choix": ["oui", "non", "pas cette fois"]}  # type: ignore[union-attr]
                 for i, a in self.c.asks_pour(pid)]
+
+    def mes_donnees(self, pid: str) -> dict:
+        """Ce que le système sait de MOI, pourquoi, et jusqu'à quand — lu dans le journal, pour moi seul·e."""
+        j = self.c.jour
+        claims = [x for x in self.c.claims() if x.membre == pid]
+        courants = [x for x in claims if x.superseded_at is None]
+        nature = {"SKILL": "compétence", "RESOURCE": "ressource", "NEED": "intérêt", "SLOT": "créneau"}
+        reponses = [e for e in self.c.journal.evenements("ASK_REPONSE") if e.acteurs[0] == pid]
+        return {"date": j.isoformat(), "fictif": True,
+                "declarations": [{"type": nature[x.kind], "texte": x.texte, "depuis_position": x.recorded_at,
+                                  "valable_jusqu_au": x.valid_until.isoformat() if x.valid_until else "sans date (jusqu'à ce que vous la retiriez)",
+                                  "etat": "valable" if x.valable(j) else "expirée (gardée dans l'historique, plus utilisée)",
+                                  "pourquoi": "composer ce que le Club peut faire ; jamais affiché avec votre nom sans votre accord"}
+                                 for x in courants],
+                "historique": len(claims) - len(courants),
+                "consentements": self.c.capacites.recus(pid),
+                "reponses_aux_demandes": [{"le": e.le.isoformat(), "reponse": "oui" if e.donnees["oui"] else "non"} for e in reponses],
+                "notes_privees": len(self.c.notes.get(pid, [])),
+                "hors_du_journal": "votre nom, votre organisation et vos coordonnées vivent dans un coffre séparé ; "
+                                   "le moteur ne les voit jamais"}
 
     def apres_reponse(self, i: Instance, pid: Optional[str] = None) -> dict:
         return self.instance(i) | {"vous": "votre pièce est enregistrée, avec votre consentement pour cette seule finalité"}

@@ -1154,6 +1154,15 @@ class Banc:
         self._ecrire("ACCORD", [membre], finalite=finalite, emplacement=emplacement, offre=oid, accepte=True,
                      jusqu_au=jusqu_au.isoformat(), empreinte=_empreinte(portee_), portee=portee_, materiel=self._materiel(o))
 
+    def retirer_finalite(self, membre: str, finalite: str, emplacement: str) -> None:
+        """Retrait d'un consentement de finalité : daté, journalisé, jamais une réécriture. Rien ne dit à qui que ce
+        soit QUI s'est retiré (les vues parlent d'un composant qui n'est plus disponible)."""
+        dern = next((e for e in self.consentements_finalite(finalite)
+                     if e.acteurs[0] == membre and e.donnees["emplacement"] == emplacement), None)
+        if dern is None or dern.type != "ACCORD":
+            raise Conflit("aucun consentement en cours à retirer")
+        self._ecrire("RETRAIT", [membre], finalite=finalite, emplacement=emplacement, offre=dern.donnees["offre"])
+
     def consentements_finalite(self, finalite: str) -> list[Evt]:
         """Le DERNIER fait (accord ou retrait) de chaque (membre, emplacement) pour cette finalité."""
         dern: dict[tuple[str, str], Evt] = {}

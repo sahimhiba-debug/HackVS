@@ -87,11 +87,12 @@ class Patron(BaseModel):
         Plage(jour=self.fenetre.jour, debut=self.fenetre.debut, fin=self.fenetre.fin)     # ordre des heures
         return self
 
-    def protocole(self, sans: Optional[str] = None) -> Protocole:
-        """Le patron comme protocole à composer par le banc (emplacements = gestes), éventuellement privé d'un emplacement."""
+    def protocole(self, sans: Optional[str] = None, garder_seul: Optional[str] = None) -> Protocole:
+        """Le patron comme protocole à composer par le banc (emplacements = gestes), éventuellement privé d'un
+        emplacement (`sans`) ou réduit à un seul (`garder_seul`)."""
         f = self.fenetre
         etapes = [Etape(id=e.id, nature=e.nature, geste=e.geste, duree_min=self.duree_min, concept=e.concept, role=e.role[:24],
-                        minimums=e.minimums) for e in self.emplacements if e.id != sans]
+                        minimums=e.minimums) for e in self.emplacements if e.id != sans and (garder_seul is None or e.id == garder_seul)]
         return Protocole(question=self.titre, echeance=f.jour, etapes=etapes, fenetre=Plage(jour=f.jour, debut=f.debut, fin=f.fin))
 
     def portee(self, emplacement: str) -> dict:
@@ -222,6 +223,10 @@ class Instance(BaseModel):
     ask: Optional[Ask] = None
     perdus: list[str] = Field(default_factory=list)      # consentements donnés pour cette finalité qui ne valent plus
     hypotheses: list[str] = Field(default_factory=list)
+    # DEGRADED : ce que le moteur propose pour recomposer (calculé, jamais appliqué) — ou, s'il n'y a rien de sûr,
+    # « aucune solution sûre » dit honnêtement : la cause, ce qu'on sait, ce qu'on ignore, ce qui débloquerait
+    recomposition: Optional[dict] = None
+    sans_solution: Optional[dict] = None
 
 
 def _texte_ask(p: Patron, e: Emplacement, c: Creneau) -> str:
@@ -241,6 +246,10 @@ class Registre:
             raise Introuvable("capacité inconnue")
         return self.patrons[finalite]
 
+    def retires(self, finalite: str) -> set[str]:
+        """Les membres dont le dernier geste pour cette finalité est un RETRAIT : ni liés, ni sollicités à nouveau pour elle."""
+        return {e.acteurs[0] for e in self.b.consentements_finalite(finalite) if e.type == "RETRAIT"}
+
     def _consentements(self, p: Patron) -> tuple[dict[str, list[OffreVolontaire]], list[str]]:
         """Par emplacement : les offres qu'un consentement VALABLE met à disposition de cette finalité ; et la liste des
         consentements donnés qui ne valent plus (en rôles : emplacement et raison — jamais qui)."""
@@ -255,7 +264,8 @@ class Registre:
                 valables.setdefault(emp, []).append(self.b.offre(e.donnees["offre"]))
             else:
                 perdus.append(f"{emp} : {raison}")
-        return valables, perdus
+        ordre = [e.id for e in p.emplacements]                # l'ordre du PATRON, jamais celui des membres
+        return valables, sorted(perdus, key=lambda x: ordre.index(x.split(" : ", 1)[0]))
 
     def instance(self, p: Patron) -> Instance:
         base = {"finalite": p.id, "version": p.version, "titre": p.titre, "fictif": p.fictif}
@@ -269,7 +279,47 @@ class Registre:
         return inst
 
     def _instance(self, p: Patron, base: dict, hyp: list[str]) -> Instance:
+        inst = self._composer(p, base, hyp)
+        if inst.statut == "DEGRADED":
+            self._recomposer(p, inst)
+        return inst
+
+    def _recomposer(self, p: Patron, inst: Instance) -> None:
+        """Ce qui peut remplacer la pièce perdue — calculé par le même compositeur, jamais appliqué : une personne décide."""
+        libelle = {e.id: e.libelle for e in p.emplacements}
+        role = {e.id: e.role for e in p.emplacements}
+        if inst.distance == 0:
+            pieces = [k for k, r in inst.consentements.items() if r is not None]
+            inst.recomposition = {"type": "consentir", "pieces": pieces, "a_decider": ["la personne qui offre cette pièce"],
+                                  "texte": "Une autre pièce existe pour : " + ", ".join(libelle[k] for k in pieces)
+                                           + ". Elle ne comptera qu'avec le consentement de la personne qui l'offre."}
+        elif inst.distance == 1:
+            inst.recomposition = {"type": "demander", "pieces": [inst.manquant], "a_decider": ["un membre qui répond à la demande"],
+                                  "texte": f"Il manque de nouveau : {libelle[inst.manquant or '']}. Une demande est adressée "
+                                           "aux membres qui peuvent la fournir."}
+        else:
+            exclus = self.retires(p.id)
+            seules = {e.id: bool(self.b.solutions(None, p.protocole(garder_seul=e.id), maximum=1, permis=self._permis(p, exclus, [e.id])))
+                      for e in p.emplacements}
+            manquent = [libelle[k] for k, ok in seules.items() if not ok]
+            inst.sans_solution = {
+                "cause": [f"{role[x.split(' : ', 1)[0]]} : ce composant n'est plus disponible" for x in inst.perdus],
+                "sait": [f"{libelle[k]} : au moins une pièce déclarée couvre la fenêtre" for k, ok in seules.items() if ok],
+                "ignore": ["si d'autres membres pourraient fournir " + (", ".join(manquent) or "les pièces restantes au même moment")
+                           + " : personne ne l'a déclaré pour cette fenêtre"],
+                "debloquerait": [f"{x} le {p.fenetre.jour.strftime('%d.%m')} entre {p.fenetre.debut} et {p.fenetre.fin}" for x in manquent]
+                                or ["des disponibilités qui se recouvrent sur un même créneau"]}
+
+    def _permis(self, p: Patron, exclus: set[str], emplacements: Optional[list[str]] = None) -> Optional[dict[str, set[str]]]:
+        """Offres utilisables pour cette finalité : toutes, sauf celles des membres qui s'y sont retirés (None : aucune restriction)."""
+        if not exclus:
+            return None
+        ids = {o.id for o in self.b.offres(publiques=True) if o.auteur not in exclus}
+        return {k: ids for k in (emplacements or [e.id for e in p.emplacements])}
+
+    def _composer(self, p: Patron, base: dict, hyp: list[str]) -> Instance:
         valables, perdus = self._consentements(p)
+        exclus = self.retires(p.id)
         ids = {k: {o.id for o in v} for k, v in valables.items()}
         garder: dict[str, Optional[OffreVolontaire]] = {e.id: valables[e.id][0] if valables.get(e.id) else None for e in p.emplacements}
 
@@ -280,7 +330,7 @@ class Registre:
         # créneau de la fenêtre) ? Sinon : la composition libre qui garde le plus de consentements.
         sol = self.b.solutions(None, p.protocole(), maximum=1, garder=garder, permis=ids) if len(ids) == len(p.emplacements) else []
         if not sol:
-            toutes = self.b.solutions(None, p.protocole(), maximum=10_000, garder=garder)
+            toutes = self.b.solutions(None, p.protocole(), maximum=10_000, garder=garder, permis=self._permis(p, exclus))
             sol = sorted(toutes, key=lambda x: -sum(1 for r in consentis(x["choix"]).values() if r is None))[:1]
         if sol:
             choix = sol[0]["choix"]
@@ -290,7 +340,8 @@ class Registre:
             return Instance(**base, statut=statut, distance=0, creneau=sol[0]["creneau"], liaisons=choix, consentements=cons,
                             perdus=perdus, hypotheses=hyp)
         for e in p.emplacements:                        # distance 1 : sans CET emplacement, le reste se compose-t-il ?
-            sous = self.b.solutions(None, p.protocole(sans=e.id), maximum=1, garder={k: v for k, v in garder.items() if k != e.id})
+            sous = self.b.solutions(None, p.protocole(sans=e.id), maximum=1, garder={k: v for k, v in garder.items() if k != e.id},
+                                    permis=self._permis(p, exclus, [x.id for x in p.emplacements if x.id != e.id]))
             if sous:
                 c = sous[0]["creneau"]
                 ask = Ask(id=f"{p.id}:{p.version}:{e.id}:{c.jour.isoformat()}:{c.debut}", finalite=p.id, titre=p.titre, emplacement=e.id,
@@ -338,6 +389,40 @@ class Registre:
             if apres.liaisons.get(e.id) != oid:                  # la pièce déclarée ne comble pas : rien n'est écrit
                 raise Conflit("votre réponse ne complète pas cette capacité (horaire ou attributs) : rien n'a été enregistré")
         return apres
+
+    def retirer(self, membre: str, finalite: str) -> Instance:
+        """Retirer, en un geste, tous ses consentements pour cette finalité. La capacité est recalculée à la projection
+        suivante : dégradée, recomposée si possible — jamais attribuée à la personne qui s'est retirée."""
+        p = self.patron(finalite)
+        miens = [e for e in self.b.consentements_finalite(p.id) if e.acteurs[0] == membre and e.type == "ACCORD"]
+        if not miens:
+            raise Introuvable("aucun consentement en cours pour cette capacité")
+        with self.b.m.transaction():
+            for e in miens:
+                self.b.retirer_finalite(membre, p.id, e.donnees["emplacement"])
+        return self.instance(p)
+
+    def recus(self, membre: str) -> list[dict]:
+        """Les REÇUS de ses consentements : finalité, portée, depuis quand, jusqu'à quand, état — présentables au membre."""
+        res = []
+        for p in sorted(self.patrons.values(), key=lambda x: x.id):
+            for e in self.b.consentements_finalite(p.id):
+                if e.acteurs[0] != membre:
+                    continue
+                emp = next((x for x in p.emplacements if x.id == e.donnees["emplacement"]), None)
+                accord = next((x for x in reversed(self.b.m.evenements("ACCORD")) if x.acteurs[0] == membre
+                               and x.donnees.get("finalite") == p.id and x.donnees["emplacement"] == e.donnees["emplacement"]), None)
+                if accord is None:
+                    continue
+                raison = self.b.raison_consentement(e, p.portee(emp.id)) if emp else "cette pièce n'existe plus dans la capacité"
+                res.append({"finalite": p.id, "titre": p.titre, "version": accord.donnees["portee"]["version"],
+                            "piece": emp.libelle if emp else accord.donnees["portee"]["emplacement"]["libelle"],
+                            "offre": self.b.offre(accord.donnees["offre"]).quoi, "donne_le": accord.le.isoformat(),
+                            "jusqu_au": accord.donnees["jusqu_au"], "fenetre": accord.donnees["portee"]["fenetre"],
+                            "partage": accord.donnees["portee"]["partage"], "reference": accord.donnees["empreinte"][:12],
+                            "etat": "valable" if raison is None else raison,
+                            "retire_le": e.le.isoformat() if e.type == "RETRAIT" else None, "revocable": raison is None})
+        return res
 
     def consentir(self, membre: str, finalite: str) -> Instance:
         """Un membre dont l'offre est LIÉE à une capacité composée consent à son usage pour cette finalité."""
