@@ -33,8 +33,8 @@ ce qui est encore possible — ou qu'il est bloqué.
 ## 2. État initial reproductible
 - `make demo` (ou `cd prototype && HACKVS_MODE=demo … uvicorn app.main:app`), puis console → « Nouvelle démonstration »
   (ou `POST /api/pulse/demo/reinitialiser`). Date simulée : mardi 06.10.2026, pendant la Foire du Valais (2–11 octobre 2026) ; la scène : jeudi 08.10.
-  ⚠️ La vidéo `captures/action/demo_action.webm` et les captures ont été enregistrées au commit `dd75a7c`, avec les
-  anciennes dates (03.11 / 05.11) : à réenregistrer (`scripts/enregistrer_demo.py`).
+  La vidéo `captures/action/demo_action.webm` et les captures ont été **réenregistrées au commit `a03bfa6`** (Phase 3),
+  aux dates actuelles (06.10 / 08.10) : `scripts/enregistrer_demo.py`.
 - Aucune action n'existe ; l'écran commun (`/projection`) montre « Jeudi 08.10 : 6 contributions proposées, dispersées ».
 - Téléphone 1 = Sophie (code affiché dans la console), téléphone 2 = Léa (voix allemande). Régie de tournage :
   `/demo/regie` (écran commun + deux téléphones côte à côte ; aucun code affiché).
@@ -46,6 +46,8 @@ ce qui est encore possible — ou qu'il est bloqué.
 | Horaire du lieu | la console (**joué**, marqué « joué par l'équipe ») | « Le lieu ferme à… » | test `test_perturbation_jouee_par_l_equipe…` : le lieu tombe, l'autre lieu (16:30) est proposé |
 | Refus ou retrait | Léa sur son téléphone, ou la console pour un rôle absent (**joué**) | « Décliner » / « Me retirer » | le geste retombe ; jamais redemandé à la même personne ; adaptation ou blocage |
 | Interdit par construction | la console **ne peut pas** jouer Léa : elle a son téléphone (403) | — | test `test_personne_ne_decide_a_la_place_d_un_autre` |
+| Registre (vendredi 09.10) : un juré **joue Markus** | un juré, sur **son** téléphone | Établi → « QR juré » : passe de 15 min, **une seule fois** ; le téléphone affiche « Jury : vous jouez Markus, personnage FICTIF » | tests `test_qr_jure.py` et E2E `test_qr_jure_etabli_telephone_usage_unique` ; activation journalisée (attribuée au jury) |
+| L'IA, allumée ou éteinte | l'équipe (Établi, en-tête) | « Éteindre l'IA » / « Allumer l'IA » ; chaque proposition et chaque récit disent qui les a produits | parité ON/OFF `test_parite_ia.py` : même état métier |
 
 **Sans solution** : l'état « bloqué : aucune adaptation admissible aujourd'hui » n'est pas une fin : si Léa redevient
 disponible (ex. 16:30), l'action **rouvre une adaptation** que Sophie choisit ; rien n'est relancé tout seul
@@ -64,21 +66,21 @@ proposition réalisable (serveur) → accords réunis (« coopération prête »
 encore réalisée ») → livrable transmis → livrable reçu (confirmé par la destinataire) → contribution constatée (au
 créneau) → résultat **déclaré** (par la porteuse, contestable) ; sans déclaration : « résultat inconnu ».
 
-## 6. Storyboard vidéo (enregistrement réel `captures/action/demo_action.webm`, 89 s, commit `dd75a7c` ; horodatage dans `demo_action.json`)
+## 6. Storyboard vidéo (enregistrement réel `captures/action/demo_action.webm`, 87 s, commit `a03bfa6` ; horodatage dans `demo_action.json`)
 | t | Écran | Action | Parole (à dire) | Preuve visible |
 |---|---|---|---|---|
-| 0:01 | régie : écran commun | — | « Jeudi, pendant la Foire : six offres de membres, chacune avec ses horaires. Dans quarante secondes, c'est vous qui changerez une condition. » | barres d'horaires anonymes, « FICTIF » |
-| 0:08 | téléphone de Sophie | elle écrit son besoin | « Sophie écrit avec ses mots ce qu'elle ne peut pas faire seule. » | texte tapé en direct |
+| 0:02 | régie : écran commun | — | « Jeudi, pendant la Foire : six offres de membres, chacune avec ses horaires. Dans quarante secondes, c'est vous qui changerez une condition. » | barres d'horaires anonymes, « FICTIF » |
+| 0:09 | téléphone de Sophie | elle écrit son besoin | « Sophie écrit avec ses mots ce qu'elle ne peut pas faire seule. » | texte tapé en direct |
 | 0:15 | téléphone de Sophie | 3 exigences, « Règles simples — aucun modèle utilisé » | « Trois exigences reprises de ses mots. Pas d'IA ici : c'est affiché. » | mention du mode |
 | 0:22 | écran commun | Sophie choisit de montrer son action | « Aucune offre ne suffit seule. Les disponibilités se recouvrent de 16 h à 17 h 30 : premier créneau, 16 h–16 h 45. » | zone de recouvrement + cadre |
-| 0:31 | téléphone de Léa | elle accepte **sa** part | « Léa reçoit sa seule part, sur son téléphone. Elle accepte. » | « 1 accord sur 3 » en < 0,4 s |
-| 0:35 | écran commun | accords de Pauline et Markus **joués** | « Pauline et Markus ne sont pas là : leurs accords sont joués, et c'est affiché. » | « Joué par l'équipe (console) » |
-| 0:42 | téléphone de Léa | le jury donne une heure (17:00) | « À vous : à partir de quelle heure Léa est-elle disponible ? » | valeur saisie sur son téléphone |
+| 0:30 | téléphone de Léa | elle accepte **sa** part | « Léa reçoit sa seule part, sur son téléphone. Elle accepte. » | « 1 accord sur 3 » (678 ms mesurés au dernier enregistrement) |
+| 0:36 | écran commun | accords de Pauline et Markus **joués** | « Pauline et Markus ne sont pas là : leurs accords sont joués, et c'est affiché. » | « Joué par l'équipe (console) » |
+| 0:43 | téléphone de Léa | le jury donne une heure (17:00) | « À vous : à partir de quelle heure Léa est-elle disponible ? » | valeur saisie sur son téléphone |
 | 0:44 | écran commun | recalcul | « Ce qui tombe, ce qui tient, ce qui est encore possible. Aucun lancement possible. » | encadré rouge, adaptations en rôles |
-| 0:54 | téléphone de Sophie | elle choisit 17:00–17:45, autre lieu | « Sophie choisit. Le moment change : tout le monde reconfirme, personne à sa place. » | nouvelle version ; accords redemandés |
-| 1:02 | les deux téléphones | action engagée ; Léa transmet la fiche | « Engagée, pas encore réalisée. Léa envoie la fiche. » | « transmis » |
-| 1:09 | téléphone de Sophie | la fiche apparaît ; « J'ai bien reçu » | « Transmise, puis reçue : deux faits. La présentation, elle, n'a pas encore eu lieu. » | palier « livrable reçu » |
-| 1:20 | écran commun | +30 jours (simulé) | « Un mois plus tard : la fiche reste reçue ; personne n'a déclaré de résultat — il reste inconnu. Rien n'est reconduit. » | « résultat inconnu », horloge simulée |
+| 0:53 | téléphone de Sophie | elle choisit 17:00–17:45, autre lieu | « Sophie choisit. Le moment change : tout le monde reconfirme, personne à sa place. » | nouvelle version ; accords redemandés |
+| 1:00 | les deux téléphones | action engagée ; Léa transmet la fiche | « Engagée, pas encore réalisée. Léa envoie la fiche. » | « transmis » |
+| 1:06 | téléphone de Sophie | la fiche apparaît ; « J'ai bien reçu » | « Transmise, puis reçue : deux faits. La présentation, elle, n'a pas encore eu lieu. » | palier « livrable reçu » |
+| 1:18 | écran commun | +30 jours (simulé) | « Un mois plus tard : la fiche reste reçue ; personne n'a déclaré de résultat — il reste inconnu. Rien n'est reconduit. » | « résultat inconnu », horloge simulée |
 
 ## 7. Scripts chronométrés
 Temps **estimés** à 150 mots/min (français parlé, lent) — non chronométrés par un humain ; la durée machine de
@@ -104,7 +106,8 @@ exécuté, l'IA non nécessaire à cette démo ; (3) le test terrain proposé (`
 |---|---|---|
 | Internet de la salle | tout tourne sur l'ordinateur de démonstration ; téléphones sur son point d'accès | — |
 | Téléphones qui ne se connectent pas | régie `/demo/regie` sur un seul écran : deux sessions distinctes dans deux cadres | « deux sessions sur une machine » |
-| Fournisseur IA | aucun impact : la démo tourne en « règles simples », affiché | « pas d'IA dans cette étape » |
+| Fournisseur IA | aucun impact : Établi → « Éteindre l'IA » (ou aucun modèle configuré) ; chaque résultat dit « forme déterministe, sans IA » ; même état métier (parité testée) | « l'IA propose, le code décide : sans elle, le formulaire » |
+| Réseau de la salle | tout est local : E2E vérifiés en « mode salle » (espace réseau vide, IA OFF) en CI | — |
 | Tout tombe | la vidéo `demo_action.webm` : **exécution réelle enregistrée, sans montage**, commit indiqué à l'image | « enregistrement, pas du direct » |
 
 ## 9. Répétition

@@ -9,6 +9,9 @@ Légende : **F** = fait vérifié (fichier, test ou capture) · **H** = hypothè
 
 ## 1. Les 30 premières secondes (vidéo `captures/action/demo_action.webm`)
 
+> Constats DATÉS de la revue (vidéo `dd75a7c`, anciennes dates « 05.11 »). La vidéo a depuis été réenregistrée au
+> commit `a03bfa6`, aux dates actuelles (06.10 / 08.10) ; les constats sont gardés tels quels, comme trace.
+
 | t | Écran commun | Ce qu'un juré qui découvre comprend (H) | Constat |
 |---|---|---|---|
 | 0–8 s | « Jeudi 05.11 : 6 contributions proposées, dispersées » — barres d'horaires anonymes | des offres, avec des horaires ; pas encore pourquoi c'est un problème | F : la dispersion est **mise en scène** par des données préparées (dont 3 pièges réels : horaire du matin, personne qui refuse les sollicitations, offre sans horaire) |

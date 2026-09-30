@@ -1,22 +1,25 @@
-# TODO — artefacts de démonstration périmés par le décalage de dates
+# TODO — artefacts de démonstration
 
-Depuis le commit `1a855b1` (2026-09-30), le monde de démonstration vit **pendant la Foire du Valais 2026** : horloge au
-mardi **06.10.2026**, scène le jeudi **08.10.2026** (avant : 03.11 / 05.11). Le code, les données et les tests sont à
-jour ; les artefacts ci-dessous ont été produits AVANT et n'ont **pas** été régénérés (volontairement, fin de session).
+## Régénérés à la fin de la Phase 3 (commit `a03bfa6`, 2026-09-30)
 
-| Artefact | Pourquoi il est périmé | Comment le régénérer |
+Aux dates actuelles (horloge au mardi **06.10.2026**, action collective le jeudi **08.10**, registre le vendredi **09.10**) :
+
+| Artefact | Comment | Résultat |
 |---|---|---|
-| `docs/audit/club-pulse-pivot/captures/action/demo_action.webm` | enregistré au commit `dd75a7c` : dates 03.11 / 05.11 à l'écran ; antérieur aussi au consentement de projection journalisé, aux statuts JOUE et au nettoyage IA | serveur démo (port 8767) puis `python scripts/enregistrer_demo.py --sortie ../docs/audit/club-pulse-pivot/captures/action --commit $(git rev-parse --short HEAD)` |
-| `…/captures/action/demo_action.json` | horodatage des étapes et textes de la vidéo ci-dessus (« 05.11 », commit `dd75a7c`) | produit par la même commande |
-| `…/captures/action/p0…p6*.png`, `a1…a4*.png`, `b1*.png` | captures du test navigateur à l'ancienne date (« Jeudi 05.11 », « 05.11 16:00–16:45 ») | `HACKVS_CAPTURES=../docs/audit/club-pulse-pivot/captures/action python -m pytest -q tests/test_e2e_action.py` |
-| `…/captures/action/delais.json` | mesures de la même exécution (valeurs non liées à la date, mais à remesurer avec les captures) | même commande que les captures |
-| `docs/audit/club-pulse-pivot/DEMO_SCRIPT.md` § 6 (storyboard) | temps et libellés calés sur la vidéo `dd75a7c` ; § 2 porte déjà l'avertissement | réaligner sur le nouveau `demo_action.json` |
-| `docs/audit/club-pulse-pivot/REVUE_JURY.md` § 1 | cite « Jeudi 05.11 » et « 05.11 16:00–16:45 » (constats datés de la revue : garder la trace, ajouter une note) | note en tête du § 1 |
-| `docs/audit/club-pulse-pivot/PREUVES.md` | commit d'enregistrement `dd75a7c`, 514 tests (désormais 523 + 6 E2E), délais de cette exécution | mettre à jour après réenregistrement |
-| `docs/audit/club-pulse-pivot/captures/essai-*.png` | captures de l'ancien scénario « étiquette » (monde antérieur au décalage) : à vérifier, sans doute à archiver | `tests/test_e2e_pulse.py` avec `HACKVS_CAPTURES` si conservées |
+| `docs/audit/club-pulse-pivot/captures/action/demo_action.webm` + `.json` | `scripts/enregistrer_demo.py --commit a03bfa6` (serveur démo, port 8767) | 87 s, exécution continue sans montage |
+| `…/captures/action/p0…p6, a1…a4, b1` + `delais.json` | `HACKVS_CAPTURES=… pytest tests/test_e2e_action.py` | dates 08.10 à l'écran ; accord → écran 678 ms, perturbation → écran 394 ms |
+| `DEMO_SCRIPT.md` § 2 et § 6 | réalignés sur le nouveau `demo_action.json` | horodatages et délai « 1 accord sur 3 » mesurés |
+| `PREUVES.md`, `REVUE_JURY.md` § 1 | commit et vidéo mis à jour ; constats de la revue gardés, datés | — |
 
-Non concernés : `docs/captures/*` (ancien prototype « Le Fil du Club », horloge propre) ; `eval/resultats_*`
-(régénérés au commit `9f2d0e9`, vérifiés à l'octet par la CI).
+## RESTE À FAIRE — à décider avant de présenter
+
+| Artefact | État | Pourquoi ce n'est pas mécanique |
+|---|---|---|
+| **`competition/*`** (dossier de pitch, `competition/video/demo.webm`, captions, timeline) | décrit le produit **d'AVANT le pivot** (« intelligence relationnelle », « Sophie rejoint le Club », vidéo de l'ancien prototype par `scripts/enregistrer_video.py`) | le réécrire pour le registre des capacités est un choix de récit et de pitch, pas une régénération ; **ne pas le présenter tel quel** |
+| Captures du registre (Établi, passeport, QR juré, interrupteur IA) | aucune capture versionnée ; seuls les E2E les vérifient | à produire avec le récit ci-dessus |
+| `…/captures/essai-*.png` | ancien scénario « étiquette » | à vérifier, sans doute à archiver |
+
+Non concernés : `docs/captures/*` (ancien prototype « Le Fil du Club ») ; `eval/resultats_*` (vérifiés à l'octet par la CI).
 
 ## Redémarrage du serveur = nouvelle démonstration
 

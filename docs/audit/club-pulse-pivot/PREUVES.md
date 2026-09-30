@@ -1,7 +1,7 @@
 # Preuves de validation — tranche « action collective » (2026-09-30)
 
 Environnement de développement (Linux x86-64, Python 3.11, Chromium headless). Commandes réellement exécutées ;
-codes de sortie lus. Aucun secret, aucune donnée personnelle réelle. Dernier enregistrement vidéo : commit `dd75a7c`.
+codes de sortie lus. Aucun secret, aucune donnée personnelle réelle. Dernier enregistrement vidéo : commit `a03bfa6` (Phase 3 ; chiffres courants : `docs/audit/PHASE_3.md`).
 
 ## Commandes et résultats
 | Commande (depuis la racine sauf mention) | Résultat |
@@ -10,7 +10,7 @@ codes de sortie lus. Aucun secret, aucune donnée personnelle réelle. Dernier e
 | `cd prototype && python -m pytest -q tests/test_action_collective.py` | 18 réussis : parcours par l'API (sessions distinctes), personne ne décide pour un autre, blocage puis réouverture, projection sans nom (4 étapes), perturbation jouée, recouvrement réel, +30 jours, fiche ≠ présentation, consentement de projection, **6 heures choisies par le jury** |
 | `cd prototype && python -m pytest -q tests/test_creneaux.py tests/test_audit_essai.py` | réussis (créneaux, livrable/présence, double réservation ; P1/P2) |
 | `cd prototype && HACKVS_CAPTURES=… python -m pytest -q tests/test_e2e_action.py` | 1 réussi — deux téléphones (390×844, 412×915) + écran commun 1920×1080 ; captures `captures/action/p0…p6, a1…a4, b1` |
-| `python scripts/enregistrer_demo.py --commit dd75a7c` (serveur démo, port 8767) | vidéo **89 s**, 1920×1080, exécution continue sans montage ; étapes horodatées `captures/action/demo_action.json` |
+| `python scripts/enregistrer_demo.py --commit a03bfa6` (serveur démo, port 8767) | vidéo **87 s** (précédente : 89 s au commit `dd75a7c`), 1920×1080, exécution continue sans montage ; étapes horodatées `captures/action/demo_action.json` |
 | `cd prototype && python -m eval.eval_apertus` | Apertus **NON EXÉCUTÉ** ; repli `comprendre_action` : **4/6** en notation exacte (échecs listés dans `eval/resultats_apertus.md`) |
 | `env \| grep -c '^APERTUS_'` | 0 — aucun appel réel possible ; rien créé, rien payé |
 
@@ -27,7 +27,7 @@ codes de sortie lus. Aucun secret, aucune donnée personnelle réelle. Dernier e
 L'écran commun relit le serveur toutes les 0,7 s : le délai attendu est 0–0,7 s plus la requête.
 | Mesure | Contexte | Valeurs observées (exécutions successives de ce jour) |
 |---|---|---|
-| accord → écran commun | test navigateur, page de projection seule | 229, 278, 627, 704 ms |
+| accord → écran commun | test navigateur, page de projection seule | 229, 278, 627, 704 ms ; 678 ms (réenregistrement Phase 3, `delais.json`) |
 | perturbation → écran commun | test navigateur | 324 à 394 ms |
 | perturbation → écran commun | enregistrement (régie à 3 cadres + capture vidéo) | 929 à 944 ms |
 Machine de développement, en local : **pas** un réseau de salle.
