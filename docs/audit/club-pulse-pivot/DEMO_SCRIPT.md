@@ -108,6 +108,7 @@ exécuté, l'IA non nécessaire à cette démo ; (3) le test terrain proposé (`
 | Tout tombe | la vidéo `demo_action.webm` : **exécution réelle enregistrée, sans montage**, commit indiqué à l'image | « enregistrement, pas du direct » |
 
 ## 9. Répétition
+0. Sur la machine de démonstration : **aucune campagne de mutation** pendant le hackathon (`TODO-DEMO.md`).
 1. `make quality-check` vert ; `python -m pytest -q prototype/tests/test_e2e_action.py` (le parcours complet dans un vrai navigateur).
 2. Nouvelle démonstration ; parcours complet deux fois, dont une fois avec une heure « bloquante » (18:00).
 3. Vérifier sur l'écran commun : aucun nom, aucun texte d'offre, « joué par l'équipe » présent, date simulée affichée.

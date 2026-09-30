@@ -23,3 +23,10 @@ Non concernés : `docs/captures/*` (ancien prototype « Le Fil du Club », horlo
 Depuis `18829d4`, le serveur **reprend** son journal au démarrage (`HACKVS_ESSAIS_DB`) au lieu de l'effacer ; le
 scénario guidé, lui, ne reprend pas au milieu (son contexte n'est pas journalisé : la console affiche « état repris du
 journal »). **Règle de scène : après tout redémarrage, console → « Nouvelle démonstration » avant de commencer.**
+
+## Aucune campagne de mutation sur la machine de démonstration
+
+Pendant le hackathon, **jamais** `make mutation` (ni mutmut) sur l'ordinateur de la salle : une campagne occupe tous
+les cœurs pendant ≈ 30 min et ralentit le serveur de démonstration (constaté : un test de délai a échoué en local
+pendant une campagne). Les campagnes tournent sur GitHub (workflow « Mutation », non bloquant) : la nuit, quand le
+registre change, et avant tout tag `demo-*` — le tag n'est posé qu'après une campagne verte.

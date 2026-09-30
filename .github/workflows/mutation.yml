@@ -1,7 +1,9 @@
 name: Mutation (registre des capacités)
 
-# Pas à chaque push (≈ 4 min) : à la demande, chaque nuit, quand le registre ou le banc changent, et sur tout tag de
+# Pas à chaque push (≈ 30–60 min de CPU) : à la demande, chaque nuit, quand le registre ou le banc changent, et sur tout tag de
 # démonstration (demo-*). Avant de poser un tag de démo : `make mutation` en local doit être vert.
+# RÈGLE D'EXPLOITATION : AUCUNE campagne de mutation sur la machine de démonstration pendant le hackathon (≈ 30 min de
+# CPU à pleine charge) — elles tournent ici, la nuit et avant un tag, jamais sur l'ordinateur de la salle.
 on:
   workflow_dispatch:
   schedule:
@@ -23,6 +25,13 @@ on:
 
 permissions:
   contents: read
+
+# Une seule campagne par branche : une nouvelle poussée annule la campagne en cours (elle mutait un code déjà dépassé).
+# Vérification NON BLOQUANTE : aucune règle de protection de branche ne l'exige (branche non protégée, constaté le
+# 2026-09-30) ; elle signale, elle n'empêche pas une fusion.
+concurrency:
+  group: mutation-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   mutation:
