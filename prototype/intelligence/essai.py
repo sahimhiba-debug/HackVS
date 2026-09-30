@@ -66,6 +66,9 @@ CONDITIONS_A_RECONFIRMER = "les conditions de son offre ont changé : à reconfi
 A_REDEMANDER = {"en attente de sa réponse", "à confirmer", "sa part a changé depuis son accord",
                 "le protocole a changé depuis votre confirmation", CONDITIONS_A_RECONFIRMER}
 CONDITIONS_CHANGEES = "les conditions de son offre ont changé depuis son accord"
+# un fait du PROFIL (compétence retirée, indisponible, ne souhaite plus être sollicité·e) : un seul motif, générique —
+# il ne dit pas lequel des trois
+MEMBRE_INDISPONIBLE = "ne peut plus assurer ce geste (déclaré dans son profil)"
 DELAI_OBSERVATION_JOURS = 14                          # sans observation 14 j après l'échéance : RÉSULTAT INCONNU
 _journal = logging.getLogger("intelligence.essai")
 PARTAGE = ("Si vous acceptez : votre nom et votre organisation sont communiqués au porteur et aux autres participants "
@@ -217,12 +220,17 @@ class Banc:
     BUDGET_NOEUDS = 20_000
 
     def __init__(self, memoire: Memoire, aujourd_hui: Callable[[], date], organisation: Callable[[str], str],
-                 eligibilite: Optional[Callable[[str, str], Optional[str]]] = None):
+                 eligibilite: Optional[Callable[[str, str], Optional[str]]] = None,
+                 membre_peut: Optional[Callable[[str, Optional[str]], bool]] = None):
         """`eligibilite(porteur, candidat)` : pourquoi ce candidat ne peut PAS être sollicité pour ce porteur (None : il
         peut l'être). Fournie par la composition à partir des règles dures du réseau (langue commune, refus des
         sollicitations, disponibilité, introduction déjà déclinée…) : une seule source de vérité pour ces règles."""
         self.m, self._jour, self._org = memoire, aujourd_hui, organisation
         self._eligibilite = eligibilite or (lambda porteur, candidat: None)
+        # `membre_peut(membre, capacité)` : ce que dit le PROFIL du membre aujourd'hui (disponible, sollicitable, déclare
+        # encore la capacité de l'offre). Relu à chaque couverture : un accord ou un consentement ne survit pas à un
+        # profil qui ne le porte plus (cas 3 et 7 de l'inspection du pivot).
+        self._membre_peut = membre_peut or (lambda membre, concept: True)
         self._origine: Statut = Statut.DECLARE
         self.recherches_tronquees = 0
 
@@ -339,6 +347,8 @@ class Banc:
         etat = self.etat_offre(o.id)
         if etat != "active":
             return {"retiree": "offre retirée", "expiree": "offre expirée", "a_venir": "offre pas encore ouverte"}[etat]
+        if not self._membre_peut(o.auteur, o.concept):
+            return MEMBRE_INDISPONIBLE
         if o.nature != e.nature:
             return "nature différente"
         if e.concept and o.concept != e.concept:
@@ -555,6 +565,19 @@ class Banc:
                      alternatives=alternatives)
         if etat != "A_ADAPTER":
             self._transition(eid, "A_ADAPTER", "", cause)
+
+    def revoir_membre(self, membre: str, cause: str = "une personne ne peut plus assurer sa part") -> list[str]:
+        """Après un changement du PROFIL d'un membre : les essais où il porte un geste — et les essais bloqués, qu'il
+        peut débloquer — sont réévalués (même règle qu'un changement d'offre)."""
+        touches = []
+        for eid in self.essais():
+            if self.etat(eid) in FINAUX or (self.etat(eid) != "IMPOSSIBLE" and membre not in {e.contributeur for e in self.protocole(eid).etapes}):
+                continue
+            avant = self.etat(eid)
+            self._reevaluer(eid, cause)
+            if self.etat(eid) != avant:
+                touches.append(eid)
+        return touches
 
     def _revoir_essais_de_l_offre(self, oid: str, cause: str) -> list[str]:
         """Les essais qui reposent sur cette offre — et les essais BLOQUÉS, qu'une offre changée peut débloquer."""
@@ -1152,6 +1175,8 @@ class Banc:
             return {"retiree": "offre retirée", "expiree": "offre expirée", "a_venir": "offre pas encore ouverte"}[self.etat_offre(o.id)]
         if e.donnees["materiel"] != self._materiel(o):
             return "les conditions de l'offre ont changé depuis le consentement"
+        if not self._membre_peut(o.auteur, o.concept):
+            return "le membre ne peut plus assurer cette pièce"
         return None
 
     def etat_canonique(self) -> dict:

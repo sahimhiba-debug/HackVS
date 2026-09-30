@@ -86,7 +86,8 @@ class ClubPulse:
         # ACTIVATION ENGINE : son propre journal — fichier si HACKVS_ESSAIS_DB (survit au redémarrage), sinon en mémoire.
         # Qui peut être sollicité pour qui : les règles DURES du réseau (langue commune, consentement, disponibilité,
         # profil récent, introduction déjà déclinée), lues dans l'état observé courant — une seule source de vérité.
-        self.banc = Banc(Memoire(self.reglages.essais_db), lambda: self.jour, self.organisation_de, self._non_sollicitable)
+        self.banc = Banc(Memoire(self.reglages.essais_db), lambda: self.jour, self.organisation_de, self._non_sollicitable,
+                         self._membre_peut)
         self.journal = self.banc.m
         # REGISTRE DES CAPACITÉS : patrons écrits par des humains × claims × consentements de finalité, composés par le banc
         self.capacites = Registre(self.banc, charger_patrons(concepts=set(tax.concepts)), lambda: self.jour)
@@ -201,7 +202,9 @@ class ClubPulse:
     def _remplacer_profil(self, p: Profil) -> None:
         champs = self._champs_declares(p)
         if champs:
-            self._enregistrer("PROFIL", [p.id], membre=p.id, champs=champs)
+            with self.journal.transaction():
+                self._enregistrer("PROFIL", [p.id], membre=p.id, champs=champs)
+                self.banc.revoir_membre(p.id)
 
     def contexte(self) -> Contexte:
         """Faits de relation (journal du Club) et de CONSENTEMENT (accords donnés dans un essai) : le porteur et chaque
@@ -335,6 +338,7 @@ class ClubPulse:
                 self._enregistrer("PREFERENCES", [pid], membre=pid, preferences=self.preferences.get(pid, {}) | visibilite)
             if champs:
                 self._enregistrer("PROFIL", [pid], membre=pid, champs=champs)
+                self.banc.revoir_membre(pid)                  # ses accords en cours : réévalués, comme un changement d'offre
         return self.vues.vue_profil(pid)
 
     # ------------------------------------------------------------------ mémoire privée : capture d'une rencontre
@@ -438,6 +442,13 @@ class ClubPulse:
             {"etape": "Découvertes", "detail": f"{len(res['opportunites'])}"}]
         self._scan, self._version_scan = res, version
         return res
+
+    def _membre_peut(self, pid: str, concept: Optional[str]) -> bool:
+        """Ce que dit le PROFIL aujourd'hui : disponible, sollicitable, et — pour une capacité du catalogue — la déclare
+        encore. Relu par le banc à chaque couverture (accords des essais, consentements des capacités)."""
+        p = self.r.par_id().get(pid)
+        return p is not None and p.disponible and p.accepte_introductions and (
+            concept is None or concept in {o.concept for o in p.offre})
 
     def _non_sollicitable(self, porteur: str, candidat: str) -> Optional[str]:
         """Pour le banc : pourquoi `candidat` ne peut pas être sollicité pour `porteur` (None : il peut l'être). L'état
