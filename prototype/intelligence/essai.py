@@ -58,8 +58,10 @@ MAX_GESTES = 4                                         # un essai reste petit : 
 AVANT_LANCEMENT = {"BROUILLON", "PROPOSE", "AUTORISE", "A_ADAPTER"}
 # une part À REDEMANDER (réponse attendue, portée changée) n'est pas une part PERDUE (refus, retrait, offre qui ne
 # couvre plus) : la première attend une décision, la seconde exige une adaptation ou un arrêt
+CONDITIONS_A_RECONFIRMER = "les conditions de son offre ont changé : à reconfirmer"
 A_REDEMANDER = {"en attente de sa réponse", "à confirmer", "sa part a changé depuis son accord",
-                "le protocole a changé depuis votre confirmation"}
+                "le protocole a changé depuis votre confirmation", CONDITIONS_A_RECONFIRMER}
+CONDITIONS_CHANGEES = "les conditions de son offre ont changé depuis son accord"
 DELAI_OBSERVATION_JOURS = 14                          # sans observation 14 j après l'échéance : RÉSULTAT INCONNU
 _journal = logging.getLogger("intelligence.essai")
 PARTAGE = ("Si vous acceptez : votre nom et votre organisation sont communiqués au porteur et aux autres participants "
@@ -298,36 +300,68 @@ class Banc:
         a = self._dernier_accord(eid, membre)
         return bool(a and a.type == "ACCORD" and a.donnees["accepte"] and a.donnees["empreinte"] == _empreinte(portee(p, porteur, membre)))
 
+    @staticmethod
+    def _materiel(o: Optional[OffreVolontaire]) -> Optional[str]:
+        """Empreinte de ce qui, dans une offre, ne se vérifie PAS par un nombre : ce qui est offert, sa nature, sa
+        capacité déclarée et ses conditions en texte libre. Durée, dates et capacité restent contrôlées numériquement."""
+        return _empreinte([o.quoi, o.nature, o.concept, o.conditions]) if o else None
+
+    def _offres_vues(self, eid: str, membre: str, p: Protocole, porteur: str) -> dict[str, Optional[str]]:
+        """Les conditions d'offre sur lesquelles porte l'accord de `membre` (toutes pour le porteur, les siennes sinon)."""
+        return {e.id: self._materiel(self.offre_de(eid, e)) for e in p.etapes
+                if e.contributeur and (membre == porteur or e.contributeur == membre)}
+
+    def raisons_gestes(self, eid: str) -> dict[str, Optional[str]]:
+        """Pour CHAQUE geste de la version courante : None s'il est couvert (accord valable et offre qui le porte encore,
+        aux mêmes conditions), sinon la raison. Chaque geste est vérifié — une personne peut en porter plusieurs."""
+        p, porteur = self.protocole(eid), self.porteur(eid)
+        recues = {x.donnees["etape"] for x in self._evs(eid, "CONTRIBUTION")}
+        acc_porteur = self._dernier_accord(eid, porteur)
+        vues_porteur = (acc_porteur.donnees.get("offres") or {}) if acc_porteur and acc_porteur.type == "ACCORD" else {}
+        res: dict[str, Optional[str]] = {}
+        for e in p.etapes:
+            if not e.contributeur:
+                res[e.id] = "personne pour ce geste"
+                continue
+            if e.id in recues:
+                res[e.id] = None                              # déjà reçue : rien ne l'efface, pas même un retrait
+                continue
+            a = self._dernier_accord(eid, e.contributeur)
+            if a is None:
+                res[e.id] = "en attente de sa réponse"
+            elif a.type == "RETRAIT":
+                res[e.id] = "a retiré sa participation"
+            elif not a.donnees["accepte"]:
+                res[e.id] = "a décliné"
+            elif not self._accord_donne(eid, e.contributeur, p, porteur):
+                res[e.id] = "sa part a changé depuis son accord"
+            else:
+                o = self.offre_de(eid, e)
+                raison = self.offre_couvre(o, e, p.echeance, sauf=eid) if o else "aucune disponibilité déclarée"
+                vues = a.donnees.get("offres")               # absent : accord écrit avant ce contrôle (journal ancien)
+                if raison:
+                    res[e.id] = f"son offre ne couvre plus ce geste : {raison}"
+                elif vues is not None and vues.get(e.id) != self._materiel(o):
+                    # un texte libre ne se vérifie pas : l'accord ne vaut plus. Si le porteur a déjà accepté les
+                    # nouvelles conditions (révision explicite), la personne doit reconfirmer ; sinon, à adapter.
+                    res[e.id] = CONDITIONS_A_RECONFIRMER if vues_porteur.get(e.id) == self._materiel(o) else \
+                        f"{CONDITIONS_CHANGEES} : « {o.conditions or o.quoi} »"  # type: ignore[union-attr]
+                else:
+                    res[e.id] = None
+        return res
+
     def couverture(self, eid: str) -> dict[str, Optional[str]]:
-        """Pour chaque personne concernée par la version courante : None si son accord couvre ce qui lui est demandé
-        MAINTENANT, sinon la raison (en clair). C'est ici qu'un accord périmé est reconnu comme tel."""
+        """Pour chaque personne concernée par la version courante : None si son accord couvre TOUT ce qui lui est
+        demandé MAINTENANT, sinon la première raison (en clair). C'est ici qu'un accord périmé est reconnu comme tel."""
         p, porteur = self.protocole(eid), self.porteur(eid)
         res: dict[str, Optional[str]] = {}
         a = self._dernier_accord(eid, porteur)
         res[porteur] = None if self._accord_donne(eid, porteur, p, porteur) else (
             "le protocole a changé depuis votre confirmation" if a else "à confirmer")
-        for e in p.etapes:
-            if not e.contributeur:
-                res[f"etape:{e.id}"] = "personne pour ce geste"
-                continue
-            if e.contributeur in res:
-                continue
-            if any(x.donnees["etape"] == e.id for x in self._evs(eid, "CONTRIBUTION")):
-                res[e.contributeur] = None                    # déjà reçue : rien ne l'efface, pas même un retrait
-                continue
-            a = self._dernier_accord(eid, e.contributeur)
-            if a is None:
-                res[e.contributeur] = "en attente de sa réponse"
-            elif a.type == "RETRAIT":
-                res[e.contributeur] = "a retiré sa participation"
-            elif not a.donnees["accepte"]:
-                res[e.contributeur] = "a décliné"
-            elif not self._accord_donne(eid, e.contributeur, p, porteur):
-                res[e.contributeur] = "sa part a changé depuis son accord"
-            else:
-                o = self.offre_de(eid, e)
-                raison = self.offre_couvre(o, e, p.echeance, sauf=eid) if o else "aucune disponibilité déclarée"
-                res[e.contributeur] = f"son offre ne couvre plus ce geste : {raison}" if raison else None
+        for e, raison in zip(p.etapes, self.raisons_gestes(eid).values(), strict=True):
+            cle = e.contributeur or f"etape:{e.id}"
+            if res.get(cle) is None:
+                res[cle] = raison                             # un geste non couvert suffit : la personne n'est pas couverte
         return res
 
     # ------------------------------------------------------------------ transitions
@@ -399,12 +433,18 @@ class Banc:
 
     def alternatives(self, eid: str) -> list[dict]:
         p = self.protocole(eid)
-        cov = self.couverture(eid)
+        raisons = self.raisons_gestes(eid)
         res: list[dict] = []
         for e in p.etapes:
-            raison = cov.get(e.contributeur or f"etape:{e.id}")
+            raison = raisons[e.id]
             if raison is None or raison in A_REDEMANDER:
                 continue
+            o_ = self.offre_de(eid, e) if e.contributeur else None
+            if o_ is not None and raison.startswith(CONDITIONS_CHANGEES) and self.offre_couvre(o_, e, p.echeance, sauf=eid) is None:
+                res.append({"id": f"conditions:{e.id}:{o_.id}:{o_.version}", "type": "accepter_conditions", "etape": e.id,
+                            "membre": e.contributeur, "offre": o_.id,
+                            "texte": f"Garder la même personne AUX NOUVELLES CONDITIONS : « {o_.conditions or o_.quoi} ». Vérifiez "
+                                     "qu'elles permettent encore ce geste ; elle devra reconfirmer.", "a_decider": ["porteur", e.contributeur]})
             for o in self.candidats(eid, e, p.echeance)[:2]:
                 res.append({"id": f"remplacer:{e.id}:{o.id}", "type": "remplacer", "etape": e.id, "offre": o.id, "membre": o.auteur,
                             "texte": f"Garder l'essai tel quel ; demander ce geste à une autre personne qui l'offre : « {o.quoi} »"
@@ -422,10 +462,9 @@ class Banc:
         return res
 
     def _manques(self, eid: str) -> list[str]:
-        p = self.protocole(eid)
-        cov = self.couverture(eid)
+        raisons = self.raisons_gestes(eid)
         return [f"{NATURES[e.nature]} pour « {e.geste} » ({e.duree_min} min) : aucune autre offre active, couvrante et disponible"
-                for e in p.etapes if cov.get(e.contributeur or f"etape:{e.id}") not in (None, *A_REDEMANDER)]
+                for e in self.protocole(eid).etapes if raisons[e.id] not in (None, *A_REDEMANDER)]
 
     # ------------------------------------------------------------------ commandes du porteur
     def brouillon(self, porteur: str, p: Protocole) -> str:
@@ -532,7 +571,8 @@ class Banc:
             if e.id == alt["etape"]:
                 e = (e.model_copy(update={"contributeur": alt["membre"], "offre_id": alt["offre"], "invitation": False})
                      if alt["type"] == "remplacer"
-                     else e.model_copy(update={"duree_min": alt["duree"]}))
+                     else e.model_copy(update={"duree_min": alt["duree"]}) if alt["type"] == "raccourcir"
+                     else e)                                  # accepter_conditions : même geste, nouvelle version à reconfirmer
             etapes.append(e)
         apres = avant.model_copy(update={"etapes": etapes})
         with self.m.transaction():
@@ -601,9 +641,10 @@ class Banc:
 
     # ------------------------------------------------------------------ commandes des participants
     def _accord(self, eid: str, membre: str, accepte: bool) -> None:
-        p = self.protocole(eid)
-        pt = portee(p, self.porteur(eid), membre)
-        self._ecrire("ACCORD", [membre], essai=eid, version=self.version(eid), accepte=accepte, empreinte=_empreinte(pt), portee=pt)
+        p, porteur = self.protocole(eid), self.porteur(eid)
+        pt = portee(p, porteur, membre)
+        self._ecrire("ACCORD", [membre], essai=eid, version=self.version(eid), accepte=accepte, empreinte=_empreinte(pt), portee=pt,
+                     offres=self._offres_vues(eid, membre, p, porteur))
 
     def decider(self, membre: str, eid: str, attendue: int, accepte: bool) -> None:
         """Accepter ou décliner SA part de la version vue. Un double clic est sans effet ; changer d'avis après avoir
