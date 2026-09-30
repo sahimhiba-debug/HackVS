@@ -30,7 +30,7 @@ from plateforme.affirmations import Statut
 from plateforme.memoire import Evt, Memoire
 
 from . import memoire_club
-from .capacites import Claim, Instance, Registre, charger_patrons, index_claims
+from .capacites import Claim, Instance, Registre, charger_patrons, choisir_asks, index_claims
 from . import monde_demo as md
 from .acces import Sessions
 from .detection import Detecteur
@@ -236,9 +236,15 @@ class ClubPulse:
 
     def asks_pour(self, pid: str) -> list[tuple[Instance, str]]:
         """Les demandes (Ask) qu'un membre peut recevoir : il est sollicitable, il n'est pas déjà une pièce de cette
-        capacité, et — si la pièce est une compétence du catalogue — il la DÉCLARE. Une catégorie, jamais un choix du
-        système parmi des personnes. Aucun plafond en Phase 1 (plafond hebdomadaire : Phase 2)."""
+        capacité, il ne s'y est pas retiré, et — si la pièce est une compétence du catalogue — il la DÉCLARE. Une
+        catégorie, jamais un choix du système parmi des personnes ; plafond d'attention ; plus fort levier d'abord."""
         if not self.sollicitable(pid):
+            return []
+        # PLAFOND D'ATTENTION (Reglages) : au plus `asks_montrees` à la fois, aucune pendant `plafond_jours` après une
+        # réponse (oui comme non). Lu à chaque lecture ; rien n'est écrit en lisant.
+        recentes = [e for e in self.journal.evenements("ASK_REPONSE") if e.acteurs[0] == pid
+                    and (self.jour - e.le).days < self.reglages.plafond_jours]
+        if recentes:
             return []
         declarees = {o.concept for o in self.profil(pid).offre if o.concept}
         res = []
@@ -249,10 +255,12 @@ class ClubPulse:
             if pid in deja or pid in self.capacites.retires(inst.finalite) or (
                     inst.ask.concept is not None and inst.ask.concept not in declarees):
                 continue
-            res.append((inst, inst.ask.id))
-        return res
+            res.append(inst)
+        return [(i, i.ask.id) for i in choisir_asks(res, self.reglages.asks_montrees)]  # type: ignore[union-attr]
 
     def repondre_ask(self, pid: str, ask_id: str, oui: bool, attributs: Optional[dict[str, int]] = None, quoi: Optional[str] = None) -> Instance:
+        """Relit les demandes de CE membre au moment de répondre (sous le verrou du monde) : deux réponses concurrentes à
+        la même demande donnent une seule liaison — la seconde ne trouve plus la demande."""
         if ask_id not in {a for _, a in self.asks_pour(pid)}:
             raise Introuvable("demande inconnue ou plus d'actualité")
         return self.capacites.repondre(pid, ask_id, oui, attributs, self._net(quoi) if quoi else None,

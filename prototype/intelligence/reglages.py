@@ -21,6 +21,8 @@ class Reglages:
     duree_session_s: int = 12 * 3600
     essais_db: str = ":memory:"        # journal du banc d'essai (HACKVS_ESSAIS_DB : fichier → survit au redémarrage)
     ancien_prototype: bool = False     # HACKVS_ANCIEN_PROTOTYPE=1 : sert AUSSI l'ancien prototype (local ou jeton de console)
+    asks_montrees: int = 1             # HACKVS_ASKS_MONTREES : demandes montrées à la fois à un membre
+    plafond_jours: int = 7             # HACKVS_PLAFOND_JOURS : aucune nouvelle demande pendant N jours après une réponse
 
     @classmethod
     def depuis_env(cls, env: Optional[Mapping[str, str]] = None) -> "Reglages":
@@ -32,4 +34,5 @@ class Reglages:
                    console_jeton=e.get("HACKVS_CONSOLE_JETON") or None,
                    notes_privees_vers_ia=e.get("APERTUS_NOTES_PRIVEES", "") == "1",
                    essais_db=e.get("HACKVS_ESSAIS_DB") or ":memory:",
-                   ancien_prototype=e.get("HACKVS_ANCIEN_PROTOTYPE", "") == "1")
+                   ancien_prototype=e.get("HACKVS_ANCIEN_PROTOTYPE", "") == "1",
+                   asks_montrees=int(e.get("HACKVS_ASKS_MONTREES", "1")), plafond_jours=int(e.get("HACKVS_PLAFOND_JOURS", "7")))

@@ -255,6 +255,13 @@ def _texte_ask(p: Patron, e: Emplacement, c: Creneau) -> str:
             f"Usage jusqu'au {p.fenetre.jour.strftime('%d.%m')}.")
 
 
+def choisir_asks(instances: list[Instance], n: int) -> list[Instance]:
+    """Les `n` demandes à montrer : le plus fort LEVIER d'abord (une pièce qui débloque plusieurs capacités), puis la
+    plus proche de son expiration, puis un ordre stable. Jamais une personne choisie : une catégorie compatible."""
+    avec = [i for i in instances if i.ask is not None]
+    return sorted(avec, key=lambda i: (-i.ask.levier, i.ask.expire, i.finalite))[:n]  # type: ignore[union-attr]
+
+
 class Registre:
     """Projection des capacités et les deux commandes de la Phase 1 (répondre à une Ask ; consentir pour une finalité).
     Lit et écrit le journal du banc — un seul journal, un seul compositeur."""
