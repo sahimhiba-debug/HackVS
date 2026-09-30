@@ -137,6 +137,9 @@ class Etape(BaseModel):
     # destinataire (le porteur) en confirme la réception — jamais parce qu'il a été envoyé
     livrable: Optional[str] = Field(default=None, max_length=120)
     role: Optional[str] = Field(default=None, max_length=24)        # « voix », « lieu », « public »… : ce que le geste REMPLIT
+    # contraintes NUMÉRIQUES d'un emplacement (ex. {"places": 15}) : une offre ne le couvre que si elle DÉCLARE au moins
+    # autant (`OffreVolontaire.attributs`) — jamais supposé
+    minimums: dict[str, int] = Field(default_factory=dict, max_length=4)
 
 
 class Protocole(BaseModel):
@@ -179,6 +182,7 @@ class OffreVolontaire(BaseModel):
     pour_etape: Optional[str] = None
     concept: Optional[str] = Field(default=None, max_length=64)       # capacité déclarée que l'offre met à disposition
     plages: list[Plage] = Field(default_factory=list, max_length=8)   # horaires DÉCLARÉS (vide : aucun horaire connu)
+    attributs: dict[str, int] = Field(default_factory=dict, max_length=4)   # ce que l'offre DÉCLARE (ex. {"places": 14})
 
 
 def _mots(t: str) -> set[str]:
@@ -198,7 +202,7 @@ def portee(p: Protocole, porteur: str, membre: str) -> dict:
     return {"question": p.question, "objet": p.objet, "critere": p.critere, "echeance": p.echeance.isoformat(), "partage": PARTAGE,
             "creneau": p.creneau.model_dump(mode="json") if p.creneau else None,
             "gestes": [e.model_dump(mode="json", include={"nature", "geste", "duree_min", "offre_id", "invitation", "concept", "livrable"})
-                       for e in p.etapes if e.contributeur == membre]}
+                       | ({"minimums": e.minimums} if e.minimums else {}) for e in p.etapes if e.contributeur == membre]}
 
 
 class Banc:
@@ -235,14 +239,15 @@ class Banc:
     # ------------------------------------------------------------------ offres volontaires
     def publier_offre(self, auteur: str, nature: str, quoi: str, capacite: int, du: date, au: date,
                       duree_max_min: Optional[int] = None, conditions: str = "", pour: Optional[tuple[str, str]] = None,
-                      concept: Optional[str] = None, plages: Optional[list[Plage]] = None) -> str:
+                      concept: Optional[str] = None, plages: Optional[list[Plage]] = None,
+                      attributs: Optional[dict[str, int]] = None) -> str:
         if au < du:
             raise Invalide("la période de l'offre se termine avant de commencer")
         oid = "of-" + _empreinte([auteur, quoi, len(self.m.evenements())])[:8]
         o = OffreVolontaire(id=oid, auteur=auteur, nature=nature, quoi=quoi, capacite=capacite, du=du, au=au,  # type: ignore[arg-type]
                             duree_max_min=duree_max_min, conditions=conditions,
                             pour_essai=pour[0] if pour else None, pour_etape=pour[1] if pour else None, concept=concept,
-                            plages=plages or [])
+                            plages=plages or [], attributs=attributs or {})
         with self.m.transaction():
             self._ecrire("OFFRE", [auteur], offre=o.model_dump(mode="json"))
             if not pour:                                      # une offre publique nouvelle peut débloquer un essai bloqué
@@ -329,6 +334,9 @@ class Banc:
             return "nature différente"
         if e.concept and o.concept != e.concept:
             return "capacité différente de celle demandée"
+        for cle, minimum in sorted(e.minimums.items()):
+            if o.attributs.get(cle, 0) < minimum:
+                return f"{cle} : {o.attributs.get(cle, 0)} déclaré(s), {minimum} demandé(s)"
         if o.duree_max_min is not None and e.duree_min > o.duree_max_min:
             return f"demande {e.duree_min} min, l'offre en accepte {o.duree_max_min}"
         if echeance > o.au:
@@ -1069,6 +1077,44 @@ class Banc:
         ordre = {"moi": 0, "participants": 1, "club": 2}
         niveaux = [d[m]["niveau"] if m in d else "participants" for m in self.participants(eid)]
         return min(niveaux, key=lambda x: ordre[x]) if niveaux else "participants"
+
+    # ------------------------------------------------------------------ consentement de FINALITÉ (registre des capacités)
+    # Le même mécanisme que l'accord d'un essai — un événement ACCORD, lié à l'empreinte de ce qui est accepté et à
+    # l'empreinte matérielle de l'offre — mais porté par une FINALITÉ (un patron de capacité et un emplacement) au lieu
+    # d'une version d'essai, et borné dans le temps (`jusqu_au`). Aucun second système de consentement.
+    def consentir_finalite(self, membre: str, finalite: str, emplacement: str, oid: str, portee_: dict, jusqu_au: date) -> None:
+        o = self.offre(oid)
+        if o.auteur != membre:
+            raise Interdit("on ne consent que pour sa propre offre")
+        if self.etat_offre(oid) != "active":
+            raise Conflit("offre non active : rien à consentir")
+        if jusqu_au < self._jour():
+            raise Invalide("consentement déjà expiré")
+        self._ecrire("ACCORD", [membre], finalite=finalite, emplacement=emplacement, offre=oid, accepte=True,
+                     jusqu_au=jusqu_au.isoformat(), empreinte=_empreinte(portee_), portee=portee_, materiel=self._materiel(o))
+
+    def consentements_finalite(self, finalite: str) -> list[Evt]:
+        """Le DERNIER fait (accord ou retrait) de chaque (membre, emplacement) pour cette finalité."""
+        dern: dict[tuple[str, str], Evt] = {}
+        for e in self.m.evenements("ACCORD", "RETRAIT"):
+            if e.donnees.get("finalite") == finalite:
+                dern[(e.acteurs[0], e.donnees["emplacement"])] = e
+        return [dern[k] for k in sorted(dern)]
+
+    def raison_consentement(self, e: Evt, portee_: dict) -> Optional[str]:
+        """Pourquoi ce consentement de finalité NE vaut PAS maintenant (None : il vaut)."""
+        if e.type == "RETRAIT":
+            return "consentement retiré"
+        if date.fromisoformat(e.donnees["jusqu_au"]) < self._jour():
+            return "consentement expiré"
+        if e.donnees["empreinte"] != _empreinte(portee_):
+            return "la finalité a changé depuis le consentement"
+        o = self.offre(e.donnees["offre"])
+        if self.etat_offre(o.id) != "active":
+            return {"retiree": "offre retirée", "expiree": "offre expirée", "a_venir": "offre pas encore ouverte"}[self.etat_offre(o.id)]
+        if e.donnees["materiel"] != self._materiel(o):
+            return "les conditions de l'offre ont changé depuis le consentement"
+        return None
 
     def etat_canonique(self) -> dict:
         """L'état CALCULÉ du banc (offres et essais), sous une forme canonique : ce que `empreinte_etat` compare."""

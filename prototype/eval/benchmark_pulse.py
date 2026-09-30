@@ -233,7 +233,7 @@ def confidentialite_ecrans() -> dict:
     secret = "OBSERVATION-NON-PARTAGEE-4c1e"
     b.observer(md.PAULINE, pauline, secret, "mitige", "une seule personne")   # niveau par défaut : participants
     d.suivant()                                                             # puis le résultat, la mémoire, +30 jours
-    refus = {(x.donnees["essai"], x.acteurs[0]) for x in b.m.evenements("ACCORD") if not x.donnees["accepte"]}
+    refus = {(x.donnees["essai"], x.acteurs[0]) for x in b.m.evenements("ACCORD") if "essai" in x.donnees and not x.donnees["accepte"]}
     ecrans, fuites = 0, []
 
     def controler(qui: str, vues: list, pid=None) -> None:
