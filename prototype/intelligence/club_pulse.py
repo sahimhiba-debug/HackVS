@@ -88,6 +88,7 @@ class ClubPulse:
         # profil récent, introduction déjà déclinée), lues dans l'état observé courant — une seule source de vérité.
         self.banc = Banc(Memoire(self.reglages.essais_db), lambda: self.jour, self.organisation_de, self._non_sollicitable,
                          self._membre_peut)
+        self.banc.BUDGET_NOEUDS = self.reglages.budget_noeuds
         self.journal = self.banc.m
         # REGISTRE DES CAPACITÉS : patrons écrits par des humains × claims × consentements de finalité, composés par le banc
         self.capacites = Registre(self.banc, charger_patrons(concepts=set(tax.concepts)), lambda: self.jour)

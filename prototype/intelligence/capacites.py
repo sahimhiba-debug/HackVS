@@ -247,6 +247,7 @@ class Instance(BaseModel):
     sans_solution: Optional[dict] = None
     # pièces liées SANS lesquelles la capacité ne se compose plus (contrefactuel calculé : « si elle disparaît, tient-elle ? »)
     critiques: list[str] = Field(default_factory=list)
+    recherche_bornee: bool = False                       # le budget de nœuds a coupé une recherche : l'état n'est pas garanti
     hypothetique: bool = False                           # projection calculée sous une hypothèse (« et si ») : jamais un état
 
 
@@ -328,6 +329,7 @@ class Registre:
         tronquees = self.b.recherches_tronquees
         inst = self._instance(p, base, hyp)
         if self.b.recherches_tronquees != tronquees:
+            inst.recherche_bornee = True
             inst.hypotheses.append("recherche bornée atteinte : une composition a pu échapper au calcul (absence non garantie)")
         return inst
 

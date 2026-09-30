@@ -7,7 +7,7 @@ Chaque écran affiche sa date. Sur échec, les pages sont capturées (tests/capt
 import pytest
 
 from tests.test_e2e_pulse import _api, _sans_debordement, _telephone
-from tests.test_e2e_scene import _chromium, url  # noqa: F401  (serveur démo isolé partagé)
+from tests.test_e2e_scene import _chromium, serveur, url  # noqa: F401  (serveur démo isolé partagé)
 
 CARTE = "article[data-finalite='delegation_acheteurs']"
 
@@ -80,3 +80,16 @@ def test_la_capture_sur_echec_sauvegarde_les_pages_ouvertes(url, tmp_path, monke
             raise AssertionError("échec volontaire")
     fichiers = sorted(x.suffix for x in tmp_path.rglob("*") if x.is_file())
     assert ".png" in fichiers and ".html" in fichiers
+
+
+def test_budget_de_noeuds_atteint_l_etabli_le_montre():
+    """Budget du compositeur forcé à 1 nœud (HACKVS_BUDGET_NOEUDS) : aucune recherche ne peut aboutir. L'Établi montre
+    quand même la capacité, dit « état incertain : recherche bornée atteinte », et la met à l'attention de l'animation."""
+    pw = pytest.importorskip("playwright.sync_api")
+    with serveur(HACKVS_BUDGET_NOEUDS="1") as base, pw.sync_playwright() as p:
+        pg = _chromium(p).new_page(viewport={"width": 1440, "height": 900})
+        pg.goto(base + "/etabli")
+        carte = pg.locator(CARTE)
+        carte.locator("[data-role=statut]:has-text('état incertain : recherche bornée atteinte')").wait_for()
+        assert "une composition a pu échapper au calcul (absence non garantie)" in carte.inner_text()
+        assert "Accueillir une délégation d'acheteurs germanophones (recherche bornée : à vérifier)" in pg.inner_text("#attention")

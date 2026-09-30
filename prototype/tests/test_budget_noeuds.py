@@ -25,3 +25,45 @@ def test_le_monde_de_demo_reste_largement_sous_le_budget():
     for banc in (c.banc, d.club.banc):
         assert banc.recherches_tronquees == 0
         assert 0 < banc.noeuds_max <= banc.BUDGET_NOEUDS // 100, (registre, d.club.banc.noeuds_max)   # marge ≥ ×100
+
+
+BORNEE = "recherche bornée atteinte : une composition a pu échapper au calcul (absence non garantie)"
+
+
+def _borne(budget: int):
+    c = Demo(TAX).club
+    c.banc.BUDGET_NOEUDS = budget                                   # déclenché EXPRÈS : le budget est plus petit que le besoin
+    return c
+
+
+def test_budget_atteint_la_capacite_reste_affichee_et_le_dit():
+    """Budget épuisé avant toute composition : la capacité n'a pas de statut calculable. Elle ne DISPARAÎT pas de
+    l'écran (ce serait un « impossible » silencieux) : elle est montrée, marquée incertaine, et l'animation le voit."""
+    c = _borne(1)
+    v = c.vues_capacites.console()
+    carte = next((x for x in v["capacites"] if x["finalite"] == A), None)
+    assert carte is not None, "capacité à la recherche tronquée absente de l'écran"
+    assert carte["recherche_bornee"] is True and carte["statut"] is None
+    assert carte["statut_libelle"] == "état incertain : recherche bornée atteinte"
+    assert BORNEE in carte["hypotheses"]
+    assert "Accueillir une délégation d'acheteurs germanophones (recherche bornée : à vérifier)" in v["attention"]["decision"]
+
+
+def test_budget_atteint_apres_une_composition_partielle_est_dit_aussi():
+    c = _borne(3)                                                   # assez pour une capacité, pas pour toutes les recherches
+    v = c.vues_capacites.console()
+    bornees = [x for x in v["capacites"] if x["recherche_bornee"]]
+    assert bornees and all(BORNEE in x["hypotheses"] for x in bornees)
+    assert c.banc.recherches_tronquees > 0
+
+
+def test_sous_le_budget_rien_n_est_dit():
+    v = Demo(TAX).club.vues_capacites.console()
+    assert not any(x["recherche_bornee"] for x in v["capacites"])
+    assert not any("recherche bornée" in d for d in v["attention"]["decision"])
+
+
+def test_le_budget_se_regle_par_l_environnement():
+    from intelligence.reglages import Reglages
+    assert Reglages.depuis_env({}).budget_noeuds == 20_000
+    assert Reglages.depuis_env({"HACKVS_BUDGET_NOEUDS": "7"}).budget_noeuds == 7

@@ -2,6 +2,7 @@
 
 Ignoré seulement si aucun Chromium n'est disponible (la CI l'installe : job « reproductibilite »).
 """
+import contextlib
 import json
 import os
 import socket
@@ -36,13 +37,14 @@ def _lancer(p):
         pytest.skip(f"Chromium indisponible : {type(e).__name__}")
 
 
-@pytest.fixture(scope="module")
-def url():
+@contextlib.contextmanager
+def serveur(**env_en_plus: str):
+    """Un serveur de démonstration isolé (mémoire seule), sur un port libre ; `env_en_plus` règle un cas précis."""
     with socket.socket() as s:
         s.bind(("127.0.0.1", 0))
         port = s.getsockname()[1]
     env = {**os.environ, "HACKVS_SEMANTIQUE": "0", "HACKVS_DB": ":memory:", "HACKVS_DECISIONS_DB": ":memory:",
-           "HACKVS_CYCLE_DB": ":memory:", "HACKVS_MODE": "demo"}
+           "HACKVS_CYCLE_DB": ":memory:", "HACKVS_MODE": "demo"} | env_en_plus
     srv = subprocess.Popen([sys.executable, "-m", "uvicorn", "app.main:app", "--port", str(port)], cwd=PROTO, env=env,
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     base = f"http://127.0.0.1:{port}"
@@ -59,8 +61,16 @@ def url():
         requete = urllib.request.Request(base + "/api/pulse/etat", headers={"X-Pulse-Console": "1"})
         ia = json.load(urllib.request.urlopen(requete, timeout=5))["ia"]
         assert ia["configure"] is False and ia["fournisseur"] == "deterministe", ia
-    yield base
-    srv.terminate()
+    try:
+        yield base
+    finally:
+        srv.terminate()
+
+
+@pytest.fixture(scope="module")
+def url():
+    with serveur() as base:
+        yield base
 
 
 def test_scene_complete_bureau_puis_mobile(url):

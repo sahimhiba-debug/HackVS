@@ -30,8 +30,11 @@ class VuesCapacites:
                            "manquante": i.manquant == e.id, "critique": e.id in i.critiques,
                            "fournie_par": "une personne du Club" if v is not None else None})     # pseudonymisé : jamais un nom
         roles = {e.id: e.role for e in p.emplacements}
+        libelle = LIBELLES.get(i.statut or "", "")
+        if i.recherche_bornee and i.statut is None:            # rien de composé ET recherche coupée : on ne sait pas
+            libelle = "état incertain : recherche bornée atteinte"
         return {"finalite": i.finalite, "version": i.version, "titre": i.titre, "statut": i.statut,
-                "statut_libelle": LIBELLES.get(i.statut or "", ""), "distance": i.distance, "date": self.c.jour.isoformat(),
+                "statut_libelle": libelle, "recherche_bornee": i.recherche_bornee, "distance": i.distance, "date": self.c.jour.isoformat(),
                 "jour": p.fenetre.jour.isoformat(), "fenetre": f"{p.fenetre.jour.strftime('%d.%m')} {p.fenetre.debut}–{p.fenetre.fin}",
                 "creneau": i.creneau.texte() if i.creneau else None, "pieces": pieces,
                 "ask": {"texte": i.ask.texte, "expire": i.ask.expire.isoformat(), "levier": i.ask.levier, "debloque": i.ask.debloque,
@@ -45,11 +48,13 @@ class VuesCapacites:
     def console(self) -> dict:
         """Le registre : ce que le Club PEUT faire (distance 0) et ce qu'il lui manque une pièce pour faire (distance 1) —
         et, pour l'animation, SEULEMENT ce qui bloque, ce qui exige une décision, ce qui expire."""
-        caps = [self.instance(i) for i in self.c.projection_capacites() if i.statut is not None]
+        # une capacité sans statut n'est pas montrée… SAUF si sa recherche a été coupée : ce serait un « impossible » silencieux
+        caps = [self.instance(i) for i in self.c.projection_capacites() if i.statut is not None or i.recherche_bornee]
         bientot = (self.c.jour + timedelta(days=2)).isoformat()
         return {"capacites": caps, "date": self.c.jour.isoformat(), "fictif": True,
                 "attention": {"bloque": [x["titre"] for x in caps if x["statut"] == "DEGRADED"],
-                              "decision": [x["titre"] for x in caps if x["recomposition"] or x["sans_solution"]],
+                              "decision": [x["titre"] for x in caps if x["recomposition"] or x["sans_solution"]]
+                                          + [f"{x['titre']} (recherche bornée : à vérifier)" for x in caps if x["recherche_bornee"]],
                               "expire": [f"{x['titre']} ({x['fenetre']})" for x in caps
                                          if x["statut"] not in ("ACTIVE", "EXTINCT") and x["jour"] <= bientot]},
                 "regle": "Une capacité n'existe que si chaque pièce est déclarée, valable à cette date et consentie pour "

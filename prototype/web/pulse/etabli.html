@@ -89,12 +89,13 @@
       const el = h("article", { class: "capacite", "data-statut": c.statut, "data-finalite": c.finalite, tabindex: 0, role: "button",
         onclick: () => { choisie = c.finalite; rendre(derniere); $("#passeport").scrollIntoView({ behavior: "smooth" }); } },
         h("div", { style: "display:flex;justify-content:space-between;gap:10px;align-items:flex-start" }, h("h2", {}, c.titre),
-          h("span", { class: "chip " + (COULEURS[c.statut] || ""), "data-role": "statut" }, c.statut_libelle)),
+          h("span", { class: "chip " + (COULEURS[c.statut] || (c.recherche_bornee ? "ambre" : "")), "data-role": "statut" }, c.statut_libelle)),
         h("p", { class: "quand" }, `${jour(c.jour)} · fenêtre ${c.fenetre}${c.creneau ? " · créneau " + c.creneau : ""}`),
         h("div", { class: "pieces" }, c.pieces.map((p) => piece(p, c))),
         c.perdus.map((x) => h("p", { class: "perdu" }, x)),
         c.recomposition ? h("p", { class: "quand" }, "Recomposition proposée : " + c.recomposition.texte) : null,
-        c.sans_solution ? h("p", { class: "perdu" }, "Aucune solution sûre aujourd'hui.") : null);
+        c.sans_solution ? h("p", { class: "perdu" }, "Aucune solution sûre aujourd'hui.") : null,
+        c.recherche_bornee ? h("p", { class: "perdu", "data-role": "bornee" }, "Recherche bornée atteinte : une composition a pu échapper au calcul (absence non garantie).") : null);
       return el;
     }
     function passeport(c) {
