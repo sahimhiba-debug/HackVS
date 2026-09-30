@@ -25,7 +25,7 @@ import time
 from pathlib import Path
 from typing import Callable, Literal, Optional, Protocol
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, model_validator
 
 from adaptateurs.club.synthese import verifier
 from app.models import Besoin
@@ -38,6 +38,9 @@ from app.taxonomy import Taxonomie, norm
 _journal = logging.getLogger("intelligence.ia")
 PROMPTS = Path(__file__).resolve().parents[1] / "prompts"
 Statut = Literal["OK", "INCERTAIN", "REJETE", "INDISPONIBLE"]
+# CE QUI A PRODUIT la sortie montrée — jamais « simulé » : le modèle (sortie acceptée), un enregistrement rejoué sans
+# rappeler le modèle, ou la forme déterministe (aucun modèle, panne, sortie rejetée)
+Issue = Literal["MODEL_CALLED", "CACHE_REPLAY", "FALLBACK_FORM"]
 
 
 def prompt(nom: str) -> tuple[str, str]:
@@ -61,6 +64,13 @@ class AppelIA(BaseModel):
     erreur: Optional[str] = None
     politique: Optional[str] = None  # raison d'un traitement LOCAL imposé (ex. note privée)
     controle: Optional[dict] = None
+    issue: Optional[Issue] = None    # déduite si absente : repli ou aucun modèle → FALLBACK_FORM, sinon MODEL_CALLED
+
+    @model_validator(mode="after")
+    def _issue(self) -> "AppelIA":
+        if self.issue is None:
+            self.issue = "FALLBACK_FORM" if self.repli or self.fournisseur == "deterministe" else "MODEL_CALLED"
+        return self
 
 
 class Reponse(BaseModel):

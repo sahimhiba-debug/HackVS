@@ -171,8 +171,9 @@ class ClubPulse:
         return o.id if o else f"org-{pid}"
 
     def _tracer_ia(self, a: AppelIA) -> None:
-        # la latence reste dans `ia.appels` (mesure) ; le journal garde un contenu déterministe, donc rejouable à l'octet
-        self.banc._ecrire("APPEL_IA", [], Statut.SIMULE, appel=a.model_dump(exclude={"latence_ms"}))
+        # la latence reste dans `ia.appels` (mesure) ; le journal garde un contenu déterministe, donc rejouable à l'octet.
+        # Un appel est un fait OBSERVÉ par le système (jamais « simulé ») ; son `issue` dit ce qui a produit la sortie.
+        self.banc._ecrire("APPEL_IA", [], Statut.OBSERVE, appel=a.model_dump(exclude={"latence_ms"}))
 
     def _net(self, texte: str) -> str:
         """FRONTIÈRE DU MOTEUR : un texte libre d'un membre que le moteur LIT (profil, besoin, offre, réponse à une
