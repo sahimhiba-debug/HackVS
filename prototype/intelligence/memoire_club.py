@@ -45,12 +45,21 @@ def souvenirs(banc: Banc) -> list[dict]:
     return res
 
 
+def _sans_attribution_refusee(s: dict) -> dict:
+    """Mention « anonyme » : l'apprentissage reste réutilisable, mais la contribution n'est ATTRIBUÉE à personne hors de
+    l'essai — ni comme preuve (« cette personne a déjà aidé »), ni pour la faire passer devant dans une découverte."""
+    return s | {"contributeurs": [c for c in s["contributeurs"] if s.get("mentions", {}).get(c, "nom") == "nom"]}
+
+
 def accessibles(tous: list[dict], pour: str) -> list[dict]:
     """Ce qu'on peut utiliser AU PROFIT de `pour` : la mémoire partagée avec le Club par TOUS ses participants, ou celle
     dont `pour` est lui-même participant. Jamais au-delà (une nouvelle audience n'hérite d'aucun ancien accord)."""
-    return [s for s in tous if s["niveau"] == "club" or pour == s["porteur"] or pour in s["contributeurs"]]
+    return [s if pour == s["porteur"] or pour in s["contributeurs"] else _sans_attribution_refusee(s)
+            for s in tous if s["niveau"] == "club" or pour == s["porteur"] or pour in s["contributeurs"]]
 
 
 def reutilisables_par_le_club(tous: list[dict]) -> list[dict]:
-    """Ce que la détection peut lire pour TOUT membre : partagé « club » par chacun, confirmé, positif ou mitigé."""
-    return [s for s in tous if s["niveau"] == "club" and s["statut"] == "confirmee" and s["qualification"] in POSITIFS]
+    """Ce que la détection peut lire pour TOUT membre : partagé « club » par chacun, confirmé, positif ou mitigé ;
+    attribué seulement à qui l'accepte."""
+    return [_sans_attribution_refusee(s) for s in tous
+            if s["niveau"] == "club" and s["statut"] == "confirmee" and s["qualification"] in POSITIFS]

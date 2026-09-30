@@ -21,7 +21,7 @@ BENCHMARKS = [
     ("eval.benchmark_invitations", ["--reseaux", "20", "--sortie", "eval/resultats_benchmark_invitations.md"]),
     ("eval.simulation_boucle", ["--reseaux", "5", "--mois", "3", "--sortie", "eval/resultats_simulation_boucle.md"]),
     ("eval.benchmark_categories", ["--sortie", "eval/resultats_benchmark_categories.md"]),
-    ("eval.benchmark_pulse", []),                  # Club Pulse : détection, pièges, replanification (oracle), confidentialité
+    ("eval.benchmark_pulse", []),                  # Club Pulse : détection, pièges, adaptation (oracle), mémoire, confidentialité
 ]
 
 

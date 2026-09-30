@@ -125,3 +125,16 @@ def test_une_opportunite_a_six_personnes_donne_un_essai_de_quatre_et_le_dit():
     p = brouillon(o, m.r, TAX, m.r.aujourd_hui)
     assert len(p.etapes) == 4 and p.origine["non_invites"] == 2
     assert all(e.concept == "export_allemagne" for e in p.etapes)           # la capacité demandée suit le geste
+
+
+def test_mention_anonyme_la_memoire_ne_designe_pas_markus():
+    """« Réutilisable par le Club, sans mon nom » : l'apprentissage existe, mais ne sert pas à désigner Markus."""
+    m = Monde()
+    _, eid = m.essai_jusqu_a_l_observation()
+    m.b.aviser(M, eid, 1, "confirme")
+    m.b.reutilisation(S, eid, "club", "nom")
+    m.b.reutilisation(M, eid, "club", "anonyme")
+    assert memoire_club.souvenirs(m.b)[0]["statut"] == "confirmee"
+    assert memoire_club.reutilisables_par_le_club(memoire_club.souvenirs(m.b))[0]["contributeurs"] == []
+    assert m.opportunites(NICO) == []
+    assert memoire_club.accessibles(memoire_club.souvenirs(m.b), S)[0]["contributeurs"] == [M]   # la personne aidée, elle, sait

@@ -11,7 +11,7 @@ Données **SYNTHÉTIQUES** : 20 clubs générés (tailles [150, 500], graines 1�
 | CONVERGENCE | 20 / 20 |
 | LACUNE | 20 / 20 |
 | LATENTE | 40 / 40 |
-| MEMOIRE | 20 / 20 |
+| mémoire du Club | 20 / 20 |
 
 ### Pièges : combien de fois la paire interdite est-elle proposée ?
 
@@ -36,9 +36,9 @@ Opportunités détectées par club (moyenne) : 57.5 — leur précision sur le F
 
 | Mesure | Résultat |
 |---|---|
-| Remplacement proposé quand l'oracle en trouve un (complétude) | 121 / 121 |
-| Remplacements proposés admissibles selon l'oracle (justesse) | 185 / 185 |
-| Sans remplacement possible : arrêt propre (IMPOSSIBLE) ou raccourcir avec la même personne | 119 / 119 |
+| Remplacement proposé quand l'oracle en trouve un (complétude) | 117 / 117 |
+| Remplacements proposés admissibles selon l'oracle (justesse) | 181 / 181 |
+| Sans remplacement possible : arrêt propre (IMPOSSIBLE) ou raccourcir avec la même personne | 123 / 123 |
 | « Raccourcir avec la même personne » proposé après une réduction | 119 / 119 |
 | Personne retirée redésignée après adaptation | 0 |
 
@@ -48,11 +48,14 @@ Opportunités détectées par club (moyenne) : 57.5 — leur précision sur le F
 |---|---|
 | Identités (nom, courriel, organisation) dans ce que voit le moteur — 150 membres | 0 fuite(s) sur 450 contrôles |
 | Identités (nom, courriel, organisation) dans ce que voit le moteur — 500 membres | 0 fuite(s) sur 1500 contrôles |
-| Nom d'une personne qui a décliné, ou note privée d'autrui, dans les écrans d'un autre membre — 150 membres, 754 écrans, 1 refus | 0 fuite(s) |
+| Écrans de chaque membre et de la console (150 membres, 763 écrans, 1 refus) : nom de qui a décliné (hors la personne qui l'a invité), note privée d'autrui, observation non partagée, pseudonyme non rendu, identifiant interne | 0 fuite(s) |
 
 ## 4. Mémoire
 
-Situation plantée « déjà résolue dans le Club » retrouvée : 20 / 20.
+Situation plantée : deux membres déclarent la même capacité ; l'un a déjà aidé (contribution confirmée par les deux parties et partagée avec le Club), l'autre a un profil plus récent et passerait devant sans mémoire.
+
+- retrouvée avec la mémoire : 20 / 20 ;
+- la même situation SANS la mémoire n'est pas retrouvée (la mémoire est décisive) : 20 / 20.
 
 ## Ce que ce banc ne dit pas
 

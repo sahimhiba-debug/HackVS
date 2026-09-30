@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import re
 from datetime import date, timedelta
 from typing import Callable, Literal, Optional
@@ -60,6 +61,7 @@ AVANT_LANCEMENT = {"BROUILLON", "PROPOSE", "AUTORISE", "A_ADAPTER"}
 A_REDEMANDER = {"en attente de sa réponse", "à confirmer", "sa part a changé depuis son accord",
                 "le protocole a changé depuis votre confirmation"}
 DELAI_OBSERVATION_JOURS = 14                          # sans observation 14 j après l'échéance : RÉSULTAT INCONNU
+_journal = logging.getLogger("intelligence.essai")
 PARTAGE = ("Si vous acceptez : votre nom et votre organisation sont communiqués au porteur et aux autres participants "
            "qui ont accepté ; l'observation reste entre participants, sauf droit de réutilisation donné par CHACUN.")
 
@@ -334,6 +336,8 @@ class Banc:
         if vers not in TRANSITIONS.get(de, set()):
             raise Conflit(f"transition interdite : {de or 'rien'} → {vers}")
         self._ecrire("ESSAI_ETAT", [par] if par else [], Statut.OBSERVE, essai=eid, de=de, vers=vers, raison=raison)
+        # identifiants techniques seulement : ni la raison (texte libre), ni qui (un identifiant de membre)
+        _journal.info("transition", extra={"essai": eid, "de": de or None, "vers": vers, "agent": "personne" if par else "système"})
 
     def _nouvelle_version(self, eid: str, p: Protocole, par: str, motif: str, statut: Statut = Statut.DECLARE) -> int:
         v = self.version(eid) + 1

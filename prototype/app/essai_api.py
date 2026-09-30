@@ -4,7 +4,7 @@ vue : si le protocole a changé entre-temps, 409 — rien n'est appliqué à une
 from __future__ import annotations
 
 from datetime import date
-from typing import Callable, Literal, Optional
+from typing import Annotated, Callable, Literal, Optional
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
@@ -51,6 +51,7 @@ class Modification(Version):
     pourquoi: Optional[str] = Field(default=None, max_length=300)
     critere: Optional[str] = Field(default=None, min_length=3, max_length=300)
     echeance: Optional[date] = None
+    durees: Optional[dict[str, Annotated[int, Field(ge=1, le=120)]]] = Field(default=None, max_length=4)   # geste → minutes
 
 
 class Choix(Version):
@@ -65,6 +66,7 @@ class OffreEntree(BaseModel):
     du: Optional[date] = None                          # absent : la date du monde (simulée en démonstration)
     au: date
     conditions: str = Field(default="", max_length=300)
+    concept: Optional[str] = Field(default=None, max_length=64)   # une capacité DÉCLARÉE dans son profil
 
 
 class OffreModif(BaseModel):
@@ -91,7 +93,7 @@ class Reutilisation(BaseModel):
     mention: Literal["nom", "anonyme"]
 
 
-JOUABLES = {"s01", "d01"}                  # Pauline, Léa : jamais Sophie ni Markus, qui ont chacun leur téléphone
+JOUABLES = {"s01", "d01", "s15"}           # Pauline, Léa, Claudia : jamais Sophie ni Markus, qui ont chacun leur téléphone
 
 
 class GesteJoue(BaseModel):
@@ -120,8 +122,8 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     # ------------------------------------------------------------------ offres volontaires (les siennes)
     @r.post("/moi/offres")
     def publier_offre(o: OffreEntree, pid: str = Depends(membre)) -> dict:
-        return au_monde(lambda c: {"offre": c.banc.publier_offre(pid, o.nature, o.quoi, o.capacite, o.du or c.jour, o.au, o.duree_max_min,
-                                                                o.conditions)})
+        return au_monde(lambda c: {"offre": c.publier_offre(pid, o.nature, o.quoi, o.capacite, o.du or c.jour, o.au, o.duree_max_min,
+                                                           o.conditions, o.concept)})
 
     @r.patch("/moi/offres/{oid}")
     def modifier_offre(oid: str, m: OffreModif, pid: str = Depends(membre)) -> dict:

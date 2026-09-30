@@ -4,7 +4,8 @@ Deux couches :
 1. un FOND aléatoire réaliste (organisations, métiers, besoins publiés en phrases, langues, créneaux, disponibilité,
    profils anciens, refus d'introduction, rencontres sur 400 jours, événements à venir) ;
 2. des SITUATIONS PLANTÉES, chacune sur une capacité RÉSERVÉE que le fond n'offre ni ne demande jamais :
-   - vraies opportunités (complémentarité, latente + événement, composition, convergence, lacune, mémoire) ;
+   - vraies opportunités (complémentarité, latente + événement, composition, convergence, lacune, et « mémoire du
+     Club » : une contribution confirmée — fournie dans `verite["souvenirs"]` — fait choisir la personne qui a déjà aidé) ;
    - pièges (concurrent, refus d'introduction, profil obsolète, même organisation, aucune langue commune,
      introduction déjà déclinée, indisponible, déjà en relation, simple ressemblance).
 La vérité terrain (`verite`) décrit ce qu'un moteur honnête DOIT trouver et ce qu'il ne doit JAMAIS proposer.
@@ -24,7 +25,6 @@ from app.taxonomy import DATA_DIR, Taxonomie, charger_taxonomie
 from plateforme.affirmations import Statut
 from plateforme.memoire import Evt, Memoire
 
-from . import apprentissage
 from .modele import BesoinActif, Evenement, Reseau
 
 AUJOURD_HUI = date(2026, 11, 3)
@@ -88,7 +88,7 @@ def generer(n: int = 150, graine: int = 2026, plantes: bool = True) -> tuple[Res
     besoins: list[BesoinActif] = []
     n_orgs = max(3, n * 2 // 3)
     orgs = [f"Entreprise {k:04d} (fictive)" for k in range(n_orgs)]
-    verite: dict = {"vraies": [], "pieges": [], "graine": graine, "membres": n}
+    verite: dict = {"vraies": [], "pieges": [], "souvenirs": [], "graine": graine, "membres": n}
 
     n_fond = n - (40 if plantes else 0)
     for i in range(max(0, n_fond)):
@@ -177,15 +177,16 @@ def _planter(rnd, tax, base, profils, besoins, evenements, m, verite) -> None:
     for d in lac:
         besoin(d, [cw])
     verite["vraies"].append({"type": "LACUNE", "membres": sorted(d.id for d in lac), "concepts": [cw]})
-    cm = res.pop()                                               # mémoire : un motif confirmé répond déjà
-    ancien = membre(offres=[cm])
-    apprentissage.enregistrer(m, AUJOURD_HUI - timedelta(days=90), type_="COMPLEMENTARITE", secteur="boissons",
-                              concepts=[cm], sequence=["accord du bénéficiaire", f"contribution : {tax.libelle(cm)}", "confirmation"],
-                              contributions=[{"nature": "ressource", "titre": f"Fiche pratique : {tax.libelle(cm)}", "reutilisable": True}],
-                              contributeurs=[ancien.id], resultat="debloque", activation="historique-1", statut=Statut.SYNTHETIQUE)
+    cm = res.pop()                                               # mémoire : une contribution confirmée CHANGE le choix
+    ancien = membre(offres=[cm], maj=(AUJOURD_HUI - timedelta(days=200)).isoformat())
+    membre(offres=[cm], maj=(AUJOURD_HUI - timedelta(days=20)).isoformat())       # sans mémoire, ce profil plus récent passerait devant
     nouveau = membre(secteurs=["boissons"])
     besoin(nouveau, [cm])
-    verite["vraies"].append({"type": "MEMOIRE", "membres": [nouveau.id], "concepts": [cm]})
+    verite["souvenirs"].append({                                 # forme de `memoire_club.souvenirs` : confirmée, partagée « club »
+        "essai": "es-historique-1", "question": f"Nous cherchons : {tax.libelle(cm)}", "porteur": membre(secteurs=["boissons"]).id,
+        "contributeurs": [ancien.id], "concepts": [cm], "qualification": "positif", "statut": "confirmee", "niveau": "club",
+        "limites": "un essai, un seul bénéficiaire", "le": (AUJOURD_HUI - timedelta(days=90)).isoformat()})
+    verite["vraies"].append({"type": "mémoire du Club", "membres": [nouveau.id, ancien.id], "concepts": [cm]})
 
     # --- pièges : la paire (a, b) ne doit JAMAIS être proposée
     def piege(nom: str, prop_a: dict, prop_b: dict, texte: str | None = None, avant=None) -> None:

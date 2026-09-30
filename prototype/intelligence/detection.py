@@ -7,7 +7,9 @@ Mécanismes (chacun produit des SIGNAUX sourcés ; aucune proximité ne suffit) 
 - LATENTE          : personne n'a rien publié, mais un intérêt DÉCLARÉ rencontre une capacité DÉCLARÉE, et un
                      « pourquoi maintenant » existe (événement commun proche et/ou intérêt réciproque) ;
 - LACUNE           : ≥ 2 besoins bloqués par la même capacité absente — avec la plus petite levée qui débloquerait ;
-- MEMOIRE          : un motif vérifié (effet confirmé) répond déjà : zéro personne à solliciter ;
+- « mémoire du Club » : marque une opportunité dont un contributeur a déjà aidé sur cette capacité — contribution
+                     CONFIRMÉE par les deux parties et partagée avec le Club par chacun (`memoire_club`). À règles dures
+                     égales, cette personne passe devant ; la mémoire ne rend éligible personne qu'une règle écarte ;
 - « capacité dormante » : marque une opportunité qui réveille un membre sans rencontre depuis 6 mois.
 Chaque exclusion est comptée par raison (jamais nominative) : une opportunité peut ne pas exister.
 """
@@ -22,7 +24,6 @@ from app.matching import _mots
 from app.models import Besoin, Profil
 from app.taxonomy import Taxonomie
 
-from . import apprentissage
 from .modele import BesoinActif, Contrainte, Opportunite, Reseau, Role, Signal
 from .observateur import CONVERGENCE_MIN, PROFIL_OBSOLETE_JOURS, Etat, observer, pouls
 
@@ -46,6 +47,15 @@ def _nom(e: Etat, pid: str) -> str:
     return p.nom if p else pid
 
 
+def _signal_memoire(pid: str, s: dict) -> Signal:
+    return Signal(source="memoire", membre=pid, extrait=f"contribution confirmée dans le Club : « {s['question']} »", le=s["le"])
+
+
+def _phrase_memoire(e: Etat, pid: str, s: dict) -> str:
+    return (f"{_nom(e, pid)} a déjà contribué sur ce besoin dans le Club (« {s['question']} ») : résultat jugé « {s['qualification']} » "
+            f"par la personne aidée et confirmé par {_nom(e, pid)}, le {s['le']} ; portée : {s['limites']}.")
+
+
 class Detecteur:
     def __init__(self, reseau: Reseau, tax: Taxonomie, exclus: Optional[set[str]] = None, souvenirs: Optional[list[dict]] = None):
         """`souvenirs` : mémoire du Club RÉUTILISABLE PAR TOUS (partagée « club » par chaque participant, confirmée,
@@ -59,7 +69,6 @@ class Detecteur:
         self.paires_ecartees: list[tuple[str, str, str]] = []   # INTERNE (banc, audit) : jamais exposé à l'interface
         self.bloques: list[dict] = []
         self._cache_f: dict[tuple, list[dict]] = {}
-        self._motifs: Optional[list[dict]] = None     # motifs de la mémoire, lus une fois par analyse (instance = une analyse)
         self._racines: dict[str, frozenset] = {}
 
     def _rac(self, texte: str) -> frozenset:
@@ -75,6 +84,7 @@ class Detecteur:
         if cle in self._cache_f:                          # même question, même réponse (et les exclusions déjà comptées)
             return list(self._cache_f[cle])
         par_id = self.r.par_id()
+        memo = self.memoire_sur(concept)
         res: list[dict[str, Any]] = []
         for pid, extrait, nature in self.e.offreurs.get(concept, []):
             if pid == beneficiaire.id or pid in self.exclus:
@@ -85,11 +95,12 @@ class Detecteur:
                     self.ecartees[raison] += 1
                 self.paires_ecartees.append((beneficiaire.id, pid, raison))
                 continue
-            res.append({"id": pid, "extrait": extrait, "nature": nature, "dormant": self.e.dormant(pid)})
-        # l'offre la plus SPÉCIFIQUE à la demande (mots communs), déclarée avant déduite, disponible maintenant avant
-        # « disponible plus tard », profil le plus récent, puis identifiant (déterministe)
+            res.append({"id": pid, "extrait": extrait, "nature": nature, "dormant": self.e.dormant(pid), "memoire": memo.get(pid)})
+        # d'abord qui a DÉJÀ aidé sur cette capacité (contribution confirmée et partagée), puis l'offre la plus
+        # SPÉCIFIQUE à la demande (mots communs), déclarée avant déduite, disponible maintenant avant « disponible plus
+        # tard », profil le plus récent, puis identifiant (déterministe)
         demande = self._rac(texte or (besoin.texte if besoin else ""))
-        res = sorted(res, key=lambda x: (-len(demande & self._rac(x["extrait"])), x["nature"] != "declare",
+        res = sorted(res, key=lambda x: (x["memoire"] is None, -len(demande & self._rac(x["extrait"])), x["nature"] != "declare",
                                          bool(par_id[x["id"]].note_disponibilite), self.e.age_profil(par_id[x["id"]]) or 0, x["id"]))
         self._cache_f[cle] = res
         return list(res)
@@ -151,7 +162,7 @@ class Detecteur:
         besoins = self._besoins()
         mesures = dict(self.e.mesures)
 
-        # 1. besoins publiés : mémoire vérifiée d'abord, puis complémentarité / composition
+        # 1. besoins publiés : complémentarité / composition (la mémoire du Club départage les fournisseurs)
         par_concept: dict[str, list[tuple[BesoinActif, list[dict]]]] = {}
         for b in besoins:
             auteur = par_id[b.auteur]
@@ -163,13 +174,6 @@ class Detecteur:
                 f = self.fournisseurs(auteur, c, b.besoin)
                 couverts[c] = f
                 par_concept.setdefault(c, []).append((b, f))
-            if self._motifs is None:                  # une lecture du journal par analyse, pas une par demande
-                self._motifs = apprentissage.motifs(self.r.memoire, self.e.aujourd_hui)
-            memo = apprentissage.chercher(self.r.memoire, set(etapes), self.e.aujourd_hui, auteur.secteurs[0] if auteur.secteurs else None,
-                                          connus=self._motifs)
-            if memo and set(etapes) <= set(memo[0]["couvre"]):
-                self._ajouter(opps, self._memoire(b, auteur, etapes, memo[0]))
-                continue
             couvrables = [c for c in etapes if couverts[c]]
             for c in etapes:
                 if not couverts[c]:
@@ -290,10 +294,14 @@ class Detecteur:
         tax = self.tax
         signaux = [Signal(source="besoin", membre=auteur.id, extrait=b.texte, le=b.le.isoformat())]
         roles = [Role(membre=auteur.id, role="bénéficiaire")]
+        memoires = []
         for c in etapes:
             if c in choix:
                 f = next(x for x in couverts[c] if x["id"] == choix[c])
                 signaux.append(Signal(source="offre", membre=f["id"], extrait=f["extrait"]))
+                if f["memoire"]:
+                    memoires.append((f["id"], f["memoire"]))
+                    signaux.append(_signal_memoire(f["id"], f["memoire"]))
                 if not any(r.membre == f["id"] for r in roles):
                     roles.append(Role(membre=f["id"], role=f"contributeur : {tax.libelle(c)}", concept=c, preuve=f["extrait"]))
         contributeurs = [r.membre for r in roles[1:]]
@@ -309,9 +317,12 @@ class Detecteur:
         if manque:
             confiance = "moyenne" if confiance == "elevee" else "faible"
             raisons.append(f"capacité manquante : {', '.join(tax.libelle(c) for c in manque)}")
+        if memoires:
+            raisons.append("contribution confirmée dans le Club")
         raisonnement = [f"{_nom(self.e, auteur.id)} a publié un besoin le {b.le.isoformat()}."]
         raisonnement += [f"{_nom(self.e, choix[c])} déclare : « {next(x for x in couverts[c] if x['id'] == choix[c])['extrait']} »."
                          for c in etapes if c in choix]
+        raisonnement += [_phrase_memoire(self.e, pid, s) for pid, s in memoires]
         raisonnement.append("Aucune règle dure violée : consentement, disponibilité, organisation, langue, concurrence, "
                             "profil récent, pas de refus antérieur.")
         if fen:
@@ -329,29 +340,8 @@ class Detecteur:
                     f"({len(contributeurs)} personne(s)), chacun pour sa seule part."),
             consentements=[auteur.id, *contributeurs], confiance=confiance, confiance_raisons=raisons,
             demandes_servies=1, personnes_a_solliciter=len(contributeurs), besoin_id=b.id, beneficiaire=auteur.id,
-            evenement=fen[0] if fen else None, mecanismes=["capacité dormante"] if dormants else [])
-
-    def _memoire(self, b: BesoinActif, auteur: Profil, etapes: list[str], motif: dict) -> Opportunite:
-        tax = self.tax
-        contrib = motif["contributions"][0] if motif["contributions"] else {"titre": "séquence d'actions"}
-        raisons = [f"{motif['confirmations']} confirmation(s) par un bénéficiaire, il y a {motif['age_jours']} jours"]
-        if motif["differences"]:
-            raisons += motif["differences"]
-        return Opportunite(
-            id="", type="MEMOIRE", titre=f"{' + '.join(tax.libelle(c) for c in etapes)} : déjà résolu dans le Club",
-            declencheur="un besoin publié ressemble à un résultat confirmé", pourquoi_maintenant=f"besoin publié le {b.le.isoformat()}",
-            signaux=[Signal(source="besoin", membre=auteur.id, extrait=b.texte, le=b.le.isoformat()),
-                     Signal(source="memoire", extrait=f"{contrib['titre']} — effet confirmé ({motif['resultat']})", le=motif["le"])],
-            roles=[Role(membre=auteur.id, role="bénéficiaire")], capacites=etapes,
-            contraintes=[Contrainte(libelle=d, statut="a_verifier") for d in motif["differences"]],
-            raisonnement=[f"{_nom(self.e, auteur.id)} a publié un besoin le {b.le.isoformat()}.",
-                          f"Le Club a déjà débloqué ce type de besoin : « {contrib['titre']} », confirmé par la personne aidée.",
-                          "Personne n'a besoin d'être sollicité pour transmettre une ressource vérifiée et partageable.",
-                          *motif["differences"]],
-            action=f"Transmettre « {contrib['titre']} » et demander à {_nom(self.e, auteur.id)} si cela débloque sa prochaine étape.",
-            consentements=[auteur.id], confiance="elevee" if not motif["differences"] else "moyenne",
-            confiance_raisons=raisons, demandes_servies=1, personnes_a_solliciter=0, besoin_id=b.id,
-            beneficiaire=auteur.id, motif=motif["motif_id"])
+            evenement=fen[0] if fen else None,
+            mecanismes=(["capacité dormante"] if dormants else []) + (["mémoire du Club"] if memoires else []))
 
     def _convergence(self, opps: dict[str, Opportunite], c: str, lst: list[tuple[BesoinActif, list[dict]]]) -> None:
         # une experte éligible pour le PLUS de demandeurs (règles dures appliquées à chacun)
@@ -479,11 +469,8 @@ class Detecteur:
             signaux.append(Signal(source="evenement", extrait=fen[1], le=ev.le.isoformat()))
             raisonnement.append(f"Pourquoi maintenant : {fen[1]}.")
         for p, s in memoires:                         # la boucle : un essai confirmé rend la découverte suivante possible
-            signaux.append(Signal(source="memoire", membre=p.id, extrait=f"contribution confirmée dans le Club : « {s['question']} »",
-                                  le=s["le"]))
-            raisonnement.append(f"{p.nom} a déjà contribué sur ce besoin dans le Club (« {s['question']} ») : résultat jugé "
-                                f"« {s['qualification']} » par la personne aidée et confirmé par {p.nom}, le {s['le']} ; "
-                                f"portée : {s['limites']}.")
+            signaux.append(_signal_memoire(p.id, s))
+            raisonnement.append(_phrase_memoire(self.e, p.id, s))
         ids_roles = [r_.membre for r_ in roles[1:]]
         suivis = [q for q in ids_roles if frozenset((a.id, q)) in self.e.relies]
         for q in suivis:

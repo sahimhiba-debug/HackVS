@@ -381,7 +381,7 @@ class Intelligence:
         repli = {"message": (f"Vous avez déclaré pouvoir aider sur : « {faits['capacite_declaree']} ». "
                              f"Une personne du Club ({faits['secteur_demandeur']}) aurait besoin de : {faits['demande']}. "
                              f"Si vous acceptez : {faits['partage']}. Vous pouvez refuser sans vous justifier ; "
-                             "votre refus ne sera montré à personne."), "statut": "OK"}
+                             "ni le Club ni personne d'autre que la personne qui vous invite ne le saura."), "statut": "OK"}
 
         def valide(brut: str) -> tuple[dict, Optional[dict]]:
             t = json.loads(_json_de(brut))["message"].strip()

@@ -11,7 +11,7 @@ from app.pulse_api import Limiteur, creer_routeur
 from intelligence import monde_demo as md
 from intelligence.acces import Sessions
 from intelligence.club_pulse import ClubPulse
-from intelligence.demo import Demo
+from intelligence.demo import CLAUDIA, Demo
 from intelligence.erreurs import Limite, NonAuthentifie
 from intelligence.politique import Spectateur
 from intelligence.reglages import Reglages
@@ -31,28 +31,34 @@ def _h(pid):
     return {"X-Pulse-Session": ses[pid]}
 
 
-def _aid():
-    return next(t["ecran"]["cible"] for t in client.get("/api/pulse/etat", headers=CONSOLE).json()["traces"] if t["acte"] == "Refus")
+def _essai():
+    return next(t["ecran"]["cible"] for t in client.get("/api/pulse/etat", headers=CONSOLE).json()["traces"] if t["acte"] == "Invitation")
+
+
+def _version(eid, pid=S):
+    return client.get(f"/api/pulse/moi/essais/{eid}", headers=_h(pid)).json()["version"]
 
 
 # ------------------------------------------------------------------ authentification ≠ autorisation
 def test_authentifie_mais_pas_autorise():
     _aller(8)
-    aid = _aid()
-    assert client.post(f"/api/pulse/moi/activations/{aid}/confirmer", headers=_h(M),
-                       json={"verdict": "debloque", "etape_suivante": True}).status_code == 403   # Markus n'est pas le bénéficiaire
-    assert client.get(f"/api/pulse/moi/activations/{aid}", headers=_h(P)).status_code == 404     # Pauline : invisible, pas « interdit »
-    assert client.post(f"/api/pulse/moi/activations/{aid}/reutiliser", headers=_h(M)).status_code == 403
-    assert client.get("/api/pulse/moi/activations/inconnue", headers=_h(S)).status_code == 404
-    assert client.get("/api/pulse/moi/opportunites/inconnue", headers=_h(S)).status_code == 404
-    assert client.get("/api/pulse/memoire/xyz/fiche").status_code == 401                          # fiche : membres seulement
+    eid = _essai()
+    obs = {"texte": "faux résultat", "qualification": "positif", "limites": "aucune"}
+    assert client.post(f"/api/pulse/moi/essais/{eid}/observation", headers=_h(M), json=obs).status_code == 403   # pas le porteur
+    assert client.get(f"/api/pulse/moi/essais/{eid}", headers=_h(P)).status_code == 404       # Pauline : invisible, pas « interdit »
+    assert client.post(f"/api/pulse/moi/essais/{eid}/lancer", headers=_h(M), json={"version": 0}).status_code == 403
+    assert client.get("/api/pulse/moi/essais/inconnu", headers=_h(S)).status_code == 404
+    assert client.get("/api/pulse/moi/decouvertes/inconnue", headers=_h(S)).status_code == 404
 
 
-def test_opportunite_d_un_autre_membre_interdite():
+def test_decouverte_d_un_autre_membre_interdite_et_console_gardee():
     _aller(3)
-    oid = next(t for t in client.get("/api/pulse/console", headers=CONSOLE).json()["toutes"] if "Sophie" in t["titre"])["id"]
-    assert client.get(f"/api/pulse/moi/opportunites/{oid}", headers=_h(A)).status_code == 403
-    assert client.post(f"/api/pulse/moi/opportunites/{oid}/activer", headers=_h(M), json={}).status_code == 403
+    oid = next(t for t in client.get("/api/pulse/console/intelligence", headers=CONSOLE).json()["premieres"] if "Sophie" in t["titre"])["id"]
+    assert client.get(f"/api/pulse/moi/decouvertes/{oid}", headers=_h(A)).status_code == 403
+    assert client.get(f"/api/pulse/moi/decouvertes/{oid}/en-clair", headers=_h(A)).status_code == 403   # contrôle AVANT l'IA
+    assert client.post(f"/api/pulse/moi/decouvertes/{oid}/essai", headers=_h(M)).status_code == 403
+    assert client.get(f"/api/pulse/console/decouvertes/{oid}").status_code == 403                # console : son en-tête
+    assert client.get(f"/api/pulse/console/decouvertes/{oid}", headers=CONSOLE).status_code == 200
 
 
 def test_sessions_falsifiees_expirees_ou_d_un_autre_monde_refusees():
@@ -69,7 +75,7 @@ def test_sessions_falsifiees_expirees_ou_d_un_autre_monde_refusees():
         s.verifier(jeton)
     ancien = _h(S)                                                         # jeton du monde précédent
     _aller(0)
-    assert client.get("/api/pulse/moi/pouls", headers=ancien).status_code == 401   # nouveau monde, nouveau secret
+    assert client.get("/api/pulse/moi/decouvertes", headers=ancien).status_code == 401   # nouveau monde, nouveau secret
 
 
 def test_aucun_secret_par_defaut():
@@ -88,8 +94,8 @@ def test_console_exige_son_en_tete_et_son_jeton():
     appli = FastAPI()
     appli.include_router(creer_routeur(TAX, console_jeton="jeton-console-de-test"))
     c = TestClient(appli)
-    assert c.get("/api/pulse/console", headers={"X-Pulse-Console": "1"}).status_code == 403
-    assert c.get("/api/pulse/console", headers={"X-Pulse-Console": "jeton-console-de-test"}).status_code == 200
+    assert c.get("/api/pulse/console/intelligence", headers={"X-Pulse-Console": "1"}).status_code == 403
+    assert c.get("/api/pulse/console/intelligence", headers={"X-Pulse-Console": "jeton-console-de-test"}).status_code == 200
     assert client.get("/api/pulse/etat").status_code == 403                  # le récit de la démo nomme des personnes
 
 
@@ -97,14 +103,14 @@ def test_console_sans_jeton_ne_repond_qu_a_cette_machine():
     """Sans HACKVS_CONSOLE_JETON, la console (qui peut incarner chaque membre) refuse un client distant ; avec un jeton,
     elle l'accepte. Défaut réel : déployée telle quelle, n'importe qui sur le réseau obtenait la session de chacun."""
     distant = TestClient(app, client=("203.0.113.9", 50000))
-    for chemin in ("/api/pulse/console/personas", "/api/pulse/etat", "/api/pulse/console"):
+    for chemin in ("/api/pulse/console/personas", "/api/pulse/etat", "/api/pulse/console/intelligence"):
         r = distant.get(chemin, headers=CONSOLE)
         assert r.status_code == 403 and "HACKVS_CONSOLE_JETON" in r.json()["detail"], chemin
     assert client.get("/api/pulse/console/personas", headers=CONSOLE).status_code == 200    # même machine : démo locale
     appli = FastAPI()
     appli.include_router(creer_routeur(TAX, console_jeton="jeton-console-de-test"))
     loin = TestClient(appli, client=("203.0.113.9", 50000))
-    assert loin.get("/api/pulse/console", headers={"X-Pulse-Console": "jeton-console-de-test"}).status_code == 200
+    assert loin.get("/api/pulse/console/intelligence", headers={"X-Pulse-Console": "jeton-console-de-test"}).status_code == 200
 
 
 def test_deviner_un_code_d_invitation_est_limite():
@@ -134,18 +140,15 @@ def test_entrees_hors_limites_refusees():
 
 
 # ------------------------------------------------------------------ idempotence et concurrence
-def test_double_activation_rejetee_en_conflit():
-    _aller(4)
-    oid = client.get("/api/pulse/etat", headers=CONSOLE).json()["traces"][3]["ecran"]["cible"]
+def test_double_proposition_simultanee_un_seul_essai():
+    _aller(3)
+    oid = client.get("/api/pulse/etat", headers=CONSOLE).json()["traces"][1]["ecran"]["cible"]
     h = _h(S)
-    premier = client.post(f"/api/pulse/moi/opportunites/{oid}/activer", headers=h, json={})
-    second = client.post(f"/api/pulse/moi/opportunites/{oid}/activer", headers=h, json={})
-    assert premier.status_code == 200 and second.status_code == 409        # un nouvel essai réseau ne crée rien
-    lecture = client.get(f"/api/pulse/moi/opportunites/{oid}", headers=h)   # RELIRE n'est pas un conflit (défaut réel :
-    assert lecture.status_code == 200                                      # 409 sur un écran rafraîchi après l'activation)
-    assert lecture.json()["activation"] == premier.json()["activation"] and not lecture.json()["activable"]
-    assert client.get(f"/api/pulse/moi/opportunites/{oid}/pourquoi", headers=h).status_code == 200
-    assert client.get(f"/api/pulse/moi/opportunites/{oid}", headers=_h(A)).status_code == 403   # toujours pas pour autrui
+    r1, r2 = _en_parallele(lambda: client.post(f"/api/pulse/moi/decouvertes/{oid}/essai", headers=h),
+                           lambda: client.post(f"/api/pulse/moi/decouvertes/{oid}/essai", headers=h))
+    assert sorted([r1.status_code, r2.status_code]) == [200, 409]           # un double clic ne crée pas deux essais
+    lecture = client.get(f"/api/pulse/moi/decouvertes/{oid}", headers=h)    # RELIRE n'est pas un conflit
+    assert lecture.status_code == 200 and lecture.json()["essai"] and not lecture.json()["peut_proposer"]
 
 
 def _en_parallele(*appels):
@@ -159,35 +162,36 @@ def _en_parallele(*appels):
 
 
 def test_deux_acceptations_simultanees_une_seule_compte():
-    _aller(5)
-    aid = next(a["activation"] for a in client.get("/api/pulse/moi/sollicitations", headers=_h(A)).json())
-    h = _h(M)
-    r1, r2 = _en_parallele(lambda: client.post(f"/api/pulse/moi/sollicitations/{aid}", headers=h, json={"accepte": True}),
-                           lambda: client.post(f"/api/pulse/moi/sollicitations/{aid}", headers=h, json={"accepte": True}))
-    assert sorted([r1.status_code, r2.status_code]) == [200, 409]
+    _aller(4)
+    eid = _essai()
+    h, v = _h(M), _version(eid, M)
+    corps = {"version": v, "accepte": True}
+    r1, r2 = _en_parallele(lambda: client.post(f"/api/pulse/moi/essais/{eid}/decision", headers=h, json=corps),
+                           lambda: client.post(f"/api/pulse/moi/essais/{eid}/decision", headers=h, json=corps))
+    assert (r1.status_code, r2.status_code) == (200, 200)                  # le second est rejoué sans effet (idempotent)
+    offres = client.get("/api/pulse/moi/souvenirs", headers=h).json()["offres"]
+    assert sum(1 for o in offres if "Développement commercial" in o["quoi"] or "Échange" in o["quoi"]) == 1   # une disponibilité, pas deux
 
 
 def test_acceptation_et_annulation_simultanees_etat_coherent():
-    _aller(5)
-    aid = next(a["activation"] for a in client.get("/api/pulse/moi/sollicitations", headers=_h(A)).json())
-    h = _h(M)
-    r1, r2 = _en_parallele(lambda: client.post(f"/api/pulse/moi/sollicitations/{aid}", headers=h, json={"accepte": True}),
-                           lambda: client.post(f"/api/pulse/console/activations/{aid}/annuler", headers=CONSOLE))
+    _aller(4)
+    eid = _essai()
+    h, v = _h(M), _version(eid, M)
+    r1, r2 = _en_parallele(lambda: client.post(f"/api/pulse/moi/essais/{eid}/decision", headers=h, json={"version": v, "accepte": True}),
+                           lambda: client.post(f"/api/pulse/console/essais/{eid}/annuler", headers=CONSOLE, json={"raison": "le jury arrête"}))
     assert {r1.status_code, r2.status_code} <= {200, 409} and 500 not in (r1.status_code, r2.status_code)
-    etat = client.get(f"/api/pulse/console/activations/{aid}", headers=CONSOLE).json()
-    assert etat["etat"] == "ANNULEE"                                        # l'annulation gagne toujours à la fin…
-    assert client.post(f"/api/pulse/moi/sollicitations/{aid}", headers=_h(A), json={"accepte": True}).status_code in (403, 409)
+    assert client.get(f"/api/pulse/console/essais/{eid}", headers=CONSOLE).json()["etat"] == "ANNULE"   # l'annulation gagne
+    assert client.post(f"/api/pulse/moi/essais/{eid}/decision", headers=h, json={"version": v, "accepte": True}).status_code == 409
 
 
 def test_rien_ne_continue_apres_annulation():
     d = Demo(TAX)
     d.rejouer(5)
-    c = d.club
-    aid = d.ctx["aid"]
-    c.piloter(aid, "annuler")
-    avant = len(c.r.memoire.evenements("SOLLICITATION_PRIVEE"))
-    c.avancer(30)                                                          # échéances : aucun geste sur une activation annulée
-    assert len(c.r.memoire.evenements("SOLLICITATION_PRIVEE")) == avant and c.moteur.etat(aid) == "ANNULEE"
+    c, eid = d.club, d.ctx["essai"]
+    c.banc.annuler("", eid, "annulé par le Club", console=True)
+    avant = len(c.banc._evs(eid))
+    c.avancer(30)                                                          # échéances : rien sur un essai annulé
+    assert len(c.banc._evs(eid)) == avant and c.banc.etat(eid) == "ANNULE"
 
 
 # ------------------------------------------------------------------ organisations et coffre
@@ -198,7 +202,9 @@ def test_collegues_d_une_meme_organisation_ne_partagent_rien_de_prive():
     x, y = [p.id for p in c.coffre._personnes.values() if p.adhesion_id == adh.id][:2]
     c.coffre.actives.update({x, y})
     c.capturer(x, "Rencontré Markus : il cherche des producteurs de boissons. Note confidentielle.")
-    assert c.vues.notes_de(y) == [] and "confidentielle" not in json.dumps(c.vues.pouls_membre(y), ensure_ascii=False)
+    assert c.vues.notes_de(y) == []
+    for vue in (c.vues.decouvertes_de(y), c.vues_essai.actions(y), c.vues_essai.souvenirs(y)):
+        assert "confidentielle" not in json.dumps(vue, ensure_ascii=False)
 
 
 def test_le_moteur_ne_voit_aucune_identite():
@@ -209,18 +215,31 @@ def test_le_moteur_ne_voit_aucune_identite():
     assert "@" not in brut
 
 
-def test_qui_a_decline_n_apparait_dans_aucun_graphe_d_evolution():
-    """Régression (trouvée par eval/benchmark_pulse.py) : le graphe « avant / après » d'une activation listait tous les
-    rôles de l'opportunité, donc la personne qui avait DÉCLINÉ — visible par les autres participants et par la console."""
+def test_qui_a_decline_n_est_nomme_qu_a_la_personne_qui_l_a_invite():
+    """Markus décline l'invitation ; Sophie choisit de demander à Claudia, qui accepte. Seule Sophie (qui l'avait
+    invité) sait que c'était Markus : ni Claudia, ni la console, ni un autre membre."""
     d = Demo(TAX)
-    d.rejouer(len(Demo.ETAPES))
-    c = d.club
-    refus = [(e.donnees["aid"], e.acteurs[0]) for e in c.r.memoire.evenements("REPONSE") if not e.donnees["accepte"]]
-    assert refus                                                           # la démonstration comporte bien un refus
-    for aid, qui in refus:
-        nom = c.coffre.identite(qui).nom
-        for sp in [ANIMATRICE_] + [Spectateur("membre", p) for p in c.coffre._personnes if p != qui]:
-            noeuds = c.vues.evolution(aid, sp)["noeuds"]
-            assert all(n["nom"] != nom for n in noeuds), (sp, nom)
-            benef = c.moteur.opportunite(aid).beneficiaire
-            assert len(noeuds) == 1 + len({k[1] for k, v in c.moteur._reponses(aid).items() if v.donnees["accepte"] and k[1] != benef})
+    d.rejouer(4)
+    c, eid = d.club, d.ctx["essai"]
+    c.banc.decider(M, eid, c.banc.version(eid), False)
+    alt = next(a for a in c.banc.alternatives(eid) if a["type"] == "remplacer")
+    c.banc.choisir_alternative(S, eid, c.banc.version(eid), alt["id"])
+    c.banc.decider(CLAUDIA, eid, c.banc.version(eid), True)
+    assert c.banc.etat(eid) == "AUTORISE"
+    nom = c.coffre.identite(M).nom
+    vues = {"Claudia": c.vues_essai.essai(eid, CLAUDIA), "console": c.vues_essai.essai(eid, None, console=True),
+            "console (essais)": c.vues_essai.console()["essais"], "Nicolas": c.vues.decouvertes_de(md.NICOLAS)}
+    for qui, vue in vues.items():
+        assert nom not in json.dumps(vue, ensure_ascii=False), qui
+    assert "Claudia Imboden" in json.dumps(c.vues_essai.essai(eid, S), ensure_ascii=False)   # nommée après SON accord
+
+
+def test_l_audit_des_ecrans_attrape_une_fuite_reintroduite(monkeypatch):
+    """Le banc de confidentialité (eval/benchmark_pulse.py) a trouvé deux fuites réelles, corrigées : l'identifiant
+    interne de la personne mentionnée dans une note, et le raisonnement pseudonymisé copié dans le « pourquoi » d'un
+    essai. Réintroduire la première doit le faire échouer (le filet a des mailles)."""
+    from eval.benchmark_pulse import confidentialite_ecrans
+    from intelligence.vues_intelligence import VuesIntelligence
+    assert confidentialite_ecrans()["fuites"] == []
+    monkeypatch.setattr(VuesIntelligence, "vue_note", lambda self, pid, note: note)
+    assert ("identifiant interne de membre", S) in confidentialite_ecrans()["fuites"]

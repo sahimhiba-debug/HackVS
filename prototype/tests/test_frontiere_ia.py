@@ -153,20 +153,20 @@ def test_injection_dans_un_profil_reste_du_contenu_et_ne_fuit_pas():
     assert rep.appel.statut == "REJETE" and "@" not in rep.sortie["explication"]
 
 
-def test_relire_ses_sollicitations_ne_rappelle_pas_le_modele():
-    """Une LECTURE répétée est sans effet : le message est rédigé une fois par sollicitation (sinon chaque rafraîchissement
-    coûterait un appel au modèle et ajouterait un événement au journal)."""
+def test_relire_son_invitation_ne_rappelle_pas_le_modele():
+    """Une LECTURE répétée est sans effet : le message d'invitation est rédigé une fois par (essai, version, personne)
+    (sinon chaque rafraîchissement coûterait un appel au modèle et ajouterait un événement au journal)."""
     from intelligence.demo import Demo
     d = Demo(TAX)
-    d.rejouer(5)
-    c = d.club
-    qui = next(e.acteurs[0] for e in c.r.memoire.evenements("SOLLICITATION_PRIVEE")
-               if (e.donnees["etape"], e.acteurs[0]) not in c.moteur._reponses(e.donnees["aid"]) and e.acteurs[0] != md.SOPHIE)
-    premiere = c.vues.demandes_pour(qui)
+    d.rejouer(4)                                                            # Sophie a invité Markus
+    c, eid = d.club, d.ctx["essai"]
+    premiere = c.vues_essai.essai(eid, md.MARKUS)
+    assert premiere["message"]["texte"] and "Sophie" not in premiere["message"]["texte"]
     avant = (len(c.ia.appels), len(c.r.memoire.evenements()))
     for _ in range(3):
-        assert c.vues.demandes_pour(qui) == premiere
+        assert c.vues_essai.essai(eid, md.MARKUS)["message"] == premiere["message"]
     assert (len(c.ia.appels), len(c.r.memoire.evenements())) == avant
+    assert "message" not in c.vues_essai.essai(eid, md.SOPHIE)             # la personne qui invite ne le reçoit pas
 
 
 def test_le_banc_apertus_ne_compte_jamais_une_panne_ou_un_rejet_comme_un_succes():

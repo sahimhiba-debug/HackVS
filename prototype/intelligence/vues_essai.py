@@ -2,7 +2,8 @@
 
 Règles de nom (testées) :
 - le porteur est nommé aux personnes à qui sa proposition est faite (il l'a publiée pour cela) ;
-- un contributeur n'est nommé qu'après SON accord (au porteur et aux autres participants qui ont accepté) ;
+- un contributeur n'est nommé qu'après SON accord (au porteur et aux autres participants qui ont accepté) ; sur
+  INVITATION, la personne aidée — qui l'a choisi — le voit comme la politique l'autorise (rencontre passée) ;
 - qui décline, se tait ou se retire n'est jamais nommé : le porteur lit « la personne sollicitée a décliné » ;
 - la console voit des états et des comptes, pas le contenu des observations ni les noms de qui a décliné.
 """
@@ -12,6 +13,7 @@ from typing import TYPE_CHECKING, Optional
 
 from .erreurs import Introuvable
 from .essai import A_REDEMANDER, FINAUX, NATURES, PARTAGE, Banc
+from .politique import Spectateur
 
 if TYPE_CHECKING:
     from .club_pulse import ClubPulse
@@ -49,7 +51,15 @@ class VuesEssai:
             return per.nom
         if self._engage(eid, pid) and (console or spectateur == porteur or self._engage(eid, spectateur)):
             return per.nom
+        if spectateur == porteur and self._invite(eid, pid):
+            # sur INVITATION, c'est la personne aidée qui a choisi qui inviter (depuis une découverte) : elle la voit
+            # comme la politique le permet (nommée si elles se sont rencontrées) — ni la console ni les autres
+            return self.c.rendu().nom(Spectateur("membre", spectateur), pid)
         return "une personne du Club"
+
+    def _invite(self, eid: str, pid: str) -> bool:
+        return any(e["contributeur"] == pid and e.get("invitation") for v in self.b._versions(eid)
+                   for e in v.donnees["protocole"]["etapes"])
 
     # ------------------------------------------------------------------ une proposition / un essai
     def essai(self, eid: str, pid: Optional[str], console: bool = False) -> dict:
@@ -102,6 +112,8 @@ class VuesEssai:
                                            for o in b.candidats(eid, e, p.echeance)]
         if role == "contributeur":
             v["votre_part"] = {"gestes": [x for x in etapes if x["vous"]], "accord": self._mon_accord(eid, pid)}
+            if pid and etat in ("PROPOSE", "A_ADAPTER") and any(x["vous"] and x["statut"] == "à vous de choisir" for x in etapes):
+                v["message"] = self.c.message_invitation(eid, pid)       # sur invitation seulement (sinon None)
         obs = b._evs(eid, "OBSERVATION")
         if obs and (console or pid in b.participants(eid)):
             v["observation"] = self._observation(eid, pid, console)

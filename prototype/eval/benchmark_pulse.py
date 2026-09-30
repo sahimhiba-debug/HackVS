@@ -14,7 +14,8 @@ Quatre questions, chacune avec une référence qui peut PERDRE :
    l'observation — âges, relations — est partagée).
 3. CONFIDENTIALITÉ — identités dans ce que voit le moteur ; nom d'une personne qui a décliné ou texte d'une note
    privée dans les écrans d'un AUTRE membre (démonstration complète, 150 membres, chaque écran).
-4. MÉMOIRE — la situation plantée « déjà résolue dans le Club » est-elle retrouvée ?
+4. MÉMOIRE — une contribution confirmée et partagée fait-elle choisir la personne qui a déjà aidé (et seulement
+   grâce à elle : sans la mémoire, la même situation choisit quelqu'un d'autre) ?
 
 Limites déclarées : données SYNTHÉTIQUES ; générateur et détecteur partagent la taxonomie (on mesure le respect des
 règles et la robustesse aux pièges, PAS la pertinence humaine ni un impact) ; la précision sur le FOND n'est pas
@@ -25,6 +26,7 @@ from __future__ import annotations
 import json
 import platform
 import random
+import re
 import sys
 import time
 from collections import Counter, defaultdict
@@ -34,14 +36,14 @@ from pathlib import Path
 from app.matching import organisation
 from app.taxonomy import charger_taxonomie
 from intelligence.club_synthetique import generer
-from intelligence.demo import NOTE_SOPHIE, Demo
+from intelligence import monde_demo as md
+from intelligence.demo import Demo
 from intelligence.detection import scanner
 from intelligence.erreurs import ErreurMetier
-from intelligence.essai import Banc
+from intelligence.essai import Banc, Etape, Protocole
 from intelligence.identite import AdhesionsSynthetiques, Coffre
 from intelligence.observateur import PROFIL_OBSOLETE_JOURS, observer
 from intelligence.passerelle import CRITERE_SUGGERE, brouillon
-from intelligence.politique import Spectateur
 from plateforme.memoire import Memoire
 
 ICI = Path(__file__).resolve().parent
@@ -75,21 +77,26 @@ def _references(r) -> dict[str, set[frozenset]]:
     return {"appariement par capacité": capacite, "ressemblance de profils": ressemblance}
 
 
+def _trouvee(t: dict, ops: list) -> bool:
+    return any(t["type"] in (o.type, *o.mecanismes) and set(t["membres"]) <= _membres(o) and set(t["concepts"]) <= set(o.capacites)
+               for o in ops)
+
+
 def detection(n: int, graine: int) -> dict:
     r, v = generer(n, graine)
-    ops = scanner(r, TAX)["opportunites"]
+    ops = scanner(r, TAX, souvenirs=v["souvenirs"])["opportunites"]
     trouvees = Counter()
     for t in v["vraies"]:
-        ok = any(t["type"] in (o.type, *o.mecanismes) and set(t["membres"]) <= _membres(o) and set(t["concepts"]) <= set(o.capacites)
-                 for o in ops)
-        trouvees[(t["type"], ok)] += 1
+        trouvees[(t["type"], _trouvee(t, ops))] += 1
+    sans_memoire = scanner(r, TAX)["opportunites"]                          # la mémoire est-elle DÉCISIVE ?
+    memoire_decisive = sum(not _trouvee(t, sans_memoire) for t in v["vraies"] if t["type"] == "mémoire du Club")
     refs = _references(r)
     pieges = []
     for t in v["pieges"]:
         cible = frozenset(t["membres"])
         pieges.append({"type": t["type"], "moteur": any(cible <= _membres(o) for o in ops),
                        **{nom: cible in paires for nom, paires in refs.items()}})
-    return {"trouvees": trouvees, "pieges": pieges, "opportunites": len(ops)}
+    return {"trouvees": trouvees, "pieges": pieges, "opportunites": len(ops), "memoire_decisive": memoire_decisive}
 
 
 # ---------------------------------------------------------------------- 2. adaptation (banc d'essai)
@@ -199,28 +206,61 @@ def confidentialite_moteur(n: int, graine: int) -> dict:
     return {"profils": len(r.profils), "identites_verifiees": 3 * len(r.profils), "fuites": fuites}
 
 
+NOTE_PRIVEE = "Note privée : Markus hésite à représenter des tisanes, ne pas le brusquer."
+IDENTIFIANT_INTERNE = re.compile(r"\b(?:[sd]\d{2}|n01|c\d{5})\b")
+
+
 def confidentialite_ecrans() -> dict:
+    """La démonstration complète, plus ce qui doit rester privé : une note privée, un refus sur un essai à offres
+    (Léa → Markus décline), un essai observé mais NON partagé (Pauline, niveau « participants »). Puis CHAQUE écran de
+    CHAQUE membre (150) et de la console : ni nom de qui a décliné (sauf chez qui l'a invité), ni note privée d'autrui,
+    ni observation hors de ses participants, ni pseudonyme non rendu, ni identifiant interne."""
     d = Demo(TAX)
     d.rejouer(len(Demo.ETAPES))
-    c = d.club
-    refus = [(ev.donnees["aid"], ev.acteurs[0]) for ev in c.r.memoire.evenements("REPONSE") if not ev.donnees["accepte"]]
-    decliners = {m for _, m in refus}
-    auteurs_notes = set(c.notes)
+    c, b = d.club, d.club.banc
+    c.capturer(md.SOPHIE, NOTE_PRIVEE)
+    geste = Etape(id="e1", nature="temps", geste="Regarder notre étiquette 10 secondes", duree_min=10)
+    lea = b.brouillon(md.LEA, Protocole(question="Notre étiquette est-elle lisible ?", critere="combien la lisent", echeance=c.jour + timedelta(days=5),
+                                         etapes=[geste]))
+    v = b.proposer(md.LEA, lea, 0, {"e1": next(o.id for o in b.offres(publiques=True) if o.auteur == md.MARKUS)})
+    b.decider(md.MARKUS, lea, v, False)                                     # refus sur un essai à offres
+    pauline = b.brouillon(md.PAULINE, Protocole(question="Le présentoir attire-t-il ?", critere="combien s'arrêtent",
+                                                echeance=c.jour + timedelta(days=5), etapes=[geste]))
+    v = b.proposer(md.PAULINE, pauline, 0, {"e1": next(o.id for o in b.offres(publiques=True) if o.auteur == md.LEA)})
+    b.decider(md.LEA, pauline, v, True)
+    b.lancer(md.PAULINE, pauline, v)
+    b.constater(md.PAULINE, pauline, "e1")
+    secret = "OBSERVATION-NON-PARTAGEE-4c1e"
+    b.observer(md.PAULINE, pauline, secret, "mitige", "une seule personne")   # niveau par défaut : participants
+    refus = {(x.donnees["essai"], x.acteurs[0]) for x in b.m.evenements("ACCORD") if not x.donnees["accepte"]}
     ecrans, fuites = 0, []
-    for pid in sorted(c.coffre._personnes):
-        sp = Spectateur("membre", pid)
-        vues = [c.vues.pouls_membre(pid), c.vues.activations_de(pid), c.vues.demandes_pour(pid), c.vues.memoire_club(sp),
-                c.vues.evenements_de(pid)]
-        vues += [c.vues.vue_activation(a["id"], sp) for a in c.vues.activations_de(pid)]
+
+    def controler(qui: str, vues: list, pid=None) -> None:
+        nonlocal ecrans
         ecrans += len(vues)
         texte = json.dumps(vues, ensure_ascii=False)
-        for m in decliners - {pid}:
-            per = c.coffre.identite(m)
-            if per and per.nom in texte:
-                fuites.append(("nom d'une personne qui a décliné", pid))
-        if pid not in auteurs_notes and NOTE_SOPHIE[:40] in texte:
-            fuites.append(("note privée d'un autre membre", pid))
-    return {"membres": len(c.coffre._personnes), "ecrans": ecrans, "refus_dans_la_demo": len(refus), "fuites": fuites}
+        if pid != md.SOPHIE and "ne pas le brusquer" in texte:
+            fuites.append(("note privée d'un autre membre", qui))
+        if pid not in b.participants(pauline) and secret in texte:
+            fuites.append(("observation hors de ses participants", qui))
+        if "MEMBRE-" in texte:
+            fuites.append(("pseudonyme non rendu", qui))
+        if IDENTIFIANT_INTERNE.search(texte):
+            fuites.append(("identifiant interne de membre", qui))
+
+    for pid in sorted(c.coffre._personnes):
+        vues = [c.vues.decouvertes_de(pid), c.vues.notes_de(pid), c.vues_essai.actions(pid), c.vues_essai.souvenirs(pid), c.vues.vue_profil(pid)]
+        vues += [c.vues_essai.essai(eid, pid) for eid in b.essais() if pid in b.personnes(eid) and (pid == b.porteur(eid) or b.etat(eid) != "BROUILLON")]
+        controler(pid, vues, pid)
+    controler("console", [c.vues.panneau(), c.vues_essai.console()] + [c.vues_essai.essai(eid, None, console=True) for eid in b.essais()])
+    for eid, m in refus:                        # qui a décliné : jamais nommé dans CET essai, sauf à qui l'avait invité(e)
+        nom = c.coffre.identite(m).nom  # type: ignore[union-attr]
+        invite = any(e.get("invitation") and e.get("contributeur") == m for v_ in b._versions(eid) for e in v_.donnees["protocole"]["etapes"])
+        spectateurs = [(x, c.vues_essai.essai(eid, x)) for x in b.personnes(eid) - {m} if not (invite and x == b.porteur(eid))]
+        spectateurs += [("console", [c.vues_essai.essai(eid, None, console=True), [x for x in c.vues_essai.console()["essais"] if x["id"] == eid]])]
+        ecrans += len(spectateurs)
+        fuites += [("nom d'une personne qui a décliné", x) for x, vue in spectateurs if nom in json.dumps(vue, ensure_ascii=False)]
+    return {"membres": len(c.coffre._personnes), "ecrans": ecrans, "refus": len(refus), "fuites": fuites}
 
 
 # ---------------------------------------------------------------------- exécution et rapport
@@ -246,7 +286,8 @@ def executer() -> dict:
         "configuration": {"tailles": list(TAILLES), "graines": list(GRAINES), "clubs": len(det), "essais_par_club": K_ESSAIS},
         "detection": {"par_type": {k: {"trouvees": v[0], "plantees": v[1]} for k, v in sorted(par_type.items())},
                       "pieges": {k: dict(v) for k, v in sorted(pieges.items())},
-                      "opportunites_par_club_moyenne": round(sum(d["opportunites"] for *_, d in det) / len(det), 1)},
+                      "opportunites_par_club_moyenne": round(sum(d["opportunites"] for *_, d in det) / len(det), 1),
+                      "memoire_decisive": sum(d["memoire_decisive"] for *_, d in det)},
         "adaptation": {"essais_perturbes": len(perturbes), "refus_a_la_publication": len(ad) - len(perturbes),
                        "retraits": sum(c["perturbation"] == "retrait" for c in perturbes), "reductions": len(reduits),
                        "avec_remplacement_selon_oracle": len(avec),
@@ -298,11 +339,16 @@ def rapport(res: dict) -> str:
         lignes.append(f"| Identités (nom, courriel, organisation) dans ce que voit le moteur — {m['profils']} membres | "
                       f"{m['fuites']} fuite(s) sur {m['identites_verifiees']} contrôles |")
     e = cf["ecrans"]
-    lignes += [f"| Nom d'une personne qui a décliné, ou note privée d'autrui, dans les écrans d'un autre membre — {e['membres']} membres, "
-               f"{e['ecrans']} écrans, {e['refus_dans_la_demo']} refus | {len(e['fuites'])} fuite(s) |", "",
+    lignes += [f"| Écrans de chaque membre et de la console ({e['membres']} membres, {e['ecrans']} écrans, {e['refus']} refus) : nom de qui a "
+               "décliné (hors la personne qui l'a invité), note privée d'autrui, observation non partagée, pseudonyme non rendu, "
+               f"identifiant interne | {len(e['fuites'])} fuite(s) |", "",
                "## 4. Mémoire", "",
-               f"Situation plantée « déjà résolue dans le Club » retrouvée : {d['par_type'].get('MEMOIRE', {}).get('trouvees', 0)} / "
-               f"{d['par_type'].get('MEMOIRE', {}).get('plantees', 0)}.", "",
+               "Situation plantée : deux membres déclarent la même capacité ; l'un a déjà aidé (contribution confirmée par les deux "
+               "parties et partagée avec le Club), l'autre a un profil plus récent et passerait devant sans mémoire.", "",
+               f"- retrouvée avec la mémoire : {d['par_type'].get('mémoire du Club', {}).get('trouvees', 0)} / "
+               f"{d['par_type'].get('mémoire du Club', {}).get('plantees', 0)} ;",
+               f"- la même situation SANS la mémoire n'est pas retrouvée (la mémoire est décisive) : {d['memoire_decisive']} / "
+               f"{d['par_type'].get('mémoire du Club', {}).get('plantees', 0)}.", "",
                "## Ce que ce banc ne dit pas", "",
                "- rien sur de vrais membres, une vraie adoption ou un impact mesuré ;",
                "- rien sur la qualité d'un modèle de langage (aucun n'est appelé) ;",

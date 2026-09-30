@@ -1,6 +1,6 @@
 """Observabilité : un identifiant par requête, une ligne JSON par fait, et JAMAIS de contenu privé.
 
-Journalisé : route, méthode, statut, durée, identifiants techniques (requête, activation, appel IA), classe d'erreur.
+Journalisé : route, méthode, statut, durée, identifiants techniques (requête, essai, appel IA), classe d'erreur.
 Jamais journalisé : corps de requête, en-têtes (sessions, jetons), notes, textes libres, noms, prompts, sorties de
 modèle, messages d'exception (ils peuvent citer une donnée) — d'une exception on garde le TYPE et la pile d'appels.
 
@@ -21,7 +21,7 @@ from typing import Any, Awaitable, Callable, Mapping, MutableMapping
 ID_REQUETE: contextvars.ContextVar[str] = contextvars.ContextVar("id_requete", default="-")
 _ID_SUR = re.compile(r"^[A-Za-z0-9._-]{8,64}$")          # un identifiant fourni par le client n'est repris que s'il est inoffensif
 # champs structurés admis dans une ligne (liste FERMÉE : un champ imprévu n'est pas écrit)
-CHAMPS = ("route", "methode", "statut", "duree_ms", "classe", "activation", "de", "vers", "agent", "trace", "tache",
+CHAMPS = ("route", "methode", "statut", "duree_ms", "classe", "essai", "de", "vers", "agent", "trace", "tache",
           "fournisseur", "modele", "prompt", "repli", "politique", "erreur_ia")
 
 Scope = MutableMapping[str, Any]

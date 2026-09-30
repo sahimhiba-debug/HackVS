@@ -2,7 +2,7 @@
 
 Entrée : `Reseau` (profils, besoins actifs, événements, journal). Sortie : `Etat` — qui offre quoi (sur preuve
 DÉCLARÉE ou DÉDUITE d'une phrase affirmative), qui cherche quoi, qui est sollicitable, quelles paires sont déjà en
-relation ou ont décliné, quels événements ouvrent une fenêtre, quels motifs vérifiés sont frais.
+relation ou ont décliné, quels événements ouvrent une fenêtre. (La mémoire du Club est lue par la détection, pas ici.)
 Aucune écriture. Coût linéaire en membres + besoins + événements du journal.
 """
 from __future__ import annotations
@@ -15,7 +15,6 @@ from app.matching import couverture, filtres_durs, organisation
 from app.models import Besoin, Profil
 from app.taxonomy import Taxonomie, norm
 
-from . import apprentissage
 from .modele import BesoinActif, Evenement, Reseau
 
 PROFIL_OBSOLETE_JOURS = 540      # hypothèse de produit : 18 mois sans mise à jour ⇒ capacité non garantie
@@ -36,7 +35,6 @@ class Etat:
     derniere_rencontre: dict[str, date] = field(default_factory=dict)
     relation_info: dict[frozenset, tuple[date, str]] = field(default_factory=dict)   # dernière rencontre de la paire
     evenements_proches: list[Evenement] = field(default_factory=list)
-    motifs: list[dict] = field(default_factory=list)
     mesures: dict[str, float] = field(default_factory=dict)
     orgs: dict[str, str] = field(default_factory=dict)                 # clé d'organisation, calculée UNE fois par membre
     participants: dict[str, frozenset] = field(default_factory=dict)   # événement → participants (ensemble)
@@ -136,7 +134,6 @@ def observer(reseau: Reseau, tax: Taxonomie) -> Etat:
     e.evenements_proches = sorted((ev for ev in reseau.evenements
                                    if 0 <= (ev.le - reseau.aujourd_hui).days <= FENETRE_EVENEMENT_JOURS), key=lambda x: (x.le, x.id))
     e.participants = {ev.id: frozenset(ev.participants) for ev in reseau.evenements}
-    e.motifs = apprentissage.motifs(m, reseau.aujourd_hui)
     e.mesures["relations_ms"] = round((time.perf_counter() - t1) * 1000, 1)
     return e
 
@@ -157,5 +154,4 @@ def pouls(e: Etat, besoins: list[BesoinActif]) -> dict:
                                 "definition": "membres sollicitables qui offrent une capacité et n'ont eu aucune rencontre depuis 6 mois"},
         "demandes_sans_offre": {"valeur": len(demandes - offerts), "definition": "capacités demandées que personne ne déclare"},
         "evenements_proches": {"valeur": len(e.evenements_proches), "definition": "événements dans les 30 prochains jours"},
-        "motifs_verifies": {"valeur": sum(1 for x in e.motifs if x["frais"]), "definition": "résultats confirmés par un bénéficiaire, de moins d'un an"},
     }

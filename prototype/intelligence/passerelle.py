@@ -21,6 +21,9 @@ from .modele import Opportunite, Reseau
 
 DUREE_ECHANGE_MIN = 60           # un rendez-vous d'échange ; le bénéficiaire l'ajuste avant de publier
 ECHEANCE_JOURS = 10
+NATURE = {"SUIVI": "une suite possible à une rencontre", "LATENTE": "un intérêt déclaré qui rencontre une capacité déclarée",
+          "COMPLEMENTARITE": "un besoin publié et une capacité déclarée", "COMPOSITION": "plusieurs capacités pour un besoin publié",
+          "CONVERGENCE": "un besoin partagé par plusieurs membres"}
 # le critère n'est JAMAIS écrit à la place du bénéficiaire : une suggestion, qu'il adopte ou remplace explicitement
 CRITERE_SUGGERE = "À la fin de l'échange, avez-vous au moins une piste concrète à relancer ?"
 
@@ -41,7 +44,11 @@ def brouillon(o: Opportunite, r: Reseau, tax: Taxonomie, jour: date, duree_min: 
             concepts.append(demande)
         etapes.append(Etape(id=f"e{i}", nature="competence", geste=f"Échange de {duree_min} min : {capa}"[:200], duree_min=duree_min,
                             contributeur=pid, invitation=True, concept=demande))
-    return Protocole(question=besoin[:300], objet="", critere="", pourquoi=("Découvert par Club Pulse : " + " ".join(o.raisonnement[:2]))[:300],
+    # le « pourquoi » du protocole est un texte HUMAIN, lu par chaque personne invitée : aucune personne n'y est nommée
+    # (le raisonnement de la détection, lui, reste dans la découverte, rendu pour son seul spectateur)
+    sujet = " + ".join(tax.libelle(c) for c in sorted(set(concepts))) or "votre besoin"
+    pourquoi = f"Découvert par Club Pulse ({NATURE.get(o.type, 'une possibilité')}) : {sujet}" + (f", avant « {ev.nom} »" if ev else "") + "."
+    return Protocole(question=besoin[:300], objet="", critere="", pourquoi=pourquoi[:300],
                      echeance=echeance, etapes=etapes,
                      origine={"opportunite": o.id, "type": o.type, "concepts": sorted(set(concepts)), "beneficiaire": o.beneficiaire,
                               "evenement": o.evenement, "critere_suggere": CRITERE_SUGGERE,

@@ -4,8 +4,8 @@
 - `Signal`      : un fait daté et sourcé qui justifie une opportunité (jamais un score).
 - `Opportunite` : ce que le réseau POURRAIT faire maintenant : déclencheur, preuves, personnes, capacités, manque,
                   action proposée, consentements requis, confiance expliquée.
-Les activations, résultats et motifs vérifiés sont des ÉVÉNEMENTS du journal (`plateforme.memoire`) : leur état est
-toujours dérivé, jamais stocké deux fois.
+Les essais, observations et confirmations sont des ÉVÉNEMENTS du journal du banc d'essai (`essai.Banc`) : leur état
+et la mémoire du Club (`memoire_club`) en sont toujours dérivés, jamais stockés deux fois.
 """
 from __future__ import annotations
 
@@ -103,5 +103,4 @@ class Opportunite(BaseModel):
     besoin_id: Optional[str] = None
     beneficiaire: Optional[str] = None
     evenement: Optional[str] = None
-    motif: Optional[str] = None        # motif vérifié réutilisé (mémoire)
     mecanismes: list[str] = []         # autres mécanismes qui ont trouvé la même opportunité (dédoublonnage)

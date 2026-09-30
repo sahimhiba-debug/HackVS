@@ -20,13 +20,16 @@ from typing import Optional
 
 from app.taxonomy import charger_taxonomie
 from intelligence import monde_demo as md
-from intelligence.demo import DEMANDE_PAULINE, NOTE_SOPHIE
 from intelligence.detection import scanner
 from intelligence.ia import Apertus, Fournisseur, Intelligence
 from intelligence.identite import AdhesionsSynthetiques, Coffre
 
 ICI = Path(__file__).resolve().parent
 TAX = charger_taxonomie()
+# entrées FICTIVES fixées ici (le banc ne dépend pas du scénario de démonstration, qui peut changer)
+DEMANDE_PAULINE = "Je dois faire traduire mes étiquettes de vin en allemand pour un salon à Stuttgart."
+NOTE_SOPHIE = ("Rencontré Markus à la Foire du Valais : il représente des marques bio en Allemagne et cherche des "
+               "producteurs de boissons. Je dois aussi faire traduire mes étiquettes.")
 
 # (texte, capacités attendues — vide = abstention attendue), écrits AVANT toute exécution
 DEMANDES = [

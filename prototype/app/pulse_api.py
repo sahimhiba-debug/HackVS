@@ -7,7 +7,8 @@ Aucune règle métier ici (elles sont dans `intelligence/`). Trois garanties par
   incompatible ; 422 entrée invalide ; 429 trop de demandes). Tout le reste est une vraie panne : 500 journalisé ;
 - la console (rôle animatrice) exige l'en-tête `X-Pulse-Console` (bloque les requêtes intersites sans pré-vol CORS) et,
   si `HACKVS_CONSOLE_JETON` est défini, sa valeur exacte. En démonstration, la console n'a pas de compte : c'est dit.
-Mode DÉMO seulement : monde fictif, gestes humains joués, résultats calculés à chaque appel.
+Mode DÉMO seulement : monde fictif, gestes humains joués, résultats calculés à chaque appel. Les routes du banc
+d'essai (`essai_api`) partagent ces sessions, ce verrou et ces erreurs.
 """
 from __future__ import annotations
 
@@ -18,7 +19,6 @@ from collections import defaultdict, deque
 from typing import Callable, Literal, Optional, TypeVar
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
-from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
 from intelligence.club_pulse import ClubPulse
@@ -80,40 +80,12 @@ class Demande(BaseModel):
     texte: str = Field(min_length=3, max_length=600)
 
 
-class Activer(BaseModel):
-    anonyme: bool = False
-    langue: Optional[Literal["fr", "de", "en", "it"]] = None
-
-
-class ActivationCreee(BaseModel):
-    activation: str
-
-
-class Reponse(BaseModel):
-    accepte: bool
-
-
-class Contribution(BaseModel):
-    nature: Literal["ressource", "rencontre", "conseil", "validation", "introduction", "document", "seance"]
-    titre: str = Field(min_length=2, max_length=120)
-    contenu: str = Field(default="", max_length=4000)
-    reutilisable: bool = False
-    attribution: bool = False
-
-
-class Confirmation(BaseModel):
-    verdict: Literal["debloque", "partiel", "non"]
-    etape_suivante: bool
-    pourquoi: str = Field(default="", max_length=300)
-
-
 class Temps(BaseModel):
     jours: int = Field(ge=1, le=60)
 
 
-class Contraintes(BaseModel):
-    langue: Optional[Literal["fr", "de", "en", "it"]] = None
-    anonyme: Optional[bool] = None
+class EssaiCree(BaseModel):
+    essai: str
 
 
 class Ok(BaseModel):
@@ -189,6 +161,7 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     def lire_etat() -> dict:
         d = etat["demo"]
         return {"etape": d.etape, "total": len(d.ETAPES), "traces": d.traces, "date": d.club.jour.isoformat(),
+                "actes": [f.__name__.split("_", 2)[-1] for f in d.ETAPES],
                 "monde": d.club.r.nom, "ia": d.club.ia.etat(), "fictif": True}
 
     @r.post("/demo/reinitialiser", dependencies=[Depends(console)])
@@ -224,10 +197,6 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
         return au_monde(lambda c: c.activer_compte(a.code))
 
     # ------------------------------------------------------------------ application du membre
-    @r.get("/moi/pouls")
-    def pouls(pid: str = Depends(membre)) -> dict:
-        return au_monde(lambda c: c.vues.pouls_membre(pid))
-
     @r.get("/moi/profil")
     def profil(pid: str = Depends(membre)) -> dict:
         return au_monde(lambda c: c.vues.vue_profil(pid))
@@ -264,119 +233,32 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
         limiter(limite_ia, f"ia|{pid}")
         return au_monde(lambda c: c.demander(pid, d.texte))
 
-    @r.get("/moi/opportunites/{oid}")
-    def opportunite(oid: str, pid: str = Depends(membre)) -> dict:
-        def f(c: ClubPulse) -> dict:
-            o, aid = c.trouver_opportunite(oid)
-            v = c.vues.vue_opportunite(o, Spectateur("membre", pid))              # contrôle d'accès (403) d'abord
-            return v | {"activation": aid, "activable": v["activable"] and aid is None}
-        return au_monde(f)
+    # ------------------------------------------------------------------ découvertes (Network Intelligence → la personne aidée)
+    @r.get("/moi/decouvertes")
+    def decouvertes(pid: str = Depends(membre)) -> list[dict]:
+        return au_monde(lambda c: c.vues.decouvertes_de(pid))
 
-    @r.get("/moi/opportunites/{oid}/pourquoi")
-    def pourquoi(oid: str, pid: str = Depends(membre)) -> dict:
-        def f(c: ClubPulse) -> dict:
-            c.vues.vue_opportunite(c.trouver_opportunite(oid)[0], Spectateur("membre", pid))    # contrôle d'accès avant l'IA
-            return c.expliquer(oid, Spectateur("membre", pid))
-        return au_monde(f)
+    @r.get("/moi/decouvertes/{oid}")
+    def decouverte(oid: str, pid: str = Depends(membre)) -> dict:
+        return au_monde(lambda c: c.vues.decouverte_de(pid, oid))
 
-    @r.post("/moi/opportunites/{oid}/activer", response_model=ActivationCreee)
-    def activer(oid: str, a: Activer, pid: str = Depends(membre)) -> dict:
-        return au_monde(lambda c: {"activation": c.activer(oid, Spectateur("membre", pid), anonyme=a.anonyme)})
+    @r.get("/moi/decouvertes/{oid}/en-clair")
+    def en_clair(oid: str, pid: str = Depends(membre)) -> dict:
+        limiter(limite_ia, f"ia|{pid}")
+        return au_monde(lambda c: c.en_clair(oid, Spectateur("membre", pid)))
 
-    @r.get("/moi/sollicitations")
-    def sollicitations(pid: str = Depends(membre)) -> list[dict]:
-        return au_monde(lambda c: c.vues.demandes_pour(pid))
+    @r.post("/moi/decouvertes/{oid}/essai", response_model=EssaiCree)
+    def proposer_essai(oid: str, pid: str = Depends(membre)) -> dict:
+        return au_monde(lambda c: {"essai": c.proposer_essai(pid, oid)})    # un BROUILLON, visible de la personne seule
 
-    @r.post("/moi/sollicitations/{aid}", response_model=Ok)
-    def repondre(aid: str, rep: Reponse, pid: str = Depends(membre)) -> Ok:
-        au_monde(lambda c: c.repondre(aid, pid, rep.accepte))
-        return Ok()
+    # ------------------------------------------------------------------ salle de contrôle du Club (rôle animatrice)
+    @r.get("/console/intelligence", dependencies=[Depends(console)])
+    def c_intelligence() -> dict:
+        return au_monde(lambda c: c.vues.panneau())
 
-    @r.get("/moi/activations")
-    def activations(pid: str = Depends(membre)) -> list[dict]:
-        return au_monde(lambda c: c.vues.activations_de(pid))
-
-    @r.get("/moi/activations/{aid}")
-    def activation(aid: str, pid: str = Depends(membre)) -> dict:
-        return au_monde(lambda c: c.vues.vue_activation(aid, Spectateur("membre", pid)))
-
-    @r.post("/moi/activations/{aid}/contribuer", response_model=Ok)
-    def contribuer(aid: str, k: Contribution, pid: str = Depends(membre)) -> Ok:
-        au_monde(lambda c: c.contribuer(aid, pid, k.nature, k.titre, k.contenu, k.reutilisable, k.attribution))
-        return Ok()
-
-    @r.post("/moi/activations/{aid}/confirmer")
-    def confirmer(aid: str, k: Confirmation, pid: str = Depends(membre)) -> dict:
-        return au_monde(lambda c: c.confirmer(aid, pid, k.verdict, k.etape_suivante, k.pourquoi))
-
-    @r.post("/moi/activations/{aid}/retirer", response_model=Ok)
-    def retirer(aid: str, pid: str = Depends(membre)) -> Ok:
-        au_monde(lambda c: c.retirer_consentement(aid, pid))
-        return Ok()
-
-    @r.post("/moi/activations/{aid}/reutiliser", response_model=Ok)
-    def reutiliser(aid: str, pid: str = Depends(membre)) -> Ok:
-        au_monde(lambda c: c.reutiliser(aid, pid))
-        return Ok()
-
-    @r.get("/moi/evenements")
-    def evenements(pid: str = Depends(membre)) -> list[dict]:
-        return au_monde(lambda c: c.vues.evenements_de(pid))
-
-    @r.get("/memoire")
-    def memoire(pid: str = Depends(membre)) -> list[dict]:
-        return au_monde(lambda c: c.vues.memoire_club(Spectateur("membre", pid)))
-
-    @r.get("/memoire/{motif_id}/fiche", response_class=PlainTextResponse)
-    def fiche(motif_id: str, pid: str = Depends(membre)) -> PlainTextResponse:
-        texte = au_monde(lambda c: c.vues.fiche(motif_id))
-        return PlainTextResponse(texte, headers={"Content-Disposition": f'attachment; filename="fiche-{motif_id[:16]}.txt"'})
-
-    # ------------------------------------------------------------------ tour de contrôle du Club (rôle animatrice)
-    @r.get("/console", dependencies=[Depends(console)])
-    def tour() -> dict:
-        return au_monde(lambda c: c.vues.tour())
-
-    @r.post("/console/scan", dependencies=[Depends(console)])
-    def scan() -> dict:
-        def f(c: ClubPulse) -> dict:
-            c.scanner(force=True)
-            return c.vues.tour()
-        return au_monde(f)
-
-    @r.get("/console/opportunites/{oid}", dependencies=[Depends(console)])
-    def c_opportunite(oid: str) -> dict:
-        def f(c: ClubPulse) -> dict:
-            o, aid = c.trouver_opportunite(oid)
-            return c.vues.vue_opportunite(o, ANIMATRICE) | {"activation": aid, "explication": c.expliquer(oid, ANIMATRICE)}
-        return au_monde(f)
-
-    @r.post("/console/opportunites/{oid}/activer", dependencies=[Depends(console)], response_model=ActivationCreee)
-    def c_activer(oid: str, a: Activer) -> dict:
-        return au_monde(lambda c: {"activation": c.activer(oid, ANIMATRICE, anonyme=a.anonyme, langue=a.langue)})
-
-    @r.post("/console/opportunites/{oid}/ecarter", dependencies=[Depends(console)], response_model=Ok)
-    def c_ecarter(oid: str) -> Ok:
-        au_monde(lambda c: c.ecarter(oid))
-        return Ok()
-
-    @r.get("/console/activations/{aid}", dependencies=[Depends(console)])
-    def c_activation(aid: str) -> dict:
-        return au_monde(lambda c: c.vues.vue_activation(aid, ANIMATRICE))
-
-    @r.post("/console/activations/{aid}/contraintes", dependencies=[Depends(console)])
-    def c_contraintes(aid: str, k: Contraintes) -> dict:
-        def f(c: ClubPulse) -> dict:
-            c.changer_contraintes(aid, k.langue, k.anonyme)
-            return c.vues.vue_activation(aid, ANIMATRICE)
-        return au_monde(f)
-
-    @r.post("/console/activations/{aid}/{action}", dependencies=[Depends(console)])
-    def c_action(aid: str, action: Literal["lancer", "pause", "reprendre", "annuler"]) -> dict:
-        def f(c: ClubPulse) -> dict:
-            c.piloter(aid, action)
-            return c.vues.vue_activation(aid, ANIMATRICE)
-        return au_monde(f)
+    @r.get("/console/decouvertes/{oid}", dependencies=[Depends(console)])
+    def c_decouverte(oid: str) -> dict:
+        return au_monde(lambda c: c.vues.opportunite_console(oid))
 
     @r.post("/console/temps", dependencies=[Depends(console)])
     def c_temps(t: Temps) -> dict:

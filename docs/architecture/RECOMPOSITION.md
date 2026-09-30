@@ -105,3 +105,46 @@ si l'essai n'a pas aidé).
    perturbations du jury (règles réelles, gestes JOUÉS marqués).
 6. Retrait de l'ancien moteur après portage des propriétés (commit dédié, justification, chemin de retour).
 7. Banc d'évaluation en 8 dimensions ; interface ; présentation, vidéo hors ligne ; trois audits.
+
+## 11. Journal de la recomposition (ce qui a été fait, vérifié, et comment revenir en arrière)
+
+| Étape | Commit | Vérification |
+|---|---|---|
+| 1. `explication.py` — « pourquoi » structuré | `c633736` | `tests/test_pourquoi.py` |
+| 2. `essai.py` — gestes sur invitation, `origine` | `41b110e` | `tests/test_essai.py` (invitation, 60 → 20 min, éligibilité) |
+| 3. `memoire_club.py` + boucle | `497c34f` | `tests/test_boucle.py` (découverte suivante ; mémoire contestée, négative, non partagée : rien) |
+| 6a. Propriétés de l'ancien moteur PORTÉES sur le banc | `bca6f83` | `tests/test_essai_invariants.py` (10 invariants, 12 marches) ; oracle d'adaptation (`eval/benchmark_pulse.py`) |
+| 6b. Retrait de l'ancien moteur | commit suivant | suite complète, bout en bout, `make quality-check` |
+
+**Modification destructive (6b) — protocole suivi.**
+1. *État sauvegardé* : `bca6f83` (tout l'ancien moteur y est intact, propriétés déjà portées).
+2. *Raison* : deux moteurs d'activation, deux mémoires et deux consoles pour un seul produit (§5) ; l'ancien moteur
+   n'était plus atteint par l'interface depuis le pivot ; le garder aurait maintenu 1 048 lignes et 23 routes sans
+   usage, et une mémoire (« motifs ») que rien de vivant n'écrivait.
+3. *Tests* : avant retrait, chaque propriété utile avait son équivalent sur le banc — invariants par marches
+   aléatoires (`test_essai_invariants.py`), oracle par force brute (adaptation, 121/121 complète, 185/185 juste),
+   audit de confidentialité des écrans (réécrit sur la nouvelle boucle : 763 écrans, 0 fuite, et un test prouve qu'il
+   attrape une fuite réintroduite). Les tests de l'ancien moteur ont été retirés AVEC lui ; ceux de l'API ont été
+   réécrits sur la boucle recomposée (mêmes intentions : session, autorisation, concurrence, refus jamais attribué,
+   notes privées, injection, effacement).
+4. *Retour arrière* : `git revert` du commit de retrait, ou `git checkout bca6f83 -- prototype/intelligence/activation.py …`.
+
+**Retirés** : `intelligence/activation.py` (moteur), `intelligence/vues.py` (ses vues), `intelligence/apprentissage.py`
+(« motifs »), l'ancienne démonstration en 10 étapes, les routes `/moi/pouls`, `/moi/opportunites/*`,
+`/moi/sollicitations/*`, `/moi/activations/*`, `/moi/evenements`, `/memoire*`, `/console` (tour), `/console/scan`,
+`/console/opportunites/*/activer|ecarter`, `/console/activations/*`.
+**Ajoutés** : `vues_intelligence.py` (profil, notes, DÉCOUVERTES rendues par spectateur, panneau d'intelligence),
+une démonstration en 11 étapes sur la boucle réelle, les routes `/moi/decouvertes[/{id}[/en-clair|/essai]]`,
+`/console/intelligence`, `/console/decouvertes/{id}`.
+**Convertis** : la détection lit la mémoire du banc (une contribution confirmée et partagée fait passer devant la
+personne qui a déjà aidé — et seulement grâce à elle : vérifié « avec / sans mémoire ») ; le club synthétique plante
+un souvenir au lieu d'un motif ; l'observateur ne lit plus de motifs ; le banc reçoit les règles dures du réseau
+(`Etat.exclusion`) ; la version de l'analyse inclut le journal du banc.
+
+**Trouvé en chemin (corrigé)** : un geste de compétence pouvait être « remplacé » par n'importe quelle compétence
+(capacité déclarée désormais portée par le geste et l'offre) ; la passerelle échouait au-delà de 4 personnes ;
+`Banc.offres()` était quadratique ; la note privée exposait à sa propriétaire l'identifiant interne de la personne
+mentionnée ; le « pourquoi » d'un essai recopiait un raisonnement pseudonymisé (MEMBRE-xxx) lu tel quel par les
+invités ; le profil de Claudia (fictive) était un piège « profil obsolète » incompatible avec son rôle dans la scène.
+**Limite connue** : un texte LIBRE écrit par un membre (observation, note) qui nomme une autre personne n'est pas
+réécrit si cette personne exerce son droit à l'effacement.

@@ -68,8 +68,8 @@ def expliquer(o: Opportunite, r: Reseau, tax: Taxonomie, disponibilites: dict[st
     for c in contrib:
         p = par_id.get(c)
         if p is not None and p.accepte_introductions and p.disponible:     # lu dans le profil, jamais supposé
-            consentement.append(_item(f"{nom(c)} a déclaré accepter les sollicitations : refus possible sans justification, "
-                                      "jamais montré à personne.", "DÉCLARÉ", c))
+            consentement.append(_item(f"{nom(c)} a déclaré accepter les sollicitations : refus possible sans justification ; "
+                                      "ni le Club ni personne d'autre que vous ne le saura.", "DÉCLARÉ", c))
         else:
             consentement.append(_item(f"{nom(c)} n'accepte pas les sollicitations actuellement : rien ne peut lui être proposé.",
                                       "DÉCLARÉ", c))
@@ -80,8 +80,8 @@ def expliquer(o: Opportunite, r: Reseau, tax: Taxonomie, disponibilites: dict[st
             preuves.append(_item(f"{nom(c)} a publié une offre : « {d['quoi']} »" + (f", {d['duree_max_min']} min au plus" if d.get("duree_max_min") else "")
                                  + f", jusqu'au {d['au']}.", "DÉCLARÉ", c, None, "offre volontaire"))
         else:
-            inconnues.append(_item(f"Disponibilité actuelle de {nom(c)} : inconnue (aucune offre publiée) — elle ne sera connue "
-                                   "que s'il ou elle accepte une proposition.", "INCONNU", c))
+            inconnues.append(_item(f"Disponibilité actuelle — {nom(c)} : inconnue (aucune offre publiée). Elle ne sera connue "
+                                   "que si cette personne accepte une proposition.", "INCONNU", c))
     inconnues += [_item(f"Capacité absente du Club : {m}", "INCONNU") for m in o.manque]
 
     niveau = NIVEAUX.index(o.confiance)
@@ -95,19 +95,19 @@ def expliquer(o: Opportunite, r: Reseau, tax: Taxonomie, disponibilites: dict[st
         contestes = [m for m in mem if m["statut"] == "contestee"]
         negatifs = [m for m in mem if m["qualification"] not in POSITIFS]
         for m in confirmes:
-            preuves.append(_item(f"Contribution de {nom(c)} dans le Club : « {m['question']} » — jugée « {m['qualification']} » par la "
-                                 f"personne aidée et confirmée par {nom(c)} (le {m['le']} ; portée : {m['limites']}). Une confirmation "
-                                 "humaine, pas une garantie.", "CONFIRMÉ", c, m["le"], "mémoire du Club"))
+            preuves.append(_item(f"Contribution confirmée dans le Club — {nom(c)} : « {m['question']} ». Jugée « {m['qualification']} » "
+                                 f"par la personne aidée, confirmée par la personne qui a contribué (le {m['le']} ; portée : {m['limites']}). "
+                                 "Une confirmation humaine, pas une garantie.", "CONFIRMÉ", c, m["le"], "mémoire du Club"))
         for m in contestes:
-            risques.append(f"une contribution passée de {nom(c)} sur ce sujet est CONTESTÉE ({m['le']})")
+            risques.append(f"une contribution passée sur ce sujet est CONTESTÉE ({m['le']}) — {nom(c)}")
         for m in negatifs:
             risques.append(f"un essai passé avec {nom(c)} sur ce sujet a été jugé « {m['qualification']} » ({m['le']} ; portée : {m['limites']})")
         if confirmes and not contestes and not negatifs:
-            niveau, effet = min(niveau + 1, 2), f"relevée : contribution confirmée de {nom(c)} dans le Club"
+            niveau, effet = min(niveau + 1, 2), f"relevée : contribution confirmée dans le Club — {nom(c)}"
         elif negatifs or contestes:
             niveau, effet = max(niveau - 1, 0), f"abaissée : un essai passé avec {nom(c)} n'a pas aidé ou est contesté"
         elif not mem:
-            risques.append(f"aucune contribution de {nom(c)} n'a encore été confirmée dans le Club sur ce sujet")
+            risques.append(f"aucune contribution n'a encore été confirmée dans le Club sur ce sujet — {nom(c)}")
     sujet = " + ".join(tax.libelle(k) for k in sorted(concepts)) or o.titre
     return {
         "resume": _item(f"Il existe peut-être une coopération : {sujet}" + (f" pour {nom(benef)}" if benef else "")

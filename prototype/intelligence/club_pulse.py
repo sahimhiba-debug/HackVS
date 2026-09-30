@@ -1,20 +1,23 @@
-"""CLUB PULSE — le service qui fait vivre la boucle, entre les membres, le Club et l'intelligence du réseau.
+"""CLUB PULSE — le service qui compose la boucle, entre les membres, le Club et l'intelligence du réseau.
 
-    MEMBRE → CONTEXTE (note privée, IA) → RÉSEAU (observer, détecter) → OPPORTUNITÉ → CONSENTEMENT → ACTIVATION
-    → ADAPTATION (refus, retrait, silence) → CONTRIBUTION → RÉSULTAT (confirmé par le bénéficiaire) → MÉMOIRE → suivante
+    MEMBRE → BESOIN → SIGNAUX → DÉCOUVERTE (+ pourquoi) → ESSAI (consentements, versions) → PERTURBATION → ADAPTATION
+    → CONTRIBUTION → OBSERVATION → MÉMOIRE (bornée, contestable) → DÉCOUVERTE SUIVANTE
 
 Frontières tenues ici :
-- le moteur (`Reseau`, `Detecteur`, `Moteur`) ne reçoit que des profils PSEUDONYMISÉS ; les identités sont au `Coffre` ;
-- tout ce qui sort vers un humain passe par `Rendu` (politique de visibilité), pour CE spectateur ;
+- NETWORK INTELLIGENCE (`Detecteur`, `expliquer`) : détecte et explique ; ne sollicite personne ;
+- ACTIVATION ENGINE (`Banc`) : essais, accords par version, adaptation, observation ; ses règles « qui peut être
+  sollicité » sont celles du réseau (une seule source : `Etat.exclusion`) ;
+- la PASSERELLE est le seul pont entre les deux, et seule la personne aidée l'emprunte ;
+- le moteur ne reçoit que des profils PSEUDONYMISÉS ; les identités sont au `Coffre` ; tout ce qui sort vers un
+  humain passe par la politique (`Rendu`, vues) pour CE spectateur ;
 - l'IA (Apertus si configuré, sinon repli déterministe déclaré) comprend et rédige ; elle ne décide rien ;
-- trois mémoires distinctes : NOTES PRIVÉES (propriétaire seul) · CONTEXTE PARTAGÉ (ce que le membre a choisi de mettre
-  dans son profil) · MÉMOIRE VÉRIFIÉE (motifs issus d'un résultat confirmé, anonymisés sauf attribution consentie).
+- trois mémoires distinctes : NOTES PRIVÉES (propriétaire seul) · PROFIL (ce que le membre a choisi de déclarer) ·
+  MÉMOIRE DU CLUB (projection des essais observés, confirmés ou contestés, bornée par les droits de chacun).
 Monde de démonstration FICTIF ; gestes humains joués dans la démonstration et marqués comme tels.
 """
 from __future__ import annotations
 
 import threading
-import time
 from datetime import date, timedelta
 from typing import Optional
 
@@ -24,19 +27,21 @@ from app.taxonomy import Taxonomie
 from plateforme.affirmations import Statut
 from plateforme.memoire import Evt, Memoire
 
+from . import memoire_club
 from . import monde_demo as md
 from .acces import Sessions
-from .activation import ErreurActivation, Moteur
 from .detection import Detecteur
 from .erreurs import Conflit, ErreurMetier, Interdit, Introuvable, Invalide, NonAuthentifie
 from .essai import Banc, Etape, Protocole
 from .ia import AppelIA, Intelligence, besoin_de
 from .identite import AdhesionsSynthetiques, Coffre, nettoyer
 from .modele import BesoinActif, Opportunite
+from .observateur import Etat, observer
+from .passerelle import CRITERE_SUGGERE, brouillon, essai_existant
 from .politique import MODIFIABLES, Contexte, Rendu, Spectateur, descripteur
 from .reglages import Reglages
-from .vues import Vues
 from .vues_essai import VuesEssai
+from .vues_intelligence import VuesIntelligence
 
 ErreurPulse = ErreurMetier             # nom historique : tout refus du service (sous-classes typées)
 
@@ -48,26 +53,27 @@ class ClubPulse:
         # Un seul verrou par monde : chaque requête HTTP s'exécute entière dessous (pas de lecture-puis-écriture
         # entrelacée entre deux requêtes). Réentrant : une commande peut en appeler une autre.
         self.verrou = threading.RLock()
-        brut = md.construire(sophie_profilee=False)
+        brut = md.construire(sophie_profilee=False, recherches_autres=md.BESOINS_SUIVANTS)
         self.coffre = Coffre(AdhesionsSynthetiques(brut.profils).importer(), secret=self.reglages.secret)
         self.sessions = Sessions(self.reglages.secret, self.reglages.duree_session_s)
         brut.profils = [self.coffre.pseudonymiser(p) for p in brut.profils]    # le moteur ne voit que des pseudonymes
         self.r = brut
-        self.moteur = Moteur(self.r, tax)
         self.ia = ia or Intelligence.depuis_environnement(tax, journal=self._tracer_ia,
                                                           notes_privees_autorisees=self.reglages.notes_privees_vers_ia)
         self.ia.journal = self._tracer_ia
-        self.vues = Vues(self)
-        # banc d'essai partagé (la tranche du pivot) : son propre journal — fichier si HACKVS_ESSAIS_DB (survit au
-        # redémarrage), sinon en mémoire
-        self.banc = Banc(Memoire(self.reglages.essais_db), lambda: self.jour, self.organisation_de)
+        self.vues = VuesIntelligence(self)
+        # ACTIVATION ENGINE : son propre journal — fichier si HACKVS_ESSAIS_DB (survit au redémarrage), sinon en mémoire.
+        # Qui peut être sollicité pour qui : les règles DURES du réseau (langue commune, consentement, disponibilité,
+        # profil récent, introduction déjà déclinée), lues dans l'état observé courant — une seule source de vérité.
+        self.banc = Banc(Memoire(self.reglages.essais_db), lambda: self.jour, self.organisation_de, self._non_sollicitable)
         self.vues_essai = VuesEssai(self)
         self.notes: dict[str, list[dict]] = {}
         self.preferences: dict[str, dict] = {}
-        self.ecartees: set[str] = set()
         self.explications: dict[tuple[str, str], dict] = {}
-        self.messages: dict[tuple[str, str, str], dict] = {}   # (activation, étape, membre) → message de sollicitation rédigé
+        self.messages: dict[tuple[str, int, str], dict] = {}   # (essai, version, invité) → message d'invitation rédigé
         self._scan: Optional[dict] = None
+        self._etat: Optional[Etat] = None
+        self._version_etat: tuple = ()
         self._version_scan: tuple = ()
         self._revision_profils = 0            # incrémentée à chaque modification de profil (invalide l'analyse)
         for pid in self.coffre._personnes:                   # tous ont activé leur compte, sauf la nouvelle venue
@@ -99,24 +105,15 @@ class ClubPulse:
         self._scan = None
 
     def contexte(self) -> Contexte:
+        """Faits de relation (journal du Club) et de CONSENTEMENT (accords donnés dans un essai) : le porteur et chaque
+        contributeur qui a accepté se voient nommés l'un l'autre ; qui décline ou se tait, jamais."""
         m = self.r.memoire
         relations = {frozenset(e.acteurs[:2]) for e in m.evenements("RENCONTRE", "COLLABORATION") if len(e.acteurs) >= 2}
         consentis: set[tuple[str, str]] = set()
-        for aid in self.moteur.activations():
-            p = self.moteur.plan(aid)
-            opp = Opportunite(**p["opportunite"])
-            rep = self.moteur._reponses(aid)
-            acceptes = {k[1] for k, v in rep.items() if v.donnees["accepte"]}
-            retires = {e.acteurs[0] for e in self.moteur._evs(aid, "RETRAIT_CONSENTEMENT")}
-            b = opp.beneficiaire
-            if not b or (b not in acceptes and any(e["type"] == "accord_beneficiaire" for e in p["etapes"])):
-                continue
-            for e in p["etapes"]:
-                x = e.get("membre")
-                if e["type"] in ("contribution", "animation") and x in acceptes and x not in retires:
-                    consentis.add((b, x))                                   # le bénéficiaire voit qui a accepté
-                    if not p["anonyme"]:
-                        consentis.add((x, b))                               # et l'inverse, sauf demande anonyme
+        for eid in self.banc.essais():
+            porteur = self.banc.porteur(eid)
+            for x in self.banc.participants(eid) - {porteur}:
+                consentis |= {(porteur, x), (x, porteur)}
         prefs = {k: {a: v for a, v in d.items() if a in MODIFIABLES} for k, d in self.preferences.items()}
         return Contexte(relations=relations, consentis=consentis, preferences=prefs)  # type: ignore[arg-type]
 
@@ -193,29 +190,19 @@ class ClubPulse:
             for k, v in visibilite.items():
                 if k not in MODIFIABLES or v not in MODIFIABLES[k]:
                     raise Invalide(f"visibilité non modifiable : {k} → {v}")
-        # Tout ou rien : profil, préférences et replanifications qu'ils déclenchent. Le journal est transactionnel ;
-        # l'état en mémoire (profils, préférences) est restauré si le moteur refuse.
+        # Tout ou rien : l'état en mémoire (profils, préférences) est restauré si une validation échoue. Suspendre ses
+        # sollicitations vaut pour les NOUVELLES propositions (règles dures) ; un accord déjà donné dans un essai se
+        # retire explicitement dans cet essai (dit, daté), jamais en silence.
         profils_avant, prefs_avant = self.r.profils, {k: dict(v) for k, v in self.preferences.items()}
         try:
-            with self.r.memoire.transaction():
-                if visibilite:
-                    self.preferences.setdefault(pid, {}).update(visibilite)
-                self._remplacer_profil(p.model_copy(update=maj))
-                if retirer_capacite:
-                    self.moteur.retirer_capacite(pid, retirer_capacite, self.jour)
-                if (disponible is False or accepte is False) and any(
-                        self.moteur.etat(a) in ("EN_ATTENTE_ACCORD", "PLANIFIEE") and any(
-                            e.get("membre") == pid and e["type"] in ("contribution", "animation") for e in self.moteur.plan(a)["etapes"])
-                        for a in self.moteur.activations()):
-                    self.moteur.retirer_membre(pid, self.jour, "la personne a suspendu les sollicitations")
-                    self.moteur.exclus.discard(pid)       # la pause vaut pour les plans en cours ; le profil dit la suite
+            if visibilite:
+                self.preferences.setdefault(pid, {}).update(visibilite)
+            self._remplacer_profil(p.model_copy(update=maj))
         except Exception:
             self.r.profils, self.preferences = profils_avant, prefs_avant
             self._revision_profils += 1
             raise
         return self.vues.vue_profil(pid)
-
-
 
     # ------------------------------------------------------------------ mémoire privée : capture d'une rencontre
     def capturer(self, pid: str, texte: str, evenement: Optional[str] = None) -> dict:
@@ -241,7 +228,7 @@ class ClubPulse:
                 "ia": {"fournisseur": rep.appel.fournisseur, "modele": rep.appel.modele, "statut": rep.appel.statut,
                        "repli": rep.appel.repli, "prompt": rep.appel.prompt}}
         self.notes.setdefault(pid, []).append(note)
-        return self.vues._vue_note(pid, note)
+        return self.vues.vue_note(pid, note)
 
     def partager(self, pid: str, note_id: str, index: int) -> dict:
         """Le membre choisit explicitement ce qui quitte sa note privée (et rien d'autre)."""
@@ -252,7 +239,7 @@ class ClubPulse:
         if prop["type"] == "ajouter_recherche":
             self.modifier_profil(pid, ajouter_recherche=prop["texte"].rstrip("."))
         note["partagee"].append(index)
-        return self.vues._vue_note(pid, note)
+        return self.vues.vue_note(pid, note)
 
 
 
@@ -280,71 +267,67 @@ class ClubPulse:
         self.r.besoins.append(BesoinActif(id=f"bj{len(self.r.besoins):05d}", auteur=pid, texte=texte.strip(), le=self.jour, besoin=b))
         self._scan = None
         scan = self.scanner()
-        miennes = [o for o in scan["opportunites"]           # seulement ce que ce membre a le droit de voir : où il est aidé
-                   if o.beneficiaire == pid or pid in {r.membre for r in o.roles if r.role == "participant"}]
+        miennes = [o for o in scan["opportunites"] if o.beneficiaire == pid]    # seulement ce qui le concerne : où il est aidé
         bloques = [x for x in scan["bloques"] if x["auteur"] == pid]
         return {"compris": [{"type": c.type, "libelle": c.libelle, "extrait": c.extrait, "obligatoire": c.obligatoire}
                             for c in b.criteres] + ([{"type": "contrainte", "libelle": "pas un concurrent direct", "extrait": None,
                                                       "obligatoire": True}] if b.exclure_concurrents else []),
                 "incertain": [a.terme for a in b.ambiguites] + b.avertissements,
                 "ia": rep.appel.model_dump(include={"fournisseur", "modele", "statut", "repli", "latence_ms"}),
-                "opportunites": [self.vues.vue_opportunite(o, Spectateur("membre", pid)) for o in miennes],
-                "sans_solution": [self.vues._vue_blocage(x) for x in bloques]}
+                "decouvertes": [self.vues.decouverte(o, Spectateur("membre", pid)) for o in miennes],
+                "sans_solution": [self.vues.vue_blocage(x) for x in bloques]}
 
 
-    # ------------------------------------------------------------------ OBSERVER → DÉTECTER
+    # ------------------------------------------------------------------ OBSERVER → DÉTECTER → EXPLIQUER
+    def _version(self) -> tuple:
+        """L'analyse est une fonction de (journal du Club, besoins, profils, date, journal des essais — la mémoire) :
+        sa version se lit sans hachage ni heuristique."""
+        return (len(self.r.memoire.evenements()), len(self.r.besoins), self._revision_profils, self.jour, len(self.banc.m.evenements()))
+
     def scanner(self, force: bool = False) -> dict:
-        # l'analyse est une fonction de (journal, besoins, profils, date) : sa version se lit sans hachage ni heuristique
-        version = (len(self.r.memoire.evenements()), len(self.r.besoins), self._revision_profils, self.jour)
+        version = self._version()
         if self._scan is not None and self._version_scan == version and not force:
             return self._scan
-        t0 = time.perf_counter()
-        d = Detecteur(self.r, self.tax, exclus=set(self.moteur.exclus))
+        souvenirs = memoire_club.reutilisables_par_le_club(memoire_club.souvenirs(self.banc))
+        d = Detecteur(self.r, self.tax, souvenirs=souvenirs)
         res = d.detecter()
-        en_cours = {self.moteur.plan(a)["opportunite"]["id"] for a in self.moteur.activations()}
-        res["opportunites"] = [o for o in res["opportunites"] if o.id not in self.ecartees and o.id not in en_cours]
-        m = res["mesures"]
         e = d.e
         res["phases"] = [
-            {"etape": "Observer le réseau", "ms": m.get("membres_ms"),
-             "detail": f"{len(self.r.profils)} membres, {sum(len(v) for v in e.offreurs.values())} capacités indexées"},
-            {"etape": "Lire les relations et leur fraîcheur", "detail": f"{len(e.relies)} relations de moins d'un an", "ms": m.get("relations_ms")},
-            {"etape": "Fenêtres d'événements", "detail": f"{len(e.evenements_proches)} événement(s) dans les 30 jours", "ms": None},
-            {"etape": "Besoins actifs et complémentarités", "ms": m.get("besoins_ms"),
-             "detail": f"{res['besoins']} besoins publiés, {len(res['bloques'])} capacité(s) introuvable(s)"},
-            {"etape": "Intérêts latents, suites de rencontres, convergences", "ms": m.get("complementarite_ms"),
-             "detail": f"{sum(len(v) for v in e.recherches.values())} intérêts déclarés"},
-            {"etape": "Règles de consentement, fraîcheur, concurrence", "ms": None,
-             "detail": f"{sum(res['ecartees'].values())} pistes écartées (sans nommer personne)"},
-            {"etape": "Opportunités retenues", "detail": f"{len(res['opportunites'])}", "ms": round((time.perf_counter() - t0) * 1000, 1)}]
+            {"etape": "Observer le réseau", "detail": f"{len(self.r.profils)} membres, {sum(len(v) for v in e.offreurs.values())} capacités déclarées"},
+            {"etape": "Relations et leur fraîcheur", "detail": f"{len(e.relies)} relations de moins d'un an"},
+            {"etape": "Fenêtres d'événements", "detail": f"{len(e.evenements_proches)} événement(s) dans les 30 jours"},
+            {"etape": "Besoins publiés", "detail": f"{res['besoins']} besoin(s), {len(res['bloques'])} capacité(s) introuvable(s)"},
+            {"etape": "Intérêts déclarés et suites de rencontres", "detail": f"{sum(len(v) for v in e.recherches.values())} intérêts déclarés"},
+            {"etape": "Mémoire du Club", "detail": f"{len(souvenirs)} contribution(s) confirmée(s) et partagée(s)"},
+            {"etape": "Règles de consentement, fraîcheur, concurrence",
+             "detail": f"{sum(res['ecartees'].values())} piste(s) écartée(s) (sans nommer personne)"},
+            {"etape": "Découvertes", "detail": f"{len(res['opportunites'])}"}]
         self._scan, self._version_scan = res, version
         return res
 
-    def opportunite(self, oid: str) -> Opportunite:
-        """Pour AGIR sur une opportunité ouverte : déjà activée → Conflit (double clic, nouvel essai réseau)."""
-        o, aid = self.trouver_opportunite(oid)
-        if aid is not None:
-            raise Conflit("cette opportunité est déjà activée")
+    def _non_sollicitable(self, porteur: str, candidat: str) -> Optional[str]:
+        """Pour le banc : pourquoi `candidat` ne peut pas être sollicité pour `porteur` (None : il peut l'être). L'état
+        observé ne dépend pas des essais : il n'est relu que si le réseau a changé (pas à chaque geste du banc)."""
+        version = self._version()[:-1]
+        if self._etat is None or self._version_etat != version:
+            self._etat, self._version_etat = observer(self.r, self.tax), version
+        par_id = self.r.par_id()
+        if porteur not in par_id or candidat not in par_id:
+            return "membre inconnu"
+        return self._etat.exclusion(par_id[porteur], par_id[candidat], None, introduction=False)
+
+    def trouver_opportunite(self, oid: str) -> Opportunite:
+        o = next((x for x in self.scanner()["opportunites"] if x.id == oid), None)
+        if o is None:
+            raise Introuvable("découverte inconnue (ou plus d'actualité)")
         return o
 
-    def trouver_opportunite(self, oid: str) -> tuple[Opportunite, Optional[str]]:
-        """Pour LIRE : une opportunité devenue activation n'est pas une erreur, c'est un état plus avancé. Renvoie
-        l'opportunité (telle qu'elle a été activée) et l'activation qui la porte, s'il y en a une. (Défaut réel : une
-        lecture tardive recevait 409 — un écran rafraîchi juste après l'activation affichait une erreur.)"""
-        o = next((x for x in self.scanner()["opportunites"] if x.id == oid), None)
-        if o is not None:
-            return o, None
-        for a in self.moteur.activations():
-            p = self.moteur.plan(a)
-            if p["opportunite"]["id"] == oid:
-                return Opportunite(**p["opportunite"]), a
-        raise Introuvable("opportunité inconnue")
-
-    # ------------------------------------------------------------------ vues d'opportunité (par spectateur)
-
-    def expliquer(self, oid: str, sp: Spectateur) -> dict:
-        """L'IA reformule le « pourquoi » à partir de faits PSEUDONYMISÉS ; le texte est contrôlé puis rendu pour le spectateur."""
-        o, _ = self.trouver_opportunite(oid)
+    def en_clair(self, oid: str, sp: Spectateur) -> dict:
+        """L'IA reformule le « pourquoi » à partir de faits PSEUDONYMISÉS ; le texte est contrôlé puis rendu pour le
+        spectateur. C'est une reformulation : la source reste l'explication structurée."""
+        o = self.trouver_opportunite(oid)
+        if sp.role == "membre" and sp.id != o.beneficiaire:
+            raise Interdit("cette découverte ne vous concerne pas")
         cle = (oid, sp.role + (sp.id or ""))
         if cle not in self.explications:
             faits = {"titre": o.titre, "raisonnement": o.raisonnement, "manque": o.manque, "action": o.action,
@@ -357,72 +340,37 @@ class ClubPulse:
                 "source": ("Apertus (texte contrôlé : fidèle aux faits)" if x["appel"]["fournisseur"] == "apertus" and not x["appel"]["repli"]
                            else "règles du moteur (aucun modèle génératif utilisé)")}
 
-    # ------------------------------------------------------------------ ACTIVER
-    def activer(self, oid: str, par: Spectateur, anonyme: bool = False, langue: Optional[str] = None) -> str:
-        o = self.opportunite(oid)
-        if par.role == "membre" and par.id != o.beneficiaire:
-            raise Interdit("seul le bénéficiaire (ou le Club) peut activer cette opportunité")
-        with self.r.memoire.transaction():                     # créer + lancer + accord du demandeur : tout ou rien
-            aid = self.moteur.creer(o, self.jour, anonyme=anonyme, langue=langue)
-            if self.moteur.etat(aid) == "PLANIFIEE" and not (par.role == "animatrice" and langue):
-                self.moteur.lancer(aid, self.jour)
-                if par.role == "membre" and par.id is not None and par.id == o.beneficiaire:
-                    self.moteur.repondre(aid, self.jour, par.id, True)    # c'est lui qui le demande : son accord est donné
-        self._scan = None
-        return aid
+    def message_invitation(self, eid: str, pid: str) -> Optional[dict]:
+        """Le message que lit une personne INVITÉE (geste sur invitation) : rédigé UNE fois par (essai, version, personne)
+        — IA contrôlée si configurée, sinon gabarit déclaré — puis mémorisé : relire la page ne rappelle pas le modèle."""
+        p = self.banc.protocole(eid)
+        e = next((x for x in p.etapes if x.contributeur == pid and x.invitation), None)
+        if e is None:
+            return None
+        cle = (eid, self.banc.version(eid), pid)
+        if cle not in self.messages:
+            porteur = self.banc.porteur(eid)
+            prof, per = self.r.par_id().get(porteur), self.coffre.identite(porteur)
+            faits = {"capacite_declaree": self.tax.libelle(e.concept) if e.concept else e.geste, "demande": p.question,
+                     "secteur_demandeur": self.tax.libelle(prof.secteurs[0]) if prof and prof.secteurs else "non précisé",
+                     "partage": "votre nom et votre organisation à cette personne seulement si vous acceptez"}
+            rep = self.ia.rediger_sollicitation(faits, [per.nom if per else "", self.coffre.pseudonyme(porteur)])
+            self.messages[cle] = {"texte": rep.sortie["message"],
+                                  "ia": rep.appel.model_dump(include={"fournisseur", "modele", "statut", "repli"})}
+        return self.messages[cle]
 
-    def lancer(self, aid: str) -> None:
-        self.moteur.lancer(aid, self.jour)
-
-    def repondre(self, aid: str, pid: str, accepte: bool) -> None:
-        self.moteur.repondre(aid, self.jour, pid, accepte)
-        self._scan = None
-
-    def contribuer(self, aid: str, pid: str, nature: str, titre: str, contenu: str, reutilisable: bool = False,
-                   attribution: bool = False) -> None:
-        self.moteur.contribuer(aid, self.jour, pid, nature, titre, contenu, reutilisable, attribution)
-
-    def confirmer(self, aid: str, pid: str, verdict: str, etape_suivante: bool, pourquoi: str = "") -> dict:
-        return self.moteur.confirmer(aid, self.jour, pid, verdict, etape_suivante, pourquoi)
-
-    def reutiliser(self, aid: str, pid: Optional[str] = None) -> None:
-        """Recevoir la ressource vérifiée d'une opportunité MÉMOIRE — geste du bénéficiaire (ou de la démonstration)."""
-        if pid is not None and self.moteur.opportunite(aid).beneficiaire != pid:
-            raise Interdit("seul le bénéficiaire reçoit la ressource vérifiée")
-        self.moteur.reutiliser(aid, self.jour)
-
-    def retirer_consentement(self, aid: str, pid: str) -> None:
-        self.moteur.retirer_consentement(aid, self.jour, pid)
-
-    def ecarter(self, oid: str) -> None:
-        """L'animatrice écarte une opportunité (elle ne réapparaît plus dans l'analyse de ce monde)."""
-        self.opportunite(oid)
-        self.ecartees.add(oid)
-        self._scan = None
-
-    def piloter(self, aid: str, action: str) -> None:
-        """Contrôle du Club sur une activation : lancer, mettre en pause, reprendre, annuler."""
-        commandes = {"lancer": self.moteur.lancer, "pause": self.moteur.mettre_en_pause,
-                     "reprendre": self.moteur.reprendre, "annuler": self.moteur.annuler}
-        if action not in commandes:
-            raise Invalide("action inconnue")
-        commandes[action](aid, self.jour)
-
-    def changer_contraintes(self, aid: str, langue: Optional[str], anonyme: Optional[bool]) -> None:
-        self.moteur.changer_contraintes(aid, self.jour, langue=langue, anonyme=anonyme)
-
-    # ------------------------------------------------------------------ vues d'activation
-
-
-
-
-    # ------------------------------------------------------------------ ÉVOLUTION DU RÉSEAU (preuve secondaire)
-
-    # ------------------------------------------------------------------ mémoire vérifiée (anonymisée)
-
-
-    # ------------------------------------------------------------------ POULS (membre) et TOUR DE CONTRÔLE (Club)
-
+    # ------------------------------------------------------------------ PASSERELLE : la personne aidée demande un essai
+    def proposer_essai(self, pid: str, oid: str) -> str:
+        """Seule la personne aidée transforme une découverte en BROUILLON d'essai (visible d'elle seule) ; rien n'est
+        envoyé à personne avant qu'elle le publie. Un essai déjà vivant pour cette découverte : Conflit (double clic)."""
+        o = self.trouver_opportunite(oid)
+        if o.beneficiaire != pid:
+            raise Interdit("seule la personne aidée peut proposer un essai à partir de cette découverte")
+        if o.type == "LACUNE" or not any(r.membre != pid for r in o.roles):
+            raise Conflit("personne à inviter : cette découverte signale un manque du Club")
+        if essai_existant([(x, self.banc.protocole(x).origine, self.banc.etat(x)) for x in self.banc.essais()], oid):
+            raise Conflit("un essai existe déjà pour cette découverte")
+        return self.banc.brouillon(pid, brouillon(o, self.r, self.tax, self.jour))
 
     # ------------------------------------------------------------------ temps
     def avancer(self, jours: int) -> list[str]:
@@ -431,7 +379,7 @@ class ClubPulse:
         self.r.aujourd_hui = self.jour + timedelta(days=jours)
         self.r.memoire.ajouter(Evt(type="HORLOGE", le=self.jour, statut=Statut.SIMULE, donnees={"avance_jours": jours}))
         self._scan = None
-        return self.moteur.echeances(self.jour) + self.banc.echeances()
+        return self.banc.echeances()
 
     # ------------------------------------------------------------------ banc d'essai : ce qui passe par l'IA
     def preparer_essai(self, pid: str, texte: str) -> dict:
@@ -455,6 +403,13 @@ class ClubPulse:
             raise Invalide("échéance passée")
         return p
 
+    def publier_offre(self, pid: str, nature: str, quoi: str, capacite: int, du: date, au: date, duree_max_min: Optional[int],
+                      conditions: str, concept: Optional[str]) -> str:
+        """Une offre ne peut porter qu'une capacité que le membre DÉCLARE dans son profil (jamais une capacité supposée)."""
+        if concept is not None and concept not in {o.concept for o in self.profil(pid).offre}:
+            raise Invalide("capacité non déclarée dans votre profil : ajoutez-la d'abord à « je peux aider »")
+        return self.banc.publier_offre(pid, nature, quoi, capacite, du, au, duree_max_min=duree_max_min, conditions=conditions, concept=concept)
+
     def creer_essai(self, pid: str, champs: dict) -> str:
         return self.banc.brouillon(pid, self._protocole(champs))
 
@@ -462,4 +417,4 @@ class ClubPulse:
         return self.banc.modifier_brouillon(pid, eid, version, self._protocole(champs))
 
 
-__all__ = ["ClubPulse", "ErreurPulse", "ErreurActivation", "descripteur"]
+__all__ = ["ClubPulse", "ErreurPulse", "CRITERE_SUGGERE", "descripteur"]

@@ -27,12 +27,16 @@ def test_generateur_reproductible_et_phrases_comprises_par_l_analyseur():
 @pytest.mark.parametrize("n,graine", [(150, 2026), (500, 11), (1000, 3)])
 def test_vraies_trouvees_et_pieges_jamais_proposes(n, graine):
     r, v = generer(n, graine)
-    ops = scanner(r, TAX)["opportunites"]
+    ops = scanner(r, TAX, souvenirs=v["souvenirs"])["opportunites"]
+    trouvee = lambda t, ops: any(t["type"] in (o.type, *o.mecanismes) and set(t["membres"]) <= _membres(o)  # noqa: E731
+                                 and set(t["concepts"]) <= set(o.capacites) for o in ops)
     for t in v["vraies"]:
-        assert any(t["type"] in (o.type, *o.mecanismes) and set(t["membres"]) <= _membres(o) and set(t["concepts"]) <= set(o.capacites)
-                   for o in ops), t
+        assert trouvee(t, ops), t
     for t in v["pieges"]:
         assert not any(set(t["membres"]) <= _membres(o) for o in ops), t
+    # la mémoire est DÉCISIVE : sans elle, la même situation désigne quelqu'un d'autre (profil plus récent)
+    sans = scanner(r, TAX)["opportunites"]
+    assert not any(trouvee(t, sans) for t in v["vraies"] if t["type"] == "mémoire du Club")
 
 
 def test_chaque_opportunite_est_prouvee_consentie_et_unique():

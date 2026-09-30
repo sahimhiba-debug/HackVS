@@ -70,3 +70,47 @@ def test_l_api_club_pulse_ne_contient_pas_de_regle_metier():
         imp = _imports(RACINE / "app" / nom)
         assert not _viole(imp, {"intelligence.activation", "intelligence.detection", "intelligence.identite", "intelligence.observateur",
                                 "intelligence.essai", "plateforme"}), nom
+
+
+# ---------------------------------------------------------------------- recomposition : NI → passerelle → AE → mémoire
+NI = {"intelligence.observateur", "intelligence.detection", "intelligence.explication", "intelligence.modele"}
+AE = {"intelligence.essai"}
+MEMOIRE = {"intelligence.memoire_club"}
+
+
+def _imports_domaine(nom: str) -> set[str]:
+    """Imports d'un module de `intelligence/`, relatifs résolus (« from .essai import Banc » → intelligence.essai)."""
+    res: set[str] = set()
+    for n in ast.walk(ast.parse((RACINE / "intelligence" / f"{nom}.py").read_text(encoding="utf-8"))):
+        if isinstance(n, ast.ImportFrom) and n.level == 1:
+            res |= {f"intelligence.{n.module}"} if n.module else {f"intelligence.{a.name}" for a in n.names}
+        elif isinstance(n, ast.ImportFrom) and n.module:
+            res.add(n.module)
+    return res
+
+
+@pytest.mark.parametrize("nom", ["observateur", "detection", "explication", "modele"])
+def test_la_network_intelligence_ne_connait_pas_le_banc_d_essai(nom):
+    """Détecter n'est pas agir : la détection lit la mémoire sous forme de DONNÉES (listes), jamais le banc."""
+    assert not (_imports_domaine(nom) & (AE | MEMOIRE | {"intelligence.passerelle", "intelligence.vues_essai"})), nom
+
+
+def test_le_banc_d_essai_ne_connait_ni_la_detection_ni_la_memoire():
+    assert not (_imports_domaine("essai") & (NI | MEMOIRE | {"intelligence.passerelle"}))
+
+
+def test_la_memoire_ne_lit_que_le_banc():
+    assert _imports_domaine("memoire_club") & (NI | {"intelligence.passerelle"}) == set()
+
+
+def test_seule_la_passerelle_relie_les_deux_dans_le_domaine():
+    domaine = ["observateur", "detection", "explication", "modele", "essai", "memoire_club", "passerelle"]
+    relient = [n for n in domaine if _imports_domaine(n) & NI and _imports_domaine(n) & AE]
+    assert relient == ["passerelle"]
+
+
+def test_un_seul_moteur_d_activation():
+    """L'ancien moteur (activation.py), ses vues et sa mémoire de « motifs » ont été retirés après portage de leurs
+    propriétés (tests/test_essai_invariants.py, eval/benchmark_pulse.py) : ils ne reviennent pas par la bande."""
+    for f in ("activation.py", "apprentissage.py", "vues.py"):
+        assert not (RACINE / "intelligence" / f).exists(), f

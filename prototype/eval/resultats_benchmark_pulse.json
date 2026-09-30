@@ -41,7 +41,7 @@
     "trouvees": 40,
     "plantees": 40
    },
-   "MEMOIRE": {
+   "mémoire du Club": {
     "trouvees": 20,
     "plantees": 20
    }
@@ -102,19 +102,20 @@
     "ressemblance de profils": 10
    }
   },
-  "opportunites_par_club_moyenne": 57.5
+  "opportunites_par_club_moyenne": 57.5,
+  "memoire_decisive": 20
  },
  "adaptation": {
   "essais_perturbes": 240,
   "refus_a_la_publication": 0,
   "retraits": 121,
   "reductions": 119,
-  "avec_remplacement_selon_oracle": 121,
-  "remplacement_propose_quand_il_en_existe": 121,
-  "remplacements_proposes": 185,
-  "remplacements_admissibles": 185,
-  "sans_remplacement_selon_oracle": 119,
-  "arret_ou_raccourci_quand_il_n_en_existe_pas": 119,
+  "avec_remplacement_selon_oracle": 117,
+  "remplacement_propose_quand_il_en_existe": 117,
+  "remplacements_proposes": 181,
+  "remplacements_admissibles": 181,
+  "sans_remplacement_selon_oracle": 123,
+  "arret_ou_raccourci_quand_il_n_en_existe_pas": 123,
   "raccourcir_propose_apres_reduction": 119,
   "retire_redemande": 0
  },
@@ -133,8 +134,8 @@
   ],
   "ecrans": {
    "membres": 150,
-   "ecrans": 754,
-   "refus_dans_la_demo": 1,
+   "ecrans": 763,
+   "refus": 1,
    "fuites": []
   }
  }
