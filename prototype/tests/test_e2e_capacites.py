@@ -45,8 +45,11 @@ def test_etabli_telephones_reponse_recu_retrait_anonyme(url):  # noqa: F811
         passeport = etabli.inner_text("section[aria-label='Passeport de capacité']")
         assert "fournie par une personne du Club, consentement donné" in passeport and "Pièces critiques" in passeport
 
-        pauline.click("#retirer-delegation_acheteurs")                                 # retrait, en un geste
-        carte.locator("[data-role=statut]:has-text('un consentement ne vaut plus')").wait_for()
+        assert carte.locator("[data-role=statut]").inner_text() == "le Club peut le faire"   # l'état AVANT le retrait
+        with etabli.expect_response(lambda r: "/console/capacites" in r.url and "DEGRADED" in r.text()) as lu:
+            pauline.click("#retirer-delegation_acheteurs")                             # retrait, en un geste
+        assert lu.value.ok                                                             # une lecture de l'Établi APRÈS le retrait…
+        carte.locator("[data-role=statut]:has-text('un consentement ne vaut plus')").wait_for()   # …et l'écran l'affiche
         texte = etabli.inner_text("body")
         assert "transport : ce composant n'est plus disponible" in texte
         for x in ("Pauline", "Darbellay", "retiré", "s'est retir", "Minibus de 14"):      # ni qui, ni l'événement
@@ -56,7 +59,7 @@ def test_etabli_telephones_reponse_recu_retrait_anonyme(url):  # noqa: F811
         markus.click("nav.onglets >> text=Demandes")
         markus.wait_for_selector("[data-ask]")                                         # la demande repart… vers un autre
         pauline.click("nav.onglets >> text=Demandes")
-        pauline.wait_for_selector("text=Aucune demande pour vous en ce moment.")       # …jamais vers la personne retirée
+        pauline.wait_for_selector("text=Aucune demande pour vous en ce moment.")       # …pas vers elle (7 jours de silence après une réponse)
         for pg in (pauline, markus):
             assert _sans_debordement(pg)
         pauline.click("text=Mes données : ce que le Club sait de moi")

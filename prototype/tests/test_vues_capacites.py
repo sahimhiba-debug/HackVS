@@ -42,6 +42,28 @@ def test_le_cache_suit_le_journal_les_profils_l_horloge_et_les_patrons(club):
     assert _statut(club) == "EXTINCT"                                         # horloge
 
 
+def test_le_cache_est_invalide_par_l_evenement_d_ecriture(club, monkeypatch):
+    """Ce qui invalide le cache, c'est l'ÉCRITURE d'un événement dans le journal — pas l'appelant : une écriture faite
+    directement sur le banc, sans passer par Club Pulse, l'invalide aussi. Une lecture, elle, ne recalcule rien."""
+    calculs = []
+    projeter = club.capacites.projeter
+    monkeypatch.setattr(club.capacites, "projeter", lambda: calculs.append(1) or projeter())
+    club.projection_capacites()
+    club.projection_capacites()
+    club.vues_capacites.console()
+    club.asks_pour(md.PAULINE)
+    club.capacites.recus(NICOLAS)
+    assert len(calculs) == 1                                                  # lectures : aucun recalcul
+    club.repondre_ask(md.PAULINE, club.asks_pour(md.PAULINE)[0][1], True, {"places": 14})
+    assert len(calculs) == 1                                                  # paresseux : rien tant que personne ne lit
+    assert _statut(club) == "ACTIVE" and len(calculs) == 2
+    n = len(club.journal.evenements())
+    club.banc.retirer_finalite(md.PAULINE, A, "minibus")                      # écriture directe, hors Club Pulse
+    assert len(club.journal.evenements()) == n + 1                            # un événement écrit…
+    assert _statut(club) == "DEGRADED" and len(calculs) == 3                  # …et la lecture suivante recalcule
+    assert _statut(club) == "DEGRADED" and len(calculs) == 3
+
+
 def test_le_cache_rend_une_copie(club):
     un = club.projection_capacites()
     un[0].titre = "modifié par un appelant"
