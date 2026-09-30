@@ -320,7 +320,7 @@
             h("button", { class: "btn discret petit", onclick: () => post("avis", { revision: e.observation.revision, avis: "conteste", raison: r.value }, "Contestation enregistrée.")() }, "Je conteste"))));
       }
       if (A.has("reutilisation")) acts.push(formReutilisation(id, e.reutilisation));
-      if (e.votre_part && !e.final) acts.push(formMonOffre(e));
+      if (e.votre_part && !e.final && !e.apres_action) acts.push(formMonOffre(e));
       if (A.has("retirer")) acts.push(h("button", { class: "btn discret petit", onclick: post("retirer", {}, "Participation retirée.") }, "Retirer ma participation"));
       if (A.has("annuler")) acts.push(h("button", { class: "btn discret petit", onclick: post("annuler", { raison: "annulé par le porteur" }, "Essai annulé.") }, "Annuler l'essai"));
       if (acts.length) blocs.push(section("Vos actions", h("div", { class: "actions", style: "flex-direction:column;align-items:stretch" }, acts)));

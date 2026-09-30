@@ -424,7 +424,10 @@ class ClubPulse:
             raise Invalide("formulation vide ou trop longue")
         noms = [per.nom for per in self.coffre._personnes.values()] + [o.nom for o in self.coffre.orgs.values()]
         rep = self.ia.comprendre_action(nettoyer(texte, noms), self.jour)
-        return rep.sortie | {"texte": texte.strip(), "critere_suggere": CRITERE_ACTION,
+        livrables = [x["livrable"] for x in rep.sortie.get("exigences", []) if x.get("livrable")]
+        critere = ("L'action a lieu au créneau convenu" + (f" et « {livrables[0]} » est remis" if livrables else "")
+                   + " ; je dirai ce que j'en ai observé.")          # jamais une fiche que personne n'a demandée
+        return rep.sortie | {"texte": texte.strip(), "critere_suggere": critere,
                              "ia": {"fournisseur": rep.appel.fournisseur, "modele": rep.appel.modele, "statut": rep.appel.statut,
                                     "repli": rep.appel.repli, "prompt": rep.appel.prompt, "trace": rep.appel.trace, "mode": rep.sortie.get("mode")}}
 

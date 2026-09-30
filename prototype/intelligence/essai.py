@@ -411,6 +411,12 @@ class Banc:
         return {e.id: self._materiel(self.offre_de(eid, e)) for e in p.etapes
                 if e.contributeur and (membre == porteur or e.contributeur == membre)}
 
+    def apres_action(self, eid: str) -> bool:
+        """L'action a eu lieu (ou est close) : son créneau est passé, ou l'essai est au-delà de EN_COURS."""
+        etat, p = self.etat(eid), self.protocole(eid)
+        return etat not in AVANT_LANCEMENT | {"EN_COURS", "IMPOSSIBLE"} or (
+            etat == "EN_COURS" and p.creneau is not None and p.creneau.jour < self._jour())
+
     def raisons_gestes(self, eid: str) -> dict[str, Optional[str]]:
         """Pour CHAQUE geste de la version courante : None s'il est couvert (accord valable et offre qui le porte encore,
         aux mêmes conditions), sinon la raison. Chaque geste est vérifié — une personne peut en porter plusieurs."""
@@ -418,12 +424,10 @@ class Banc:
         recues = {x.donnees["etape"] for x in self._evs(eid, "CONTRIBUTION")}
         acc_porteur = self._dernier_accord(eid, porteur)
         vues_porteur = (acc_porteur.donnees.get("offres") or {}) if acc_porteur and acc_porteur.type == "ACCORD" else {}
-        etat = self.etat(eid)
         # APRÈS le moment de l'action (créneau passé, ou action close), l'état ACTUEL d'une offre ne requalifie plus un
         # accord : une disponibilité datée qui expire ensuite n'est pas un désistement (défaut trouvé : +30 jours
         # affichait « ne couvre plus » pour un lieu accepté et engagé)
-        passe = etat not in AVANT_LANCEMENT | {"EN_COURS", "IMPOSSIBLE"} or (
-            etat == "EN_COURS" and p.creneau is not None and p.creneau.jour < self._jour())
+        passe = self.apres_action(eid)
         res: dict[str, Optional[str]] = {}
         for e in p.etapes:
             if not e.contributeur:
@@ -987,6 +991,8 @@ class Banc:
             raise Introuvable("essai inconnu") if membre not in self.personnes(eid) else Interdit("le porteur annule, il ne se retire pas")
         if self.etat(eid) in FINAUX:
             raise Conflit("essai terminé")
+        if self.apres_action(eid):                            # défaut trouvé à l'enregistrement : « retirer » 30 jours après
+            raise Conflit("l'action a déjà eu lieu : un retrait n'a plus d'objet")
         recues = {x.donnees["etape"] for x in self._evs(eid, "CONTRIBUTION") if x.donnees["contributeur"] == membre}
         with self.m.transaction():
             self._ecrire("RETRAIT", [membre], essai=eid, version=self.version(eid))

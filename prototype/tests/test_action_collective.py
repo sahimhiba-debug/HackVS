@@ -182,6 +182,9 @@ def test_trente_jours_plus_tard_rien_n_est_reconduit_et_le_resultat_reste_inconn
     assert proj["etat"] == "RESULTAT_INCONNU"
     assert next(x for x in proj["exigences"] if x["id"] == "e1")["palier"] == "livrable reçu"      # un fait reçu ne s'efface pas
     assert {x["palier"] for x in proj["exigences"] if x["id"] != "e1"} == {"accepté"}             # accepté ≠ réalisé : rien de plus
+    lea = _essai(h, L, eid)                             # défaut vu à l'enregistrement : « retirer » proposé 30 jours après
+    assert "retirer" not in lea["actions"] and lea["apres_action"]
+    assert client.post(f"/api/pulse/moi/essais/{eid}/retirer", headers=h[L]).status_code == 409
     prop = client.post("/api/pulse/moi/actions/preparer", headers=h[S], json={"texte": BESOIN_SOPHIE}).json()   # le même besoin, un mois après
     r = client.post("/api/pulse/moi/actions/nouvelle", headers=h[S], json={
         "question": "Recommencer le mois suivant", "objet": prop["objet"], "critere": prop["critere_suggere"],

@@ -116,7 +116,7 @@ class VuesEssai:
              "creneau": {"texte": p.creneau.texte(), **p.creneau.model_dump(mode="json")} if p.creneau else None,
              "fenetre": {"texte": p.fenetre.texte(), **p.fenetre.model_dump(mode="json")} if p.fenetre else None,
              "duree_min_acceptable": p.duree_min_acceptable,
-             "projetee": b.projetable(eid) if pid == porteur and not console else None}
+             "projetee": b.projetable(eid) if pid == porteur and not console else None, "apres_action": b.apres_action(eid)}
         if etat == "A_ADAPTER":
             v["adaptation"] = self._adaptation(eid, pid, console)
         if etat == "BROUILLON" and pid == porteur and p.fenetre:  # une ACTION à créneau : le serveur assemble, le porteur lit
@@ -334,7 +334,7 @@ class VuesEssai:
             # d'adapter d'abord (accepter serait refusé)
             if etat in ("PROPOSE", "AUTORISE") and cov.get(pid or "") in A_REDEMANDER and pid not in self.b.refus(eid):
                 a += ["accepter", "decliner"]
-            if etat not in FINAUX and self.b._dernier_accord(eid, pid or "") is not None:
+            if etat not in FINAUX and not self.b.apres_action(eid) and self.b._dernier_accord(eid, pid or "") is not None:
                 a += ["retirer"]
             if etat == "EN_COURS" and any(e.contributeur == pid and e.livrable and not self.b.receptions(eid, e.id) for e in etapes):
                 a += ["livrer"]
