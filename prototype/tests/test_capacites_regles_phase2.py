@@ -1,6 +1,7 @@
 """Règles fines de la Phase 2 (retrait, reçus, recomposition, hypothèses, pièces critiques, Pulse), écrites pour tuer
 les mutants SURVIVANTS de la campagne de mutation de fin de Phase 2 : chaque test correspond à un comportement que la
 suite ne distinguait pas encore d'une variante fausse. Données FICTIVES."""
+import re
 from datetime import timedelta
 
 import pytest
@@ -32,11 +33,12 @@ def test_le_recu_complet_de_chaque_membre_quel_que_soit_son_rang(club):
     anna = club.capacites.recus(md.ANNA)                    # s10 : après s01 et s04 dans l'ordre des consentements
     assert len(anna) == 1
     r = anna[0]
+    assert r["accord"] == 1
     assert {k: r[k] for k in ("finalite", "titre", "version", "piece", "offre", "donne_le", "jusqu_au", "etat", "retire_le", "revocable")} == {
         "finalite": A, "titre": "Accueillir une délégation d'acheteurs germanophones", "version": 1,
         "piece": "Une interprétation français–allemand", "offre": "Interprétation français–allemand, une demi-journée",
         "donne_le": "2026-10-06", "jusqu_au": "2026-10-09", "etat": "valable", "retire_le": None, "revocable": True}
-    assert len(r["reference"]) == 12 and r["fenetre"] == {"jour": "2026-10-09", "debut": "13:00", "fin": "18:00"}
+    assert re.fullmatch(r"[0-9a-f]{12}-\d+", r["reference"]) and r["fenetre"] == {"jour": "2026-10-09", "debut": "13:00", "fin": "18:00"}
     assert r["partage"].startswith("Votre offre n'est utilisée que pour cette capacité")
 
 

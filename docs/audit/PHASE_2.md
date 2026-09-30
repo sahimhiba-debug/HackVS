@@ -126,8 +126,9 @@ Une recherche d'équipe porte sur un créneau : au plus 4 gestes × les offres a
   a pas de consentement « permanent » multi-fenêtres (volontaire).
 - **Plafond d'Ask** : il compte les *réponses*, pas les Asks *vues*. Lire ne doit rien écrire, donc une Ask montrée
   mais ignorée ne compte pas. Choix assumé.
-- **Personnes retirées** : elles ne peuvent plus re-consentir pour cette finalité (comme un refus). Un « revenir »
-  explicite n'est pas construit.
+- **Retrait (sémantique corrigée après validation, commit suivant)** : un retrait tue définitivement la pièce et son
+  consentement pour cette finalité ; une NOUVELLE déclaration avec un NOUVEAU consentement (accord n+1) reste possible,
+  l'ancien accord ne ressuscite jamais (`tests/test_reconsentement.py`).
 - **IA** (EXTRACT, NARRATE, NORMALIZE), parité IA ON/OFF non vacueuse, statut honnête des appels IA, QR juré avec
   expiration et limitation par code : **Phase 3**, comme convenu.
 - **Artefacts** (vidéo, captures, DEMO_SCRIPT § 6, PREUVES, `competition/*`) : non régénérés (fin de Phase 3).

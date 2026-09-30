@@ -287,7 +287,7 @@ class ClubPulse:
             if inst.ask is None:
                 continue
             deja = {self.banc.offre(v).auteur for v in inst.liaisons.values() if v}
-            if pid in deja or pid in self.capacites.retires(inst.finalite) or (
+            if pid in deja or (
                     inst.ask.concept is not None and inst.ask.concept not in declarees):
                 continue
             res.append(inst)

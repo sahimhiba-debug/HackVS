@@ -1166,6 +1166,8 @@ class Banc:
         o = self.offre(oid)
         if o.auteur != membre:
             raise Interdit("on ne consent que pour sa propre offre")
+        if oid in self.pieces_retirees(finalite):
+            raise Conflit("cette pièce a été retirée pour cette capacité : un retrait est définitif, déclarez-en une nouvelle")
         if self.etat_offre(oid) != "active":
             raise Conflit("offre non active : rien à consentir")
         if jusqu_au < self._jour():
@@ -1181,6 +1183,11 @@ class Banc:
         if dern is None or dern.type != "ACCORD":
             raise Conflit("aucun consentement en cours à retirer")
         self._ecrire("RETRAIT", [membre], finalite=finalite, emplacement=emplacement, offre=dern.donnees["offre"])
+
+    def pieces_retirees(self, finalite: str) -> set[str]:
+        """Les offres dont le consentement pour cette finalité a été RETIRÉ : mortes pour elle, définitivement (une
+        nouvelle déclaration, avec un nouveau consentement, reste possible — l'ancien accord ne ressuscite jamais)."""
+        return {e.donnees["offre"] for e in self.m.evenements("RETRAIT") if e.donnees.get("finalite") == finalite}
 
     def consentements_finalite(self, finalite: str) -> list[Evt]:
         """Le DERNIER fait (accord ou retrait) de chaque (membre, emplacement) pour cette finalité."""

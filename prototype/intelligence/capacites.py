@@ -299,8 +299,9 @@ class Registre:
         return self.patrons[finalite]
 
     def retires(self, finalite: str) -> set[str]:
-        """Les membres dont le dernier geste pour cette finalité est un RETRAIT : ni liés, ni sollicités à nouveau pour elle."""
-        return {e.acteurs[0] for e in self.b.consentements_finalite(finalite) if e.type == "RETRAIT"}
+        """Les PIÈCES (offres) retirées pour cette finalité : jamais liées à nouveau pour elle. La personne, elle, n'est
+        pas exclue : une nouvelle déclaration avec un nouveau consentement reste possible (accord n+1)."""
+        return self.b.pieces_retirees(finalite)
 
     def _consentements(self, p: Patron) -> tuple[dict[str, list[OffreVolontaire]], list[str]]:
         """Par emplacement : les offres qu'un consentement VALABLE met à disposition de cette finalité ; et la liste des
@@ -341,7 +342,7 @@ class Registre:
     def _critiques(self, p: Patron, inst: Instance) -> list[str]:
         """Contrefactuel, par le compositeur : sans CETTE pièce liée, une composition existe-t-elle encore ?"""
         exclus = self.retires(p.id)
-        tous = {o.id for o in self.b.offres(publiques=True) if o.auteur not in exclus}
+        tous = {o.id for o in self.b.offres(publiques=True) if o.id not in exclus}
         res = []
         for k, oid in inst.liaisons.items():
             if oid is None:
@@ -398,10 +399,10 @@ class Registre:
                                 or ["des disponibilités qui se recouvrent sur un même créneau"]}
 
     def _permis(self, p: Patron, exclus: set[str], emplacements: Optional[list[str]] = None) -> Optional[dict[str, set[str]]]:
-        """Offres utilisables pour cette finalité : toutes, sauf celles des membres qui s'y sont retirés (None : aucune restriction)."""
+        """Offres utilisables pour cette finalité : toutes, sauf les pièces retirées pour elle (None : aucune restriction)."""
         if not exclus:
             return None
-        ids = {o.id for o in self.b.offres(publiques=True) if o.auteur not in exclus}
+        ids = {o.id for o in self.b.offres(publiques=True) if o.id not in exclus}
         return {k: ids for k in (emplacements or [e.id for e in p.emplacements])}
 
     def _composer(self, p: Patron, base: dict, hyp: list[str]) -> Instance:
@@ -493,31 +494,44 @@ class Registre:
         miens = [e for e in self.b.consentements_finalite(p.id) if e.acteurs[0] == membre and e.type == "ACCORD"]
         if not miens:
             raise Introuvable("aucun consentement en cours pour cette capacité")
+        nees_d_une_reponse = {e.donnees.get("offre") for e in self.b.m.evenements("ASK_REPONSE") if e.acteurs[0] == membre}
         with self.b.m.transaction():
             for e in miens:
                 self.b.retirer_finalite(membre, p.id, e.donnees["emplacement"])
+                oid = e.donnees["offre"]
+                # une pièce DÉCLARÉE en répondant à cette demande n'avait pas d'autre raison d'être : elle meurt aussi
+                if oid in nees_d_une_reponse and self.b.etat_offre(oid) != "retiree":
+                    self.b.retirer_offre(membre, oid)
         return self.instance(p)
 
     def recus(self, membre: str) -> list[dict]:
-        """Les REÇUS de ses consentements : finalité, portée, depuis quand, jusqu'à quand, état — présentables au membre."""
+        """Les REÇUS de TOUS ses consentements, dans l'ordre : finalité, portée, depuis quand, jusqu'à quand, état. Un
+        accord retiré le reste pour toujours ; un nouvel accord (n+1) a son propre reçu."""
         res = []
-        for p in sorted(self.patrons.values(), key=lambda x: x.id):
-            for e in self.b.consentements_finalite(p.id):
-                if e.acteurs[0] != membre:
-                    continue
-                emp = next((x for x in p.emplacements if x.id == e.donnees["emplacement"]), None)
-                accord = next((x for x in reversed(self.b.m.evenements("ACCORD")) if x.acteurs[0] == membre
-                               and x.donnees.get("finalite") == p.id and x.donnees["emplacement"] == e.donnees["emplacement"]), None)
-                if accord is None:
-                    continue
-                raison = self.b.raison_consentement(e, p.portee(emp.id)) if emp else "cette pièce n'existe plus dans la capacité"
-                res.append({"finalite": p.id, "titre": p.titre, "version": accord.donnees["portee"]["version"],
-                            "piece": emp.libelle if emp else accord.donnees["portee"]["emplacement"]["libelle"],
-                            "offre": self.b.offre(accord.donnees["offre"]).quoi, "donne_le": accord.le.isoformat(),
-                            "jusqu_au": accord.donnees["jusqu_au"], "fenetre": accord.donnees["portee"]["fenetre"],
-                            "partage": accord.donnees["portee"]["partage"], "reference": accord.donnees["empreinte"][:12],
-                            "etat": "valable" if raison is None else raison,
-                            "retire_le": e.le.isoformat() if e.type == "RETRAIT" else None, "revocable": raison is None})
+        evs = [e for e in self.b.m.evenements("ACCORD", "RETRAIT") if e.acteurs[0] == membre and e.donnees.get("finalite")]
+        compte: dict[tuple[str, str], int] = {}
+        for i, accord in enumerate(evs):
+            if accord.type != "ACCORD" or accord.donnees["finalite"] not in self.patrons:
+                continue
+            p = self.patrons[accord.donnees["finalite"]]
+            cle = (p.id, accord.donnees["emplacement"])
+            compte[cle] = compte.get(cle, 0) + 1
+            retrait = next((x for x in evs[i + 1:] if x.type == "RETRAIT" and x.donnees["finalite"] == p.id
+                            and x.donnees["offre"] == accord.donnees["offre"]), None)
+            emp = next((x for x in p.emplacements if x.id == accord.donnees["emplacement"]), None)
+            if retrait is not None:
+                raison: Optional[str] = "consentement retiré"
+            elif emp is None:
+                raison = "cette pièce n'existe plus dans la capacité"
+            else:
+                raison = self.b.raison_consentement(accord, p.portee(emp.id))
+            res.append({"finalite": p.id, "titre": p.titre, "version": accord.donnees["portee"]["version"], "accord": compte[cle],
+                        "piece": emp.libelle if emp else accord.donnees["portee"]["emplacement"]["libelle"],
+                        "offre": self.b.offre(accord.donnees["offre"]).quoi, "donne_le": accord.le.isoformat(),
+                        "jusqu_au": accord.donnees["jusqu_au"], "fenetre": accord.donnees["portee"]["fenetre"],
+                        "partage": accord.donnees["portee"]["partage"], "reference": accord.donnees["empreinte"][:12] + f"-{accord.seq}",
+                        "etat": "valable" if raison is None else raison,
+                        "retire_le": retrait.le.isoformat() if retrait else None, "revocable": raison is None})
         return res
 
     def consentir(self, membre: str, finalite: str) -> Instance:
