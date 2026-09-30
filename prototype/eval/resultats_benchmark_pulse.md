@@ -36,9 +36,9 @@ Opportunités détectées par club (moyenne) : 57.5 — leur précision sur le F
 
 | Mesure | Résultat |
 |---|---|
-| Remplacement proposé quand l'oracle en trouve un (complétude) | 117 / 117 |
-| Remplacements proposés admissibles selon l'oracle (justesse) | 181 / 181 |
-| Sans remplacement possible : arrêt propre (IMPOSSIBLE) ou raccourcir avec la même personne | 123 / 123 |
+| Remplacement proposé quand l'oracle en trouve un (complétude) | 118 / 118 |
+| Remplacements proposés admissibles selon l'oracle (justesse) | 187 / 187 |
+| Sans remplacement possible : arrêt propre (IMPOSSIBLE) ou raccourcir avec la même personne | 122 / 122 |
 | « Raccourcir avec la même personne » proposé après une réduction | 119 / 119 |
 | Personne retirée redésignée après adaptation | 0 |
 
@@ -48,7 +48,7 @@ Opportunités détectées par club (moyenne) : 57.5 — leur précision sur le F
 |---|---|
 | Identités (nom, courriel, organisation) dans ce que voit le moteur — 150 membres | 0 fuite(s) sur 450 contrôles |
 | Identités (nom, courriel, organisation) dans ce que voit le moteur — 500 membres | 0 fuite(s) sur 1500 contrôles |
-| Écrans de chaque membre et de la console (150 membres, 763 écrans, 1 refus) : nom de qui a décliné (hors la personne qui l'a invité), note privée d'autrui, observation non partagée, pseudonyme non rendu, identifiant interne | 0 fuite(s) |
+| Écrans de chaque membre et de la console (150 membres, 767 écrans, 1 refus) : nom de qui a décliné (hors la personne qui l'a invité), note privée d'autrui, observation non partagée, pseudonyme non rendu, identifiant interne | 0 fuite(s) |
 
 ## 4. Mémoire
 

@@ -110,12 +110,12 @@
   "refus_a_la_publication": 0,
   "retraits": 121,
   "reductions": 119,
-  "avec_remplacement_selon_oracle": 117,
-  "remplacement_propose_quand_il_en_existe": 117,
-  "remplacements_proposes": 181,
-  "remplacements_admissibles": 181,
-  "sans_remplacement_selon_oracle": 123,
-  "arret_ou_raccourci_quand_il_n_en_existe_pas": 123,
+  "avec_remplacement_selon_oracle": 118,
+  "remplacement_propose_quand_il_en_existe": 118,
+  "remplacements_proposes": 187,
+  "remplacements_admissibles": 187,
+  "sans_remplacement_selon_oracle": 122,
+  "arret_ou_raccourci_quand_il_n_en_existe_pas": 122,
   "raccourcir_propose_apres_reduction": 119,
   "retire_redemande": 0
  },
@@ -134,7 +134,7 @@
   ],
   "ecrans": {
    "membres": 150,
-   "ecrans": 763,
+   "ecrans": 767,
    "refus": 1,
    "fuites": []
   }
