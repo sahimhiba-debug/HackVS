@@ -171,6 +171,26 @@ class VuesEssai:
                                 "disponibilités déclarées se recouvrent." if sol else None)}
 
     # ------------------------------------------------------------------ E. écran commun (projection devant un public)
+    def offres_dispersees(self) -> dict:
+        """AVANT toute demande : ce que des membres ont DÉCLARÉ pouvoir donner, avec leurs horaires — des rôles, jamais des
+        noms. Le jour le plus chargé à venir ; seulement les offres actives, publiques, avec un horaire."""
+        b, jour = self.b, self.c.jour
+        offres = [o for o in b.offres(publiques=True) if b.etat_offre(o.id) == "active" and o.plages]
+        jours = sorted({pl.jour for o in offres for pl in o.plages if pl.jour >= jour})
+        if not jours:
+            return {"vide": True, "offres": [], "fictif": True}
+        j = max(jours, key=lambda d: (sum(1 for o in offres for pl in o.plages if pl.jour == d), -d.toordinal()))
+        lignes: list[dict] = []
+        for o in offres:
+            f = [{"debut": pl.debut, "fin": pl.fin} for pl in o.plages if pl.jour == j]
+            if f:
+                genre = self.c.tax.libelle(o.concept) if o.concept else NATURES[o.nature]
+                lignes.append({"genre": genre, "quoi": o.quoi, "fenetres": f})
+        lignes.sort(key=lambda x: (x["genre"], x["fenetres"][0]["debut"]))
+        return {"vide": True, "jour": j.strftime("%d.%m"), "offres": lignes, "fictif": True,
+                "regle": "Offres déclarées par des membres, chacune avec ses horaires. Personne n'a encore rien demandé."}
+
+
     def projection(self, eid: str, joues: list[dict]) -> dict:
         """Ce qu'on peut PROJETER devant un public : des RÔLES et des états, jamais un nom, une note, un code, un jeton, le
         contenu d'une observation ou le détail d'un refus. Calculé par le même moteur que les téléphones."""

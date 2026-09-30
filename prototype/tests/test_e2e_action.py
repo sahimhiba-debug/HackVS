@@ -54,7 +54,7 @@ def test_action_collective_deux_telephones_et_ecran_commun(url):  # noqa: F811
         proj = b.new_context(viewport={"width": 1920, "height": 1080}).new_page()
         proj.on("pageerror", lambda e: erreurs.append(str(e)))
         proj.goto(url + "/projection")
-        proj.wait_for_selector("text=Aucune action en cours")
+        proj.wait_for_selector("text=contributions proposées, dispersées")      # AVANT : des offres éparses, aucune demande
 
         # --- 1. le besoin, avec ses mots ; 2. les exigences confirmées ; 3. la proposition trouvée par le serveur
         s.click("nav.onglets >> text=Agir à plusieurs")

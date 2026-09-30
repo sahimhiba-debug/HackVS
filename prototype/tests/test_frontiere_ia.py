@@ -185,3 +185,30 @@ def test_le_banc_apertus_ne_compte_jamais_une_panne_ou_un_rejet_comme_un_succes(
     faux = executer(menteur)
     assert all(t["acceptees"] == 0 for t in faux.values())
     assert "NON EXÉCUTÉ" in rapport(executer(None), None, None)
+
+
+def _action(**sur):
+    base = {"objet": "tisanes", "langue_public": "de", "manquant": [],
+            "exigences": [{"role": "voix", "nature": "competence", "concept": "traduction", "geste": "Présenter en allemand", "duree_min": 45,
+                           "livrable": "Fiche produit en allemand"}],
+            "fenetre": {"jour": "2026-11-05", "debut": "14:00", "fin": "18:00"}}
+    return json.dumps(base | sur)
+
+
+@pytest.mark.parametrize("sortie,accepte", [
+    (_action(), True),
+    (_action(exigences=[{"role": "voix", "nature": "competence", "concept": "astrologie", "geste": "Lire les astres", "duree_min": 45,
+                         "livrable": None}]), False),                                           # capacité hors catalogue
+    (_action(fenetre={"jour": "2031-01-01", "debut": "14:00", "fin": "18:00"}), False),         # hors de l'horizon
+    (_action(fenetre={"jour": "2026-11-05", "debut": "18:00", "fin": "14:00"}), False),         # heures inversées
+    (_action(objet="MEMBRE-014 a dit oui"), False),                                             # une identité interne
+    (_action(manquant=["Écrire à markus@exemple.ch"]), False),                                  # une donnée personnelle
+])
+def test_comprendre_action_sortie_du_modele_validee_sinon_repli_visible(sortie, accepte):
+    """La sortie du modèle est une ENTRÉE NON FIABLE : capacités du catalogue, jour dans les 60 jours, heures ordonnées,
+    aucune identité ni donnée personnelle. Refusée → repli par règles, et c'est dit (repli=True)."""
+    from datetime import date
+    r = Intelligence(TAX, Maquette({"comprendre_action": sortie})).comprendre_action("Présenter nos tisanes jeudi", date(2026, 11, 3))
+    assert (r.appel.statut == "OK" and not r.appel.repli) is accepte
+    assert r.sortie["mode"] == ("apertus" if accepte else "regles")
+    assert r.appel.prompt == "comprendre_action_v1"                                          # tâche et version du prompt tracées

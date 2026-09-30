@@ -293,7 +293,7 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
         """L'écran commun : l'action collective la plus récente, en RÔLES (jamais de noms)."""
         def f(c: ClubPulse) -> dict:
             eid = next((x for x in reversed(c.banc.essais()) if c.banc.protocole(x).fenetre), None)
-            return c.vues_essai.projection(eid, c.joues) if eid else {"vide": True, "regle": "Aucune action en cours.", "fictif": True}
+            return c.vues_essai.projection(eid, c.joues) if eid else c.vues_essai.offres_dispersees()
         return au_monde(f)
 
     @r.post("/console/jouer/disponibilite", dependencies=[Depends(console)])

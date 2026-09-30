@@ -128,3 +128,17 @@ def test_la_projection_ne_montre_ni_nom_ni_secret(etape):
         assert x not in brut, (etape, x)
     for p in per:
         assert p["code"] not in brut and (not p["session"] or p["session"] not in brut)
+
+
+def test_perturbation_jouee_par_l_equipe_est_affichee_comme_telle_et_refusee_pour_un_telephone_reel():
+    client.post("/api/pulse/demo/aller/4", headers=CONSOLE)                  # coopération prête, créneau 16:00–16:45
+    offres = client.get("/api/pulse/console/essais", headers=CONSOLE).json()["offres"]
+    lieu = next(o["id"] for o in offres if o["quoi"].startswith("Présentoir éclairé sur mon stand (halle 2)"))
+    voix = next(o["id"] for o in offres if o["quoi"].startswith("Présenter un produit en allemand"))
+    plage = [{"jour": "2026-11-05", "debut": "14:00", "fin": "16:30"}]
+    assert client.post("/api/pulse/console/jouer/disponibilite", headers=CONSOLE, json={"membre": L, "offre": voix, "plages": plage}).status_code == 403
+    r = client.post("/api/pulse/console/jouer/disponibilite", headers=CONSOLE, json={"membre": P, "offre": lieu, "plages": plage})
+    assert r.status_code == 200 and r.json()["joue"] and r.json()["essais_a_adapter"]
+    proj = client.get("/api/pulse/console/projection", headers=CONSOLE).json()
+    assert proj["adaptation"]["tombe"] == ["lieu"] and any(j["qui"] == "lieu" and "joue_par" in j for j in proj["joues"])
+    assert any("16:30" in a["texte"] for a in proj["adaptation"]["alternatives"])           # l'autre lieu ouvre à 16:30

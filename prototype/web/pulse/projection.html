@@ -56,6 +56,8 @@
     .change li { margin-top: 4px; }
     .bas { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 18px; font-size: 15px; color: var(--encre-2); }
     .bas ol { margin: 6px 0 0; padding-left: 20px; }
+    .ligne-temps.large .piste { grid-template-columns: 250px minmax(0, 1fr); }
+    .ligne-temps.large .axe { margin-left: 260px; }
     .vide { font-size: 28px; margin-top: 80px; text-align: center; color: var(--encre-3); }
     @media (max-width: 1100px) { .grille { grid-template-columns: 1fr; } .bas { grid-template-columns: 1fr; } }
   </style>
@@ -101,8 +103,27 @@
       }
     }
     let derniere = "";
+    function rendreDispersees(p) {
+      const cle = JSON.stringify(p);
+      if (cle === derniere) return;
+      derniere = cle;
+      $("#etat").textContent = "aucune action en cours";
+      $("#date").textContent = `jour des offres : ${p.jour || "—"}`;
+      if (!p.offres.length) { $("#page").replaceChildren(h("p", { class: "vide" }, "Aucune offre avec horaire. Rien n'est fabriqué pour remplir cet écran.")); return; }
+      const ms = p.offres.flatMap((o) => o.fenetres.flatMap((f) => [min(f.debut), min(f.fin)]));
+      const t0 = Math.floor(Math.min(...ms) / 60) * 60, t1 = Math.ceil(Math.max(...ms) / 60) * 60;
+      const pos = (t) => `${((min(t) - t0) / (t1 - t0)) * 100}%`, larg = (a, b) => `${((min(b) - min(a)) / (t1 - t0)) * 100}%`;
+      const axe = h("div", { class: "axe" });
+      for (let m = t0; m <= t1; m += 60) axe.append(h("span", { style: `left:${((m - t0) / (t1 - t0)) * 100}%` }, `${String(m / 60).padStart(2, "0")}:00`));
+      const pistes = p.offres.map((o) => h("div", { class: "piste" }, h("div", { class: "nom" }, o.genre, h("small", {}, "une personne du Club")),
+        h("div", { class: "zone" }, o.fenetres.map((f) => h("div", { class: "barre", style: `left:${pos(f.debut)};width:${larg(f.debut, f.fin)};background:#6b7a90` }, `${f.debut}–${f.fin}`)))));
+      $("#page").replaceChildren(h("h1", { class: "titre" }, `Jeudi ${p.jour} : ${p.offres.length} contributions proposées, dispersées`),
+        h("p", { class: "phrase attente" }, "Des offres éparses, chacune avec ses horaires. Personne n'a encore rien demandé."),
+        h("div", { class: "ligne-temps large", style: "margin-top:22px" }, axe, ...pistes),
+        h("p", { class: "legende" }, p.regle));
+    }
     function rendre(p) {
-      if (p.vide) { $("#page").replaceChildren(h("p", { class: "vide" }, "Aucune action en cours. Sophie décrit son besoin sur son téléphone.")); return; }
+      if (p.vide) { rendreDispersees(p); return; }
       $("#date").textContent = `date simulée : ${p.date}`;
       $("#etat").textContent = `${p.etat_libelle} · version ${p.version}`;
       const cle = JSON.stringify(p);

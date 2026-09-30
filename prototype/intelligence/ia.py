@@ -435,7 +435,9 @@ class Intelligence:
             nom = self.LANGUES[langue][0]
             exig.append({"role": "voix", "nature": "competence", "concept": "traduction", "geste": f"Présenter le produit en {nom}",
                          "duree_min": min(duree, 120), "livrable": f"Fiche produit en {nom}"})
-        if re.search(r"stand|presentoir|lieu|salle|table|foire|salon|degustation|demonstration|vitrine", n):
+        # un lieu : nommé, ou impliqué par « présenter / montrer » PENDANT un salon — « aidez-moi pour la Foire » seul ne dit rien
+        if re.search(r"stand|presentoir|lieu|salle|table|degustation|demonstration|vitrine|gouter|deguster", n) or (
+                re.search(r"presenter|montrer", n) and re.search(r"foire|salon", n)):
             reconnu.append("un lieu")
             exig.append({"role": "lieu", "nature": "lieu", "concept": None, "geste": "Prêter un lieu adapté (présentoir, table, stand)",
                          "duree_min": min(duree, 120), "livrable": None})
@@ -454,6 +456,9 @@ class Intelligence:
             jour = aujourd_hui + timedelta(days=1)
             reconnu.append("jour : demain")
         moment = next((v for k, v in self.MOMENTS.items() if k in n), None)
+        hm = re.search(r"(?:entre|de)\s*(\d{1,2})\s*h\s*(\d{2})?\s*(?:et|a|-)\s*(\d{1,2})\s*h\s*(\d{2})?", n)
+        if hm and int(hm.group(1)) < int(hm.group(3)) <= 23:           # « entre 15h et 17h » : des heures dites, reprises telles quelles
+            moment = (f"{int(hm.group(1)):02d}:{hm.group(2) or '00'}", f"{int(hm.group(3)):02d}:{hm.group(4) or '00'}")
         if moment:
             reconnu.append(f"moment : {moment[0]}–{moment[1]}")
         if not exig:

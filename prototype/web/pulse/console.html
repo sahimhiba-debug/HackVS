@@ -48,7 +48,16 @@
         <div class="actions" style="margin-top:8px"><button class="btn discret petit" id="reinit">Nouvelle démonstration</button>
           <button class="btn discret petit" data-temps="1">+1 jour (simulé)</button><button class="btn discret petit" data-temps="15">+15 jours (simulé)</button></div>
         <div id="codes" style="margin-top:10px"></div></div>
+      <div class="carte"><span class="surtitre">Écran commun</span><p class="note" style="margin-top:6px">À projeter : des rôles, jamais des noms.</p>
+        <div class="actions" style="margin-top:8px"><a class="btn plein petit" href="/projection" target="_blank" rel="noopener">Ouvrir la projection</a></div></div>
+      <div class="carte"><span class="surtitre">Intervention du jury</span>
+        <p class="note" style="margin-top:6px">Dimension prise en charge : l'HEURE de disponibilité d'une contribution. Le jury choisit la valeur ;
+          la personne concernée la saisit sur SON téléphone (Léa : « Ma disponibilité a changé »). Pour un rôle joué, l'équipe la saisit ici — et c'est affiché « joué ».</p>
+        <div id="jury" style="margin-top:8px"><p class="note">Choisissez l'action en cours.</p></div></div>
       <div class="carte"><span class="surtitre">Gestes joués (membres absents de la scène)</span><div id="joues"><p class="note">Choisissez un essai.</p></div></div>
+      <div class="carte"><span class="surtitre">Répétition et secours</span>
+        <p class="note" style="margin-top:6px">Rejoue le parcours depuis zéro jusqu'à une étape (mêmes données, mêmes calculs). Pour répéter, jamais pendant le direct.</p>
+        <div class="actions" id="etapes" style="margin-top:8px"></div></div>
     </aside>
   </div>
   <div id="toasts" aria-live="assertive"></div>
@@ -113,14 +122,27 @@
       const joue = (membre, nom, accepte) => h("button", { class: "btn discret petit", onclick: async () => {
         try { await api(`/api/pulse/console/essais/${choisi}/geste`, { corps: { membre, version: e.version, accepte } }); toast(`${nom} : ${accepte ? "accepte" : "décline"} (JOUÉ).`); await charger(); }
         catch (err) { toast(err.message, "erreur"); } } }, `${nom} ${accepte ? "accepte" : "décline"}`);
-      $("#joues").replaceChildren(h("p", { class: "note" }, "Ces membres ne sont pas sur scène : leur geste est joué par l'animation et marqué comme tel."),
-        h("div", { class: "actions" }, joue("s01", "Pauline", true), joue("s01", "Pauline", false), joue("d01", "Léa", true), joue("d01", "Léa", false)));
+      const JOUABLES = [["s01", "Pauline (lieu)"], ["s14", "Markus (public)"], ["s04", "Nicolas (autre lieu)"]];
+      $("#joues").replaceChildren(h("p", { class: "note" }, "Ces membres ne sont pas sur scène : leur geste est joué par l'équipe et affiché « joué » sur l'écran commun."),
+        h("div", { class: "actions" }, JOUABLES.flatMap(([m, n]) => [joue(m, n, true), joue(m, n, false)])));
+      const offres = await api("/api/pulse/console/essais");
+      const lieu = offres.offres.find((o) => o.quoi.startsWith("Présentoir éclairé sur mon stand (halle 2)"));
+      const heure = h("input", { type: "time", step: 900, value: "16:30", id: "jury-heure" });
+      $("#jury").replaceChildren(h("p", {}, h("b", {}, "Voix allemande"), " — sur le téléphone de Léa (réel)."),
+        lieu ? h("div", { style: "margin-top:8px" }, h("p", {}, h("b", {}, "Lieu"), " — rôle joué : le stand ferme à"), h("div", { class: "ligne" }, heure,
+          h("button", { class: "btn discret petit", onclick: async () => {
+            try { const r = await api("/api/pulse/console/jouer/disponibilite", { corps: { membre: "s01", offre: lieu.id, plages: [{ jour: e.creneau ? e.creneau.jour : e.echeance, debut: "14:00", fin: heure.value }] } });
+              toast(`Joué : le lieu ferme à ${heure.value}. ${r.essais_a_adapter.length} action(s) réévaluée(s).`); await charger(); } catch (err) { toast(err.message, "erreur"); } } }, "Appliquer (joué)"))) : null);
     }
     async function codes() {
       const p = await api("/api/pulse/console/personas");
-      $("#codes").replaceChildren(...p.filter((x) => ["n01", "s14"].includes(x.id)).map((x) => h("div", { style: "margin-top:8px" },
-        h("p", { class: "note" }, `${x.nom} — téléphone ${x.id === "n01" ? "1 (porteuse)" : "2 (contributeur)"}`), h("p", { class: "code" }, x.code),
+      $("#codes").replaceChildren(...p.filter((x) => ["n01", "d01"].includes(x.id)).map((x) => h("div", { style: "margin-top:8px" },
+        h("p", { class: "note" }, `${x.nom} — téléphone ${x.id === "n01" ? "1 (porteuse)" : "2 (voix allemande)"}`), h("p", { class: "code" }, x.code),
         h("p", { class: "note" }, `${location.origin}/app?code=${x.code}`))));
+      const etat = await api("/api/pulse/etat");
+      $("#etapes").replaceChildren(...etat.actes.map((a, i) => h("button", { class: "btn discret petit", onclick: async () => {
+        try { await api(`/api/pulse/demo/aller/${i + 1}`, { corps: {} }); choisi = null; toast(`Rejoué jusqu'à « ${a} ».`); await charger(); } catch (err) { toast(err.message, "erreur"); } } },
+        `${i + 1}. ${a}`)));
     }
     $("#reinit").addEventListener("click", async () => {
       if (occupe) return; occupe = true; $("#reinit").disabled = true;
