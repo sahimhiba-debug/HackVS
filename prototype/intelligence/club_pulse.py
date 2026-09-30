@@ -407,10 +407,14 @@ class ClubPulse:
             raise Invalide("échéance passée")
         return p
 
-    def jouer(self, pid: str, geste: str) -> None:
+    def jouer(self, pid: str, geste: str, role: Optional[str] = None) -> None:
         """Trace d'un geste JOUÉ par l'équipe pour un personnage (démonstration) : affiché comme tel, jamais confondu avec
         une action faite sur un téléphone. L'écran commun n'en montre que le RÔLE, jamais le nom."""
-        self.joues.append({"le": self.jour.isoformat(), "membre": pid, "geste": geste, "joue_par": "l'équipe (console)"})
+        self.joues.append({"le": self.jour.isoformat(), "membre": pid, "role": role, "geste": geste, "joue_par": "l'équipe (console)"})
+
+    def role_dans(self, eid: str, pid: str) -> Optional[str]:
+        """Le rôle que tient `pid` dans la version courante de l'essai (lu AU MOMENT du geste joué)."""
+        return next((e.role for e in self.banc.protocole(eid).etapes if e.contributeur == pid and e.role), None)
 
     # ------------------------------------------------------------------ ACTION COLLECTIVE : demande → exigences → proposition
     def preparer_action(self, pid: str, texte: str) -> dict:

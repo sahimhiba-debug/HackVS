@@ -90,7 +90,7 @@ app = FastAPI(title="Le Fil du Club (prototype exploratoire)", version="0.2.0")
 WEB_PULSE = Path(__file__).resolve().parent.parent / "web" / "pulse"
 _observabilite.configurer(_observabilite.niveau_depuis_env(os.environ))
 # ordre : la dernière ajoutée est la plus EXTÉRIEURE → l'identifiant de requête couvre aussi les refus 413
-app.add_middleware(_Protections, csp=_politique_contenu([WEB_PULSE / "app.html", WEB_PULSE / "console.html", WEB_PULSE / "projection.html"]))
+app.add_middleware(_Protections, csp=_politique_contenu([WEB_PULSE / f for f in ("app.html", "console.html", "projection.html", "regie.html")]))
 app.add_middleware(_observabilite.MiddlewareRequete)
 
 
@@ -951,6 +951,15 @@ def page_projection():
     if MODE != "demo":
         raise HTTPException(501, "Club Pulse est présenté en mode démo (monde fictif).")
     return FileResponse(WEB / "pulse" / "projection.html")
+
+
+@app.get("/demo/regie")
+def page_regie():
+    """DÉMONSTRATION SEULEMENT : la régie (écran commun + deux téléphones réels côte à côte) pour enregistrer une exécution
+    réelle. Lit la console : ne répond utilement qu'à la machine de démonstration (ou avec le jeton de console)."""
+    if MODE != "demo":
+        raise HTTPException(501, "Club Pulse est présenté en mode démo (monde fictif).")
+    return FileResponse(WEB / "pulse" / "regie.html")
 
 
 @app.get("/demo/stage")

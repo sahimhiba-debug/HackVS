@@ -246,7 +246,7 @@ class VuesEssai:
                 "exigences": exigences, "adaptation": adaptation, "blocage": prop["blocage"] if prop else None,
                 "journal": journal, "date": self.c.jour.isoformat(),
                 "joues": [{"le": j["le"], "geste": j["geste"], "joue_par": j["joue_par"],
-                           "qui": next((e.role or NATURES[e.nature] for e in p.etapes if e.contributeur == j["membre"]), "un membre")}
+                           "qui": j.get("role") or next((e.role or NATURES[e.nature] for e in p.etapes if e.contributeur == j["membre"]), "un membre")}
                           for j in joues[-5:]],
                 "regle": "Projection : des rôles, jamais des noms. Chaque état est calculé par le serveur et prouvé par un accord ou une réception.",
                 "fictif": True}

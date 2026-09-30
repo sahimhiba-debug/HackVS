@@ -303,7 +303,9 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
             if d.membre not in JOUABLES:
                 raise Interdit("ce membre agit depuis son propre téléphone")
             touches = c.modifier_offre(d.membre, d.offre, {"plages": [x.model_dump() for x in d.plages]})
-            c.jouer(d.membre, "change sa disponibilité : " + ", ".join(f"{x.debut}–{x.fin}" for x in d.plages))
+            o = c.banc.offre(d.offre)
+            c.jouer(d.membre, "change sa disponibilité : " + ", ".join(f"{x.debut}–{x.fin}" for x in d.plages),
+                    "lieu" if o.nature == "lieu" else None)
             return {"essais_a_adapter": touches, "joue": True}
         return au_monde(f)
 
@@ -314,8 +316,9 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
         def f(c: ClubPulse) -> dict:
             if g.membre not in JOUABLES:
                 raise Interdit("seuls les membres absents de la scène peuvent être joués")
+            role = c.role_dans(eid, g.membre)
             c.banc.decider(g.membre, eid, g.version, g.accepte)
-            c.jouer(g.membre, "accepte sa part" if g.accepte else "décline")
+            c.jouer(g.membre, "accepte sa part" if g.accepte else "décline", role)
             return c.vues_essai.essai(eid, None, console=True) | {"joue": True}
         return au_monde(f)
 
