@@ -47,21 +47,21 @@ proposition réalisable (serveur) → accords réunis (« coopération prête »
 encore réalisée ») → livrable transmis → livrable reçu (confirmé par la destinataire) → contribution constatée (au
 créneau) → résultat **déclaré** (par la porteuse, contestable) ; sans déclaration : « résultat inconnu ».
 
-## 6. Storyboard vidéo (enregistrement réel `captures/action/demo_action.webm`, horodatage dans `demo_action.json`)
+## 6. Storyboard vidéo (enregistrement réel `captures/action/demo_action.webm`, 89 s, commit `dd75a7c` ; horodatage dans `demo_action.json`)
 | t | Écran | Action | Parole (à dire) | Preuve visible |
 |---|---|---|---|---|
-| 0:00 | régie : écran commun | — | « Jeudi, pendant la Foire : six offres de membres, chacune avec ses horaires. Personne n'a rien demandé. » | barres d'horaires anonymes, « FICTIF » |
-| 0:07 | téléphone de Sophie | elle écrit son besoin | « Sophie écrit avec ses mots ce qu'elle ne peut pas faire seule. » | texte tapé en direct |
-| 0:12 | téléphone de Sophie | 3 exigences, « Règles simples — aucun modèle utilisé » | « Trois exigences reprises de ses mots. Pas d'IA ici : c'est affiché. » | mention du mode |
-| 0:19 | écran commun | Sophie choisit de montrer son action | « Aucune offre ne suffit seule. Les disponibilités se recouvrent de 16 h à 17 h 30 : premier créneau, 16 h–16 h 45. » | zone de recouvrement + cadre |
-| 0:28 | téléphone de Léa | elle accepte **sa** part | « Léa reçoit sa seule part, sur son téléphone. Elle accepte. » | « 1 accord sur 3 » en < 0,4 s |
-| 0:32 | écran commun | accords de Pauline et Markus **joués** | « Pauline et Markus ne sont pas là : leurs accords sont joués, et c'est affiché. » | « Joué par l'équipe (console) » |
-| 0:39 | téléphone de Léa | le jury donne une heure (17:00) | « À vous : à partir de quelle heure Léa est-elle disponible ? » | valeur saisie sur son téléphone |
-| 0:41 | écran commun | recalcul | « Ce qui tombe, ce qui tient, ce qui est encore possible. Aucun lancement possible. » | encadré rouge, adaptations en rôles |
-| 0:50 | téléphone de Sophie | elle choisit 17:00–17:45, autre lieu | « Sophie choisit. Le moment change : tout le monde reconfirme, personne à sa place. » | nouvelle version ; accords redemandés |
-| 0:58 | les deux téléphones | action engagée ; Léa transmet la fiche | « Engagée, pas encore réalisée. Léa envoie la fiche. » | « transmis » |
-| 1:05 | téléphone de Sophie | la fiche apparaît ; « J'ai bien reçu » | « Transmise, puis reçue : deux faits. La présentation, elle, n'a pas encore eu lieu. » | palier « livrable reçu » |
-| 1:15 | écran commun | +30 jours (simulé) | « Un mois plus tard : la fiche reste reçue ; personne n'a déclaré de résultat — il reste inconnu. Rien n'est reconduit. » | « résultat inconnu », horloge simulée |
+| 0:01 | régie : écran commun | — | « Jeudi, pendant la Foire : six offres de membres, chacune avec ses horaires. Dans quarante secondes, c'est vous qui changerez une condition. » | barres d'horaires anonymes, « FICTIF » |
+| 0:08 | téléphone de Sophie | elle écrit son besoin | « Sophie écrit avec ses mots ce qu'elle ne peut pas faire seule. » | texte tapé en direct |
+| 0:15 | téléphone de Sophie | 3 exigences, « Règles simples — aucun modèle utilisé » | « Trois exigences reprises de ses mots. Pas d'IA ici : c'est affiché. » | mention du mode |
+| 0:22 | écran commun | Sophie choisit de montrer son action | « Aucune offre ne suffit seule. Les disponibilités se recouvrent de 16 h à 17 h 30 : premier créneau, 16 h–16 h 45. » | zone de recouvrement + cadre |
+| 0:31 | téléphone de Léa | elle accepte **sa** part | « Léa reçoit sa seule part, sur son téléphone. Elle accepte. » | « 1 accord sur 3 » en < 0,4 s |
+| 0:35 | écran commun | accords de Pauline et Markus **joués** | « Pauline et Markus ne sont pas là : leurs accords sont joués, et c'est affiché. » | « Joué par l'équipe (console) » |
+| 0:42 | téléphone de Léa | le jury donne une heure (17:00) | « À vous : à partir de quelle heure Léa est-elle disponible ? » | valeur saisie sur son téléphone |
+| 0:44 | écran commun | recalcul | « Ce qui tombe, ce qui tient, ce qui est encore possible. Aucun lancement possible. » | encadré rouge, adaptations en rôles |
+| 0:54 | téléphone de Sophie | elle choisit 17:00–17:45, autre lieu | « Sophie choisit. Le moment change : tout le monde reconfirme, personne à sa place. » | nouvelle version ; accords redemandés |
+| 1:02 | les deux téléphones | action engagée ; Léa transmet la fiche | « Engagée, pas encore réalisée. Léa envoie la fiche. » | « transmis » |
+| 1:09 | téléphone de Sophie | la fiche apparaît ; « J'ai bien reçu » | « Transmise, puis reçue : deux faits. La présentation, elle, n'a pas encore eu lieu. » | palier « livrable reçu » |
+| 1:20 | écran commun | +30 jours (simulé) | « Un mois plus tard : la fiche reste reçue ; personne n'a déclaré de résultat — il reste inconnu. Rien n'est reconduit. » | « résultat inconnu », horloge simulée |
 
 ## 7. Scripts chronométrés
 Temps **estimés** à 150 mots/min (français parlé, lent) — non chronométrés par un humain ; la durée machine de

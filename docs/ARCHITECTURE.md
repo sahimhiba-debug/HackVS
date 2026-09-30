@@ -34,9 +34,9 @@ politique de confidentialité pour **ce** spectateur.
           │ appels de méthodes ; erreurs métier typées (intelligence/erreurs.py)
  ┌────────▼──────────────────────────────────────────────────────────────────────────────┐
  │ SERVICE   intelligence/club_pulse.py (commandes, état du monde, verrou)                  │
- │           intelligence/vues.py (projections par spectateur)  · demo.py (scène rejouable) │
+ │           vues_essai.py · vues_intelligence.py (qui voit quoi) · demo.py (scène rejouable) │
  ├───────────────────────────────────────────────────────────────────────────────────────┤
- │ DOMAINE   observateur · detection · activation · apprentissage · modele · erreurs        │
+ │ DOMAINE   essai (actions, créneaux, accords) · observateur · detection · modele · erreurs │
  │ PRIVÉ     identite (coffre, pseudonymes) · politique (portées, rendu) · acces (sessions) │
  │ IA        ia.py : Intelligence (unique point d'entrée) → Apertus | repli déterministe    │  seule frontière réseau
  ├───────────────────────────────────────────────────────────────────────────────────────┤

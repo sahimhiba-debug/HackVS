@@ -1,17 +1,19 @@
-# Club Pulse — banc d'essai partagé (Hack VS 2026)
+# Club Pulse — une action collective qu'aucun membre ne pouvait faire seul (Hack VS 2026)
 
-> **État actuel (pivot du 2026-09-29).** Club Pulse permet à des membres du Club d'**essayer quelque chose ensemble,
-> à leurs conditions**, puis de garder un résultat qui dit ses limites. Une personne pose une question concrète sur un
-> objet ; d'autres membres ont publié des offres volontaires (quelques minutes, un lieu, un objet, une compétence) ;
-> chacun accepte SA part d'une version précise ; si une condition change, le système invalide ce qui n'est plus couvert,
-> préserve le reste et propose une adaptation — ou dit que c'est impossible ; l'observation (même négative) est
-> déclarée avec sa portée, contestable, et ne se partage qu'avec le droit de chacun.
-> **Scénario illustratif, données fictives, besoin non validé auprès des membres.** Apertus : branché mais **jamais
-> appelé** ici (aucun identifiant) ; secours = formulaire, affiché comme tel.
+> **État actuel (2026-09-30).** Une personne décrit avec ses mots ce qu'elle ne peut pas faire seule (ex. présenter
+> son produit à des acheteurs germanophones pendant la Foire). D'autres membres ont publié des offres avec leurs
+> horaires ; le serveur trouve le créneau où elles se recouvrent, chacun accepte SA part sur SON téléphone, et si une
+> condition change (le jury choisit une heure), le système dit ce qui tombe, ce qui tient, ce qui reste possible — ou
+> qu'il est bloqué. Le résultat concret (une fiche en allemand) est transmis puis reçu ; l'écran commun ne montre que
+> des rôles, et jamais un état plus fort que sa preuve.
+> **Données fictives, gestes des absents joués (affiché), besoin non validé auprès des membres.** Apertus : branché
+> mais **jamais appelé** ici (aucun identifiant) ; la démo tourne en « règles simples », affiché comme tel.
 >
-> - Lancer : `make setup && make demo` → `/console` (écran commun) et `/app` (téléphones) · tout vérifier : `make quality-check`
-> - Démonstration de 2 minutes : [DEMO_SCRIPT](docs/audit/club-pulse-pivot/DEMO_SCRIPT.md) · dossier d'audit :
->   [HANDOFF_FOR_CODEX](docs/audit/club-pulse-pivot/HANDOFF_FOR_CODEX.md), [ACCEPTANCE_MATRIX](docs/audit/club-pulse-pivot/ACCEPTANCE_MATRIX.md)
+> - Lancer : `make setup && make demo` → `/projection` (écran commun), `/app` (téléphones), `/console`, `/demo/regie` · tout vérifier : `make quality-check`
+> - Démonstration : [DEMO_SCRIPT](docs/audit/club-pulse-pivot/DEMO_SCRIPT.md) (storyboard, scripts 60 s / 2 min / 5 min, secours) ·
+>   vidéo d'une exécution réelle : `docs/audit/club-pulse-pivot/captures/action/demo_action.webm` · dossier d'audit :
+>   [HANDOFF_FOR_CODEX](docs/audit/club-pulse-pivot/HANDOFF_FOR_CODEX.md), [ACCEPTANCE_MATRIX](docs/audit/club-pulse-pivot/ACCEPTANCE_MATRIX.md),
+>   [REVUE_JURY](docs/audit/club-pulse-pivot/REVUE_JURY.md)
 > - Architecture : [ARCHITECTURE](docs/ARCHITECTURE.md) · menaces : [THREAT_MODEL](docs/THREAT_MODEL.md) · décisions : [ADR](docs/ADR/README.md)
 >
 > La suite de ce fichier décrit le **prototype précédent** (« Le Fil du Club »), toujours servi mais hors du parcours.

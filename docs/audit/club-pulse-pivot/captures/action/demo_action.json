@@ -1,7 +1,7 @@
 {
- "commit": "6dc7322",
+ "commit": "dd75a7c",
  "heure_jury": "17:00",
- "duree_s": 78.1,
+ "duree_s": 89.0,
  "etapes": [
   {
    "t_s": 1.1,
@@ -10,76 +10,82 @@
    "joue": false
   },
   {
-   "t_s": 8.1,
+   "t_s": 8.2,
    "titre": "1. Le besoin",
    "texte": "Sophie a le produit. Elle écrit, avec ses mots, ce qu'elle ne peut pas faire seule.",
    "joue": false
   },
   {
-   "t_s": 12.4,
+   "t_s": 15.5,
    "titre": "2. Ce qu'il faudrait réunir",
-   "texte": "Trois exigences proposées (une voix allemande qui remet une fiche, un lieu, un public) — des règles simples, pas un modèle : c'est affiché. Sophie confirme.",
+   "texte": "Trois exigences reprises de SES mots (une voix allemande qui remet la fiche demandée, un lieu, un public) — des règles simples, pas un modèle : c'est affiché. Sophie confirme.",
    "joue": false
   },
   {
-   "t_s": 19.4,
+   "t_s": 22.1,
    "titre": "3. La proposition",
-   "texte": "Aucune offre ne suffit seule. Le serveur cherche le moment où les disponibilités DÉCLARÉES se recouvrent : jeudi 16:00–16:45. Rien n'est encore envoyé.",
+   "texte": "Sophie choisit de la montrer sur l'écran commun. Aucune offre ne suffit seule : les disponibilités DÉCLARÉES se recouvrent de 16:00 à 17:30 ; le serveur retient le premier créneau, 16:00–16:45. Rien n'est encore envoyé.",
    "joue": false
   },
   {
-   "t_s": 27.6,
+   "t_s": 30.2,
    "titre": "4. Chacun décide",
    "texte": "Léa reçoit SA part sur SON téléphone : présenter en allemand et remettre une fiche. Elle accepte.",
    "joue": false
   },
   {
-   "t_s": 31.5,
+   "t_s": 35.6,
    "titre": "4. Chacun décide",
    "texte": "Pauline (lieu) et Markus (public) ne sont pas sur scène : leurs accords sont JOUÉS depuis la console, et l'écran commun l'affiche. Coopération prête : pas encore réalisée.",
    "joue": true
   },
   {
-   "t_s": 38.5,
+   "t_s": 42.6,
    "titre": "5. Le jury change une condition",
    "texte": "« Léa n'est disponible qu'à partir de 17:00. » Elle le déclare sur SON téléphone.",
    "joue": false
   },
   {
-   "t_s": 40.5,
+   "t_s": 44.6,
    "titre": "6. Ce qui change",
-   "texte": "Visible sur l'écran commun en 944 ms : la voix allemande ne couvre plus le créneau ; le lieu et le public restaient valables pour l'ancien créneau. Adaptations calculées par le serveur ; aucun lancement possible.",
+   "texte": "Visible sur l'écran commun en 929 ms : la voix allemande ne couvre plus le créneau ; le lieu et le public restaient valables pour l'ancien créneau. Adaptations calculées par le serveur ; aucun lancement possible.",
    "joue": false
   },
   {
-   "t_s": 49.7,
+   "t_s": 53.8,
    "titre": "7. Sophie choisit, chacun reconfirme",
-   "texte": "Déplacer à 17:00–17:45 dans un autre lieu (une autre personne). Le moment change : TOUS reconfirment — personne n'est reconfirmé à sa place.",
+   "texte": "Nouveau créneau : 05.11 17:00–17:45. Le moment change : TOUS reconfirment — personne n'est reconfirmé à sa place.",
    "joue": false
   },
   {
-   "t_s": 54.9,
+   "t_s": 59.1,
    "titre": "7. Sophie choisit, chacun reconfirme",
    "texte": "Nouveaux accords réunis sur la nouvelle version (joués pour les rôles absents).",
    "joue": true
   },
   {
-   "t_s": 58.0,
+   "t_s": 62.2,
    "titre": "8. Un résultat concret",
    "texte": "Sophie engage l'action. Léa écrit la fiche en allemand et la transmet.",
    "joue": false
   },
   {
-   "t_s": 65.3,
+   "t_s": 69.1,
    "titre": "8. Un résultat concret",
    "texte": "La fiche apparaît sur le téléphone de Sophie. Transmise ≠ reçue : c'est Sophie qui confirme.",
    "joue": false
   },
   {
-   "t_s": 69.2,
-   "titre": "Fin",
-   "texte": "Réception confirmée par la destinataire. La présentation, elle, est engagée pour jeudi 17:00 — pas encore tenue : l'écran ne dit rien de plus que ce qui est prouvé.",
+   "t_s": 72.3,
+   "titre": "8. Un résultat concret",
+   "texte": "Réception de la fiche confirmée par la destinataire. La présentation, elle, est engagée pour 05.11 17:00–17:45 — pas encore tenue : l'écran ne dit rien de plus que ce qui est prouvé.",
    "joue": false
+  },
+  {
+   "t_s": 80.1,
+   "titre": "9. Trente jours plus tard (horloge SIMULÉE)",
+   "texte": "La fiche reçue le reste. Personne n'a déclaré ce que la présentation a donné : le résultat reste inconnu — le silence n'est pas un succès. Les disponibilités étaient datées : rien n'est reconduit.",
+   "joue": true
   }
  ]
 }

@@ -11,16 +11,15 @@ Légende : **F** = fait vérifié (fichier, test ou capture) · **H** = hypothè
 
 | t | Écran commun | Ce qu'un juré qui découvre comprend (H) | Constat |
 |---|---|---|---|
-| 0–7 s | « Jeudi 05.11 : 6 contributions proposées, dispersées » — barres d'horaires anonymes | des offres, avec des horaires ; pas encore pourquoi c'est un problème | F : la dispersion est **mise en scène** par des données préparées (dont 3 pièges réels : horaire du matin, personne qui refuse les sollicitations, offre sans horaire) |
-| 8–19 s | (téléphone) Sophie écrit son besoin ; 3 exigences, « Règles simples — aucun modèle » | une personne demande de l'aide | F : avant correction, la **fiche en allemand** et le **lieu** étaient ajoutés par une règle sans avoir été demandés |
-| ~20 s | « Proposition complète : 05.11 16:00–16:45 » + cadre sur la ligne de temps | « le serveur a trouvé un moment commun » — lisible en < 5 s (H) | F : avant correction, l'écran disait « **le seul moment** » alors que les disponibilités se recouvrent de 16:00 à 17:30 (6 créneaux de 45 min) |
-| ~40 s | « Ce qui vient de changer » : ne couvre plus / reste valable / adaptations | le seul moment non trivial | hors des 30 premières secondes : **le « wow » éventuel arrive tard** (H) |
+| 0–8 s | « Jeudi 05.11 : 6 contributions proposées, dispersées » — barres d'horaires anonymes | des offres, avec des horaires ; pas encore pourquoi c'est un problème | F : la dispersion est **mise en scène** par des données préparées (dont 3 pièges réels : horaire du matin, personne qui refuse les sollicitations, offre sans horaire) |
+| 8–22 s | (téléphone) Sophie écrit son besoin ; 3 exigences, « Règles simples — aucun modèle » | une personne demande de l'aide | F : avant correction, la **fiche en allemand** et le **lieu** étaient ajoutés par une règle sans avoir été demandés |
+| ~22 s | « Proposition complète : 05.11 16:00–16:45 » + cadre sur la ligne de temps | « le serveur a trouvé un moment commun » — lisible en < 5 s (H) | F : avant correction, l'écran disait « **le seul moment** » alors que les disponibilités se recouvrent de 16:00 à 17:30 (6 créneaux de 45 min) |
+| ~44 s | « Ce qui vient de changer » : ne couvre plus / reste valable / adaptations | le seul moment non trivial | hors des 30 premières secondes : **le « wow » éventuel arrive tard** (H) |
 
 **Ce qui pourrait donner envie d'en voir plus (H)** : la valeur choisie en direct par le jury, et l'encadré rouge qui
 dit ce qui tombe et ce qui tient sans rien inventer. Non mesuré.
 
-**Correction de rythme retenue** : dans le script de 2 minutes, la perturbation est annoncée dès la 1re phrase
-(« dans 40 secondes, vous changerez une condition ») ; l'écran « avant » passe de 7 s à 4 s à l'oral.
+**Correction de rythme retenue** : la première phrase du storyboard annonce l'intervention (« dans quarante secondes, c'est vous qui changerez une condition ») ; la vidéo, elle, garde 7 s d'écran « avant » (non recoupée).
 
 ## 2. Test de réduction : « un réseau social avec matching » ?
 
@@ -55,6 +54,8 @@ ne porte pas deux gestes ; l'offre de chacun ne couvre qu'une exigence) : elle n
 | Représentant du Club | WhatsApp suffit pour 3 personnes | H | outils réels du Club : **inconnus** | non tranché | test terrain proposé : même besoin via le groupe habituel et via Club Pulse ; mesurer temps jusqu'à une équipe confirmée, erreurs de créneau, relances |
 | Investisseur | Aucun utilisateur, qui paie, coût d'hébergement | F | `PREUVES.md` | vrai | hypothèses affichées comme telles ; rien n'est chiffré |
 | Investisseur | Valeur entre deux événements : les offres expirent, rien n'est reconduit | F | étape +30 jours | vrai **par choix** | la mémoire garde ce qui a été reçu et déclaré ; fréquence réelle des besoins à plusieurs : **non mesurée** (compter les demandes à plusieurs des 12 derniers mois) |
+
+Trouvé ensuite par l'équipe en inspectant l'enregistrement image par image (F) : 30 jours après l'action, le téléphone de la contributrice proposait encore « Retirer ma participation » et « Ma disponibilité a changé » → **corrigé** (`Banc.apres_action` : retrait refusé, formulaires masqués ; garde vérifiée par mutation). La capture de l'écran « avant » manquait (p0) → ajoutée.
 
 Libellés corrigés au passage (F) : « Voix allemande » et « Public germanophone » écrits en dur → libellés **dérivés du
 geste** ; « Jeudi » écrit en dur → jour calculé ; « Produit : apporté » → « sa part (déclaré) » ; « confirmé par les
