@@ -1,0 +1,33 @@
+{
+  "id": "atelier_cyber",
+  "version": 1,
+  "titre": "Tenir un atelier cybersécurité pour vingt PME",
+  "auteur": "Commission des événements du Club (données fictives)",
+  "fictif": true,
+  "fenetre": {
+    "jour": "2026-10-07",
+    "debut": "17:00",
+    "fin": "20:00"
+  },
+  "duree_min": 90,
+  "emplacements": [
+    {
+      "id": "salle",
+      "role": "lieu",
+      "nature": "lieu",
+      "libelle": "Une salle de 20 places ou plus",
+      "geste": "Mettre une salle à disposition",
+      "minimums": {
+        "places": 20
+      }
+    },
+    {
+      "id": "expert",
+      "role": "expertise",
+      "nature": "competence",
+      "concept": "cybersecurite",
+      "libelle": "Une experte ou un expert en cybersécurité",
+      "geste": "Animer l'atelier"
+    }
+  ]
+}

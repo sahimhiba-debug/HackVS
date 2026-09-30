@@ -1,0 +1,43 @@
+{
+  "id": "delegation_acheteurs",
+  "version": 1,
+  "titre": "Accueillir une délégation d'acheteurs germanophones",
+  "auteur": "Commission des événements du Club (données fictives)",
+  "fictif": true,
+  "fenetre": {
+    "jour": "2026-10-09",
+    "debut": "13:00",
+    "fin": "18:00"
+  },
+  "duree_min": 90,
+  "emplacements": [
+    {
+      "id": "salle",
+      "role": "lieu",
+      "nature": "lieu",
+      "libelle": "Une salle de 15 places ou plus",
+      "geste": "Mettre une salle à disposition",
+      "minimums": {
+        "places": 15
+      }
+    },
+    {
+      "id": "minibus",
+      "role": "transport",
+      "nature": "objet",
+      "libelle": "Un minibus de 12 places ou plus",
+      "geste": "Conduire la délégation de la gare à la salle",
+      "minimums": {
+        "places": 12
+      }
+    },
+    {
+      "id": "interp",
+      "role": "voix",
+      "nature": "competence",
+      "concept": "traduction",
+      "libelle": "Une interprétation français–allemand",
+      "geste": "Interpréter les échanges en allemand"
+    }
+  ]
+}

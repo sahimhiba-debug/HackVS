@@ -1,0 +1,41 @@
+{
+  "id": "degustation_alemanique",
+  "version": 1,
+  "titre": "Faire déguster des produits valaisans à des importateurs alémaniques",
+  "auteur": "Commission des événements du Club (données fictives)",
+  "fictif": true,
+  "fenetre": {
+    "jour": "2026-10-10",
+    "debut": "10:00",
+    "fin": "16:00"
+  },
+  "duree_min": 60,
+  "emplacements": [
+    {
+      "id": "lieu",
+      "role": "lieu",
+      "nature": "lieu",
+      "libelle": "Un lieu de dégustation de 10 places ou plus",
+      "geste": "Accueillir la dégustation",
+      "minimums": {
+        "places": 10
+      }
+    },
+    {
+      "id": "traiteur",
+      "role": "traiteur",
+      "nature": "competence",
+      "concept": "traiteur",
+      "libelle": "Un service traiteur",
+      "geste": "Préparer et servir la dégustation"
+    },
+    {
+      "id": "public",
+      "role": "public",
+      "nature": "competence",
+      "concept": "export_suisse_alemanique",
+      "libelle": "Des importateurs alémaniques",
+      "geste": "Inviter des importateurs"
+    }
+  ]
+}

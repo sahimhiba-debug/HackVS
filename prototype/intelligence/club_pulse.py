@@ -30,6 +30,7 @@ from plateforme.affirmations import Statut
 from plateforme.memoire import Evt, Memoire
 
 from . import memoire_club
+from .capacites import Claim, Instance, Registre, charger_patrons, index_claims
 from . import monde_demo as md
 from .acces import Sessions
 from .detection import Detecteur
@@ -42,6 +43,7 @@ from .observateur import Etat, observer
 from .passerelle import CRITERE_SUGGERE, brouillon, essai_existant
 from .politique import MODIFIABLES, Contexte, Rendu, Spectateur, descripteur
 from .reglages import Reglages
+from .vues_capacites import VuesCapacites
 from .vues_essai import VuesEssai
 from .vues_intelligence import VuesIntelligence
 
@@ -75,6 +77,7 @@ class ClubPulse:
         brut.profils = [self.coffre.pseudonymiser(p) for p in brut.profils]    # le moteur ne voit que des pseudonymes
         self.r = brut
         self._semis = self._empreinte_semis()
+        self._profils_depart = {p.id: p for p in brut.profils}      # le monde de départ (données préparées) : base des claims
         self.ia = ia or Intelligence.depuis_environnement(tax, journal=self._tracer_ia,
                                                           notes_privees_autorisees=self.reglages.notes_privees_vers_ia)
         self.ia.journal = self._tracer_ia
@@ -85,7 +88,10 @@ class ClubPulse:
         # profil récent, introduction déjà déclinée), lues dans l'état observé courant — une seule source de vérité.
         self.banc = Banc(Memoire(self.reglages.essais_db), lambda: self.jour, self.organisation_de, self._non_sollicitable)
         self.journal = self.banc.m
+        # REGISTRE DES CAPACITÉS : patrons écrits par des humains × claims × consentements de finalité, composés par le banc
+        self.capacites = Registre(self.banc, charger_patrons(concepts=set(tax.concepts)), lambda: self.jour)
         self.vues_essai = VuesEssai(self)
+        self.vues_capacites = VuesCapacites(self)
         self.notes: dict[str, list[dict]] = {}
         self.preferences: dict[str, dict] = {}
         self._scan: Optional[dict] = None
@@ -149,7 +155,8 @@ class ClubPulse:
                 "besoins": [{"id": b.id, "auteur": b.auteur, "texte": b.texte, "le": b.le.isoformat(), "anonyme": b.anonyme,
                              "besoin": b.besoin.model_dump(mode="json")} for b in self.r.besoins],
                 "preferences": {k: dict(sorted(v.items())) for k, v in sorted(self.preferences.items())},
-                "banc": self.banc.etat_canonique()}
+                "banc": self.banc.etat_canonique(),
+                "capacites": [i.model_dump(mode="json") for i in self.capacites.projeter()]}
         return hashlib.sha256(json.dumps(etat, sort_keys=True, ensure_ascii=False, default=str).encode()).hexdigest()
 
     # ------------------------------------------------------------------ bases
@@ -207,6 +214,40 @@ class ClubPulse:
 
     def pseudonymes(self) -> set[str]:
         return {self.coffre.pseudonyme(p) for p in self.coffre._personnes}
+
+    # ------------------------------------------------------------------ registre des capacités
+    def claims(self) -> list[Claim]:
+        """Index BI-TEMPOREL des faits déclarés (offres, compétences, intérêts) : projection du journal."""
+        return index_claims(self.journal, self._profils_depart)
+
+    def sollicitable(self, pid: str) -> bool:
+        p = self.profil(pid)
+        return pid in self.coffre.actives and p.disponible and p.accepte_introductions
+
+    def asks_pour(self, pid: str) -> list[tuple[Instance, str]]:
+        """Les demandes (Ask) qu'un membre peut recevoir : il est sollicitable, il n'est pas déjà une pièce de cette
+        capacité, et — si la pièce est une compétence du catalogue — il la DÉCLARE. Une catégorie, jamais un choix du
+        système parmi des personnes. Aucun plafond en Phase 1 (plafond hebdomadaire : Phase 2)."""
+        if not self.sollicitable(pid):
+            return []
+        declarees = {o.concept for o in self.profil(pid).offre if o.concept}
+        res = []
+        for inst in self.capacites.projeter():
+            if inst.ask is None:
+                continue
+            deja = {self.banc.offre(v).auteur for v in inst.liaisons.values() if v}
+            if pid in deja or (inst.ask.concept is not None and inst.ask.concept not in declarees):
+                continue
+            res.append((inst, inst.ask.id))
+        return res
+
+    def repondre_ask(self, pid: str, ask_id: str, oui: bool, attributs: Optional[dict[str, int]] = None, quoi: Optional[str] = None) -> Instance:
+        if ask_id not in {a for _, a in self.asks_pour(pid)}:
+            raise Introuvable("demande inconnue ou plus d'actualité")
+        return self.capacites.repondre(pid, ask_id, oui, attributs, quoi, {o.concept for o in self.profil(pid).offre if o.concept})
+
+    def consentir_capacite(self, pid: str, finalite: str) -> Instance:
+        return self.capacites.consentir(pid, finalite)
 
     # ------------------------------------------------------------------ accès et profil
     def session(self, pid: str) -> str:

@@ -1,0 +1,38 @@
+{
+  "id": "journee_metiers",
+  "version": 1,
+  "titre": "Ouvrir une journée découverte des métiers aux apprentis",
+  "auteur": "Commission des événements du Club (données fictives)",
+  "fictif": true,
+  "fenetre": {
+    "jour": "2026-10-10",
+    "debut": "08:00",
+    "fin": "12:00"
+  },
+  "duree_min": 120,
+  "emplacements": [
+    {
+      "id": "atelier",
+      "role": "lieu",
+      "nature": "lieu",
+      "libelle": "Un atelier à visiter",
+      "geste": "Faire visiter un atelier"
+    },
+    {
+      "id": "former",
+      "role": "formation",
+      "nature": "competence",
+      "concept": "formation",
+      "libelle": "Une personne formatrice",
+      "geste": "Présenter la formation professionnelle"
+    },
+    {
+      "id": "rh",
+      "role": "recrutement",
+      "nature": "competence",
+      "concept": "recrutement",
+      "libelle": "Une personne des ressources humaines",
+      "geste": "Expliquer le recrutement des apprentis"
+    }
+  ]
+}

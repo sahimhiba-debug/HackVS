@@ -1,0 +1,38 @@
+{
+  "id": "presentation_germanophone",
+  "version": 1,
+  "titre": "Présenter un produit valaisan à des acheteurs germanophones",
+  "auteur": "Commission des événements du Club (données fictives)",
+  "fictif": true,
+  "fenetre": {
+    "jour": "2026-10-08",
+    "debut": "14:00",
+    "fin": "18:30"
+  },
+  "duree_min": 45,
+  "emplacements": [
+    {
+      "id": "voix",
+      "role": "voix",
+      "nature": "competence",
+      "concept": "traduction",
+      "libelle": "Une voix en allemand",
+      "geste": "Présenter le produit en allemand"
+    },
+    {
+      "id": "lieu",
+      "role": "lieu",
+      "nature": "lieu",
+      "libelle": "Un lieu de présentation sur la Foire",
+      "geste": "Prêter un lieu adapté (présentoir, table, stand)"
+    },
+    {
+      "id": "public",
+      "role": "public",
+      "nature": "competence",
+      "concept": "export_allemagne",
+      "libelle": "Des acheteurs germanophones",
+      "geste": "Amener des acheteurs"
+    }
+  ]
+}

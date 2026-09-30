@@ -13,7 +13,7 @@ import pytest
 
 RACINE = Path(__file__).resolve().parent.parent
 HTTP = {"fastapi", "starlette", "uvicorn"}
-ADAPTATEURS_HTTP = {"app.main", "app.pulse_api", "app.essai_api", "app.stage", "app.cycle_api", "app.decisions_api", "app.observabilite",
+ADAPTATEURS_HTTP = {"app.main", "app.pulse_api", "app.essai_api", "app.capacites_api", "app.stage", "app.cycle_api", "app.decisions_api", "app.observabilite",
                     "app.protections", "app.mcp_serveur"}
 BIBLIOTHEQUES_APP = ["models", "taxonomy", "parser_rules", "parser_llm", "matching", "agenda", "securite", "semantique"]
 
@@ -66,10 +66,10 @@ def test_un_seul_endroit_choisit_le_fournisseur_ia():
 def test_l_api_club_pulse_ne_contient_pas_de_regle_metier():
     """L'adaptateur HTTP n'accède au moteur qu'à travers le service (`ClubPulse`) : aucun import du moteur, de la
     détection, du coffre ou de la politique au-delà du spectateur."""
-    for nom in ("pulse_api.py", "essai_api.py"):
+    for nom in ("pulse_api.py", "essai_api.py", "capacites_api.py"):
         imp = _imports(RACINE / "app" / nom)
         assert not _viole(imp, {"intelligence.activation", "intelligence.detection", "intelligence.identite", "intelligence.observateur",
-                                "intelligence.essai", "plateforme"}), nom
+                                "intelligence.essai", "intelligence.capacites", "plateforme"}), nom
 
 
 # ---------------------------------------------------------------------- recomposition : NI → passerelle → AE → mémoire
@@ -114,3 +114,14 @@ def test_un_seul_moteur_d_activation():
     propriétés (tests/test_essai_invariants.py, eval/benchmark_pulse.py) : ils ne reviennent pas par la bande."""
     for f in ("activation.py", "apprentissage.py", "vues.py"):
         assert not (RACINE / "intelligence" / f).exists(), f
+
+
+# ---------------------------------------------------------------------- registre des capacités
+def test_le_registre_des_capacites_n_a_qu_un_compositeur_et_aucune_ia():
+    """Le registre compose avec le BANC (aucun second moteur) ; il ne connaît ni l'IA, ni la détection d'opportunités
+    (leur « composition » sur profils ne doit pas revenir comme second compositeur)."""
+    imp = _imports_domaine("capacites")
+    assert "intelligence.essai" in imp
+    assert not (imp & (NI | MEMOIRE | {"intelligence.ia", "intelligence.passerelle", "intelligence.club_pulse"}))
+    assert "intelligence.capacites" not in _imports_domaine("ia")            # l'IA ne voit ni ne modifie les patrons
+    assert "intelligence.capacites" not in _imports_domaine("essai")         # le banc ignore le registre qui le lit

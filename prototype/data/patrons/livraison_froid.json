@@ -1,0 +1,31 @@
+{
+  "id": "livraison_froid",
+  "version": 1,
+  "titre": "Livrer des produits frais au stand d'un membre hors canton",
+  "auteur": "Commission des événements du Club (données fictives)",
+  "fictif": true,
+  "fenetre": {
+    "jour": "2026-10-11",
+    "debut": "06:00",
+    "fin": "12:00"
+  },
+  "duree_min": 120,
+  "emplacements": [
+    {
+      "id": "camion",
+      "role": "transport",
+      "nature": "competence",
+      "concept": "transport_frigorifique",
+      "libelle": "Un transport frigorifique",
+      "geste": "Transporter les produits au froid"
+    },
+    {
+      "id": "prepa",
+      "role": "logistique",
+      "nature": "competence",
+      "concept": "logistique",
+      "libelle": "Une préparation de commande",
+      "geste": "Préparer et étiqueter les colis"
+    }
+  ]
+}

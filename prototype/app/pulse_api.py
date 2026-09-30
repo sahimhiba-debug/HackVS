@@ -26,6 +26,7 @@ from intelligence.demo import Demo
 from intelligence.erreurs import ErreurMetier, Limite
 from intelligence.politique import Spectateur
 
+from .capacites_api import ajouter_routes as ajouter_routes_capacites
 from .essai_api import ajouter_routes as ajouter_routes_essai
 from .protections import LOCALES
 from .taxonomy import Taxonomie
@@ -271,6 +272,7 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
         return au_monde(lambda c: {"echeances": c.avancer(t.jours), "date": c.jour.isoformat()})
 
     ajouter_routes_essai(r, au_monde, membre, console, lambda pid: limiter(limite_ia, f"ia|{pid}"))
+    ajouter_routes_capacites(r, au_monde, membre, console)
 
     @r.get("/console/personas", dependencies=[Depends(console)])
     def personas() -> list[dict]:

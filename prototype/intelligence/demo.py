@@ -74,6 +74,20 @@ def semer_offres(club: ClubPulse) -> None:
                                 concept=concept, plages=plages)
 
 
+def semer_capacites(club: ClubPulse) -> None:
+    """DONNÉES PRÉPARÉES (fictives) du scénario A : pour « Accueillir une délégation d'acheteurs germanophones » (vendredi
+    09.10), une salle et une interprète ont DÉJÀ déclaré leur disponibilité et consenti à cette finalité. Il manque UNE
+    pièce — un minibus de 12 places ou plus : c'est l'Ask. Rien n'est posé le jeudi 08.10 (l'action collective)."""
+    j, v = club.jour, md.JOUR_SCENE + timedelta(days=1)
+    p = club.capacites.patron("delegation_acheteurs")
+    for auteur, emplacement, nature, quoi, concept, attributs, plage in (
+            (NICOLAS, "salle", "lieu", "Salle de dégustation de la distillerie, 24 places", None, {"places": 24}, ("13:00", "18:00")),
+            (md.ANNA, "interp", "competence", "Interprétation français–allemand, une demi-journée", "traduction", {}, ("13:30", "17:30"))):
+        oid = club.banc.publier_offre(auteur, nature, quoi, 1, j, v, concept=concept, attributs=attributs,
+                                      plages=[Plage(jour=v, debut=plage[0], fin=plage[1])])
+        club.banc.consentir_finalite(auteur, p.id, emplacement, oid, p.portee(emplacement), p.fenetre.jour)
+
+
 class Demo:
     PERSONAS = (md.SOPHIE, md.LEA, md.PAULINE, md.MARKUS, NICOLAS, md.ANNA, CLAUDIA)
 
@@ -91,6 +105,7 @@ class Demo:
         if not repris:
             with self.club.banc.origine(Statut.SYNTHETIQUE):  # données PRÉPARÉES : jamais présentées comme déclarées
                 semer_offres(self.club)
+                semer_capacites(self.club)
         self.etape = len(self.ETAPES) if repris else 0
         self.ctx: dict = {}
         self.traces: list[dict] = [{"acte": "reprise", "legende": "état repris du journal ; « Nouvelle démonstration » pour "
