@@ -11,7 +11,8 @@ from app.pulse_api import Limiteur, creer_routeur
 from intelligence import monde_demo as md
 from intelligence.acces import Sessions
 from intelligence.club_pulse import ClubPulse
-from intelligence.demo import CLAUDIA, Demo
+from intelligence.demo import Demo
+from tests.test_club_pulse import _decouverte, _invitation
 from intelligence.erreurs import Limite, NonAuthentifie
 from intelligence.politique import Spectateur
 from intelligence.reglages import Reglages
@@ -45,15 +46,14 @@ def test_authentifie_mais_pas_autorise():
     eid = _essai()
     obs = {"texte": "faux résultat", "qualification": "positif", "limites": "aucune"}
     assert client.post(f"/api/pulse/moi/essais/{eid}/observation", headers=_h(M), json=obs).status_code == 403   # pas le porteur
-    assert client.get(f"/api/pulse/moi/essais/{eid}", headers=_h(P)).status_code == 404       # Pauline : invisible, pas « interdit »
+    assert client.get(f"/api/pulse/moi/essais/{eid}", headers=_h(A)).status_code == 404       # Anna : invisible, pas « interdit »
     assert client.post(f"/api/pulse/moi/essais/{eid}/lancer", headers=_h(M), json={"version": 0}).status_code == 403
     assert client.get("/api/pulse/moi/essais/inconnu", headers=_h(S)).status_code == 404
     assert client.get("/api/pulse/moi/decouvertes/inconnue", headers=_h(S)).status_code == 404
 
 
 def test_decouverte_d_un_autre_membre_interdite_et_console_gardee():
-    _aller(3)
-    oid = next(t for t in client.get("/api/pulse/console/intelligence", headers=CONSOLE).json()["premieres"] if "Sophie" in t["titre"])["id"]
+    oid = _decouverte()
     assert client.get(f"/api/pulse/moi/decouvertes/{oid}", headers=_h(A)).status_code == 403
     assert client.get(f"/api/pulse/moi/decouvertes/{oid}/en-clair", headers=_h(A)).status_code == 403   # contrôle AVANT l'IA
     assert client.post(f"/api/pulse/moi/decouvertes/{oid}/essai", headers=_h(M)).status_code == 403
@@ -73,7 +73,7 @@ def test_sessions_falsifiees_expirees_ou_d_un_autre_monde_refusees():
     t[0] = 2000.0
     with pytest.raises(NonAuthentifie, match="expirée"):
         s.verifier(jeton)
-    ancien = _h(S)                                                         # jeton du monde précédent
+    ancien = _h(L)                                                         # jeton du monde précédent
     _aller(0)
     assert client.get("/api/pulse/moi/decouvertes", headers=ancien).status_code == 401   # nouveau monde, nouveau secret
 
@@ -141,8 +141,7 @@ def test_entrees_hors_limites_refusees():
 
 # ------------------------------------------------------------------ idempotence et concurrence
 def test_double_proposition_simultanee_un_seul_essai():
-    _aller(3)
-    oid = client.get("/api/pulse/etat", headers=CONSOLE).json()["traces"][1]["ecran"]["cible"]
+    oid = _decouverte()
     h = _h(S)
     r1, r2 = _en_parallele(lambda: client.post(f"/api/pulse/moi/decouvertes/{oid}/essai", headers=h),
                            lambda: client.post(f"/api/pulse/moi/decouvertes/{oid}/essai", headers=h))
@@ -162,8 +161,7 @@ def _en_parallele(*appels):
 
 
 def test_deux_acceptations_simultanees_une_seule_compte():
-    _aller(4)
-    eid = _essai()
+    eid = _invitation()
     h, v = _h(M), _version(eid, M)
     corps = {"version": v, "accepte": True}
     r1, r2 = _en_parallele(lambda: client.post(f"/api/pulse/moi/essais/{eid}/decision", headers=h, json=corps),
@@ -174,8 +172,7 @@ def test_deux_acceptations_simultanees_une_seule_compte():
 
 
 def test_acceptation_et_annulation_simultanees_etat_coherent():
-    _aller(4)
-    eid = _essai()
+    eid = _invitation()
     h, v = _h(M), _version(eid, M)
     r1, r2 = _en_parallele(lambda: client.post(f"/api/pulse/moi/essais/{eid}/decision", headers=h, json={"version": v, "accepte": True}),
                            lambda: client.post(f"/api/pulse/console/essais/{eid}/annuler", headers=CONSOLE, json={"raison": "le jury arrête"}))
@@ -215,23 +212,19 @@ def test_le_moteur_ne_voit_aucune_identite():
     assert "@" not in brut
 
 
-def test_qui_a_decline_n_est_nomme_qu_a_la_personne_qui_l_a_invite():
-    """Markus décline l'invitation ; Sophie choisit de demander à Claudia, qui accepte. Seule Sophie (qui l'avait
-    invité) sait que c'était Markus : ni Claudia, ni la console, ni un autre membre."""
+def test_qui_a_decline_n_est_nomme_a_personne():
+    """Dans l'action collective (offres choisies par le serveur, pas des invitations nominatives), Markus décline : ni la
+    porteuse, ni Léa, ni la console, ni l'écran commun ne savent que c'était lui — seulement qu'« une personne a décliné »."""
     d = Demo(TAX)
-    d.rejouer(4)
+    d.rejouer(3)
     c, eid = d.club, d.ctx["essai"]
     c.banc.decider(M, eid, c.banc.version(eid), False)
-    alt = next(a for a in c.banc.alternatives(eid) if a["type"] == "remplacer")
-    c.banc.choisir_alternative(S, eid, c.banc.version(eid), alt["id"])
-    c.banc.decider(CLAUDIA, eid, c.banc.version(eid), True)
-    assert c.banc.etat(eid) == "AUTORISE"
     nom = c.coffre.identite(M).nom
-    vues = {"Claudia": c.vues_essai.essai(eid, CLAUDIA), "console": c.vues_essai.essai(eid, None, console=True),
-            "console (essais)": c.vues_essai.console()["essais"], "Nicolas": c.vues.decouvertes_de(md.NICOLAS)}
+    vues = {"Sophie": c.vues_essai.essai(eid, S), "Léa": c.vues_essai.essai(eid, L), "console": c.vues_essai.essai(eid, None, console=True),
+            "console (essais)": c.vues_essai.console()["essais"], "projection": c.vues_essai.projection(eid, c.joues)}
     for qui, vue in vues.items():
         assert nom not in json.dumps(vue, ensure_ascii=False), qui
-    assert "Claudia Imboden" in json.dumps(c.vues_essai.essai(eid, S), ensure_ascii=False)   # nommée après SON accord
+    assert c.banc.etat(eid) == "IMPOSSIBLE"                                  # aucun autre public déclaré à cette heure : bloqué, dit
 
 
 def test_l_audit_des_ecrans_attrape_une_fuite_reintroduite(monkeypatch):

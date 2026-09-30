@@ -1,5 +1,6 @@
-"""Club Pulse de bout en bout (service + API), la boucle recomposée : besoin → découverte → pourquoi → essai →
-perturbation → adaptation → résultat → mémoire → découverte suivante ; et ce que CHACUN voit à chaque moment.
+"""Club Pulse de bout en bout (service + API) : la démonstration (une ACTION COLLECTIVE à créneau) rejouable à
+l'identique, et la fonction DÉCOUVERTE (Network Intelligence → essai sur invitation → mémoire → découverte suivante),
+préparée ici par l'API elle-même. Ce que CHACUN voit à chaque moment.
 Monde de démonstration FICTIF ; gestes humains joués par la démonstration ou par les tests."""
 import json
 import threading
@@ -9,6 +10,7 @@ from fastapi.testclient import TestClient
 from app.main import TAX, app
 from intelligence import memoire_club
 from intelligence import monde_demo as md
+from intelligence.club_pulse import CRITERE_SUGGERE
 from intelligence.demo import CLAUDIA, Demo
 
 client = TestClient(app)
@@ -34,6 +36,35 @@ def _cible(etat, acte):
     return next(t["ecran"]["cible"] for t in etat["traces"] if t["acte"] == acte)
 
 
+BESOIN = "Trouver un distributeur pour entrer sur le marché allemand avec nos tisanes"
+_n = [0]
+
+
+def _decouverte() -> str:
+    """Sophie rejoint le Club et DÉCLARE ce qu'elle cherche : la détection trouve Markus (rencontré à la Foire)."""
+    client.post("/api/pulse/demo/reinitialiser", headers=CONSOLE)
+    code = next(p["code"] for p in client.get("/api/pulse/console/personas", headers=CONSOLE).json() if p["id"] == S)
+    _n[0] += 1                                        # une adresse par appel : la limite d'essais de code reste active
+    entree = TestClient(app, client=(f"10.7.{_n[0] % 250}.{_n[0] // 250 + 1}", 50000))
+    h = {"X-Pulse-Session": entree.post("/api/pulse/acces", json={"code": code}).json()["session"]}
+    client.post("/api/pulse/moi/accueil", headers=h, json={"aide": [{"texte": "tisanes de plantes alpines bio", "concept": "boissons"}],
+                                                          "cherche": [{"texte": BESOIN, "concept": "export_allemagne"}], "visible": True})
+    d = client.get("/api/pulse/moi/decouvertes", headers=h).json()
+    return next(x["id"] for x in d if any(p["capacite"] == TAX.libelle("export_allemagne") for p in x["personnes"]))
+
+
+def _invitation() -> str:
+    """… elle en fait un essai, écrit SON critère (la suggestion) et publie : Markus est invité."""
+    oid = _decouverte()
+    eid = client.post(f"/api/pulse/moi/decouvertes/{oid}/essai", headers=_h(S)).json()["essai"]
+    v = client.get(f"/api/pulse/moi/essais/{eid}", headers=_h(S)).json()
+    r = client.put(f"/api/pulse/moi/essais/{eid}/brouillon?version=0", headers=_h(S), json={
+        "question": v["question"], "critere": CRITERE_SUGGERE, "echeance": v["echeance"]})      # sans « etapes » : l'invitation reste
+    assert r.status_code == 200 and r.json()["etapes"][0]["invitation"]
+    assert client.post(f"/api/pulse/moi/essais/{eid}/publier", headers=_h(S), json={"version": 1}).status_code == 200
+    return eid
+
+
 def test_la_boucle_complete_est_rejouable_a_l_identique():
     a, b = Demo(TAX), Demo(TAX)
     a.rejouer(len(Demo.ETAPES))
@@ -41,13 +72,14 @@ def test_la_boucle_complete_est_rejouable_a_l_identique():
     assert a.club.banc.m.empreinte() == b.club.banc.m.empreinte() and a.club.r.memoire.empreinte() == b.club.r.memoire.empreinte()
     assert [t["legende"] for t in a.traces] == [t["legende"] for t in b.traces]
     c, eid = a.club, a.ctx["essai"]
-    assert c.banc.etat(eid) == "OBSERVEE" and c.banc.protocole(eid).origine["type"] == "SUIVI"   # personne ne l'avait demandé
-    assert "A_ADAPTER" in [e.donnees["vers"] for e in c.banc._evs(eid, "ESSAI_ETAT")]            # une vraie perturbation
-    assert sorted(a.traces[6]["alternatives"]) == ["raccourcir", "remplacer"]                    # deux adaptations valables
+    assert c.banc.etat(eid) == "OBSERVEE"
+    etats = [e.donnees["vers"] for e in c.banc._evs(eid, "ESSAI_ETAT")]
+    assert etats.index("A_ADAPTER") < etats.index("EN_COURS")                                     # perturbation AVANT l'engagement
+    assert a.traces[1]["creneau"] == "05.11 16:00–16:45" and c.banc.protocole(eid).creneau.debut == "17:00"
+    assert len(a.traces[5]["alternatives"]) >= 2                                                 # au moins deux adaptations
     assert [t["joue"] for t in a.traces].count(True) == 8                                        # les gestes humains sont marqués
     s = memoire_club.souvenirs(c.banc)[0]
-    assert (s["statut"], s["niveau"], s["contributeurs"]) == ("confirmee", "club", [M])
-    assert a.traces[-1]["avant"] == 0 and a.traces[-1]["preuve"]                                 # la découverte suivante n'existait pas
+    assert (s["statut"], s["niveau"]) == ("confirmee", "club") and set(s["contributeurs"]) == {md.LEA, M, N}
 
 
 def test_session_obligatoire_et_non_falsifiable():
@@ -63,8 +95,7 @@ def test_session_obligatoire_et_non_falsifiable():
 
 
 def test_une_decouverte_n_est_visible_que_de_la_personne_aidee_et_ne_sollicite_personne():
-    etat = _aller(3)
-    oid = _cible(etat, "Découverte")
+    oid = _decouverte()
     d = client.get(f"/api/pulse/moi/decouvertes/{oid}", headers=_h(S)).json()
     assert d["peut_proposer"] and d["pourquoi"]["question"] == "Voulez-vous proposer un essai ?"
     assert "Markus Heinzmann" in json.dumps(d, ensure_ascii=False)                              # ils se sont rencontrés
@@ -75,8 +106,7 @@ def test_une_decouverte_n_est_visible_que_de_la_personne_aidee_et_ne_sollicite_p
 
 
 def test_proposer_un_essai_un_brouillon_prive_une_seule_fois():
-    etat = _aller(3)
-    oid = _cible(etat, "Découverte")
+    oid = _decouverte()
     eid = client.post(f"/api/pulse/moi/decouvertes/{oid}/essai", headers=_h(S)).json()["essai"]
     assert client.post(f"/api/pulse/moi/decouvertes/{oid}/essai", headers=_h(S)).status_code == 409   # double clic
     v = client.get(f"/api/pulse/moi/essais/{eid}", headers=_h(S)).json()
@@ -86,8 +116,7 @@ def test_proposer_un_essai_un_brouillon_prive_une_seule_fois():
 
 
 def test_avant_son_accord_markus_voit_la_proposition_pas_plus_et_nicolas_rien():
-    etat = _aller(4)
-    eid = _cible(etat, "Invitation")
+    eid = _invitation()
     v = client.get(f"/api/pulse/moi/essais/{eid}", headers=_h(M)).json()
     assert v["porteur"] == "Sophie Carron" and v["role"] == "contributeur"
     assert v["votre_part"]["gestes"][0]["statut"] == "à vous de choisir"
@@ -96,8 +125,7 @@ def test_avant_son_accord_markus_voit_la_proposition_pas_plus_et_nicolas_rien():
 
 
 def test_un_refus_n_est_connu_que_de_la_personne_qui_a_invite():
-    etat = _aller(4)
-    eid = _cible(etat, "Invitation")
+    eid = _invitation()
     v = client.get(f"/api/pulse/moi/essais/{eid}", headers=_h(M)).json()
     assert client.post(f"/api/pulse/moi/essais/{eid}/decision", headers=_h(M), json={"version": v["version"], "accepte": False}).status_code == 200
     sophie = client.get(f"/api/pulse/moi/essais/{eid}", headers=_h(S)).json()
@@ -107,8 +135,9 @@ def test_un_refus_n_est_connu_que_de_la_personne_qui_a_invite():
 
 
 def test_apres_accord_la_disponibilite_est_declaree_et_le_nom_revele():
-    etat = _aller(5)
-    eid = _cible(etat, "Accord")
+    eid = _invitation()
+    m = client.get(f"/api/pulse/moi/essais/{eid}", headers=_h(M)).json()
+    client.post(f"/api/pulse/moi/essais/{eid}/decision", headers=_h(M), json={"version": m["version"], "accepte": True})
     v = client.get(f"/api/pulse/moi/essais/{eid}", headers=_h(S)).json()
     assert v["etat"] == "AUTORISE" and v["etapes"][0]["qui"] == "Markus Heinzmann"
     assert v["etapes"][0]["offre"]["duree_max_min"] == 60                                          # déclarée EN acceptant
@@ -117,7 +146,20 @@ def test_apres_accord_la_disponibilite_est_declaree_et_le_nom_revele():
 
 
 def test_la_decouverte_de_nicolas_ne_nomme_ni_markus_ni_sophie():
-    _aller(len(Demo.ETAPES))
+    """La boucle mémoire → découverte suivante, jouée par l'API (Markus accepte, l'essai a lieu, Sophie observe, Markus
+    confirme, les deux partagent) : Nicolas voit une possibilité NOUVELLE, sans aucun nom."""
+    eid = _invitation()
+    assert client.get("/api/pulse/moi/decouvertes", headers=_h(N)).json() == []
+    m = client.get(f"/api/pulse/moi/essais/{eid}", headers=_h(M)).json()
+    client.post(f"/api/pulse/moi/essais/{eid}/decision", headers=_h(M), json={"version": m["version"], "accepte": True})
+    v = client.get(f"/api/pulse/moi/essais/{eid}", headers=_h(S)).json()
+    client.post(f"/api/pulse/moi/essais/{eid}/lancer", headers=_h(S), json={"version": v["version"]})
+    client.post(f"/api/pulse/moi/essais/{eid}/contributions/e1", headers=_h(S))
+    client.post(f"/api/pulse/moi/essais/{eid}/observation", headers=_h(S), json={"texte": "Deux distributeurs présentés.", "qualification": "positif",
+                                                                                  "limites": "un échange, une gamme"})
+    client.post(f"/api/pulse/moi/essais/{eid}/avis", headers=_h(M), json={"revision": 1, "avis": "confirme"})
+    for x in (S, M):
+        client.post(f"/api/pulse/moi/essais/{eid}/reutilisation", headers=_h(x), json={"niveau": "club", "mention": "nom"})
     d = client.get("/api/pulse/moi/decouvertes", headers=_h(N)).json()
     assert len(d) == 1 and d[0]["memoire"]
     brut = json.dumps(d, ensure_ascii=False)

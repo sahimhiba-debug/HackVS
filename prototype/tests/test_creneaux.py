@@ -160,3 +160,15 @@ def test_un_retrait_apres_accord_bloque_le_lancement():
     assert s.b.etat(eid) in ("A_ADAPTER", "IMPOSSIBLE")
     with pytest.raises(Conflit):
         s.b.lancer(PORTEUR, eid, v)
+
+
+def test_un_refus_n_est_jamais_garde_dans_une_adaptation():
+    """Défaut trouvé : après un refus, « déplacer — même équipe » gardait la personne qui avait décliné."""
+    s = Scene()
+    eid = s.b.brouillon(PORTEUR, s.protocole())
+    sol = s.b.assembler(PORTEUR, eid)["solution"]
+    v = s.b.proposer(PORTEUR, eid, 0, {k: x for k, x in sol["choix"].items() if x}, sol["creneau"])
+    s.b.decider(PUBLIC, eid, v, False)
+    for a in s.b.alternatives(eid):
+        assert PUBLIC not in {s.b.offre(o).auteur for o in (a.get("choix") or {}).values() if o}, a["texte"]
+    assert s.b.etat(eid) == "IMPOSSIBLE"                                      # aucun autre public déclaré : bloqué, dit

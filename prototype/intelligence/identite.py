@@ -139,14 +139,19 @@ def nettoyer(texte: str, identites: list[str]) -> str:
         return texte
     t = _URL.sub(RETIRE, _COURRIEL.sub(RETIRE, texte))
     t = _TELEPHONE.sub(RETIRE, t)
+    entiers: set[str] = set()
     mots: set[str] = set()
     for ident in identites:
         base = re.sub(r"\(fictive?\)", "", ident, flags=re.I).strip()
         if base:
-            mots.add(base)
+            entiers.add(base)
             mots.update(m for m in re.split(r"[\s'’-]+", base) if len(m) > 3 and m.lower() not in _GENERIQUES)
-    for m in sorted(mots, key=len, reverse=True):
+    for m in sorted(entiers, key=len, reverse=True):
         t = re.sub(rf"(?<!\w){re.escape(m)}(?!\w)", RETIRE, t, flags=re.I)
+    # un MOT isolé d'un nom n'est retiré que s'il est employé comme nom propre (majuscule) : « Entremont » oui, « nos
+    # tisanes » non — sinon le produit même du membre disparaissait de sa demande (défaut trouvé en démonstration)
+    for m in sorted(mots - entiers, key=len, reverse=True):
+        t = re.sub(rf"(?<!\w){re.escape(m[0].upper() + m[1:].lower())}(?!\w)|(?<!\w){re.escape(m.upper())}(?!\w)", RETIRE, t)
     return t
 
 

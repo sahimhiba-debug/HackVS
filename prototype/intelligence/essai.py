@@ -135,6 +135,7 @@ class Etape(BaseModel):
     # un résultat CONCRET que la personne transmet (ex. « Fiche produit en allemand ») ; reçu seulement quand le
     # destinataire (le porteur) en confirme la réception — jamais parce qu'il a été envoyé
     livrable: Optional[str] = Field(default=None, max_length=120)
+    role: Optional[str] = Field(default=None, max_length=24)        # « voix », « lieu », « public »… : ce que le geste REMPLIT
 
 
 class Protocole(BaseModel):
@@ -524,12 +525,14 @@ class Banc:
     def _composer(self, eid: str, p: Protocole, c: Creneau, garder: dict[str, Optional[OffreVolontaire]]) -> Optional[dict]:
         """Une équipe pour ce créneau : chaque geste garde son offre actuelle si elle le couvre, sinon la première offre
         admissible d'une AUTRE personne. None si un geste reste sans offre (rien n'est inventé)."""
+        etapes = [e.model_copy(update={"duree_min": min(e.duree_min, c.duree_min)}) for e in p.etapes]   # variante courte : dite
+        par_id = {e.id: e for e in etapes}
         gardees = {k: o for k, o in garder.items()
-                   if o is not None and self.offre_couvre(o, next(x for x in p.etapes if x.id == k), p.echeance, sauf=eid, creneau=c) is None}
+                   if o is not None and self.offre_couvre(o, par_id[k], p.echeance, sauf=eid, creneau=c) is None}
         choix: dict[str, Optional[str]] = {}
         auteurs: set[str] = set()
         remplaces = []
-        for e in p.etapes:
+        for e in etapes:
             if e.invitation and e.contributeur and garder.get(e.id) is None:
                 choix[e.id] = None                            # sur invitation, pas encore déclarée : à demander, jamais supposée
                 continue
@@ -556,9 +559,11 @@ class Banc:
         if fen is None or not p.etapes:
             return []
         duree = p.creneau.duree_min if p.creneau else max(e.duree_min for e in p.etapes)
-        plancher = max([p.duree_min_acceptable or duree, *(e.duree_min for e in p.etapes)])
+        plancher = p.duree_min_acceptable or duree           # jamais sous le minimum que le porteur a fixé
         durees = list(range(duree, plancher - 1, -PAS_MIN)) or [duree]
-        garder = {e.id: self.offre_de(eid, e) if e.contributeur else None for e in p.etapes}
+        partis = self.refus(eid) | {x.acteurs[0] for x in self._evs(eid, "RETRAIT")}
+        # on ne GARDE jamais quelqu'un qui a décliné ou s'est retiré (défaut trouvé : « même équipe » gardait un refus)
+        garder = {e.id: self.offre_de(eid, e) if e.contributeur and e.contributeur not in partis else None for e in p.etapes}
         res = []
         for d in durees:
             for m in range(minutes(fen.debut), minutes(fen.fin) - d + 1, PAS_MIN):
@@ -628,9 +633,11 @@ class Banc:
                 res.append({"id": f"decaler:{c.jour.isoformat()}:{c.debut}:{c.duree_min}:" + ",".join(f"{k}={v}" for k, v in sol["choix"].items()),
                             "type": "decaler", "creneau": c.model_dump(mode="json"), "choix": sol["choix"], "remplaces": qui,
                             "plus_court": sol["plus_court"],
-                            "texte": (f"Déplacer à {c.texte()}" + (f" — variante plus courte ({c.duree_min} min, au-dessus de votre minimum)"
-                                                                    if sol["plus_court"] else "")
-                                      + (" — même équipe" if not qui else f" — {len(qui)} geste(s) confié(s) à une autre personne")
+                            "texte": (f"Déplacer à {c.texte()}" + (f" — variante plus courte ({c.duree_min} min ; votre minimum : "
+                                                                    f"{p.duree_min_acceptable} min)" if sol["plus_court"] else "")
+                                      + (" — même équipe" if not qui else " — " + " ; ".join(
+                                          f"{next(x for x in p.etapes if x.id == k).role or k} : « {self.offre(sol['choix'][k]).quoi} »"
+                                          " (une autre personne)" for k in qui))
                                       + ". Le moment change : chaque participant reconfirme."),
                             "a_decider": ["porteur", "chaque participant"]})
         return res
@@ -752,6 +759,8 @@ class Banc:
                      if alt["type"] == "remplacer"
                      else e.model_copy(update={"duree_min": alt["duree"]}) if alt["type"] == "raccourcir"
                      else e)                                  # accepter_conditions : même geste, nouvelle version à reconfirmer
+            if alt["type"] == "decaler" and e.duree_min > alt["creneau"]["duree_min"]:
+                e = e.model_copy(update={"duree_min": alt["creneau"]["duree_min"]})   # variante plus courte, choisie explicitement
             if alt["type"] == "decaler" and alt["choix"].get(e.id) and (self.offre_de(eid, e) is None or self.offre_de(eid, e).id != alt["choix"][e.id]):  # type: ignore[union-attr]
                 o = self.offre(alt["choix"][e.id])
                 e = e.model_copy(update={"contributeur": o.auteur, "offre_id": o.id, "invitation": False})

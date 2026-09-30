@@ -1,12 +1,13 @@
-"""Contrôleur de DÉMONSTRATION : la boucle Club Pulse en 11 étapes, faites d'appels RÉELS au service (aucun résultat
-écrit d'avance). Chaque étape appelle `ClubPulse` et le banc d'essai comme le feraient les membres ; les gestes humains
-(déclarer, proposer, accepter, réduire sa disponibilité, choisir, observer, confirmer, partager) sont JOUÉS par la
-présentation et marqués `joue=True`. `rejouer(n)` reconstruit l'état depuis zéro : mêmes données, même résultat.
+"""Contrôleur de DÉMONSTRATION : une ACTION COLLECTIVE, faite d'appels RÉELS au service (aucun résultat écrit d'avance).
 
-    BESOIN → DÉCOUVERTE → POURQUOI → INVITATION → ACCORD → PERTURBATION → ADAPTATION → ACTION → RÉSULTAT → MÉMOIRE
-    → DÉCOUVERTE SUIVANTE (qui n'existait pas avant)
+    BESOIN (les mots de Sophie) → EXIGENCES confirmées → PROPOSITION (le seul créneau où les offres se recouvrent)
+    → ACCORDS (chacun sur son téléphone) → PERTURBATION (une disponibilité change, valeur choisie par le jury)
+    → ADAPTATION (ce qui tombe, ce qui tient, qui reconfirme) → ACTION ENGAGÉE → FICHE transmise → RÉCEPTION confirmée
+    → après l'événement : ce qui reste (horloge de démonstration, signalée)
 
-Monde FICTIF (données synthétiques étiquetées) ; dates simulées.
+Chaque étape appelle `ClubPulse` et le banc comme le feraient les membres ; les gestes humains sont JOUÉS par la
+présentation et marqués `joue=True` (en direct, les téléphones les font). `rejouer(n)` reconstruit l'état depuis zéro :
+mêmes données, même résultat. Monde FICTIF (données préparées, étiquetées) ; dates simulées.
 """
 from __future__ import annotations
 
@@ -15,40 +16,62 @@ from typing import Callable, Optional
 
 from app.taxonomy import Taxonomie
 
-from . import memoire_club
 from . import monde_demo as md
-from .club_pulse import CRITERE_SUGGERE, ClubPulse
+from .club_pulse import CRITERE_ACTION, ClubPulse
+from .essai import Plage
 from .ia import Intelligence
 
-CLAUDIA = "s15"
-BESOIN_SOPHIE = "Trouver un distributeur pour entrer sur le marché allemand avec nos tisanes"
-OBSERVATION = ("Deux distributeurs bio présentés, à contacter ; un rendez-vous pris avec l'un d'eux au salon de Munich. "
-               "Rien n'est signé.")
-LIMITES = "un échange de 20 minutes, une seule gamme (tisanes), avant le salon ; aucun contrat à ce stade"
+CLAUDIA, STEFAN, NICOLAS = "s15", "s16", md.NICOLAS
+BESOIN_SOPHIE = "Je voudrais présenter nos tisanes à des acheteurs germanophones pendant la Foire, jeudi après-midi."
+FICHE_DE = ("Kräutertees aus dem Val d'Entremont — Bio-Kräuter aus 1 200 m Höhe, von Hand geerntet.\n"
+            "Sorten: Alpenminze, Melisse, Thymian-Zitrone. 20 Beutel à 1,5 g.\n"
+            "Ideal für Bioläden und Hofläden. Muster auf Anfrage am Stand.")
+OBSERVATION = "Trois acheteurs présents, une demande d'échantillons pour un magasin bio de Munich. Rien n'est commandé."
+LIMITES = "une présentation de 45 min, une gamme (tisanes), trois personnes ; aucune commande à ce stade"
+HEURE_JURY = ("17:00", "19:00")          # la valeur par défaut du rejeu ; en direct, le jury la choisit
 
-OFFRES_PREPAREES = [   # DONNÉES PRÉPARÉES (fictives) : ce que des membres ont publié AVANT la scène — (auteur, nature, quoi,
-    # durée max, capacité, du, au, conditions, capacité déclarée)
+
+def jour_foire(club: ClubPulse):
+    return club.jour + timedelta(days=2)                 # jeudi 05.11 (le monde fictif est au mardi 03.11)
+
+
+def offres_scene(club: ClubPulse) -> list[tuple]:
+    """DONNÉES PRÉPARÉES (fictives) : ce que des membres ont publié AVANT la scène, avec LEURS horaires. Dont des pièges
+    réels : une traductrice le matin seulement, une offre sans horaire, une personne qui refuse les sollicitations."""
+    j = jour_foire(club)
+    return [  # (auteur, nature, quoi, durée max, capacité, conditions, capacité déclarée, plages)
+        (md.LEA, "competence", "Présenter un produit en allemand et en rédiger une fiche courte", 60, 2, "sur place, à la Foire", "traduction",
+         [Plage(jour=j, debut="16:00", fin="18:00")]),
+        (md.ANNA, "competence", "Traduction et interprétariat français–allemand", 60, 2, "", "traduction", [Plage(jour=j, debut="09:00", fin="12:00")]),
+        (md.PAULINE, "lieu", "Présentoir éclairé sur mon stand (halle 2)", None, 1, "stand B12", None, [Plage(jour=j, debut="14:00", fin="17:30")]),
+        (NICOLAS, "lieu", "Coin dégustation du stand de la distillerie (halle 3)", None, 1, "stand C4", None, [Plage(jour=j, debut="16:30", fin="19:00")]),
+        (md.MARKUS, "competence", "Amener deux ou trois acheteurs germanophones à un stand", 60, 1, "acheteurs de magasins bio", "export_allemagne",
+         [Plage(jour=j, debut="15:00", fin="18:30")]),
+        (STEFAN, "competence", "Présenter des distributeurs allemands", 60, 1, "", "export_allemagne", [Plage(jour=j, debut="14:00", fin="18:00")]),
+    ]
+
+
+OFFRES_PIVOT = [   # la tranche précédente (banc d'essai sans horaire) : conservée, jamais retenue pour une action à créneau
     (CLAUDIA, "competence", "Conseil pour lancer un produit sur le marché allemand", 60, 2, 0, 30, "en visio ou à Sierre", "export_allemagne"),
-    # une offre « temps » de Markus (le banc d'essai de la tranche pivot) : elle ne dit RIEN de sa disponibilité pour
-    # une heure de conseil export — la découverte l'ignore (autre capacité), l'essai sur invitation aussi
     (md.MARKUS, "temps", "Regard neuf de distributeur sur un emballage ou une étiquette", 15, 2, 0, 20, "pendant la Foire, sur un stand", None),
     (md.LEA, "temps", "Quelques minutes de regard neuf sur un support imprimé (français ou allemand)", 15, 2, 0, 20, "à distance", None),
-    (md.PAULINE, "lieu", "Un présentoir éclairé sur mon stand pendant la Foire", None, 1, 0, 10, "hors heures d'affluence", None),
+    (md.PAULINE, "lieu", "Un présentoir éclairé sur mon stand pendant la Foire", 20, 1, 0, 10, "hors heures d'affluence", None),
     ("s12", "competence", "Photographier un produit sur fond neutre", 30, 1, -60, -5, "offre ancienne", "developpement_web"),
 ]
 
 
 def semer_offres(club: ClubPulse) -> None:
-    """Offres volontaires DÉCLARÉES par des membres fictifs (données préparées, étiquetées). Aucune n'est déduite d'un
-    profil : une compétence déclarée n'est pas une disponibilité présente."""
     j = club.jour
-    for auteur, nature, quoi, duree, capacite, du, au, conditions, concept in OFFRES_PREPAREES:
+    for auteur, nature, quoi, duree, capacite, du, au, conditions, concept in OFFRES_PIVOT:
         club.banc.publier_offre(auteur, nature, quoi, capacite, j + timedelta(days=du), j + timedelta(days=au),
                                 duree_max_min=duree, conditions=conditions, concept=concept)
+    for auteur, nature, quoi, duree, capacite, conditions, concept, plages in offres_scene(club):
+        club.banc.publier_offre(auteur, nature, quoi, capacite, j, jour_foire(club), duree_max_min=duree, conditions=conditions,
+                                concept=concept, plages=plages)
 
 
 class Demo:
-    PERSONAS = (md.SOPHIE, md.MARKUS, CLAUDIA, md.NICOLAS, md.PAULINE, md.LEA, md.ANNA)
+    PERSONAS = (md.SOPHIE, md.LEA, md.PAULINE, md.MARKUS, NICOLAS, md.ANNA, CLAUDIA)
 
     def __init__(self, tax: Taxonomie, ia: Optional[Intelligence] = None):
         self.tax, self._ia = tax, ia
@@ -63,12 +86,17 @@ class Demo:
         self.traces: list[dict] = []
 
     # --------------------------------------------------------------- utilitaires
-    def _decouverte(self, pid: str) -> Optional[dict]:
-        d = self.club.vues.decouvertes_de(pid)
-        return next((x for x in d if any(p["capacite"] == self.tax.libelle("export_allemagne") for p in x["personnes"])), None)
-
     def _essai(self) -> tuple[str, int]:
         return self.ctx["essai"], self.club.banc.version(self.ctx["essai"])
+
+    def offre_de_lea(self) -> str:
+        c = self.club
+        return next(o.id for o in c.banc.offres(publiques=True) if o.auteur == md.LEA and o.plages)
+
+    def perturber_disponibilite(self, debut: str, fin: str) -> list[str]:
+        """La personne germanophone change SA disponibilité (sur son téléphone en direct ; jouée ici, et dite telle)."""
+        c = self.club
+        return c.banc.modifier_offre(md.LEA, self.offre_de_lea(), plages=[Plage(jour=jour_foire(c), debut=debut, fin=fin)])
 
     # --------------------------------------------------------------- les étapes (acte, légende, geste joué ?)
     def _e1_besoin(self) -> dict:
@@ -76,113 +104,103 @@ class Demo:
         acces = c.activer_compte(c.coffre.code_invitation(md.SOPHIE))
         self.ctx["session_sophie"] = acces["session"]
         aide = c.proposer("tisanes de plantes alpines bio", "aide")
-        cherche = c.proposer(BESOIN_SOPHIE, "cherche")
-        c.onboarding(md.SOPHIE, aide=[aide[0]], cherche=[next(x for x in cherche if x["concept"] == "export_allemagne")], visible=True)
-        self.ctx["avant_nicolas"] = len(c.vues.decouvertes_de(md.NICOLAS))
-        return {"acte": "Besoin", "legende": "Sophie produit des tisanes en Valais. Elle rejoint l'application du Club et dit ce qu'elle "
-                f"cherche : « {BESOIN_SOPHIE} ». Elle accepte d'être sollicitée ; rien d'autre n'est partagé.", "joue": True,
-                "ecran": {"app": md.SOPHIE, "vue": "profil"}}
-
-    def _e2_decouverte(self) -> dict:
-        d = self._decouverte(md.SOPHIE)
-        assert d is not None, "la découverte attendue n'existe pas"
-        self.ctx["decouverte"] = d["id"]
-        return {"acte": "Découverte", "legende": f"Personne n'a rien demandé à personne. Club Pulse détecte une possibilité : {d['titre']}. "
-                "Ce n'est pas un score, ni une décision : une inférence, avec ses preuves.", "joue": False,
-                "ecran": {"app": md.SOPHIE, "vue": "decouverte", "cible": d["id"]}}
-
-    def _e3_pourquoi(self) -> dict:
-        d = self.club.vues.decouverte_de(md.SOPHIE, self.ctx["decouverte"])
-        p = d["pourquoi"]
-        return {"acte": "Pourquoi", "legende": "Pourquoi lui, pourquoi maintenant : le besoin (déclaré), sa capacité (déclarée), leur "
-                "rencontre à la Foire (observée), le salon de Munich (agenda). Ce qui reste inconnu est dit : sa disponibilité. "
-                "Et le risque : aucune contribution de sa part n'a encore été confirmée dans le Club.", "joue": False,
-                "ecran": {"app": md.SOPHIE, "vue": "decouverte", "cible": self.ctx["decouverte"]},
-                "inconnues": [x["texte"] for x in p["inconnues"]], "risques": p["risques"]}
-
-    def _e4_invitation(self) -> dict:
-        c = self.club
-        eid = c.proposer_essai(md.SOPHIE, self.ctx["decouverte"])
-        p = c.banc.protocole(eid)
-        v = c.banc.modifier_brouillon(md.SOPHIE, eid, 0, p.model_copy(update={"critere": CRITERE_SUGGERE}))   # adopté EXPLICITEMENT
-        c.banc.proposer(md.SOPHIE, eid, v)
+        c.onboarding(md.SOPHIE, aide=[aide[0]], cherche=[], visible=True)
+        prop = c.preparer_action(md.SOPHIE, BESOIN_SOPHIE)
+        self.ctx["comprehension"] = prop
+        eid = c.creer_action(md.SOPHIE, {"question": "Présenter nos tisanes à des acheteurs germanophones", "objet": prop["objet"],
+                                          "critere": CRITERE_ACTION, "exigences": prop["exigences"], "fenetre": prop["fenetre"],
+                                          "duree_min_acceptable": 30})
         self.ctx["essai"] = eid
-        return {"acte": "Invitation", "legende": "Sophie décide. Le brouillon d'essai est prêt : un échange d'une heure avec Markus avant "
-                "le salon. Le critère n'est pas écrit à sa place : elle adopte la suggestion. Markus est invité en privé.",
-                "joue": True, "ecran": {"app": md.MARKUS, "vue": "essai", "cible": eid}}
+        return {"acte": "Besoin", "legende": f"Sophie écrit avec ses mots : « {BESOIN_SOPHIE} » Elle a le produit ; il lui manque "
+                "une voix allemande, un lieu et un public. Elle confirme ces trois exigences et sa fenêtre (jeudi 14 h–18 h).",
+                "joue": True, "ia": prop["ia"], "ecran": {"app": md.SOPHIE, "vue": "essai", "cible": eid}}
 
-    def _e5_accord(self) -> dict:
-        eid, v = self._essai()
-        self.club.banc.decider(md.MARKUS, eid, v, True)
-        return {"acte": "Accord", "legende": "Markus accepte. En acceptant, il DÉCLARE sa disponibilité : une heure, pour cet essai seulement. "
-                "Son nom n'est révélé qu'à présent, et seulement à Sophie.", "joue": True,
-                "ecran": {"app": md.SOPHIE, "vue": "essai", "cible": eid}}
-
-    def _e6_perturbation(self) -> dict:
+    def _e2_proposition(self) -> dict:
         c = self.club
         eid, _ = self._essai()
-        o = c.banc.offre_de(eid, c.banc.protocole(eid).etapes[0])
-        assert o is not None
-        c.banc.modifier_offre(md.MARKUS, o.id, duree_max_min=20)
-        return {"acte": "Perturbation", "legende": "La réalité : Markus n'a plus que 20 minutes au lieu de 60. Son accord ne couvre plus "
-                "l'essai. Le système ne remplace personne en silence : il dit ce qui est invalidé et ce qui reste valable.",
-                "joue": True, "ecran": {"app": md.SOPHIE, "vue": "essai", "cible": eid}}
+        a = c.banc.assembler(md.SOPHIE, eid)
+        cr = a["solution"]["creneau"]
+        return {"acte": "Proposition", "legende": f"Aucune offre ne suffit seule. Le serveur cherche le moment où les disponibilités "
+                f"DÉCLARÉES se recouvrent : {cr.texte()}. La traductrice du matin, l'offre sans horaire et la personne qui refuse les "
+                "sollicitations sont écartées — et c'est dit.", "joue": False, "creneau": cr.texte(),
+                "ecran": {"projection": True}}
 
-    def _e7_adaptation(self) -> dict:
+    def _e3_publication(self) -> dict:
+        c = self.club
+        eid, v = self._essai()
+        c.publier_action(md.SOPHIE, eid, v)
+        return {"acte": "Invitation", "legende": "Sophie publie. Chaque personne reçoit, sur SON téléphone, sa seule part : le geste, "
+                "le créneau, ce qui sera partagé. Rien n'est décidé à sa place.", "joue": True,
+                "ecran": {"app": md.LEA, "vue": "essai", "cible": eid}}
+
+    def _e4_accords(self) -> dict:
+        c = self.club
+        eid, v = self._essai()
+        for pid in (md.LEA, md.PAULINE, md.MARKUS):
+            c.banc.decider(pid, eid, v, True)
+        return {"acte": "Accords", "legende": "Léa, Pauline et Markus acceptent, chacun depuis son espace. La coopération est prête : "
+                "tous les accords couvrent CETTE version — pas encore une réalisation.", "joue": True, "etat": c.banc.etat(eid),
+                "ecran": {"projection": True}}
+
+    def _e5_perturbation(self) -> dict:
+        eid, _ = self._essai()
+        self.perturber_disponibilite(*HEURE_JURY)
+        c = self.club
+        return {"acte": "Perturbation", "legende": f"Le jury change une condition : Léa n'est disponible qu'à partir de {HEURE_JURY[0]}. "
+                "Elle le déclare sur son téléphone. Son accord ne couvre plus le créneau ; le lieu et le public restent valables "
+                "— pour ce créneau-là.", "joue": True, "etat": c.banc.etat(eid), "ecran": {"projection": True}}
+
+    def _e6_adaptation(self) -> dict:
         c = self.club
         eid, v = self._essai()
         alts = c.banc.alternatives(eid)
-        choix = next(a for a in alts if a["type"] == "raccourcir")
+        choix = next((a for a in alts if a["type"] == "decaler" and not a["plus_court"]), alts[0])
         c.banc.choisir_alternative(md.SOPHIE, eid, v, choix["id"])
-        c.banc.decider(md.MARKUS, eid, c.banc.version(eid), True)
-        return {"acte": "Adaptation", "legende": f"{len(alts)} adaptations valables : raccourcir à 20 minutes avec Markus, ou demander à "
-                "une autre personne qui offre une heure sur le marché allemand. Sophie garde Markus ; lui seul redonne son accord, "
-                "sur la nouvelle version.", "joue": True, "alternatives": [a["type"] for a in alts],
-                "ecran": {"app": md.SOPHIE, "vue": "essai", "cible": eid}}
+        return {"acte": "Adaptation", "legende": f"{len(alts)} adaptation(s) admissible(s), calculées par le serveur. Sophie garde 45 min : "
+                f"{choix['texte']} Personne n'est reconfirmé à sa place.", "joue": True,
+                "alternatives": [a["texte"] for a in alts], "ecran": {"projection": True}}
 
-    def _e8_action(self) -> dict:
+    def _e7_reconfirmations(self) -> dict:
         c = self.club
         eid, v = self._essai()
-        c.banc.lancer(md.SOPHIE, eid, v)
-        c.avancer((c.banc.protocole(eid).echeance - c.jour).days or 1)
-        c.banc.constater(md.SOPHIE, eid, "e1")
-        return {"acte": "Action", "legende": "Au salon de Munich, l'échange a lieu. Sophie le constate : une contribution reçue — ce n'est "
-                "pas encore un résultat.", "joue": True, "ecran": {"app": md.SOPHIE, "vue": "essai", "cible": eid}}
+        for e in c.banc.protocole(eid).etapes:
+            if c.banc.couverture(eid).get(e.contributeur or "") is not None:
+                c.banc.decider(e.contributeur or "", eid, v, True)
+        c.banc.lancer(md.SOPHIE, eid, c.banc.version(eid))
+        return {"acte": "Engagé", "legende": "Chacun reconfirme sur la nouvelle version ; Sophie engage l'action. Réalisation engagée "
+                "— pas encore réalisée.", "joue": True, "etat": c.banc.etat(eid), "ecran": {"projection": True}}
 
-    def _e9_resultat(self) -> dict:
+    def _e8_fiche(self) -> dict:
         c = self.club
         eid, _ = self._essai()
-        c.avancer(2)
+        e = next(x for x in c.banc.protocole(eid).etapes if x.livrable)
+        c.banc.livrer(e.contributeur or "", eid, e.id, FICHE_DE)
+        c.banc.constater(md.SOPHIE, eid, e.id)
+        return {"acte": "Résultat", "legende": "Léa écrit la fiche en allemand et la transmet. Elle apparaît sur le téléphone de Sophie, "
+                "qui en confirme la réception. Transmise, puis reçue : deux faits distincts.", "joue": True,
+                "ecran": {"app": md.SOPHIE, "vue": "essai", "cible": eid}}
+
+    def _e9_apres(self) -> dict:
+        c = self.club
+        eid, _ = self._essai()
+        c.avancer((jour_foire(c) - c.jour).days)
+        for e in c.banc.protocole(eid).etapes:
+            if not any(x.donnees["etape"] == e.id for x in c.banc._evs(eid, "CONTRIBUTION")):
+                c.banc.constater(md.SOPHIE, eid, e.id)
         rev = c.banc.observer(md.SOPHIE, eid, OBSERVATION, "positif", LIMITES)
-        c.banc.aviser(md.MARKUS, eid, rev, "confirme")
-        return {"acte": "Résultat", "legende": "Deux jours plus tard, Sophie déclare ce qui s'est passé, avec ses limites : deux contacts, "
-                "un rendez-vous, rien de signé. Markus confirme. Déclaré et confirmé par deux personnes : pas une vérité, pas une note.",
-                "joue": True, "ecran": {"app": md.SOPHIE, "vue": "essai", "cible": eid}}
-
-    def _e10_memoire(self) -> dict:
-        c = self.club
-        eid, _ = self._essai()
+        for pid in sorted(c.banc.participants(eid) - {md.SOPHIE}):
+            c.banc.aviser(pid, eid, rev, "confirme")
         c.banc.reutilisation(md.SOPHIE, eid, "club", "nom")
-        c.banc.reutilisation(md.MARKUS, eid, "club", "nom")
-        s = next(x for x in memoire_club.souvenirs(c.banc) if x["essai"] == eid)
-        return {"acte": "Mémoire", "legende": "Chacun choisit ce que le Club peut en réutiliser : les deux acceptent, avec leur nom. La "
-                f"mémoire dit « dans ce contexte, cette contribution a aidé, avec ces limites » — statut : {s['statut']}, "
-                f"partage : {s['niveau']}. Jamais « Markus est fiable ».", "joue": True,
+        for pid in sorted(c.banc.participants(eid) - {md.SOPHIE}):
+            c.banc.reutilisation(pid, eid, "club", "nom")
+        c.avancer(30)
+        return {"acte": "Entre les événements", "legende": "Horloge de démonstration : +30 jours. Il reste ce qui a été déclaré et "
+                "confirmé — la fiche reçue, la présentation DÉCLARÉE tenue par Sophie, ce qu'elle a observé, qui l'a confirmé, qui peut le réutiliser. Les "
+                "disponibilités ont expiré : rien n'est reconduit.", "joue": True, "horloge": "démonstration (+30 jours, simulé)",
                 "ecran": {"app": md.SOPHIE, "vue": "souvenirs"}}
 
-    def _e11_suivante(self) -> dict:
-        d = self._decouverte(md.NICOLAS)
-        assert d is not None, "la découverte suivante n'existe pas"
-        self.ctx["decouverte_nicolas"] = d["id"]
-        preuve = next((x["texte"] for x in d["pourquoi"]["preuves"] if x["statut"] == "CONFIRMÉ"), None)
-        return {"acte": "Découverte suivante", "legende": "Nicolas, distillateur, cherche lui aussi à se faire connaître en Allemagne. Hier, "
-                "rien ne se passait. Aujourd'hui, une possibilité apparaît — parce que le Club a appris. Il ne voit pas le nom de "
-                "Markus : seulement qu'une personne du Club a déjà aidé sur ce sujet.", "joue": False,
-                "avant": self.ctx.get("avant_nicolas"), "preuve": preuve,
-                "ecran": {"app": md.NICOLAS, "vue": "decouverte", "cible": d["id"]}}
-
-    ETAPES: list[Callable[["Demo"], dict]] = [_e1_besoin, _e2_decouverte, _e3_pourquoi, _e4_invitation, _e5_accord, _e6_perturbation,
-                                              _e7_adaptation, _e8_action, _e9_resultat, _e10_memoire, _e11_suivante]
+    ETAPES: list[Callable[["Demo"], dict]] = [_e1_besoin, _e2_proposition, _e3_publication, _e4_accords, _e5_perturbation, _e6_adaptation,
+                                              _e7_reconfirmations, _e8_fiche, _e9_apres]
 
     def suivant(self) -> dict:
         if self.etape >= len(self.ETAPES):
@@ -198,7 +216,7 @@ class Demo:
             self.suivant()
 
     def personas(self) -> list[dict]:
-        """DÉMO SEULEMENT : les membres fictifs que le jury peut incarner (code d'invitation, session si compte actif).
+        """DÉMO SEULEMENT : les membres fictifs que l'équipe peut incarner (code d'invitation, session si compte actif).
         En production, chacun n'a que son propre téléphone : cette route n'existe pas."""
         c = self.club
         res = []
@@ -208,4 +226,3 @@ class Demo:
                         "session": c.session(p) if p in c.coffre.actives else None,
                         "capacite": next((self.tax.libelle(o.concept) for o in c.profil(p).offre if o.concept), None)})
         return res
-

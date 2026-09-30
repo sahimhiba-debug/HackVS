@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Club Pulse · Écran commun</title>
+  <meta name="description" content="Club Pulse — écran commun d'une action collective : des rôles, jamais des noms. Monde de démonstration fictif.">
+  <link rel="icon" href="/static/pulse/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/pulse/pulse.css">
+  <style>
+    body { background: var(--papier); }
+    header.haut { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 16px 32px; border-bottom: 1px solid var(--ligne); background: var(--surface); }
+    header.haut .droite { margin-left: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .page { max-width: 1760px; margin: 0 auto; padding: 22px 32px 28px; }
+    h1.titre { font-size: clamp(28px, 2.6vw, 46px); font-weight: 750; letter-spacing: -0.03em; }
+    .phrase { font-size: clamp(20px, 1.7vw, 30px); margin-top: 10px; font-weight: 600; }
+    .phrase.ok { color: var(--vert); } .phrase.alerte { color: var(--rouge); } .phrase.attente { color: var(--ambre); }
+    .grille { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 26px; margin-top: 22px; }
+    .ligne-temps { background: var(--surface); border: 1px solid var(--ligne); border-radius: var(--rayon); padding: 18px 20px 40px; position: relative; }
+    .axe { position: relative; height: 26px; margin-left: 170px; border-bottom: 1px solid var(--ligne-forte); }
+    .axe span { position: absolute; transform: translateX(-50%); font-size: 15px; color: var(--encre-3); font-variant-numeric: tabular-nums; }
+    .piste { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 10px; align-items: center; min-height: 64px; border-bottom: 1px dashed var(--ligne); }
+    .piste .nom { font-size: 19px; font-weight: 700; }
+    .piste .nom small { display: block; font-size: 13px; font-weight: 500; color: var(--encre-3); }
+    .zone { position: relative; height: 58px; }
+    .barre { position: absolute; top: 4px; height: 30px; z-index: 3; border-radius: 8px; background: #2c5aa0; color: #fff; font-size: 13px; font-weight: 600;
+      padding: 7px 10px; white-space: nowrap; overflow: hidden; transition: left .8s ease, width .8s ease, background .6s ease, opacity .6s ease; }
+    .barre.autre { background: var(--surface); border: 2px dashed var(--encre-3); color: var(--encre-2); top: 36px; height: 20px; padding: 0 8px; font-size: 12px; z-index: 1; }
+    .barre.tombe { background: var(--rouge); }
+    .fenetre { position: absolute; top: 0; bottom: 0; background: rgba(20, 105, 59, .06); border-left: 2px solid rgba(20,105,59,.25); border-right: 2px solid rgba(20,105,59,.25);
+      transition: left .8s ease, width .8s ease; }
+    .bande { position: absolute; top: 44px; bottom: 16px; border-radius: 10px; border: 3px solid var(--vert); background: rgba(20,105,59,.06);
+      transition: left .8s ease, width .8s ease, border-color .6s ease, background .6s ease; pointer-events: none; z-index: 2; }
+    .bande.attente { border-color: var(--ambre); background: rgba(122,82,0,.10); }
+    .bande.alerte { border-color: var(--rouge); background: rgba(200,32,26,.10); border-style: dashed; }
+    .bande b { position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%); font-size: 17px; white-space: nowrap; background: var(--surface); padding: 2px 8px; border-radius: 6px; }
+    .legende { margin-top: 10px; font-size: 14px; color: var(--encre-3); }
+    .cartes { display: grid; gap: 12px; align-content: start; }
+    .exig { background: var(--surface); border: 1px solid var(--ligne); border-left: 6px solid var(--ligne-forte); border-radius: var(--rayon); padding: 14px 18px;
+      transition: border-color .6s ease, transform .4s ease; }
+    .exig h3 { font-size: 22px; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+    .exig p { font-size: 16px; margin-top: 4px; color: var(--encre-2); }
+    .exig[data-palier="accepté"], .exig[data-palier="disponible"] { border-left-color: #2c5aa0; }
+    .exig[data-palier="transmis"] { border-left-color: var(--ambre); }
+    .exig[data-palier="reçu"], .exig[data-palier="apporté"] { border-left-color: var(--vert); }
+    .exig[data-palier="ne couvre plus"], .exig[data-palier="manquant"] { border-left-color: var(--rouge); }
+    .exig[data-palier="proposé"], .exig[data-palier="à reconfirmer"] { border-left-color: var(--ambre); }
+    .chip { font-size: 15px; font-weight: 700; padding: 4px 12px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--ligne); white-space: nowrap; }
+    .chip.vert { background: var(--vert-pale); color: var(--vert); border-color: transparent; }
+    .chip.rouge { background: var(--rouge-pale); color: var(--rouge); border-color: transparent; }
+    .chip.ambre { background: var(--ambre-pale); color: var(--ambre); border-color: transparent; }
+    .chip.bleu { background: #e3ecf8; color: #1d4580; border-color: transparent; }
+    .change { margin-top: 22px; background: var(--surface); border: 2px solid var(--rouge); border-radius: var(--rayon); padding: 16px 20px; }
+    .change h2 { font-size: 24px; }
+    .change ul { margin: 8px 0 0; padding-left: 22px; font-size: 18px; }
+    .change li { margin-top: 4px; }
+    .bas { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 18px; font-size: 15px; color: var(--encre-2); }
+    .bas ol { margin: 6px 0 0; padding-left: 20px; }
+    .vide { font-size: 28px; margin-top: 80px; text-align: center; color: var(--encre-3); }
+    @media (max-width: 1100px) { .grille { grid-template-columns: 1fr; } .bas { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header class="haut">
+    <span class="marque"><span class="pouls-point" aria-hidden="true"></span>Club Pulse · écran commun</span>
+    <span class="puce">des rôles, jamais des noms</span>
+    <span class="puce fictif">monde de démonstration FICTIF</span>
+    <div class="droite"><span class="puce" id="date"></span><span class="puce" id="etat"></span><span class="puce" id="fraicheur" title="délai de la dernière lecture du serveur"></span></div>
+  </header>
+  <main class="page" id="page" aria-live="polite"><p class="vide">Connexion au serveur…</p></main>
+  <script type="module">
+    const $ = (s, r = document) => r.querySelector(s);
+    function h(tag, attrs = {}, ...enfants) {
+      const el = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs || {})) {
+        if (v === null || v === undefined || v === false) continue;
+        if (k === "class") el.className = v; else if (k === "style") el.setAttribute("style", v); else el.setAttribute(k, v === true ? "" : v);
+      }
+      for (const e of enfants.flat(Infinity)) if (e !== null && e !== undefined && e !== false) el.append(e instanceof Node ? e : document.createTextNode(String(e)));
+      return el;
+    }
+    const jeton = () => { try { return sessionStorage.getItem("console-jeton") || "1"; } catch { return "1"; } };
+    const min = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+    const ROLES = { voix: "Voix allemande", lieu: "Lieu", public: "Public germanophone", autre: "Contribution" };
+    const PUCES = { "reçu": "vert", "apporté": "vert", "accepté": "bleu", "disponible": "bleu", "transmis": "ambre", "proposé": "ambre",
+                    "à reconfirmer": "ambre", "ne couvre plus": "rouge", "manquant": "rouge" };
+    function phrase(p) {
+      const c = p.creneau ? p.creneau.texte : "";
+      const n = p.exigences.length, acc = p.exigences.filter((x) => ["accepté", "transmis", "reçu"].includes(x.palier)).length;
+      switch (p.etat) {
+        case "BROUILLON": return p.creneau ? ["ok", `Proposition complète : ${c} — le seul moment où les ${n} disponibilités se recouvrent.`]
+                                           : ["alerte", `Pas de proposition complète : ${p.blocage || "des exigences restent sans offre."}`];
+        case "PROPOSE": return ["attente", `Proposé à chacun, sur son téléphone : ${acc} accord(s) sur ${n}. Rien n'est supposé.`];
+        case "AUTORISE": return ["ok", `Coopération prête : les ${n} accords couvrent ${c}.`];
+        case "A_ADAPTER": return ["alerte", `Une condition a changé : ${p.adaptation ? p.adaptation.alternatives.length : 0} adaptation(s) admissible(s).`];
+        case "IMPOSSIBLE": return ["alerte", "Bloqué : aucune combinaison d'offres réelles ne tient. Rien n'est inventé."];
+        case "EN_COURS": return ["ok", `Action engagée pour ${c}.`];
+        case "CONTRIBUTION_RECUE": return ["ok", "Toutes les contributions sont reçues."];
+        case "OBSERVEE": return ["ok", "Résultat déclaré par la porteuse, confirmé par les participants."];
+        default: return ["attente", p.etat_libelle];
+      }
+    }
+    let derniere = "";
+    function rendre(p) {
+      if (p.vide) { $("#page").replaceChildren(h("p", { class: "vide" }, "Aucune action en cours. Sophie décrit son besoin sur son téléphone.")); return; }
+      $("#date").textContent = `date simulée : ${p.date}`;
+      $("#etat").textContent = `${p.etat_libelle} · version ${p.version}`;
+      const cle = JSON.stringify(p);
+      if (cle === derniere) return;                      // rien de neuf : aucune animation fabriquée
+      derniere = cle;
+      // échelle du temps : la fenêtre de la porteuse et toutes les disponibilités déclarées
+      const bornes = [p.fenetre && p.fenetre.debut, p.fenetre && p.fenetre.fin];
+      p.exigences.forEach((x) => [x.offre, ...x.candidats].filter(Boolean).forEach((o) => o.fenetres.forEach((f) => bornes.push(f.debut, f.fin))));
+      const ms = bornes.filter(Boolean).map(min);
+      const t0 = Math.floor(Math.min(...ms) / 60) * 60, t1 = Math.ceil(Math.max(...ms) / 60) * 60;
+      const pct = (t) => `${((min(t) - t0) / (t1 - t0)) * 100}%`;
+      const larg = (a, b) => `${((min(b) - min(a)) / (t1 - t0)) * 100}%`;
+      const [ton, texte] = phrase(p);
+      const axe = h("div", { class: "axe" });
+      for (let m = t0; m <= t1; m += 60) axe.append(h("span", { style: `left:${((m - t0) / (t1 - t0)) * 100}%` }, `${String(m / 60).padStart(2, "0")}:00`));
+      const pistes = [h("div", { class: "piste" }, h("div", { class: "nom" }, "Produit", h("small", {}, "la porteuse")),
+        h("div", { class: "zone" }, p.fenetre ? h("div", { class: "barre", style: `left:${pct(p.fenetre.debut)};width:${larg(p.fenetre.debut, p.fenetre.fin)};background:var(--vert)` }, `fenêtre ${p.fenetre.debut}–${p.fenetre.fin}`) : null))];
+      for (const x of p.exigences) {
+        const zone = h("div", { class: "zone" });
+        const retenue = x.offre ? [x.offre] : (x.candidats.length && p.etat === "BROUILLON" ? [x.candidats[0]] : []);
+        for (const o of x.candidats) if (!retenue.includes(o) && (!x.offre || o.quoi !== x.offre.quoi))
+          o.fenetres.forEach((f) => zone.append(h("div", { class: "barre autre", style: `left:${pct(f.debut)};width:${larg(f.debut, f.fin)}`, title: o.quoi }, `autre offre ${f.debut}–${f.fin}`)));
+        for (const o of retenue) o.fenetres.forEach((f) => zone.append(h("div", { class: "barre" + (x.palier === "ne couvre plus" ? " tombe" : ""),
+          style: `left:${pct(f.debut)};width:${larg(f.debut, f.fin)}` }, `${f.debut}–${f.fin}`)));
+        pistes.push(h("div", { class: "piste", "data-id": x.id }, h("div", { class: "nom" }, ROLES[x.role] || x.role), zone));
+      }
+      const lt = h("div", { class: "ligne-temps" }, axe, ...pistes);
+      if (p.creneau) {
+        const cl = p.etat === "A_ADAPTER" || p.etat === "IMPOSSIBLE" ? "alerte" : (["PROPOSE", "BROUILLON"].includes(p.etat) ? "attente" : "");
+        lt.append(h("div", { class: `bande ${cl}`, style: `left:calc(170px + 20px + (100% - 210px) * ${(min(p.creneau.debut) - t0) / (t1 - t0)});width:calc((100% - 210px) * ${(min(p.creneau.fin) - min(p.creneau.debut)) / (t1 - t0)})` },
+          h("b", {}, p.creneau.texte)));
+      }
+      const cartes = h("div", { class: "cartes" },
+        h("div", { class: "exig", "data-palier": "apporté" }, h("h3", {}, "Produit", h("span", { class: "chip vert" }, "apporté")), h("p", {}, "La porteuse a le produit ; il lui manque le reste.")),
+        ...p.exigences.map((x) => h("div", { class: "exig", "data-palier": x.palier },
+          h("h3", {}, ROLES[x.role] || x.role, h("span", { class: `chip ${PUCES[x.palier] || ""}` }, x.palier)),
+          h("p", {}, x.geste + (x.livrable ? ` · à remettre : ${x.livrable}` : "")),
+          x.pourquoi ? h("p", { style: "color:var(--rouge);font-weight:600" }, x.pourquoi) : null)));
+      const blocs = [h("h1", { class: "titre" }, p.titre), h("p", { class: `phrase ${ton}` }, texte), h("div", { class: "grille" }, lt, cartes),
+        h("p", { class: "legende" }, "Barres pleines : disponibilités DÉCLARÉES par leurs propriétaires · pointillés : autres offres réelles · cadre : le créneau calculé par le serveur.")];
+      if (p.adaptation) blocs.push(h("div", { class: "change" }, h("h2", {}, p.adaptation.bloque ? "Bloqué — ce qui manque est dit" : "Ce qui vient de changer"),
+        h("ul", {}, h("li", {}, p.adaptation.cause),
+          p.adaptation.tombe.length ? h("li", {}, "Ne couvre plus : ", h("b", {}, p.adaptation.tombe.map((r) => ROLES[r] || r).join(", "))) : null,
+          p.adaptation.tient.length ? h("li", {}, "Reste valable pour l'ancien créneau : ", p.adaptation.tient.map((r) => ROLES[r] || r).join(", ")) : null,
+          ...p.adaptation.alternatives.map((a) => h("li", {}, "Adaptation possible : ", a.texte)),
+          h("li", {}, "La porteuse choisit sur son téléphone ; chaque participant concerné reconfirme sur le sien."))));
+      blocs.push(h("div", { class: "bas" },
+        h("div", {}, h("span", { class: "surtitre" }, "Événements enregistrés"), h("ol", {}, p.journal.map((j) => h("li", {}, `${j.le} · ${j.quoi}`)))),
+        h("div", {}, h("span", { class: "surtitre" }, "Joué par l'équipe (console)"),
+          p.joues.length ? h("ol", {}, p.joues.map((j) => h("li", {}, `${j.qui} : ${j.geste}`))) : h("p", { class: "note" }, "Aucun geste joué : tout vient des téléphones."),
+          h("p", { class: "note", style: "margin-top:8px" }, p.regle))));
+      $("#page").replaceChildren(...blocs);
+    }
+    let enCours = false;
+    async function lire() {
+      if (enCours) return; enCours = true;
+      const t = performance.now();
+      try {
+        const r = await fetch("/api/pulse/console/projection", { headers: { "X-Pulse-Console": jeton() } });
+        if (!r.ok) throw new Error(`serveur : ${r.status}`);
+        rendre(await r.json());
+        $("#fraicheur").textContent = `lu en ${Math.round(performance.now() - t)} ms`;
+        $("#fraicheur").className = "puce";
+      } catch (e) {
+        $("#fraicheur").textContent = "hors ligne : écran figé";         // jamais un état inventé
+        $("#fraicheur").className = "puce rouge";
+      } finally { enCours = false; }
+    }
+    lire();
+    setInterval(lire, 700);
+  </script>
+</body>
+</html>

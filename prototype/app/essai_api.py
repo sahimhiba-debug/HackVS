@@ -31,7 +31,44 @@ class Brouillon(BaseModel):
     pourquoi: str = Field(default="", max_length=300)
     critere: str = Field(default="", max_length=300)
     echeance: date
-    etapes: list[GesteEntree] = Field(default_factory=list, max_length=4)
+    etapes: Optional[list[GesteEntree]] = Field(default=None, max_length=4)    # absent : gestes existants conservés
+
+
+HHMM = r"^([01]\d|2[0-3]):[0-5]\d$"
+
+
+class PlageEntree(BaseModel):
+    jour: date
+    debut: str = Field(pattern=HHMM)
+    fin: str = Field(pattern=HHMM)
+
+
+class FenetreEntree(BaseModel):
+    jour: date
+    debut: str = Field(pattern=HHMM)
+    fin: str = Field(pattern=HHMM)
+
+
+class Exigence(BaseModel):
+    role: Literal["voix", "lieu", "public", "autre"] = "autre"
+    nature: Nature
+    concept: Optional[str] = Field(default=None, max_length=64)
+    geste: str = Field(min_length=3, max_length=200)
+    duree_min: int = Field(ge=5, le=120)
+    livrable: Optional[str] = Field(default=None, max_length=120)
+
+
+class Action(BaseModel):
+    question: str = Field(min_length=3, max_length=300)
+    objet: str = Field(default="", max_length=120)
+    critere: str = Field(default="", max_length=300)
+    exigences: list[Exigence] = Field(min_length=1, max_length=4)
+    fenetre: FenetreEntree
+    duree_min_acceptable: Optional[int] = Field(default=None, ge=5, le=240)
+
+
+class Livraison(BaseModel):
+    contenu: str = Field(min_length=3, max_length=3000)
 
 
 class Version(BaseModel):
@@ -67,6 +104,7 @@ class OffreEntree(BaseModel):
     au: date
     conditions: str = Field(default="", max_length=300)
     concept: Optional[str] = Field(default=None, max_length=64)   # une capacité DÉCLARÉE dans son profil
+    plages: list[PlageEntree] = Field(default_factory=list, max_length=8)
 
 
 class OffreModif(BaseModel):
@@ -74,6 +112,7 @@ class OffreModif(BaseModel):
     capacite: Optional[int] = Field(default=None, ge=1, le=20)
     au: Optional[date] = None
     conditions: Optional[str] = Field(default=None, max_length=300)
+    plages: Optional[list[PlageEntree]] = Field(default=None, max_length=8)   # « je ne suis disponible qu'à partir de 17 h »
 
 
 class Observation(BaseModel):
@@ -93,13 +132,21 @@ class Reutilisation(BaseModel):
     mention: Literal["nom", "anonyme"]
 
 
-JOUABLES = {"s01", "d01", "s15"}           # Pauline, Léa, Claudia : jamais Sophie ni Markus, qui ont chacun leur téléphone
+# personnages que l'ÉQUIPE peut jouer depuis la console (Pauline, Markus, Nicolas, Anna, Claudia) — jamais Sophie ni Léa,
+# qui agissent depuis leur propre téléphone ; chaque geste joué est journalisé et affiché comme tel
+JOUABLES = {"s01", "s14", "s04", "s10", "s15"}
 
 
 class GesteJoue(BaseModel):
     membre: str = Field(max_length=8)
     version: int = Field(ge=0)
     accepte: bool
+
+
+class DisponibiliteJouee(BaseModel):
+    membre: str = Field(max_length=8)
+    offre: str = Field(max_length=32)
+    plages: list[PlageEntree] = Field(min_length=1, max_length=8)
 
 
 class Annulation(BaseModel):
@@ -123,15 +170,36 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     @r.post("/moi/offres")
     def publier_offre(o: OffreEntree, pid: str = Depends(membre)) -> dict:
         return au_monde(lambda c: {"offre": c.publier_offre(pid, o.nature, o.quoi, o.capacite, o.du or c.jour, o.au, o.duree_max_min,
-                                                           o.conditions, o.concept)})
+                                                           o.conditions, o.concept, [x.model_dump() for x in o.plages])})
 
     @r.patch("/moi/offres/{oid}")
     def modifier_offre(oid: str, m: OffreModif, pid: str = Depends(membre)) -> dict:
-        return au_monde(lambda c: {"essais_a_adapter": c.banc.modifier_offre(pid, oid, **m.model_dump())})
+        return au_monde(lambda c: {"essais_a_adapter": c.modifier_offre(pid, oid, m.model_dump())})
 
     @r.post("/moi/offres/{oid}/retirer")
     def retirer_offre(oid: str, pid: str = Depends(membre)) -> dict:
         return au_monde(lambda c: {"essais_a_adapter": c.banc.retirer_offre(pid, oid)})
+
+    # ------------------------------------------------------------------ B0. une ACTION collective (demande → exigences → proposition)
+    @r.post("/moi/actions/preparer")
+    def preparer_action(f: Formulation, pid: str = Depends(membre)) -> dict:
+        limiter_ia(pid)
+        return au_monde(lambda c: c.preparer_action(pid, f.texte))        # une proposition à confirmer ; rien n'est écrit
+
+    @r.post("/moi/actions/nouvelle")
+    def creer_action(a: Action, pid: str = Depends(membre)) -> dict:
+        def f(c: ClubPulse) -> dict:
+            eid = c.creer_action(pid, a.model_dump(mode="json"))
+            return vue(c, eid, pid)
+        return au_monde(f)
+
+    @r.post("/moi/essais/{eid}/publier-proposition")
+    def publier_proposition(eid: str, v: Version, pid: str = Depends(membre)) -> dict:
+        return commande(eid, pid, lambda c: c.publier_action(pid, eid, v.version))
+
+    @r.post("/moi/essais/{eid}/livrer/{etape}")
+    def livrer(eid: str, etape: str, x: Livraison, pid: str = Depends(membre)) -> dict:
+        return commande(eid, pid, lambda c: c.banc.livrer(pid, eid, etape, x.contenu))
 
     # ------------------------------------------------------------------ B. un essai
     @r.post("/moi/essais/preparer")
@@ -220,6 +288,25 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
             return c.vues_essai.essai(eid, None, console=True)
         return au_monde(f)
 
+    @r.get("/console/projection", dependencies=[Depends(console)])
+    def projection() -> dict:
+        """L'écran commun : l'action collective la plus récente, en RÔLES (jamais de noms)."""
+        def f(c: ClubPulse) -> dict:
+            eid = next((x for x in reversed(c.banc.essais()) if c.banc.protocole(x).fenetre), None)
+            return c.vues_essai.projection(eid, c.joues) if eid else {"vide": True, "regle": "Aucune action en cours.", "fictif": True}
+        return au_monde(f)
+
+    @r.post("/console/jouer/disponibilite", dependencies=[Depends(console)])
+    def jouer_disponibilite(d: DisponibiliteJouee) -> dict:
+        """DÉMONSTRATION SEULEMENT : un membre absent de la scène change SA disponibilité, JOUÉ par l'équipe et affiché comme tel."""
+        def f(c: ClubPulse) -> dict:
+            if d.membre not in JOUABLES:
+                raise Interdit("ce membre agit depuis son propre téléphone")
+            touches = c.modifier_offre(d.membre, d.offre, {"plages": [x.model_dump() for x in d.plages]})
+            c.jouer(d.membre, "change sa disponibilité : " + ", ".join(f"{x.debut}–{x.fin}" for x in d.plages))
+            return {"essais_a_adapter": touches, "joue": True}
+        return au_monde(f)
+
     @r.post("/console/essais/{eid}/geste", dependencies=[Depends(console)])
     def c_geste(eid: str, g: GesteJoue) -> dict:
         """DÉMONSTRATION SEULEMENT : un geste d'un membre fictif absent de la scène (ex. Pauline), JOUÉ par l'animation
@@ -228,6 +315,7 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
             if g.membre not in JOUABLES:
                 raise Interdit("seuls les membres absents de la scène peuvent être joués")
             c.banc.decider(g.membre, eid, g.version, g.accepte)
+            c.jouer(g.membre, "accepte sa part" if g.accepte else "décline")
             return c.vues_essai.essai(eid, None, console=True) | {"joue": True}
         return au_monde(f)
 

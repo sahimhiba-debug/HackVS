@@ -45,8 +45,8 @@ def test_en_tetes_de_securite_et_csp_par_empreintes():
 def test_chaque_script_en_ligne_a_son_empreinte():
     """Une page modifiée sans que la CSP suive serait bloquée par le navigateur : l'empreinte est recalculée au démarrage
     à partir du fichier servi, et le test de bout en bout échoue sur toute violation (erreurs de console)."""
-    pages = [WEB_PULSE / "app.html", WEB_PULSE / "console.html"]
-    assert len(empreintes(pages)) == 2
+    pages = [WEB_PULSE / "app.html", WEB_PULSE / "console.html", WEB_PULSE / "projection.html"]
+    assert len(empreintes(pages)) == 3
     assert all(e.encode() in politique_contenu(pages) for e in empreintes(pages))
 
 

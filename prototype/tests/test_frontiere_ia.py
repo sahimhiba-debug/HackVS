@@ -156,10 +156,15 @@ def test_injection_dans_un_profil_reste_du_contenu_et_ne_fuit_pas():
 def test_relire_son_invitation_ne_rappelle_pas_le_modele():
     """Une LECTURE répétée est sans effet : le message d'invitation est rédigé une fois par (essai, version, personne)
     (sinon chaque rafraîchissement coûterait un appel au modèle et ajouterait un événement au journal)."""
-    from intelligence.demo import Demo
-    d = Demo(TAX)
-    d.rejouer(4)                                                            # Sophie a invité Markus
-    c, eid = d.club, d.ctx["essai"]
+    from intelligence.club_pulse import CRITERE_SUGGERE, ClubPulse
+    c = ClubPulse(TAX)
+    c.activer_compte(c.coffre.code_invitation(md.SOPHIE))
+    c.onboarding(md.SOPHIE, aide=[{"texte": "tisanes de plantes alpines bio", "concept": "boissons"}],
+                 cherche=[{"texte": "Trouver un distributeur pour entrer sur le marché allemand", "concept": "export_allemagne"}], visible=True)
+    o = next(x for x in c.scanner()["opportunites"] if x.beneficiaire == md.SOPHIE and md.MARKUS in {r.membre for r in x.roles})
+    eid = c.proposer_essai(md.SOPHIE, o.id)
+    v = c.banc.modifier_brouillon(md.SOPHIE, eid, 0, c.banc.protocole(eid).model_copy(update={"critere": CRITERE_SUGGERE}))
+    c.banc.proposer(md.SOPHIE, eid, v)                                     # Sophie a invité Markus
     premiere = c.vues_essai.essai(eid, md.MARKUS)
     assert premiere["message"]["texte"] and "Sophie" not in premiere["message"]["texte"]
     avant = (len(c.ia.appels), len(c.r.memoire.evenements()))

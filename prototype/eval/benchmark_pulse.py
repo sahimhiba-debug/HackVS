@@ -216,7 +216,7 @@ def confidentialite_ecrans() -> dict:
     CHAQUE membre (150) et de la console : ni nom de qui a décliné (sauf chez qui l'a invité), ni note privée d'autrui,
     ni observation hors de ses participants, ni pseudonyme non rendu, ni identifiant interne."""
     d = Demo(TAX)
-    d.rejouer(len(Demo.ETAPES))
+    d.rejouer(len(Demo.ETAPES) - 1)                                         # avant le saut de +30 jours (les offres valent encore)
     c, b = d.club, d.club.banc
     c.capturer(md.SOPHIE, NOTE_PRIVEE)
     geste = Etape(id="e1", nature="temps", geste="Regarder notre étiquette 10 secondes", duree_min=10)
@@ -232,6 +232,7 @@ def confidentialite_ecrans() -> dict:
     b.constater(md.PAULINE, pauline, "e1")
     secret = "OBSERVATION-NON-PARTAGEE-4c1e"
     b.observer(md.PAULINE, pauline, secret, "mitige", "une seule personne")   # niveau par défaut : participants
+    d.suivant()                                                             # puis le résultat, la mémoire, +30 jours
     refus = {(x.donnees["essai"], x.acteurs[0]) for x in b.m.evenements("ACCORD") if not x.donnees["accepte"]}
     ecrans, fuites = 0, []
 
@@ -253,6 +254,11 @@ def confidentialite_ecrans() -> dict:
         vues += [c.vues_essai.essai(eid, pid) for eid in b.essais() if pid in b.personnes(eid) and (pid == b.porteur(eid) or b.etat(eid) != "BROUILLON")]
         controler(pid, vues, pid)
     controler("console", [c.vues.panneau(), c.vues_essai.console()] + [c.vues_essai.essai(eid, None, console=True) for eid in b.essais()])
+    for eid in b.essais():                                                  # l'écran COMMUN : aucun nom du tout
+        if b.protocole(eid).fenetre:
+            ecrans += 1
+            brut = json.dumps(c.vues_essai.projection(eid, c.joues), ensure_ascii=False)
+            fuites += [("nom sur l'écran commun", "projection") for per in c.coffre._personnes.values() if per.nom in brut]
     for eid, m in refus:                        # qui a décliné : jamais nommé dans CET essai, sauf à qui l'avait invité(e)
         nom = c.coffre.identite(m).nom  # type: ignore[union-attr]
         invite = any(e.get("invitation") and e.get("contributeur") == m for v_ in b._versions(eid) for e in v_.donnees["protocole"]["etapes"])

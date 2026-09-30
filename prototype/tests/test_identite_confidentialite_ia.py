@@ -229,3 +229,14 @@ def test_identifiant_d_appel_ia_sans_lien_avec_le_contenu():
     t1 = Intelligence(TAX, None).comprendre_demande("Je cherche un avocat.").appel.trace
     t2 = Intelligence(TAX, None).comprendre_demande("Je cherche un traducteur.").appel.trace
     assert t1 == t2 == "ia-000001"                                          # un compteur : rien ne se déduit du message
+
+
+def test_nettoyer_retire_les_noms_sans_detruire_le_sens():
+    """Nom complet : retiré quelle que soit la casse. Mot isolé d'un nom : seulement employé comme nom propre — « nos
+    tisanes » (le produit du membre) reste, « Entremont » part. Courriels et téléphones partent toujours."""
+    from intelligence.identite import nettoyer
+    t = nettoyer("Chez Tisanes du Val d'Entremont, nos tisanes partent ; écrire à s@x.ch ou +41 79 123 45 67 ; Entremont.",
+                 ["Tisanes du Val d'Entremont (fictive)", "Sophie Carron"])
+    assert "Val d'Entremont" not in t and "Entremont" not in t and "@" not in t and "79 123" not in t
+    assert "nos tisanes partent" in t
+    assert "Carron" not in nettoyer("Parlez-en à sophie carron ou à Carron.", ["Sophie Carron"])

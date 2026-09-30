@@ -19,18 +19,29 @@
     main { padding-top: 18px; }
     .grand { font-size: clamp(24px, 6.5vw, 32px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; }
     nav.onglets { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--ligne); z-index: 6;
-      display: grid; grid-template-columns: repeat(3, 1fr); padding-bottom: env(safe-area-inset-bottom); }
+      display: grid; grid-template-columns: repeat(4, 1fr); padding-bottom: env(safe-area-inset-bottom); }
     nav.onglets a { text-decoration: none; font-size: 12px; font-weight: 600; color: var(--encre-3); display: grid; justify-items: center; gap: 2px; padding: 9px 2px 10px; min-height: 56px; }
     nav.onglets a span { font-size: 19px; line-height: 1; }
     nav.onglets a[aria-current="page"] { color: var(--encre); }
     .ligne { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
     .geste { border-left: 3px solid var(--ligne-forte); padding: 6px 0 6px 10px; margin-top: 10px; }
     .geste.vous { border-left-color: var(--rouge); }
-    .alt { width: 100%; text-align: left; margin-top: 8px; }
+    .alt { width: 100%; text-align: left; justify-content: flex-start; margin-top: 8px; border-radius: var(--rayon-s); font-weight: 550; line-height: 1.35; padding: 12px 14px; }
     fieldset { border: 0; padding: 0; margin: 0; }
     .radios label { display: inline-flex; gap: 6px; align-items: center; margin: 6px 12px 0 0; font-size: 15px; }
     input[type="number"] { width: 90px; }
     details summary { cursor: pointer; font-weight: 600; margin-top: 12px; }
+    .creneau { font-size: 22px; font-weight: 750; letter-spacing: -0.02em; margin-top: 6px; }
+    .palier { font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--ligne); }
+    .palier.reçu, .palier.apporté { background: var(--vert-pale); color: var(--vert); border-color: transparent; }
+    .palier.accepté { background: #e3ecf8; color: #1d4580; border-color: transparent; }
+    .palier.transmis, .palier.proposé, .palier.à.reconfirmer { background: var(--ambre-pale); color: var(--ambre); border-color: transparent; }
+    .palier.ne.couvre.plus, .palier.manquant { background: var(--rouge-pale); color: var(--rouge); border-color: transparent; }
+    .fiche { white-space: pre-wrap; background: var(--surface-2); border: 1px solid var(--ligne); border-radius: var(--rayon-s); padding: 10px 12px; margin-top: 6px; }
+    .exigence { border: 1px solid var(--ligne); border-radius: var(--rayon-s); padding: 10px 12px; margin-top: 8px; background: var(--surface); }
+    .exigence .x-geste, .exigence .x-livrable { width: 100%; margin-top: 6px; }
+    .exigence .x-livrable { flex: 1 1 100%; }
+    input[type="time"], input[type="date"] { min-width: 0; }
   </style>
 </head>
 <body>
@@ -44,6 +55,7 @@
   </div>
   <nav class="onglets" id="onglets" aria-label="Navigation" hidden>
     <a href="#actions" data-o="actions"><span aria-hidden="true">◉</span>Mes actions</a>
+    <a href="#action" data-o="action"><span aria-hidden="true">⧉</span>Agir à plusieurs</a>
     <a href="#nouveau" data-o="nouveau"><span aria-hidden="true">＋</span>Proposer un essai</a>
     <a href="#souvenirs" data-o="souvenirs"><span aria-hidden="true">◈</span>Souvenirs et accords</a>
   </nav>
@@ -169,6 +181,66 @@
         h("p", { class: "note", style: "margin-top:8px" }, "Rien n'est envoyé à personne tant que vous n'avez pas publié la proposition."));
     }
 
+    // ------------------------------------------------------------------ B0. agir à plusieurs : besoin → exigences confirmées → proposition
+    const ROLES = { voix: "Voix (langue)", lieu: "Lieu", public: "Public", autre: "Autre contribution" };
+    async function ecranAction() {
+      const t = h("textarea", { rows: 3, id: "besoin", maxlength: 600, placeholder: "Ex. : Je voudrais présenter nos tisanes à des acheteurs germanophones pendant la Foire, jeudi après-midi." });
+      const zone = h("div");
+      afficher(h("h1", { class: "grand" }, "Agir à plusieurs"),
+        h("p", { class: "note", style: "margin-top:6px" }, "Ce que vous ne pouvez pas faire seul·e. Dites-le avec vos mots : Club Pulse propose ce qu'il faudrait réunir ; vous confirmez ; le serveur cherche des offres RÉELLES et le moment où elles se recouvrent."),
+        h("div", { class: "champ" }, h("label", { for: "besoin" }, "Votre besoin"), t),
+        h("div", { class: "actions", style: "margin-top:8px" }, h("button", { class: "btn plein", id: "comprendre", onclick: async (ev) => {
+          const bouton = ev.currentTarget;
+          bouton.disabled = true;
+          try { const p = await api("/api/pulse/moi/actions/preparer", { corps: { texte: t.value } }); zone.replaceChildren(formAction(p)); }
+          catch (e) { toast(e.message, "erreur"); } finally { bouton.disabled = false; } } }, "Comprendre ma demande")), zone);
+    }
+    function formAction(p) {
+      const liste = h("div", { id: "exigences" });
+      const ajouter = (x) => liste.append(h("div", { class: "exigence", "data-role": x.role, "data-nature": x.nature, "data-concept": x.concept || "" },
+        h("div", { class: "ligne" }, h("b", {}, ROLES[x.role] || x.role), h("button", { class: "btn discret petit", style: "margin-left:auto", onclick: (e) => e.currentTarget.closest(".exigence").remove() }, "Retirer")),
+        h("input", { class: "x-geste", maxlength: 200, value: x.geste, "aria-label": "Ce que la personne ferait" }),
+        h("div", { class: "ligne", style: "margin-top:6px" }, h("input", { class: "x-duree", type: "number", min: 5, max: 120, value: x.duree_min, "aria-label": "Durée en minutes" }), h("span", { class: "note" }, "min"),
+          h("input", { class: "x-livrable", maxlength: 120, value: x.livrable || "", placeholder: "à remettre (facultatif)", "aria-label": "Résultat à remettre" }))));
+      p.exigences.forEach(ajouter);
+      const f = p.fenetre || {};
+      const jour = h("input", { id: "f-jour", type: "date", value: f.jour || "" });
+      const debut = h("input", { id: "f-debut", type: "time", step: 900, value: f.debut || "" });
+      const fin = h("input", { id: "f-fin", type: "time", step: 900, value: f.fin || "" });
+      const minimum = h("input", { id: "f-min", type: "number", min: 5, max: 240, value: 30 });
+      const question = h("input", { id: "f-question", maxlength: 300, value: p.objet ? `Présenter nos ${p.objet}${p.langue_public === "de" ? " à des acheteurs germanophones" : ""}` : p.texte });
+      const critere = h("textarea", { id: "f-critere", rows: 2, maxlength: 300, placeholder: "Qu'est-ce qui comptera comme réalisé ?" });
+      const mode = p.ia && p.ia.fournisseur === "apertus" && !p.ia.repli ? `Compris par Apertus · ${p.ia.modele || ""} (prompt ${p.ia.prompt}) — à vérifier`
+        : `Règles simples, aucun modèle utilisé. Mots reconnus : ${(p.reconnu || []).join(" · ") || "aucun"}.`;
+      return h("div", { class: "carte", style: "margin-top:14px" }, h("p", { class: "ia" }, mode),
+        p.manquant.length ? h("p", { class: "encadre" }, "À préciser : " + p.manquant.join(" · ")) : null,
+        h("div", { class: "champ" }, h("label", { for: "f-question" }, "Ce que vous voulez réaliser"), question),
+        section("Ce qu'il faudrait réunir (d'autres membres)", liste,
+          h("div", { class: "ligne" }, Object.entries(ROLES).map(([r, lib]) => h("button", { class: "btn discret petit", style: "margin-top:8px",
+            onclick: () => ajouter({ role: r, nature: r === "lieu" ? "lieu" : "competence", concept: null, geste: lib, duree_min: 45, livrable: null }) }, `+ ${lib}`)))),
+        section("Quand êtes-vous disponible ?", h("div", { class: "ligne" }, jour, debut, h("span", {}, "→"), fin),
+          h("div", { class: "ligne", style: "margin-top:6px" }, h("label", { for: "f-min" }, "En dessous de"), minimum, h("span", {}, "min, cela ne vaut plus la peine"))),
+        h("div", { class: "champ" }, h("label", { for: "f-critere" }, "Ce qui comptera comme réalisé"), critere,
+          h("button", { class: "btn discret petit", style: "margin-top:6px", onclick: () => { critere.value = p.critere_suggere; } }, "Reprendre la suggestion")),
+        h("div", { class: "actions", style: "margin-top:12px" }, h("button", { class: "btn plein", id: "chercher", onclick: async () => {
+          const corps = { question: question.value, objet: p.objet || "", critere: critere.value, duree_min_acceptable: Number(minimum.value) || null,
+            fenetre: { jour: jour.value, debut: debut.value, fin: fin.value },
+            exigences: [...liste.children].map((x) => ({ role: x.dataset.role, nature: x.dataset.nature, concept: x.dataset.concept || null,
+              geste: x.querySelector(".x-geste").value, duree_min: Number(x.querySelector(".x-duree").value), livrable: x.querySelector(".x-livrable").value || null })) };
+          try { const e = await api("/api/pulse/moi/actions/nouvelle", { corps }); location.hash = `#essai/${e.id}`; } catch (e) { toast(e.message, "erreur"); } } },
+          "Chercher une proposition")),
+        h("p", { class: "note", style: "margin-top:8px" }, "Rien n'est envoyé à personne tant que vous n'avez pas publié."));
+    }
+    function carteAssemblage(a) {
+      return section("Ce que le Club peut réunir", h("p", { class: "note" }, `Votre fenêtre : ${a.fenetre}`),
+        a.exigences.map((x, i) => h("div", { class: "exigence" }, h("b", {}, `Exigence ${i + 1}`),
+          x.offres.length ? x.offres.map((o) => h("p", { class: "note", style: o.id === x.retenue ? "color:var(--encre);font-weight:600" : "" },
+            `${o.id === x.retenue ? "✓ retenue · " : ""}« ${o.quoi} » · ${o.plages.join(", ") || "aucun horaire déclaré"}${o.conditions ? " · " + o.conditions : ""} · ${o.qui}`))
+            : h("p", { class: "encadre" }, "Personne n'offre cela aujourd'hui."))),
+        a.creneau ? h("div", { class: "carte", style: "margin-top:10px" }, h("span", { class: "surtitre" }, "Proposition complète"), h("p", { class: "creneau" }, a.creneau.texte),
+          h("p", { class: "note" }, a.explication)) : h("p", { class: "encadre", style: "margin-top:10px" }, a.blocage));
+    }
+
     // ------------------------------------------------------------------ B2. une proposition / un essai
     async function ecranEssai(id) {
       const e = await api(`/api/pulse/moi/essais/${id}`);
@@ -179,7 +251,13 @@
       const post = (chemin, corps, message) => agir(() => api(`/api/pulse/moi/essais/${id}/${chemin}`, { corps: corps ?? {} }), message);
       const A = new Set(e.actions);
       const gestes = e.etapes.map((g) => h("div", { class: "geste" + (g.vous ? " vous" : "") },
-        h("div", { class: "ligne" }, h("b", {}, g.geste), h("span", { class: "puce" }, `${g.duree_min} min`)),
+        h("div", { class: "ligne" }, h("b", {}, g.geste), h("span", { class: "puce" }, `${g.duree_min} min`), e.creneau ? h("span", { class: `palier ${g.palier}` }, g.palier) : null),
+        g.livrable ? h("p", { class: "note" }, `À remettre : ${g.livrable}`) : null,
+        g.plages && g.plages.length ? h("p", { class: "note" }, `Disponibilité déclarée : ${g.plages.join(", ")}`) : null,
+        g.livraison && g.livraison.contenu ? h("div", {}, h("p", { class: "note" }, `Transmis le ${g.livraison.le} (version ${g.livraison.revision})${g.livraison.recue ? " · réception confirmée" : " · réception à confirmer"}`),
+          h("div", { class: "fiche", id: `fiche-${g.id}` }, g.livraison.contenu)) : null,
+        e.role === "porteur" && A.has("confirmer_reception") && g.livraison && !g.livraison.recue ? h("button", { class: "btn plein petit", id: `recu-${g.id}`, style: "margin-top:6px",
+          onclick: post(`contributions/${g.id}`, {}, "Réception confirmée.") }, "J'ai bien reçu") : null,
         h("p", { class: "note" }, `${g.nature} · ${g.vous ? "vous" : g.qui} · ${g.statut}`),
         g.offre ? h("p", { class: "note" }, `Offre : « ${g.offre.quoi} »${g.offre.duree_max_min ? ` · ${g.offre.duree_max_min} min au plus` : ""}${g.offre.conditions ? " · " + g.offre.conditions : ""} · jusqu'au ${g.offre.jusqu_au}`) : null,
         g.offres_admissibles ? (g.offres_admissibles.length ? h("fieldset", { class: "radios" }, h("legend", { class: "note" }, "Offres admissibles (vous choisissez) :"),
@@ -192,6 +270,7 @@
         h("p", { class: "surtitre" }, `Essai · version ${e.version} · ${e.mode}`), h("h1", { class: "grand" }, e.question),
         h("p", { style: "margin-top:8px" }, h("span", { class: "puce" + (e.etat === "A_ADAPTER" || e.etat === "IMPOSSIBLE" ? " rouge" : "") }, e.etat_libelle)),
         h("p", { class: "note", style: "margin-top:6px" }, `Porteur : ${e.porteur}${e.objet ? " · objet : " + e.objet : ""} · échéance : ${e.echeance}`),
+        e.creneau ? h("p", { class: "creneau", id: "creneau" }, `Créneau : ${e.creneau.texte}`) : null,
         section("Prochaine décision", h("p", { class: "encadre" }, e.prochaine))];
       const details = [e.pourquoi ? section("Pourquoi", h("p", {}, e.pourquoi)) : null,
         section("Critère d'observation", h("p", {}, e.critere || "—")),
@@ -207,6 +286,16 @@
           e.role === "porteur" ? h("p", { class: "note" }, "Le système ne remplace personne et ne change pas votre objectif sans votre choix.") : null));
       }
       const acts = [];
+      if (e.assemblage) blocs.push(carteAssemblage(e.assemblage));
+      if (A.has("publier_proposition")) acts.push(h("button", { class: "btn plein", id: "publier-proposition", disabled: !(e.assemblage && e.assemblage.creneau),
+        onclick: post("publier-proposition", { version: e.version }, "Proposition publiée : chaque personne décide depuis son téléphone.") }, "Publier la proposition"));
+      if (A.has("livrer")) {
+        const g = e.etapes.find((x) => x.vous && x.livrable);
+        const t = h("textarea", { id: "livraison", rows: 5, maxlength: 3000, placeholder: g ? g.livrable : "" });
+        acts.push(h("div", { class: "carte" }, h("span", { class: "surtitre" }, `À remettre : ${g ? g.livrable : ""}`), h("div", { class: "champ" }, t),
+          h("button", { class: "btn plein", id: "transmettre", onclick: agir(() => api(`/api/pulse/moi/essais/${id}/livrer/${g.id}`, { corps: { contenu: t.value } }),
+            "Transmis. La réception sera confirmée par la destinataire.") }, g && g.livraison ? "Transmettre une version corrigée" : "Transmettre")));
+      }
       if (A.has("publier")) acts.push(h("button", { class: "btn plein", id: "publier", onclick: () => post("publier", { version: e.version,
         choix: Object.fromEntries([...document.querySelectorAll("input[type=radio][name^=choix-]:checked")].map((x) => [x.name.slice(6), x.value])) },
         "Proposition publiée : chaque personne choisit sa part.")() }, "Publier la proposition"));
@@ -240,6 +329,14 @@
       const g = e.votre_part.gestes.find((x) => x.offre_id);
       if (!g) return null;
       const d = h("input", { id: "ma-duree", type: "number", min: 1, max: 240, value: g.offre.duree_max_min || "" });
+      const pl = (g.offre.plages || [])[0];
+      if (pl) {                                        // une disponibilité HORAIRE : c'est elle qui change le plus souvent
+        const deb = h("input", { id: "dispo-debut", type: "time", step: 900, value: pl.debut }), fin = h("input", { id: "dispo-fin", type: "time", step: 900, value: pl.fin });
+        return h("details", {}, h("summary", {}, "Ma disponibilité a changé"),
+          h("p", { class: "note" }, `Votre offre : « ${g.offre.quoi} » · ${pl.jour}`), h("div", { class: "ligne" }, h("span", {}, "Disponible de"), deb, h("span", {}, "à"), fin),
+          h("button", { class: "btn discret petit", id: "changer-dispo", onclick: agir(() => api(`/api/pulse/moi/offres/${g.offre_id}`, {
+            methode: "PATCH", corps: { plages: [{ jour: pl.jour, debut: deb.value, fin: fin.value }] } }), "Disponibilité mise à jour : la proposition est réévaluée pour tous.") }, "Mettre à jour ma disponibilité"));
+      }
       return h("details", {}, h("summary", {}, "Mes conditions ont changé"),
         h("p", { class: "note" }, `Votre offre : « ${g.offre.quoi} »`), h("div", { class: "ligne" }, h("label", { for: "ma-duree" }, "Je peux donner au plus"), d, h("span", {}, "minutes")),
         h("button", { class: "btn discret petit", id: "changer-duree", onclick: agir(() => api(`/api/pulse/moi/offres/${g.offre_id}`, {
@@ -323,7 +420,7 @@
       ecran.setAttribute("aria-busy", "true");
       const attente = silencieux ? null : setTimeout(() => { if (g === generation) ecran.replaceChildren(h("p", { class: "note", role: "status" }, "Chargement…")); }, 250);
       try {
-        await ({ acces: ecranAcces, actions: ecranActions, nouveau: () => (id ? ecranCorriger(id) : ecranNouveau()), essai: () => ecranEssai(id),
+        await ({ acces: ecranAcces, actions: ecranActions, action: ecranAction, nouveau: () => (id ? ecranCorriger(id) : ecranNouveau()), essai: () => ecranEssai(id),
           souvenirs: ecranSouvenirs }[nom] || ecranActions)();
       } catch (e) {
         if (e instanceof Perime || g !== generation) return;

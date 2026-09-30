@@ -143,7 +143,7 @@ def test_banc_d_essai_deux_telephones_perturbation_et_resultat_negatif(url):  # 
 
 def test_refus_sans_alternative_arret_honnete(url):  # noqa: F811
     """Markus décline ; Léa a retiré son offre : le système ne sollicite personne d'autre, ne redemande rien à Markus,
-    et dit que l'essai est impossible en l'état."""
+    et dit que l'essai est bloqué : aucune adaptation admissible."""
     pw = pytest.importorskip("playwright.sync_api")
     _api(url, "/api/pulse/demo/reinitialiser", {})
     codes = {p["id"]: p["code"] for p in _api(url, "/api/pulse/console/personas")}
@@ -167,7 +167,7 @@ def test_refus_sans_alternative_arret_honnete(url):  # noqa: F811
         eid = s.url.split("#essai/")[1]
         m.goto(url + f"/app#essai/{eid}")
         m.click("#decliner")
-        s.wait_for_selector("text=impossible en l'état", timeout=15_000)
+        s.wait_for_selector("text=bloqué : aucune adaptation admissible", timeout=15_000)
         assert "Markus" not in s.inner_text("main")                         # qui a décliné n'est jamais nommé
         m.reload()
         m.wait_for_selector("text=vous avez décliné", timeout=15_000)

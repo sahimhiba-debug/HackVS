@@ -32,7 +32,7 @@ from . import monde_demo as md
 from .acces import Sessions
 from .detection import Detecteur
 from .erreurs import Conflit, ErreurMetier, Interdit, Introuvable, Invalide, NonAuthentifie
-from .essai import Banc, Etape, Protocole
+from .essai import Banc, Etape, Plage, Protocole
 from .ia import AppelIA, Intelligence, besoin_de
 from .identite import AdhesionsSynthetiques, Coffre, nettoyer
 from .modele import BesoinActif, Opportunite
@@ -44,6 +44,9 @@ from .vues_essai import VuesEssai
 from .vues_intelligence import VuesIntelligence
 
 ErreurPulse = ErreurMetier             # nom historique : tout refus du service (sous-classes typées)
+# ce qu'on considérera comme RÉALISÉ : une suggestion que le porteur adopte ou remplace (jamais écrite à sa place)
+CRITERE_ACTION = ("La présentation a lieu au créneau convenu et la fiche promise est remise ; "
+                  "je dirai ce que les acheteurs en ont retenu.")
 
 
 class ClubPulse:
@@ -71,6 +74,7 @@ class ClubPulse:
         self.preferences: dict[str, dict] = {}
         self.explications: dict[tuple[str, str], dict] = {}
         self.messages: dict[tuple[str, int, str], dict] = {}   # (essai, version, invité) → message d'invitation rédigé
+        self.joues: list[dict] = []                            # gestes JOUÉS par l'équipe depuis la console (démonstration)
         self._scan: Optional[dict] = None
         self._etat: Optional[Etat] = None
         self._version_etat: tuple = ()
@@ -396,25 +400,81 @@ class ClubPulse:
 
     def _protocole(self, champs: dict) -> Protocole:
         etapes = [Etape(id=f"e{i + 1}", nature=e["nature"], geste=e["geste"], duree_min=e["duree_min"])
-                  for i, e in enumerate(champs.get("etapes", []))]
+                  for i, e in enumerate(champs.get("etapes") or [])]
         p = Protocole(question=champs["question"], objet=champs.get("objet", ""), pourquoi=champs.get("pourquoi", ""),
                       critere=champs.get("critere", ""), echeance=date.fromisoformat(champs["echeance"]), etapes=etapes)
         if p.echeance < self.jour:
             raise Invalide("échéance passée")
         return p
 
+    def jouer(self, pid: str, geste: str) -> None:
+        """Trace d'un geste JOUÉ par l'équipe pour un personnage (démonstration) : affiché comme tel, jamais confondu avec
+        une action faite sur un téléphone. L'écran commun n'en montre que le RÔLE, jamais le nom."""
+        self.joues.append({"le": self.jour.isoformat(), "membre": pid, "geste": geste, "joue_par": "l'équipe (console)"})
+
+    # ------------------------------------------------------------------ ACTION COLLECTIVE : demande → exigences → proposition
+    def preparer_action(self, pid: str, texte: str) -> dict:
+        """Les mots du membre → exigences PROPOSÉES et ce qui manque (IA contrôlée ou règles simples, déclaré). Rien n'est
+        écrit : le membre confirme ou corrige. Les noms connus du Club sont retirés du texte avant tout envoi."""
+        if not 3 <= len(texte.strip()) <= 600:
+            raise Invalide("formulation vide ou trop longue")
+        noms = [per.nom for per in self.coffre._personnes.values()] + [o.nom for o in self.coffre.orgs.values()]
+        rep = self.ia.comprendre_action(nettoyer(texte, noms), self.jour)
+        return rep.sortie | {"texte": texte.strip(), "critere_suggere": CRITERE_ACTION,
+                             "ia": {"fournisseur": rep.appel.fournisseur, "modele": rep.appel.modele, "statut": rep.appel.statut,
+                                    "repli": rep.appel.repli, "prompt": rep.appel.prompt, "trace": rep.appel.trace, "mode": rep.sortie.get("mode")}}
+
+    def creer_action(self, pid: str, champs: dict) -> str:
+        """Le membre CONFIRME ses exigences et sa fenêtre : un brouillon, visible de lui seul."""
+        f = champs["fenetre"]
+        fen = Plage(jour=date.fromisoformat(f["jour"]), debut=f["debut"], fin=f["fin"])
+        if fen.jour < self.jour:
+            raise Invalide("jour passé")
+        etapes = [Etape(id=f"e{i + 1}", nature=x["nature"], geste=x["geste"], duree_min=x["duree_min"], concept=x.get("concept"),
+                        livrable=x.get("livrable"), role=x.get("role"))
+                  for i, x in enumerate(champs["exigences"])]
+        for e in etapes:
+            if e.concept is not None and e.concept not in self.tax.concepts:
+                raise Invalide(f"capacité inconnue : {e.concept}")
+        p = Protocole(question=champs["question"], objet=champs.get("objet", ""), critere=champs.get("critere", ""), echeance=fen.jour,
+                      fenetre=fen, duree_min_acceptable=champs.get("duree_min_acceptable"), etapes=etapes)
+        return self.banc.brouillon(pid, p)
+
+    def publier_action(self, pid: str, eid: str, version: int) -> int:
+        """Publier la proposition que le serveur a TROUVÉE (recalculée ici, jamais reçue du navigateur)."""
+        a = self.banc.assembler(pid, eid)
+        if a["solution"] is None:
+            raise Conflit("aucune proposition complète : " + (a["blocage"] or "exigences non couvertes"))
+        sol = a["solution"]
+        return self.banc.proposer(pid, eid, version, {k: v for k, v in sol["choix"].items() if v}, sol["creneau"])
+
     def publier_offre(self, pid: str, nature: str, quoi: str, capacite: int, du: date, au: date, duree_max_min: Optional[int],
-                      conditions: str, concept: Optional[str]) -> str:
+                      conditions: str, concept: Optional[str], plages: Optional[list[dict]] = None) -> str:
         """Une offre ne peut porter qu'une capacité que le membre DÉCLARE dans son profil (jamais une capacité supposée)."""
         if concept is not None and concept not in {o.concept for o in self.profil(pid).offre}:
             raise Invalide("capacité non déclarée dans votre profil : ajoutez-la d'abord à « je peux aider »")
-        return self.banc.publier_offre(pid, nature, quoi, capacite, du, au, duree_max_min=duree_max_min, conditions=conditions, concept=concept)
+        return self.banc.publier_offre(pid, nature, quoi, capacite, du, au, duree_max_min=duree_max_min, conditions=conditions, concept=concept,
+                                       plages=[Plage(**x) for x in plages or []])
+
+    def modifier_offre(self, pid: str, oid: str, champs: dict) -> list[str]:
+        """Le PROPRIÉTAIRE change ses conditions (dont ses horaires) ; les essais concernés sont réévalués pour tous."""
+        if champs.get("plages") is not None:
+            champs = champs | {"plages": [Plage(**x) for x in champs["plages"]]}
+        return self.banc.modifier_offre(pid, oid, **champs)
 
     def creer_essai(self, pid: str, champs: dict) -> str:
         return self.banc.brouillon(pid, self._protocole(champs))
 
     def corriger_essai(self, pid: str, eid: str, version: int, champs: dict) -> int:
+        """Correction du brouillon. Sans `etapes`, les gestes existants sont CONSERVÉS (invitations, capacités, livrables,
+        rôles) ainsi que l'origine et le « quand » — une correction de texte ne défait pas ce qui a été préparé."""
+        if champs.get("etapes") is None:
+            cur = self.banc.protocole(eid)
+            p = self._protocole(champs | {"etapes": []}).model_copy(update={
+                "etapes": cur.etapes, "origine": cur.origine, "fenetre": cur.fenetre, "creneau": cur.creneau,
+                "duree_min_acceptable": cur.duree_min_acceptable})
+            return self.banc.modifier_brouillon(pid, eid, version, Protocole(**p.model_dump()))
         return self.banc.modifier_brouillon(pid, eid, version, self._protocole(champs))
 
 
-__all__ = ["ClubPulse", "ErreurPulse", "CRITERE_SUGGERE", "descripteur"]
+__all__ = ["ClubPulse", "ErreurPulse", "CRITERE_SUGGERE", "CRITERE_ACTION", "descripteur"]

@@ -20,6 +20,7 @@ import logging
 import os
 import random
 import re
+from datetime import date, timedelta
 import time
 from pathlib import Path
 from typing import Callable, Literal, Optional, Protocol
@@ -199,6 +200,20 @@ SCHEMA_ESSAI = {"type": "object", "additionalProperties": False, "required": ["q
                                    "type": "object", "additionalProperties": False, "required": ["nature", "geste", "duree_min"],
                                    "properties": {"nature": {"type": "string", "enum": ["temps", "lieu", "objet", "competence"]},
                                                   "geste": {"type": "string"}, "duree_min": {"type": "integer"}}}}}}
+SCHEMA_ACTION = {"type": "object", "additionalProperties": False, "required": ["objet", "langue_public", "exigences", "fenetre", "manquant"],
+                 "properties": {
+                     "objet": {"type": "string"}, "langue_public": {"type": ["string", "null"]},
+                     "exigences": {"type": "array", "minItems": 1, "maxItems": 4, "items": {
+                         "type": "object", "additionalProperties": False,
+                         "required": ["role", "nature", "concept", "geste", "duree_min", "livrable"],
+                         "properties": {"role": {"type": "string", "enum": ["voix", "lieu", "public", "autre"]},
+                                        "nature": {"type": "string", "enum": ["temps", "lieu", "objet", "competence"]},
+                                        "concept": {"type": ["string", "null"]}, "geste": {"type": "string"},
+                                        "duree_min": {"type": "integer"}, "livrable": {"type": ["string", "null"]}}}},
+                     "fenetre": {"type": "object", "additionalProperties": False, "required": ["jour", "debut", "fin"],
+                                 "properties": {"jour": {"type": ["string", "null"]}, "debut": {"type": ["string", "null"]},
+                                                "fin": {"type": ["string", "null"]}}},
+                     "manquant": {"type": "array", "maxItems": 4, "items": {"type": "string"}}}}
 SCHEMA_TEXTE = {"explication": {"type": "object", "additionalProperties": False, "required": ["explication"],
                                 "properties": {"explication": {"type": "string"}}},
                 "message": {"type": "object", "additionalProperties": False, "required": ["message"],
@@ -350,6 +365,107 @@ class Intelligence:
             objet = next((o for o in self.OBJETS_CONNUS if o in n), "")
             return {"question": t[:300], "objet": objet, "critere": "", "etapes": [], "mode": "formulaire"}
         return self._executer("structurer_essai", "structurer_essai", texte, SCHEMA_ESSAI, valide, repli)
+
+    LANGUES = {"de": ("allemand", ("allemand", "germanophone", "deutsch", "german", "alémanique")),
+               "it": ("italien", ("italien", "italophone", "italiano", "italian")),
+               "en": ("anglais", ("anglais", "anglophone", "english"))}
+    PUBLIC_PAR_LANGUE = {"de": "export_allemagne"}
+    JOURS = ("lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche")
+    # ordre significatif : « après-midi » contient « midi » (défaut trouvé en l'exécutant)
+    MOMENTS = {"apres-midi": ("14:00", "18:00"), "apres midi": ("14:00", "18:00"), "matin": ("08:00", "12:00"),
+               "soir": ("17:00", "20:00"), "midi": ("11:30", "14:00")}
+
+    def comprendre_action(self, texte: str, aujourd_hui: date) -> Reponse:
+        """Formulation libre d'un membre → EXIGENCES d'une action collective (qui apporterait quoi, quand) et ce qui
+        MANQUE pour la préparer. Une proposition à confirmer par le membre, jamais une décision : aucune offre, aucune
+        disponibilité, aucun nom ne peut en sortir (le schéma ne les contient pas ; le serveur cherche les offres).
+        Secours : RÈGLES SIMPLES visibles (mots reconnus : langue, lieu, public, jour, moment, durée)."""
+        message = (f"Date du jour : {aujourd_hui.isoformat()} ({self.JOURS[aujourd_hui.weekday()]})\nCapacités du catalogue :\n"
+                   + "\n".join(f"- {c.id} : {c.libelle}" for c in self.tax.concepts.values()) + f"\n\nTexte du membre :\n{texte}")
+
+        def valide(brut: str) -> tuple[dict, Optional[dict]]:
+            if "MEMBRE-" in brut:
+                raise ValueError("la sortie cite un identifiant de membre")
+            d = json.loads(_json_de(brut))
+            exig = d.get("exigences") or []
+            if not 1 <= len(exig) <= 4:
+                raise ValueError("exigences absentes ou trop nombreuses")
+            propres = []
+            for x in exig:
+                if x.get("nature") not in ("temps", "lieu", "objet", "competence") or x.get("role") not in ("voix", "lieu", "public", "autre"):
+                    raise ValueError("nature ou rôle inconnu")
+                if x.get("concept") is not None and x["concept"] not in self.tax.concepts:
+                    raise ValueError(f"capacité hors catalogue : {x['concept']}")
+                if not 5 <= int(x.get("duree_min", 0)) <= 120 or not 3 <= len(str(x.get("geste", ""))) <= 200:
+                    raise ValueError("geste ou durée hors bornes")
+                propres.append({"role": x["role"], "nature": x["nature"], "concept": x.get("concept"), "geste": str(x["geste"]).strip(),
+                                "duree_min": int(x["duree_min"]), "livrable": (str(x["livrable"]).strip()[:120] or None) if x.get("livrable") else None})
+            f = d.get("fenetre") or {}
+            fenetre = self._fenetre_valide(f.get("jour"), f.get("debut"), f.get("fin"), aujourd_hui)
+            manquant = [str(m).strip()[:160] for m in (d.get("manquant") or [])][:4]
+            return {"objet": str(d.get("objet") or "").strip()[:120], "langue_public": d.get("langue_public") if d.get("langue_public") in
+                    self.LANGUES else None, "exigences": propres, "fenetre": fenetre, "manquant": manquant, "reconnu": [],
+                    "mode": "apertus"}, None
+        return self._executer("comprendre_action", "comprendre_action", message, SCHEMA_ACTION, valide,
+                              lambda: self._action_regles(texte, aujourd_hui))
+
+    @staticmethod
+    def _fenetre_valide(jour: Optional[str], debut: Optional[str], fin: Optional[str], aujourd_hui: date) -> dict:
+        """Une fenêtre sortie d'un modèle est une donnée non fiable : jour ISO dans les 60 jours, heures HH:MM, ordre."""
+        heure_ok = lambda h: h is None or bool(re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", str(h)))  # noqa: E731
+        if not heure_ok(debut) or not heure_ok(fin) or (debut and fin and str(fin) <= str(debut)):
+            raise ValueError("heures invalides")
+        if jour is not None:
+            j = date.fromisoformat(str(jour))
+            if not aujourd_hui <= j <= aujourd_hui + timedelta(days=60):
+                raise ValueError("jour hors de l'horizon de 60 jours")
+        return {"jour": jour, "debut": debut, "fin": fin}
+
+    def _action_regles(self, texte: str, aujourd_hui: date) -> dict:
+        n = norm(texte)
+        reconnu: list[str] = []
+        langue = next((code for code, (_, mots) in self.LANGUES.items() if any(m in n for m in mots)), None)
+        if langue:
+            reconnu.append(f"public : {self.LANGUES[langue][0]}")
+        m = re.search(r"(\d{2,3})\s*min", n) or re.search(r"(une|1)\s*(h\b|heure)", n)
+        duree = (int(m.group(1)) if m.group(1).isdigit() else 60) if m else 45
+        manquant = [] if m else [f"Durée proposée : {duree} min — à confirmer"]
+        exig = []
+        if langue:
+            nom = self.LANGUES[langue][0]
+            exig.append({"role": "voix", "nature": "competence", "concept": "traduction", "geste": f"Présenter le produit en {nom}",
+                         "duree_min": min(duree, 120), "livrable": f"Fiche produit en {nom}"})
+        if re.search(r"stand|presentoir|lieu|salle|table|foire|salon|degustation|demonstration|vitrine", n):
+            reconnu.append("un lieu")
+            exig.append({"role": "lieu", "nature": "lieu", "concept": None, "geste": "Prêter un lieu adapté (présentoir, table, stand)",
+                         "duree_min": min(duree, 120), "livrable": None})
+        if re.search(r"acheteur|client|distributeur|revendeur|visiteur|public|kaufer|buyer|importateur|grossiste", n):
+            reconnu.append("un public")
+            exig.append({"role": "public", "nature": "competence", "concept": self.PUBLIC_PAR_LANGUE.get(langue or ""),
+                         "geste": "Amener des acheteurs" + (f" {self.LANGUES[langue][0]}s" if langue else ""), "duree_min": min(duree, 120),
+                         "livrable": None})
+        jour = None
+        jm = re.search(r"\b(" + "|".join(self.JOURS) + r")\b", n)
+        if jm:
+            k = self.JOURS.index(jm.group(1))
+            jour = aujourd_hui + timedelta(days=(k - aujourd_hui.weekday()) % 7 or 7)
+            reconnu.append(f"jour : {jm.group(1)} {jour.strftime('%d.%m')}")
+        elif "demain" in n:
+            jour = aujourd_hui + timedelta(days=1)
+            reconnu.append("jour : demain")
+        moment = next((v for k, v in self.MOMENTS.items() if k in n), None)
+        if moment:
+            reconnu.append(f"moment : {moment[0]}–{moment[1]}")
+        if not exig:
+            manquant.append("Qu'est-ce que d'autres membres devraient apporter (une langue, un lieu, un public…) ?")
+        if jour is None:
+            manquant.append("Quel jour ?")
+        if moment is None:
+            manquant.append("Entre quelles heures ?")
+        om = re.search(r"presenter (?:nos|notre|mes|mon|ma|le|la|les) ([a-z]+)", n)
+        return {"objet": om.group(1) if om else "", "langue_public": langue, "exigences": exig,
+                "fenetre": {"jour": jour.isoformat() if jour else None, "debut": moment[0] if moment else None, "fin": moment[1] if moment else None},
+                "manquant": manquant, "reconnu": reconnu, "mode": "regles"}
 
     def capturer_rencontre(self, note: str) -> Reponse:
         concepts = "\n".join(f"- {c.id} : {c.libelle}" for c in self.tax.concepts.values())
