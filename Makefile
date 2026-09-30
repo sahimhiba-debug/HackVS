@@ -6,7 +6,7 @@ PY ?= python
 P = prototype
 export HACKVS_SEMANTIQUE ?= 0
 
-.PHONY: setup browsers lint typecheck test e2e eval secrets audit coverage demo quality-check
+.PHONY: setup browsers lint typecheck test e2e eval secrets audit coverage demo quality-check mutation
 
 setup:
 	cd $(P) && $(PY) -m pip install -r requirements-dev.txt -c constraints.txt
@@ -38,6 +38,10 @@ audit:
 
 coverage:
 	cd $(P) && $(PY) -m coverage run --source=app,intelligence,plateforme,adaptateurs -m pytest -q && $(PY) -m coverage report --skip-covered | tail -25
+
+# obligatoire avant tout tag de démonstration (demo-*) ; aussi en CI : nuit, à la demande, et quand le registre change
+mutation:
+	cd $(P) && $(PY) scripts/mutation_capacites.py
 
 demo:
 	cd $(P) && HACKVS_MODE=demo HACKVS_DB=:memory: HACKVS_DECISIONS_DB=:memory: HACKVS_CYCLE_DB=:memory: \

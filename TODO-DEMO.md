@@ -17,3 +17,9 @@ jour ; les artefacts ci-dessous ont été produits AVANT et n'ont **pas** été 
 
 Non concernés : `docs/captures/*` (ancien prototype « Le Fil du Club », horloge propre) ; `eval/resultats_*`
 (régénérés au commit `9f2d0e9`, vérifiés à l'octet par la CI).
+
+## Redémarrage du serveur = nouvelle démonstration
+
+Depuis `18829d4`, le serveur **reprend** son journal au démarrage (`HACKVS_ESSAIS_DB`) au lieu de l'effacer ; le
+scénario guidé, lui, ne reprend pas au milieu (son contexte n'est pas journalisé : la console affiche « état repris du
+journal »). **Règle de scène : après tout redémarrage, console → « Nouvelle démonstration » avant de commencer.**

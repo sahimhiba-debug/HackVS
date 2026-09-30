@@ -81,7 +81,7 @@ le journal et le statut `DECLARE` de chaque fait écrit).
   | 2 (+ `test_capacites_regles.py`) | 595 / 682 | 83 | 87,2 % |
   | finale (+ 7 tests ciblés, fonction morte retirée) | **617 / 678** | 61 | **91,0 %** |
 
-  Les 61 survivants finaux sont **tous équivalents**, classés un par un dans `docs/audit/phase1_mutants_survivants.txt` :
+  Les 61 survivants finaux sont **tous équivalents**, classés un par un dans `docs/audit/mutants_survivants.txt` :
   - 20 : clés et `mode` de sérialisation internes à l'empreinte de portée, calculée de la même façon des deux côtés ;
   - 3 : rôle d'affichage du geste, non lu par le registre ;
   - 13 : `maximum` des recherches, dont seul le premier résultat est lu ; `garder` sous `permis` ; facteur du tri ;
@@ -93,8 +93,9 @@ le journal et le statut `DECLARE` de chaque fait écrit).
   nouveau défaut du code : borne exacte des minimums, compétence non déclarée, portée calculée sur le mauvais
   emplacement, bornes bi-temporelles, retrait d'une offre dans l'index, préférence « le plus de consentements »,
   `DEGRADED` à distance 1, lecture des consentements après un emplacement disparu, réouverture d'une compétence.
-- **Commande** : `cd prototype && python -m mutmut run && python -m mutmut results`. Durée ≈ 4 min. **Elle n'est pas
-  en CI** : c'est une décision à prendre (coût : ~4 min par exécution).
+- **Commande** : `make mutation` (≈ 4 min) — échoue si un survivant n'est pas dans la liste classée. En CI
+  (`.github/workflows/mutation.yml`) : à la demande, chaque nuit, quand le registre ou le banc changent, et sur tout
+  tag `demo-*` ; obligatoire en local avant de poser un tag de démonstration (décision du 2026-09-30).
 
 ## 5. Vérifications finales (2026-09-30)
 

@@ -1,15 +1,18 @@
-# Mutants SURVIVANTS — mutmut 3.8.0 sur prototype/intelligence/capacites.py (campagne finale, Phase 1)
-# 678 mutants : 617 tués, 61 survivants — tous classés ÉQUIVALENTS (voir docs/audit/PHASE_1.md § 4).
+# Mutants SURVIVANTS classés ÉQUIVALENTS — mutmut sur prototype/intelligence/capacites.py.
+# Mis à jour à chaque campagne (scripts/mutation_capacites.py --ecrire) ; classement : docs/audit/PHASE_1.md § 4.
 # format : fonction__mutmut_n | ligne mutée
-xǁPatronǁprotocole__mutmut_8 | etapes = [Etape(id=e.id, nature=e.nature, geste=e.geste, duree_min=self.duree_min, concept=e.concept, role=None,
-xǁPatronǁprotocole__mutmut_15 | etapes = [Etape(id=e.id, nature=e.nature, geste=e.geste, duree_min=self.duree_min, concept=e.concept, minimums=e.minimums) for e in self.emplacements if e.
-xǁPatronǁprotocole__mutmut_17 | etapes = [Etape(id=e.id, nature=e.nature, geste=e.geste, duree_min=self.duree_min, concept=e.concept, role=e.role[:25],
-xǁPatronǁportee__mutmut_4 | return {"XXfinaliteXX": self.id, "version": self.version, "titre": self.titre, "emplacement": e.model_dump(mode="json"),
-xǁPatronǁportee__mutmut_5 | return {"FINALITE": self.id, "version": self.version, "titre": self.titre, "emplacement": e.model_dump(mode="json"),
-xǁPatronǁportee__mutmut_6 | return {"finalite": self.id, "XXversionXX": self.version, "titre": self.titre, "emplacement": e.model_dump(mode="json"),
-xǁPatronǁportee__mutmut_7 | return {"finalite": self.id, "VERSION": self.version, "titre": self.titre, "emplacement": e.model_dump(mode="json"),
-xǁPatronǁportee__mutmut_8 | return {"finalite": self.id, "version": self.version, "XXtitreXX": self.titre, "emplacement": e.model_dump(mode="json"),
-xǁPatronǁportee__mutmut_9 | return {"finalite": self.id, "version": self.version, "TITRE": self.titre, "emplacement": e.model_dump(mode="json"),
+x_charger_patrons__mutmut_10 | p = Patron(**json.loads(f.read_text(encoding="UTF-8")))
+x_charger_patrons__mutmut_21 | raise ValueError("XXdeux patrons portent le même identifiantXX")
+x_charger_patrons__mutmut_8 | p = Patron(**json.loads(f.read_text(encoding=None)))
+x_index_claims__mutmut_13 | ouvertes.pop(cle, )
+x_index_claims__mutmut_31 | neufs = {f"profil:{pid}:{kind}:{x.get('concept') or x['texte'][:41]}": x for x in champs[k]}
+x_index_claims__mutmut_7 | if cle in ouvertes or ouvertes[cle].superseded_at is None:
+x_index_claims__mutmut_79 | profil(pid, p.model_dump(mode=None, include={"offre", "recherche"}), 0, "SYNTHETIQUE")
+x_index_claims__mutmut_80 | profil(pid, p.model_dump(mode="json", include=None), 0, "SYNTHETIQUE")
+x_index_claims__mutmut_81 | profil(pid, p.model_dump(include={"offre", "recherche"}), 0, "SYNTHETIQUE")
+x_index_claims__mutmut_82 | profil(pid, p.model_dump(mode="json", ), 0, "SYNTHETIQUE")
+x_index_claims__mutmut_83 | profil(pid, p.model_dump(mode="XXjsonXX", include={"offre", "recherche"}), 0, "SYNTHETIQUE")
+x_index_claims__mutmut_84 | profil(pid, p.model_dump(mode="JSON", include={"offre", "recherche"}), 0, "SYNTHETIQUE")
 xǁPatronǁportee__mutmut_10 | return {"finalite": self.id, "version": self.version, "titre": self.titre, "XXemplacementXX": e.model_dump(mode="json"),
 xǁPatronǁportee__mutmut_11 | return {"finalite": self.id, "version": self.version, "titre": self.titre, "EMPLACEMENT": e.model_dump(mode="json"),
 xǁPatronǁportee__mutmut_12 | return {"finalite": self.id, "version": self.version, "titre": self.titre, "emplacement": e.model_dump(mode=None),
@@ -24,19 +27,19 @@ xǁPatronǁportee__mutmut_20 | "fenetre": self.fenetre.model_dump(mode="json"), 
 xǁPatronǁportee__mutmut_21 | "fenetre": self.fenetre.model_dump(mode="json"), "DUREE_MIN": self.duree_min, "partage": PARTAGE_FINALITE}
 xǁPatronǁportee__mutmut_22 | "fenetre": self.fenetre.model_dump(mode="json"), "duree_min": self.duree_min, "XXpartageXX": PARTAGE_FINALITE}
 xǁPatronǁportee__mutmut_23 | "fenetre": self.fenetre.model_dump(mode="json"), "duree_min": self.duree_min, "PARTAGE": PARTAGE_FINALITE}
-x_charger_patrons__mutmut_8 | p = Patron(**json.loads(f.read_text(encoding=None)))
-x_charger_patrons__mutmut_10 | p = Patron(**json.loads(f.read_text(encoding="UTF-8")))
-x_charger_patrons__mutmut_21 | raise ValueError("XXdeux patrons portent le même identifiantXX")
-x_index_claims__mutmut_7 | if cle in ouvertes or ouvertes[cle].superseded_at is None:
-x_index_claims__mutmut_13 | ouvertes.pop(cle, )
-x_index_claims__mutmut_31 | neufs = {f"profil:{pid}:{kind}:{x.get('concept') or x['texte'][:41]}": x for x in champs[k]}
-x_index_claims__mutmut_79 | profil(pid, p.model_dump(mode=None, include={"offre", "recherche"}), 0, "SYNTHETIQUE")
-x_index_claims__mutmut_80 | profil(pid, p.model_dump(mode="json", include=None), 0, "SYNTHETIQUE")
-x_index_claims__mutmut_81 | profil(pid, p.model_dump(include={"offre", "recherche"}), 0, "SYNTHETIQUE")
-x_index_claims__mutmut_82 | profil(pid, p.model_dump(mode="json", ), 0, "SYNTHETIQUE")
-x_index_claims__mutmut_83 | profil(pid, p.model_dump(mode="XXjsonXX", include={"offre", "recherche"}), 0, "SYNTHETIQUE")
-x_index_claims__mutmut_84 | profil(pid, p.model_dump(mode="JSON", include={"offre", "recherche"}), 0, "SYNTHETIQUE")
-xǁRegistreǁpatron__mutmut_3 | raise Introuvable("XXcapacité inconnueXX")
+xǁPatronǁportee__mutmut_4 | return {"XXfinaliteXX": self.id, "version": self.version, "titre": self.titre, "emplacement": e.model_dump(mode="json"),
+xǁPatronǁportee__mutmut_5 | return {"FINALITE": self.id, "version": self.version, "titre": self.titre, "emplacement": e.model_dump(mode="json"),
+xǁPatronǁportee__mutmut_6 | return {"finalite": self.id, "XXversionXX": self.version, "titre": self.titre, "emplacement": e.model_dump(mode="json"),
+xǁPatronǁportee__mutmut_7 | return {"finalite": self.id, "VERSION": self.version, "titre": self.titre, "emplacement": e.model_dump(mode="json"),
+xǁPatronǁportee__mutmut_8 | return {"finalite": self.id, "version": self.version, "XXtitreXX": self.titre, "emplacement": e.model_dump(mode="json"),
+xǁPatronǁportee__mutmut_9 | return {"finalite": self.id, "version": self.version, "TITRE": self.titre, "emplacement": e.model_dump(mode="json"),
+xǁPatronǁprotocole__mutmut_15 | etapes = [Etape(id=e.id, nature=e.nature, geste=e.geste, duree_min=self.duree_min, concept=e.concept, minimums=e.minimums) for e in self.emplacements if e.id !=
+xǁPatronǁprotocole__mutmut_17 | etapes = [Etape(id=e.id, nature=e.nature, geste=e.geste, duree_min=self.duree_min, concept=e.concept, role=e.role[:25],
+xǁPatronǁprotocole__mutmut_8 | etapes = [Etape(id=e.id, nature=e.nature, geste=e.geste, duree_min=self.duree_min, concept=e.concept, role=None,
+xǁRegistreǁconsentir__mutmut_17 | raise Introuvable("XXaucune de vos offres ne compose cette capacité aujourd'huiXX")
+xǁRegistreǁinstance__mutmut_134 | sous = self.b.solutions(None, p.protocole(sans=e.id), maximum=None, garder={k: v for k, v in garder.items() if k != e.id})
+xǁRegistreǁinstance__mutmut_138 | sous = self.b.solutions(None, p.protocole(sans=e.id), garder={k: v for k, v in garder.items() if k != e.id})
+xǁRegistreǁinstance__mutmut_141 | sous = self.b.solutions(None, p.protocole(sans=e.id), maximum=2, garder={k: v for k, v in garder.items() if k != e.id})
 xǁRegistreǁinstance__mutmut_51 | sol = self.b.solutions(None, p.protocole(), maximum=1, garder=garder, permis=ids) if (len(ids) == len(p.emplacements)) or True else []
 xǁRegistreǁinstance__mutmut_53 | sol = self.b.solutions(None, p.protocole(), maximum=None, garder=garder, permis=ids) if len(ids) == len(p.emplacements) else []
 xǁRegistreǁinstance__mutmut_54 | sol = self.b.solutions(None, p.protocole(), maximum=1, garder=None, permis=ids) if len(ids) == len(p.emplacements) else []
@@ -47,18 +50,15 @@ xǁRegistreǁinstance__mutmut_66 | toutes = self.b.solutions(None, p.protocole()
 xǁRegistreǁinstance__mutmut_72 | toutes = self.b.solutions(None, p.protocole(), maximum=10001, garder=garder)
 xǁRegistreǁinstance__mutmut_81 | sol = sorted(toutes, key=lambda x: -sum(2 for r in consentis(x["choix"]).values() if r is None))[:1]
 xǁRegistreǁinstance__mutmut_86 | sol = sorted(toutes, key=lambda x: -sum(1 for r in consentis(x["choix"]).values() if r is None))[:2]
-xǁRegistreǁinstance__mutmut_134 | sous = self.b.solutions(None, p.protocole(sans=e.id), maximum=None, garder={k: v for k, v in garder.items() if k != e.id})
-xǁRegistreǁinstance__mutmut_138 | sous = self.b.solutions(None, p.protocole(sans=e.id), garder={k: v for k, v in garder.items() if k != e.id})
-xǁRegistreǁinstance__mutmut_141 | sous = self.b.solutions(None, p.protocole(sans=e.id), maximum=2, garder={k: v for k, v in garder.items() if k != e.id})
-xǁRegistreǁrepondre__mutmut_5 | finalite = ask_id.split(":", )[0]
-xǁRegistreǁrepondre__mutmut_8 | finalite = ask_id.split(":", 2)[0]
-xǁRegistreǁrepondre__mutmut_18 | raise Conflit("XXcette demande n'est plus d'actualité : la pièce a déjà été trouvée, ou la capacité a changéXX")
-xǁRegistreǁrepondre__mutmut_42 | raise Invalide("XXcapacité non déclarée dans votre profil : ajoutez-la d'abord à « je peux aider »XX")
-xǁRegistreǁrepondre__mutmut_52 | manque = [f"{k} ≥ {v}" for k, v in e.minimums.items() if attributs.get(k, 1) < v]
-xǁRegistreǁrepondre__mutmut_59 | raise Invalide("ne couvre pas la demande : " + "XX, XX".join(manque))
-xǁRegistreǁrepondre__mutmut_83 | oid = self.b.publier_offre(membre, e.nature, (quoi or e.libelle)[:201], 1, self._jour(), p.fenetre.jour, concept=e.concept,
-xǁRegistreǁrepondre__mutmut_85 | conditions=f"déclarée en réponse à une demande pour « {p.titre[:81]} »", attributs=attributs,
+xǁRegistreǁpatron__mutmut_3 | raise Introuvable("XXcapacité inconnueXX")
 xǁRegistreǁrepondre__mutmut_122 | raise Conflit(None)
 xǁRegistreǁrepondre__mutmut_123 | raise Conflit("XXvotre réponse ne complète pas cette capacité (horaire ou attributs) : rien n'a été enregistréXX")
 xǁRegistreǁrepondre__mutmut_124 | raise Conflit("VOTRE RÉPONSE NE COMPLÈTE PAS CETTE CAPACITÉ (HORAIRE OU ATTRIBUTS) : RIEN N'A ÉTÉ ENREGISTRÉ")
-xǁRegistreǁconsentir__mutmut_17 | raise Introuvable("XXaucune de vos offres ne compose cette capacité aujourd'huiXX")
+xǁRegistreǁrepondre__mutmut_18 | raise Conflit("XXcette demande n'est plus d'actualité : la pièce a déjà été trouvée, ou la capacité a changéXX")
+xǁRegistreǁrepondre__mutmut_42 | raise Invalide("XXcapacité non déclarée dans votre profil : ajoutez-la d'abord à « je peux aider »XX")
+xǁRegistreǁrepondre__mutmut_5 | finalite = ask_id.split(":", )[0]
+xǁRegistreǁrepondre__mutmut_52 | manque = [f"{k} ≥ {v}" for k, v in e.minimums.items() if attributs.get(k, 1) < v]
+xǁRegistreǁrepondre__mutmut_59 | raise Invalide("ne couvre pas la demande : " + "XX, XX".join(manque))
+xǁRegistreǁrepondre__mutmut_8 | finalite = ask_id.split(":", 2)[0]
+xǁRegistreǁrepondre__mutmut_83 | oid = self.b.publier_offre(membre, e.nature, (quoi or e.libelle)[:201], 1, self._jour(), p.fenetre.jour, concept=e.concept,
+xǁRegistreǁrepondre__mutmut_85 | conditions=f"déclarée en réponse à une demande pour « {p.titre[:81]} »", attributs=attributs,

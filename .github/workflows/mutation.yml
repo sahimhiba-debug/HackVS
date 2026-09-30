@@ -1,0 +1,39 @@
+name: Mutation (registre des capacités)
+
+# Pas à chaque push (≈ 4 min) : à la demande, chaque nuit, quand le registre ou le banc changent, et sur tout tag de
+# démonstration (demo-*). Avant de poser un tag de démo : `make mutation` en local doit être vert.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 2 * * *"
+  push:
+    tags: ["demo-*"]
+    paths:
+      - "prototype/intelligence/capacites.py"
+      - "prototype/intelligence/essai.py"
+      - "prototype/tests/test_capacites*.py"
+      - "prototype/tests/test_banc_finalite.py"
+      - "prototype/setup.cfg"
+      - "docs/audit/mutants_survivants.txt"
+
+permissions:
+  contents: read
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prototype
+    env:
+      HACKVS_SEMANTIQUE: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Dépendances
+        run: pip install -r requirements-dev.txt -c constraints.txt && pip install mutmut==3.8.0
+      - name: Campagne de mutation ; échec si un survivant n'est pas classé équivalent
+        run: python scripts/mutation_capacites.py
