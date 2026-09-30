@@ -24,6 +24,7 @@ class Statut(str, Enum):
     INFERE = "INFERE"
     SYNTHETIQUE = "SYNTHETIQUE"
     SIMULE = "SIMULE"
+    JOUE = "JOUE"                      # fait par l'équipe (console) à la place d'un personnage absent de la scène
     PROPOSE = "PROPOSE"
     PERIME = "PERIME"
     REJETE = "REJETE"
@@ -38,6 +39,7 @@ TRANSITIONS: dict[Statut, set[Statut]] = {
     Statut.VERIFIE: {Statut.PERIME, Statut.REJETE},
     Statut.SYNTHETIQUE: {Statut.REJETE},   # jamais vérifiable : ce n'est pas le monde réel
     Statut.SIMULE: {Statut.REJETE},
+    Statut.JOUE: {Statut.REJETE},
     Statut.PERIME: {Statut.DECLARE, Statut.OBSERVE},  # ré-observé
     Statut.REJETE: set(),
 }

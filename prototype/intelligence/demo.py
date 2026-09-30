@@ -16,6 +16,8 @@ from typing import Callable, Optional
 
 from app.taxonomy import Taxonomie
 
+from plateforme.affirmations import Statut
+
 from . import monde_demo as md
 from .club_pulse import CRITERE_ACTION, ClubPulse
 from .essai import Plage
@@ -81,7 +83,8 @@ class Demo:
     def reinitialiser(self) -> None:
         self.club = ClubPulse(self.tax, ia=Intelligence(self.tax, self._ia.f if self._ia else None) if self._ia else None)
         self.club.banc.m.vider()                         # nouvelle démonstration : aucun essai d'une démonstration précédente
-        semer_offres(self.club)
+        with self.club.banc.origine(Statut.SYNTHETIQUE):  # données PRÉPARÉES : jamais présentées comme déclarées
+            semer_offres(self.club)
         self.etape = 0
         self.ctx: dict = {}
         self.traces: list[dict] = []
@@ -208,7 +211,8 @@ class Demo:
     def suivant(self) -> dict:
         if self.etape >= len(self.ETAPES):
             raise IndexError("démonstration terminée")
-        t = self.ETAPES[self.etape](self) | {"etape": self.etape + 1, "total": len(self.ETAPES), "date": self.club.jour.isoformat()}
+        with self.club.banc.origine(Statut.JOUE):         # le contrôleur de démonstration JOUE tous les personnages
+            t = self.ETAPES[self.etape](self) | {"etape": self.etape + 1, "total": len(self.ETAPES), "date": self.club.jour.isoformat()}
         self.traces.append(t)
         self.etape += 1
         return t

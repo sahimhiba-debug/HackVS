@@ -117,6 +117,11 @@ class VuesEssai:
              "fenetre": {"texte": p.fenetre.texte(), **p.fenetre.model_dump(mode="json")} if p.fenetre else None,
              "duree_min_acceptable": p.duree_min_acceptable,
              "projetee": b.projetable(eid) if pid == porteur and not console else None, "apres_action": b.apres_action(eid)}
+        if console:                                           # pour l'audit : d'où vient chaque accord (téléphone ou console)
+            v["origines"] = [{"le": x.le.isoformat(), "role": next((e.role or NATURES[e.nature] for e in p.etapes if e.contributeur == x.acteurs[0]),
+                                                                     "porteur" if x.acteurs[0] == porteur else "ancien"),
+                              "fait": ("accepte" if x.donnees["accepte"] else "décline") if x.type == "ACCORD" else "se retire",
+                              "origine": x.statut.value} for x in b._evs(eid, "ACCORD", "RETRAIT")]
         if etat == "A_ADAPTER":
             v["adaptation"] = self._adaptation(eid, pid, console)
         if etat == "BROUILLON" and pid == porteur and p.fenetre:  # une ACTION à créneau : le serveur assemble, le porteur lit

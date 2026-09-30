@@ -73,7 +73,6 @@ class ClubPulse:
         self.vues_essai = VuesEssai(self)
         self.notes: dict[str, list[dict]] = {}
         self.preferences: dict[str, dict] = {}
-        self.joues: list[dict] = []                            # gestes JOUÉS par l'équipe depuis la console (démonstration)
         self._scan: Optional[dict] = None
         self._etat: Optional[Etat] = None
         self._version_etat: tuple = ()
@@ -447,7 +446,18 @@ class ClubPulse:
     def jouer(self, pid: str, geste: str, role: Optional[str] = None) -> None:
         """Trace d'un geste JOUÉ par l'équipe pour un personnage (démonstration) : affiché comme tel, jamais confondu avec
         une action faite sur un téléphone. L'écran commun n'en montre que le RÔLE, jamais le nom."""
-        self.joues.append({"le": self.jour.isoformat(), "membre": pid, "role": role, "geste": geste, "joue_par": "l'équipe (console)"})
+        with self.banc.origine(Statut.JOUE):                   # JOURNALISÉ : la marque survit au redémarrage
+            self.banc._ecrire("GESTE_JOUE", [pid], role=role, geste=geste)
+
+    def joue(self):
+        """Contexte : les faits écrits dedans sont JOUÉS par l'équipe (console de démonstration)."""
+        return self.banc.origine(Statut.JOUE)
+
+    @property
+    def joues(self) -> list[dict]:
+        """Gestes JOUÉS par l'équipe depuis la console (démonstration), relus du journal."""
+        return [{"le": e.le.isoformat(), "membre": e.acteurs[0], "role": e.donnees["role"], "geste": e.donnees["geste"],
+                 "joue_par": "l'équipe (console)"} for e in self.banc.m.evenements("GESTE_JOUE")]
 
     def role_dans(self, eid: str, pid: str) -> Optional[str]:
         """Le rôle que tient `pid` dans la version courante de l'essai (lu AU MOMENT du geste joué)."""

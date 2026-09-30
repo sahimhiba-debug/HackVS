@@ -27,8 +27,9 @@ import hashlib
 import json
 import logging
 import re
+from contextlib import contextmanager
 from datetime import date, timedelta
-from typing import Callable, Literal, Optional
+from typing import Callable, Iterator, Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -210,9 +211,21 @@ class Banc:
         sollicitations, disponibilité, introduction déjà déclinée…) : une seule source de vérité pour ces règles."""
         self.m, self._jour, self._org = memoire, aujourd_hui, organisation
         self._eligibilite = eligibilite or (lambda porteur, candidat: None)
+        self._origine: Statut = Statut.DECLARE
 
     # ------------------------------------------------------------------ journal
-    def _ecrire(self, type_: str, acteurs: list[str], statut: Statut = Statut.DECLARE, **donnees) -> None:
+    @contextmanager
+    def origine(self, statut: Statut) -> Iterator[None]:
+        """D'où viennent les faits écrits dans ce bloc : SYNTHETIQUE (données préparées), JOUE (console de démonstration).
+        Par défaut, DECLARE : saisi par la personne elle-même."""
+        avant, self._origine = self._origine, statut
+        try:
+            yield
+        finally:
+            self._origine = avant
+
+    def _ecrire(self, type_: str, acteurs: list[str], statut: Optional[Statut] = None, **donnees) -> None:
+        statut = statut or self._origine                      # ESSAI_ETAT, ADAPTATION : calculés par le moteur (statut propre)
         self.m.ajouter(Evt(type=type_, le=self._jour(), acteurs=acteurs, statut=statut,
                            donnees=donnees | {"n": len(self.m.evenements())}))    # deux gestes identiques restent deux faits
 
