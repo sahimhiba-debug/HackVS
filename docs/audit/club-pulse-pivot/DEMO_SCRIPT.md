@@ -73,7 +73,7 @@ créneau) → résultat **déclaré** (par la porteuse, contestable) ; sans déc
 | 0:09 | téléphone de Sophie | elle écrit son besoin | « Sophie écrit avec ses mots ce qu'elle ne peut pas faire seule. » | texte tapé en direct |
 | 0:15 | téléphone de Sophie | 3 exigences, « Règles simples — aucun modèle utilisé » | « Trois exigences reprises de ses mots. Pas d'IA ici : c'est affiché. » | mention du mode |
 | 0:22 | écran commun | Sophie choisit de montrer son action | « Aucune offre ne suffit seule. Les disponibilités se recouvrent de 16 h à 17 h 30 : premier créneau, 16 h–16 h 45. » | zone de recouvrement + cadre |
-| 0:30 | téléphone de Léa | elle accepte **sa** part | « Léa reçoit sa seule part, sur son téléphone. Elle accepte. » | « 1 accord sur 3 » (678 ms mesurés au dernier enregistrement) |
+| 0:30 | téléphone de Léa | elle accepte **sa** part | « Léa reçoit sa seule part, sur son téléphone. Elle accepte. » | « 1 accord sur 3 » (678 ms mesurés au dernier enregistrement ; à l'oral : « moins d'une seconde ») |
 | 0:36 | écran commun | accords de Pauline et Markus **joués** | « Pauline et Markus ne sont pas là : leurs accords sont joués, et c'est affiché. » | « Joué par l'équipe (console) » |
 | 0:43 | téléphone de Léa | le jury donne une heure (17:00) | « À vous : à partir de quelle heure Léa est-elle disponible ? » | valeur saisie sur son téléphone |
 | 0:44 | écran commun | recalcul | « Ce qui tombe, ce qui tient, ce qui est encore possible. Aucun lancement possible. » | encadré rouge, adaptations en rôles |
