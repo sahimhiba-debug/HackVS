@@ -1,8 +1,13 @@
 """Banc MÉTIER de la tâche IA réellement utilisée par Club Pulse : `comprendre_action` (« Agir à plusieurs → Comprendre
 ma demande »). Mesure le modèle, pas une démonstration.
 
-    python -m eval.banc_comprendre_action                 # exige APERTUS_* ; écrit eval/resultats_comprendre_action.md (+ .json)
-    python -m eval.banc_comprendre_action --sortie X.md
+    python -m eval.banc_comprendre_action --fournisseur apertus|openai|claude   # → eval/resultats_banc/<fournisseur>.md (+ .json)
+    python -m eval.banc_comprendre_action --dry-run tous                         # fournisseurs FACTICES, aucun réseau → var/banc_dry_run/
+    python -m eval.comparer_bancs                                                # → eval/resultats_banc/comparaison.md
+
+Le résultat Apertus du 01.10 (`eval/resultats_comprendre_action.md`) est une preuve datée : ce script ne l'écrase plus.
+Chaque fournisseur reçoit EXACTEMENT les mêmes cas, le même prompt, le même schéma, le même budget et la MÊME
+validation du produit (`Intelligence.comprendre_action`) : seul le format de l'API diffère (`intelligence/ia.py`).
 
 Protocole (fixé AVANT toute exécution d'Apertus) :
 - cas FICTIFS et attentes : `eval/cas_comprendre_action.json` (empreinte SHA-256 publiée avec les résultats) ;
@@ -37,11 +42,30 @@ if str(PROTO) not in sys.path:
     sys.path.insert(0, str(PROTO))
 
 from app.taxonomy import charger_taxonomie  # noqa: E402
-from intelligence.ia import Apertus, Intelligence, prompt  # noqa: E402
+from intelligence.ia import FOURNISSEURS, SCHEMA_ACTION, Intelligence, _json_de, prompt  # noqa: E402
 
 CAS = PROTO / "eval" / "cas_comprendre_action.json"
-SORTIE = PROTO / "eval" / "resultats_comprendre_action.md"
-VARIABLES = ("APERTUS_BASE_URL", "APERTUS_API_KEY", "APERTUS_MODEL")
+RESULTATS = PROTO / "eval" / "resultats_banc"                    # un fichier par fournisseur, et la comparaison
+DRY_RUN = PROTO / "var" / "banc_dry_run"                          # hors dépôt (var/ est ignoré par git)
+SECRETS = ("APERTUS_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY")
+
+
+def analyser_brut(brut: Optional[str]) -> dict:
+    """Mesures sur la sortie BRUTE, indépendantes de la décision du produit : JSON lisible ? conforme au schéma de la
+    tâche (validation JSON Schema, sans rien corriger) ? Le produit, lui, décide avec sa propre validation."""
+    if brut is None:
+        return {"json_valide": None, "schema_valide": None, "erreur_schema": None}
+    try:
+        donnees = json.loads(_json_de(brut))
+    except (ValueError, TypeError):
+        return {"json_valide": False, "schema_valide": False, "erreur_schema": "JSON illisible"}
+    import jsonschema
+    erreurs = sorted(jsonschema.Draft202012Validator(SCHEMA_ACTION).iter_errors(donnees), key=lambda e: list(e.path))
+    if erreurs:
+        e = erreurs[0]
+        return {"json_valide": True, "schema_valide": False,
+                "erreur_schema": f"{'/'.join(str(x) for x in e.path) or 'racine'} : {e.message[:160]}"}
+    return {"json_valide": True, "schema_valide": True, "erreur_schema": None}
 
 
 def charger() -> tuple[list[dict], date, str]:
@@ -82,6 +106,8 @@ class Enregistreur:
         self.ms: Optional[float] = None
         self.erreur: Optional[str] = None
 
+    contrainte: Optional[str] = None
+
     def completer(self, systeme_txt: str, message: str, schema: Optional[dict]) -> str:
         t = time.perf_counter()
         try:
@@ -92,6 +118,7 @@ class Enregistreur:
             raise
         finally:
             self.ms = round((time.perf_counter() - t) * 1000, 1)
+            self.contrainte = getattr(self.f, "contrainte", None)
 
 
 def stats(v: list[float]) -> Optional[dict]:
@@ -102,21 +129,28 @@ def stats(v: list[float]) -> Optional[dict]:
             "min": round(s[0], 1), "max": round(s[-1], 1)}
 
 
-def executer(fabrique: Any = None) -> dict:
-    """`fabrique()` → un fournisseur neuf par cas (défaut : l'Apertus du produit, depuis l'environnement)."""
+def executer(fabrique: Any = None, fournisseur: str = "apertus") -> dict:
+    """`fabrique()` → un fournisseur neuf par cas (défaut : celui du produit nommé `fournisseur`, depuis l'environnement)."""
     tax = charger_taxonomie()
     cas, jour, empreinte = charger()
-    fabrique = fabrique or Apertus
+    fabrique = fabrique or FOURNISSEURS[fournisseur]
+    nom_f = modele_f = base_f = None
     lignes = []
     debut = datetime.now(timezone.utc)
     for c in cas:
         regles = Intelligence(tax, None).comprendre_action(c["texte"], jour)
-        enr = Enregistreur(fabrique())
+        f = fabrique()
+        nom_f, modele_f, base_f = f.nom, f.modele, getattr(f, "base", None)
+        enr = Enregistreur(f)
         rep = Intelligence(tax, enr).comprendre_action(c["texte"], jour)
         accepte = not rep.appel.repli and rep.appel.statut in ("OK", "INCERTAIN")
+        brut = analyser_brut(enr.brut)
         juste_produit, raison_produit = conforme(rep.sortie, c)
         juste_regles, raison_regles = conforme(regles.sortie, c)
-        lignes.append({"id": c["id"], "categorie": c["categorie"], "texte": c["texte"], "statut": rep.appel.statut,
+        lignes.append({"id": c["id"], "categorie": c["categorie"], "texte": c["texte"], "attendu": {k: c.get(k) for k in
+                       ("roles", "jour", "heures", "livrable", "duree") if k in c}, "fournisseur": nom_f, "modele": modele_f,
+                       "statut": rep.appel.statut, "repondu": enr.brut is not None, **brut, "validation_metier": accepte,
+                       "repli": rep.appel.repli, "contrainte": enr.contrainte, "erreur_fournisseur": enr.erreur,
                        "cause_rejet": None if accepte else (rep.appel.erreur or enr.erreur),
                        "modele_juste": accepte and juste_produit, "raison_modele": raison_produit if accepte else "sortie non utilisée",
                        "produit_juste": juste_produit, "raison_produit": raison_produit,
@@ -128,14 +162,21 @@ def executer(fabrique: Any = None) -> dict:
     git = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=PROTO, capture_output=True, text=True).stdout.strip()
     return {"contexte": {"debut_utc": debut.isoformat(timespec="seconds"), "fin_utc": fin.isoformat(timespec="seconds"),
                          "commit": git or "inconnu", "cas_sha256": empreinte, "jour_du_banc": jour.isoformat(),
-                         "endpoint": (os.environ.get("APERTUS_BASE_URL") or "").rstrip("/") + "/chat/completions",
-                         "modele": os.environ.get("APERTUS_MODEL"), "budget_s": os.environ.get("APERTUS_BUDGET_S", "12"),
+                         "fournisseur": nom_f, "modele": modele_f, "endpoint": base_f or "—",
+                         "budget_s": getattr(f, "budget", None) if lignes else None,
+                         "temperature": os.environ.get(f"{FOURNISSEURS[fournisseur].PREFIXE}_TEMPERATURE", "0")
+                         if fournisseur in FOURNISSEURS and fournisseur != "apertus" else "0",
                          "prompt": prompt("comprendre_action")[1]},
             "totaux": {"cas": n, "acceptees": sum(x["statut"] in ("OK", "INCERTAIN") and x["cause_rejet"] is None for x in lignes),
                        "rejetees": sum(x["statut"] == "REJETE" for x in lignes),
                        "indisponibles": sum(x["statut"] == "INDISPONIBLE" for x in lignes),
                        "modele_justes": sum(x["modele_juste"] for x in lignes), "produit_justes": sum(x["produit_juste"] for x in lignes),
                        "regles_justes": sum(x["regles_justes"] for x in lignes),
+                       "json_valides": sum(x["json_valide"] is True for x in lignes),
+                       "schema_valides": sum(x["schema_valide"] is True for x in lignes),
+                       "acceptees_fausses": sum(x["validation_metier"] and not x["modele_juste"] for x in lignes),
+                       "replis": sum(bool(x["repli"]) for x in lignes),
+                       "sans_contrainte_serveur": sum(x["contrainte"] == "consigne" for x in lignes),
                        "latence_ms": stats([x["latence_ms"] for x in lignes if x["latence_ms"] is not None])},
             "cas": lignes}
 
@@ -149,12 +190,16 @@ def rapport(r: dict) -> str:
         cats.setdefault(x["categorie"], []).append(x)
     lat = t["latence_ms"]
     out = [
-        "# Banc métier — `comprendre_action` (Apertus, chemin du produit)", "",
+        f"# Banc métier — `comprendre_action` ({c.get('fournisseur') or 'Apertus'}, chemin du produit)", "",
         "> Produit par `python -m eval.banc_comprendre_action`. Cas FICTIFS ; attentes fixées avant exécution",
         f"> (`eval/cas_comprendre_action.json`, SHA-256 `{c['cas_sha256'][:16]}…`). Mesure le MODÈLE sur UNE tâche du produit ;",
         "> ne démontre pas une qualité générale. La démonstration de scène tourne sans modèle.", "",
         f"- Période : {c['debut_utc']} → {c['fin_utc']} (UTC) ; commit `{c['commit']}` ; jour simulé {c['jour_du_banc']}",
-        f"- Endpoint `{c['endpoint']}` ; modèle `{c['modele']}` ; prompt `{c['prompt']}` ; budget {c['budget_s']} s par appel ; 1 appel par cas", "",
+        f"- Fournisseur `{c.get('fournisseur')}` ; point d'accès `{c['endpoint']}` ; modèle `{c['modele']}` ; prompt `{c['prompt']}` ;"
+        f" budget {c['budget_s']} s par appel ; température {c.get('temperature', '0')} ; 1 appel par cas", "",
+        f"- JSON lisible {t.get('json_valides', '—')}/{n} ; conforme au schéma {t.get('schema_valides', '—')}/{n} ;"
+        f" acceptées mais FAUSSES {t.get('acceptees_fausses', '—')} ; replis {t.get('replis', '—')} ;"
+        f" contrainte serveur refusée (consigne seule) {t.get('sans_contrainte_serveur', '—')}", "",
         "## Résultats", "",
         "| | réussis |", "|---|---|",
         f"| **Modèle juste** (sortie acceptée par la validation ET conforme) | **{pct('modele_justes')}** |",
@@ -175,22 +220,48 @@ def rapport(r: dict) -> str:
         pourquoi = x["raison_modele"] if x["cause_rejet"] is None else f"rejeté : {x['cause_rejet']}"
         out.append(f"| {x['id']} | {x['categorie']} | {x['statut']} | {'✓' if x['modele_juste'] else '✗'} | {pourquoi or '—'} |"
                    f" {'✓' if x['produit_juste'] else '✗ ' + x['raison_produit']} | {x['latence_ms'] if x['latence_ms'] is not None else '—'} |")
-    out += ["", "Sorties BRUTES du modèle, cas par cas : `eval/resultats_comprendre_action.json`.", ""]
+    out += ["", "Sorties BRUTES du modèle, cas par cas : le fichier `.json` de même nom.", ""]
     return "\n".join(out)
 
 
-if __name__ == "__main__":
-    sortie = Path(sys.argv[sys.argv.index("--sortie") + 1]) if "--sortie" in sys.argv else SORTIE
-    manque = [k for k in VARIABLES if not os.environ.get(k)]
-    if manque:
-        print("NON EXÉCUTÉ : " + ", ".join(manque) + " absente(s). Rien n'est appelé, rien n'est écrit.")
-        sys.exit(2)
-    res = executer()
-    texte = rapport(res)
-    cle = os.environ["APERTUS_API_KEY"]
-    if cle in texte or cle in json.dumps(res):
-        print("ARRÊT : la clé apparaîtrait dans le rapport. Rien n'est écrit.")
-        sys.exit(3)
+def _arg(nom: str) -> Optional[str]:
+    return sys.argv[sys.argv.index(nom) + 1] if nom in sys.argv and sys.argv.index(nom) + 1 < len(sys.argv) else None
+
+
+def _ecrire(res: dict, sortie: Path) -> None:
+    texte, brut = rapport(res), json.dumps(res, ensure_ascii=False, indent=1)
+    for k in SECRETS:                                          # jamais une clé dans un rapport
+        cle = os.environ.get(k)
+        if cle and (cle in texte or cle in brut):
+            print(f"ARRÊT : {k} apparaîtrait dans le rapport. Rien n'est écrit.")
+            sys.exit(3)
+    sortie.parent.mkdir(parents=True, exist_ok=True)
     sortie.write_text(texte, encoding="utf-8")
-    sortie.with_suffix(".json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(texte)
+    sortie.with_suffix(".json").write_text(brut, encoding="utf-8")
+    print(f"{sortie} : modèle juste {res['totaux']['modele_justes']}/{res['totaux']['cas']}, "
+          f"acceptées {res['totaux']['acceptees']}, rejetées {res['totaux']['rejetees']}, indisponibles {res['totaux']['indisponibles']}")
+
+
+if __name__ == "__main__":
+    factice = _arg("--dry-run")
+    if factice:                                                # AUCUN réseau : fournisseurs factices seulement
+        from eval.fournisseurs_factices import FACTICES
+        noms = list(FACTICES) if factice == "tous" else [factice]
+        inconnus = [x for x in noms if x not in FACTICES]
+        if inconnus:
+            print(f"--dry-run inconnu : {inconnus} (attendu : tous, {', '.join(FACTICES)})")
+            sys.exit(2)
+        dossier = Path(_arg("--dossier") or DRY_RUN)
+        for x in noms:
+            _ecrire(executer(FACTICES[x], fournisseur=x), dossier / f"{x}.md")
+        sys.exit(0)
+    nom = (_arg("--fournisseur") or os.environ.get("LLM_PROVIDER") or "apertus").strip().lower()
+    if nom not in FOURNISSEURS:
+        print(f"--fournisseur invalide : « {nom} » (attendu : {', '.join(FOURNISSEURS)})")
+        sys.exit(2)
+    cls = FOURNISSEURS[nom]
+    if not cls.configure():
+        manque = [k for k in cls.variables_requises() if not os.environ.get(k)]
+        print(f"NON EXÉCUTÉ ({nom}) : " + ", ".join(manque) + " absente(s). Rien n'est appelé, rien n'est écrit.")
+        sys.exit(2)
+    _ecrire(executer(fournisseur=nom), Path(_arg("--sortie") or RESULTATS / f"{nom}.md"))

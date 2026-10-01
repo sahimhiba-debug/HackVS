@@ -11,7 +11,7 @@ export HACKVS_SEMANTIQUE ?= 0
 HOTE ?= 127.0.0.1
 URL_PUBLIQUE ?=
 
-.PHONY: setup browsers lint typecheck test e2e e2e-salle sonde-ia latence-ia banc-ia eval secrets audit coverage demo quality-check mutation perf
+.PHONY: setup browsers lint typecheck test e2e e2e-salle sonde-ia latence-ia banc-ia banc-ia-dry-run banc-ia-comparer eval secrets audit coverage demo quality-check mutation perf
 
 setup:
 	cd $(P) && $(PY) -m pip install -r requirements-dev.txt -c constraints.txt
@@ -51,10 +51,22 @@ N ?= 30
 latence-ia:
 	cd $(P) && $(PY) scripts/mesurer_latence_apertus.py --n $(N)
 
-# Banc MÉTIER de la tâche IA du produit (comprendre_action, 26 cas fictifs, attentes fixées avant exécution) contre
-# Apertus, par le chemin du produit → eval/resultats_comprendre_action.md (+ .json, sorties brutes). Exige APERTUS_*.
+# Banc MÉTIER de la tâche IA du produit (comprendre_action, 26 cas fictifs figés, attentes fixées avant exécution), par
+# le chemin du produit, pour UN fournisseur → eval/resultats_banc/<fournisseur>.md (+ .json, sorties brutes).
+#   make banc-ia FOURNISSEUR=apertus|openai|claude   (exige les variables de ce fournisseur ; sinon rien n'est appelé)
+#   make banc-ia-dry-run                              (fournisseurs FACTICES, aucun réseau → prototype/var/banc_dry_run/)
+#   make banc-ia-comparer                             (comptes côte à côte → eval/resultats_banc/comparaison.md)
+# Docs : docs/BANC_MULTI_FOURNISSEURS.md
+FOURNISSEUR ?= apertus
 banc-ia:
-	cd $(P) && $(PY) -m eval.banc_comprendre_action
+	cd $(P) && $(PY) -m eval.banc_comprendre_action --fournisseur $(FOURNISSEUR)
+
+banc-ia-dry-run:
+	cd $(P) && env -u APERTUS_API_KEY -u OPENAI_API_KEY -u ANTHROPIC_API_KEY $(PY) -m eval.banc_comprendre_action --dry-run tous \
+	  && $(PY) -m eval.comparer_bancs --dossier var/banc_dry_run
+
+banc-ia-comparer:
+	cd $(P) && $(PY) -m eval.comparer_bancs
 
 eval:
 	cd $(P) && $(PY) -m eval.run_eval --verifier && $(PY) -m eval.eval_decisions --verifier \
