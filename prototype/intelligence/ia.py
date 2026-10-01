@@ -86,6 +86,23 @@ class Reponse(BaseModel):
     appel: AppelIA
 
 
+class Rejet(ValueError):
+    """Une sortie du modèle REJETÉE par le code. Son message est une CATÉGORIE fixe, écrite ici — jamais un morceau de
+    la sortie (F33) : il part dans les journaux, dans `APPEL_IA` et, au nouvel essai, vers le modèle lui-même."""
+
+
+def raison_sans_contenu(e: BaseException) -> str:
+    """Ce qu'on GARDE d'un rejet : sa catégorie si le code l'a nommée (`Rejet`), sinon son seul type — jamais son texte
+    (un message d'erreur peut recopier une clé, une valeur ou un concept inventés par le modèle)."""
+    if isinstance(e, Rejet):
+        return str(e).splitlines()[0][:160]
+    if isinstance(e, json.JSONDecodeError):
+        return "sortie non JSON"
+    if isinstance(e, ValidationError):
+        return "schéma non respecté"
+    return "structure inattendue"
+
+
 class ErreurFournisseur(RuntimeError):
     """CONTRAT de tout fournisseur : toute panne (réseau, délai, 429, 5xx, réponse mal formée) est levée sous ce type.
     `Intelligence` ne rattrape QUE celui-ci : un bogue de notre code n'est jamais déguisé en « fournisseur indisponible »."""
@@ -346,7 +363,7 @@ class Intelligence:
             return Reponse(sortie=sortie, appel=a)
         try:
             if _DONNEES_PERSONNELLES.search(brut):
-                raise ValueError("la sortie contient une donnée personnelle (courriel, téléphone ou adresse web)")
+                raise Rejet("la sortie contient une donnée personnelle (courriel, téléphone ou adresse web)")
             sortie, controle = valider_sortie(brut)
             statut: Statut = "OK" if sortie.get("statut", "OK") == "OK" else "INCERTAIN"
             a = AppelIA(trace=trace, tache=tache, fournisseur=self.f.nom, modele=self.f.modele, prompt=version,
@@ -355,7 +372,7 @@ class Intelligence:
             sortie = repli()
             a = AppelIA(trace=trace, tache=tache, fournisseur=self.f.nom, modele=self.f.modele, prompt=version,
                         latence_ms=round((time.perf_counter() - t0) * 1000, 1), statut="REJETE", repli=True,
-                        erreur=str(e).splitlines()[0][:200])
+                        erreur=raison_sans_contenu(e))
         self._tracer(a)
         return Reponse(sortie=sortie, appel=a)
 
@@ -395,14 +412,14 @@ class Intelligence:
                     break
                 try:
                     if _DONNEES_PERSONNELLES.search(brut):
-                        raise ValueError("la sortie contient une donnée personnelle (courriel, téléphone ou adresse web)")
+                        raise Rejet("la sortie contient une donnée personnelle (courriel, téléphone ou adresse web)")
                     sortie, controle = valider_sortie(brut)
                     a = AppelIA(trace=trace, tache=tache, fournisseur=self.f.nom, modele=self.f.modele, prompt=version, latence_ms=ms(),
                                 statut="OK", controle=controle, cle=cle, sortie=sortie, tentatives=len(rejets) + 1, rejets=rejets)
                     self._tracer(a)
                     return Reponse(sortie=sortie, appel=a)
                 except (ValueError, ValidationError, KeyError, TypeError, AttributeError) as e:
-                    rejets.append(str(e).splitlines()[0][:160])
+                    rejets.append(raison_sans_contenu(e))
                     consigne = protege + "\n\nTa sortie précédente a été REJETÉE : " + rejets[-1] + ". Corrige-la en respectant le schéma."
         elif disjoncte:
             erreur = "disjoncteur ouvert après pannes répétées"
@@ -435,20 +452,20 @@ class Intelligence:
             d = json.loads(_json_de(brut))
             etapes = d.get("etapes") or []
             if not isinstance(etapes, list) or len(etapes) > 3:
-                raise ValueError("gestes absents ou trop nombreux")
+                raise Rejet("gestes absents ou trop nombreux")
             propres = []
             for e in etapes:
                 if e.get("nature") not in ("temps", "lieu", "objet", "competence"):
-                    raise ValueError("nature de geste inconnue")
+                    raise Rejet("nature de geste inconnue")
                 duree = int(e.get("duree_min", 0))
                 if not 1 <= duree <= 60 or not 3 <= len(str(e.get("geste", ""))) <= 200:
-                    raise ValueError("geste ou durée hors bornes")
+                    raise Rejet("geste ou durée hors bornes")
                 propres.append({"nature": e["nature"], "geste": str(e["geste"]).strip(), "duree_min": duree})
             champs = {k: str(d.get(k) or "").strip() for k in ("question", "objet", "critere")}
             if not 3 <= len(champs["question"]) <= 300 or len(champs["objet"]) > 120 or len(champs["critere"]) > 300:
-                raise ValueError("champ vide ou trop long")
+                raise Rejet("champ vide ou trop long")
             if "MEMBRE-" in brut:
-                raise ValueError("la sortie cite un identifiant de membre")
+                raise Rejet("la sortie cite un identifiant de membre")
             return champs | {"etapes": propres, "mode": "apertus"}, None
 
         def repli() -> dict:
@@ -477,19 +494,19 @@ class Intelligence:
 
         def valide(brut: str) -> tuple[dict, Optional[dict]]:
             if "MEMBRE-" in brut:
-                raise ValueError("la sortie cite un identifiant de membre")
+                raise Rejet("la sortie cite un identifiant de membre")
             d = json.loads(_json_de(brut))
             exig = d.get("exigences") or []
             if not 1 <= len(exig) <= 4:
-                raise ValueError("exigences absentes ou trop nombreuses")
+                raise Rejet("exigences absentes ou trop nombreuses")
             propres = []
             for x in exig:
                 if x.get("nature") not in ("temps", "lieu", "objet", "competence") or x.get("role") not in ("voix", "lieu", "public", "autre"):
-                    raise ValueError("nature ou rôle inconnu")
+                    raise Rejet("nature ou rôle inconnu")
                 if x.get("concept") is not None and x["concept"] not in self.tax.concepts:
-                    raise ValueError(f"capacité hors catalogue : {x['concept']}")
+                    raise Rejet("capacité hors catalogue")
                 if not 5 <= int(x.get("duree_min", 0)) <= 120 or not 3 <= len(str(x.get("geste", ""))) <= 200:
-                    raise ValueError("geste ou durée hors bornes")
+                    raise Rejet("geste ou durée hors bornes")
                 propres.append({"role": x["role"], "nature": x["nature"], "concept": x.get("concept"), "geste": str(x["geste"]).strip(),
                                 "duree_min": int(x["duree_min"]), "livrable": (str(x["livrable"]).strip()[:120] or None) if x.get("livrable") else None})
             f = d.get("fenetre") or {}
@@ -506,11 +523,11 @@ class Intelligence:
         """Une fenêtre sortie d'un modèle est une donnée non fiable : jour ISO dans les 60 jours, heures HH:MM, ordre."""
         heure_ok = lambda h: h is None or bool(re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", str(h)))  # noqa: E731
         if not heure_ok(debut) or not heure_ok(fin) or (debut and fin and str(fin) <= str(debut)):
-            raise ValueError("heures invalides")
+            raise Rejet("heures invalides")
         if jour is not None:
             j = date.fromisoformat(str(jour))
             if not aujourd_hui <= j <= aujourd_hui + timedelta(days=60):
-                raise ValueError("jour hors de l'horizon de 60 jours")
+                raise Rejet("jour hors de l'horizon de 60 jours")
         return {"jour": jour, "debut": debut, "fin": fin}
 
     def _action_regles(self, texte: str, aujourd_hui: date) -> dict:
@@ -585,10 +602,10 @@ class Intelligence:
         def valide(brut: str) -> tuple[dict, Optional[dict]]:
             t = json.loads(_json_de(brut))["explication"].strip()
             if not t or len(t) > 700:
-                raise ValueError("explication vide ou trop longue")
+                raise Rejet("explication vide ou trop longue")
             v = verifier(t, faits, pseudonymes)
             if not v["fidele"]:
-                raise ValueError(f"explication infidèle aux faits : {v['nombres_inventes'] or v['identifiants_inventes'] or v['nombres_en_lettres']}")
+                raise Rejet("explication infidèle aux faits (nombre, identifiant ou nombre en lettres inventé)")
             return {"explication": t, "statut": "OK"}, v
         return self._executer("expliquer_opportunite", "expliquer_opportunite", json.dumps(faits, ensure_ascii=False),
                               SCHEMA_TEXTE["explication"], valide, lambda: repli)
@@ -612,9 +629,9 @@ class Intelligence:
             t = json.loads(_json_de(brut))["message"].strip()
             fuites = [x for x in interdits if x and x.lower() in t.lower()]
             if "MEMBRE-" in t or fuites:
-                raise ValueError("le message révèle une identité non autorisée")
+                raise Rejet("le message révèle une identité non autorisée")
             if not t or len(t) > 600:
-                raise ValueError("message vide ou trop long")
+                raise Rejet("message vide ou trop long")
             return {"message": t, "statut": "OK"}, {"fuites": fuites}
         return self._executer("rediger_sollicitation", "rediger_sollicitation", json.dumps(faits, ensure_ascii=False),
                               SCHEMA_TEXTE["message"], valide, lambda: repli)

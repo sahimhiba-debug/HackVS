@@ -17,7 +17,7 @@ from typing import Optional
 from app.parser_llm import _json_de
 from app.taxonomy import Taxonomie, norm
 
-from .ia import Intelligence, Reponse
+from .ia import Intelligence, Rejet, Reponse
 
 NOMBRE = re.compile(r"\d+")
 ETATS = ("il manque une pièce", "toutes les pièces existent", "consentements en cours", "le Club peut le faire",
@@ -27,9 +27,9 @@ ETATS = ("il manque une pièce", "toutes les pièces existent", "consentements e
 def _objet(brut: str, cles: set[str]) -> dict:
     v = json.loads(_json_de(brut))
     if not isinstance(v, dict):
-        raise ValueError("la sortie n'est pas un objet JSON")
+        raise Rejet("la sortie n'est pas un objet JSON")
     if set(v) - cles:
-        raise ValueError(f"champs non demandés : {sorted(set(v) - cles)}")      # ni consentement, ni statut, ni identité
+        raise Rejet("champs non demandés")      # ni consentement, ni statut, ni identité
     return v
 
 
@@ -46,15 +46,15 @@ class RolesIA:
             v = _objet(brut, {"attributs", "incertitudes"})
             att = v.get("attributs") or {}
             if not isinstance(att, dict) or set(att) - set(minimums):
-                raise ValueError("attribut non demandé")
-            for k, x in att.items():
+                raise Rejet("attribut non demandé")
+            for x in att.values():
                 if not isinstance(x, int) or isinstance(x, bool) or not 0 <= x <= 1000:
-                    raise ValueError(f"{k} : valeur hors bornes")
+                    raise Rejet("valeur hors bornes")
                 if str(x) not in nombres:
-                    raise ValueError(f"{k} = {x} : valeur absente du texte du membre (inventée)")
+                    raise Rejet("valeur absente du texte du membre (inventée)")
             inc = v.get("incertitudes") or []
             if not isinstance(inc, list) or len(inc) > 3 or any(not isinstance(i, str) or len(i) > 120 for i in inc):
-                raise ValueError("incertitudes mal formées")
+                raise Rejet("incertitudes mal formées")
             return {"attributs": att, "incertitudes": inc}, {"nombres_du_texte": sorted(nombres)}
         schema = {"type": "object", "additionalProperties": False, "required": ["attributs"],
                   "properties": {"attributs": {"type": "object", "properties": {k: {"type": "integer"} for k in minimums},
@@ -74,9 +74,9 @@ class RolesIA:
             if c is None:
                 return {"concept": None, "extrait": None}, None
             if c not in self.tax.concepts:
-                raise ValueError(f"concept hors vocabulaire : {str(c)[:40]}")
+                raise Rejet("concept hors vocabulaire")
             if not isinstance(x, str) or len(x.strip()) < 3 or norm(x) not in protege:
-                raise ValueError("extrait absent du texte du membre")
+                raise Rejet("extrait absent du texte du membre")
             return {"concept": c, "extrait": x.strip()}, None
 
         def regles() -> dict:
@@ -106,23 +106,23 @@ class RolesIA:
             v = _objet(brut, {"phrases"})
             ph = v.get("phrases")
             if not isinstance(ph, list) or not 1 <= len(ph) <= 4:
-                raise ValueError("1 à 4 phrases attendues")
+                raise Rejet("1 à 4 phrases attendues")
             propres = []
             for p in ph:
                 if not isinstance(p, dict) or set(p) - {"texte", "faits"}:
-                    raise ValueError("phrase mal formée")
+                    raise Rejet("phrase mal formée")
                 t, cites = p.get("texte"), p.get("faits")
                 if not isinstance(t, str) or not 3 <= len(t) <= 240:
-                    raise ValueError("phrase vide ou trop longue")
+                    raise Rejet("phrase vide ou trop longue")
                 if not isinstance(cites, list) or not cites or any(c not in par_id for c in cites):
-                    raise ValueError("phrase sans citation, ou citation d'un fait inexistant")
+                    raise Rejet("phrase sans citation, ou citation d'un fait inexistant")
                 source = " ".join(par_id[c] for c in cites)
                 if set(NOMBRE.findall(t)) - set(NOMBRE.findall(source)):
-                    raise ValueError("nombre absent des faits cités")
+                    raise Rejet("nombre absent des faits cités")
                 if any(e in norm(t) and e not in norm(source) for e in map(norm, ETATS)):
-                    raise ValueError("état affirmé sans fait cité qui le porte")
+                    raise Rejet("état affirmé sans fait cité qui le porte")
                 if "MEMBRE-" in t or self.ia.proteger(t) != t:
-                    raise ValueError("la phrase désigne une personne")
+                    raise Rejet("la phrase désigne une personne")
                 propres.append({"texte": t.strip(), "faits": list(dict.fromkeys(cites))})
             return {"phrases": propres}, None
 
