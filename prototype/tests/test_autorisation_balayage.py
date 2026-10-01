@@ -168,3 +168,33 @@ def test_les_gestes_doubles_ne_s_appliquent_qu_une_fois(monde):
     assert client.post(f"/api/pulse/moi/capacites/{finalite}/consentement", headers=p).status_code == 200
     assert recus() == avant                                      # déjà consenti par la réponse : rien de neuf
     assert [client.post(f"/api/pulse/moi/capacites/{finalite}/retrait", headers=p).status_code for _ in range(2)] == [200, 404]
+
+
+def test_lire_ne_capte_rien_aucune_route_de_lecture_n_ecrit_au_journal(monde, tmp_path):
+    """Claim du pitch (D1) : « Lire ne capte rien : aucune écriture sans geste ». CHAQUE route GET servie — téléphone,
+    console, Établi, écran commun — est appelée (avec de vrais identifiants quand la route en prend), et le journal
+    SQLite est compté AVANT et APRÈS, dans le fichier même : aucune ligne ne doit apparaître."""
+    import sqlite3
+    app, routes = monde
+    client = TestClient(app)
+    s = _sessions(client)
+    a = s["s01"]
+    oid = client.post("/api/pulse/moi/offres", headers=a, json={"nature": "objet", "quoi": "Un présentoir fictif",
+                                                                 "au": "2026-10-10"}).json()["offre"]
+    eid = client.post("/api/pulse/moi/essais", headers=a, json={"question": "Une question fictive ?",
+                                                                 "echeance": "2026-10-09"}).json()["id"]
+
+    def compter() -> int:
+        with sqlite3.connect(tmp_path / "journal.db") as db:
+            return db.execute("SELECT COUNT(*) FROM evenements").fetchone()[0]
+    avant = compter()
+    lectures = 0
+    for m, c, g in routes:
+        if m != "GET":
+            continue
+        for chemin in {c, c.replace("/x1", f"/{oid}") if "decouvertes" in c else c.replace("/x1", f"/{eid}")}:
+            entetes = CONSOLE if g == "console" else a
+            client.get(chemin, headers=entetes)
+            lectures += 1
+    assert lectures >= 20
+    assert compter() == avant, f"{compter() - avant} fait(s) écrit(s) par une simple lecture"

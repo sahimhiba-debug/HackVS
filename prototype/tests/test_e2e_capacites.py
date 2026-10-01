@@ -34,6 +34,10 @@ def test_etabli_telephones_reponse_recu_retrait_anonyme(url):  # noqa: F811
         pauline.click("nav.onglets >> text=Demandes")
         pauline.wait_for_selector("[data-ask]")
         assert "mardi 06.10" in pauline.inner_text("main")                             # le téléphone dit sa date
+        # claim du pitch (D1) « Répondre : trois boutons » : la réponse tient en Oui / Non / Pas cette fois (l'aide à la
+        # saisie par le texte est facultative et ne répond pas)
+        reponses = [x.strip() for x in pauline.locator("[data-ask] button").all_inner_texts() if x.strip() != "Proposer à partir de mon texte"]
+        assert reponses == ["Oui", "Non", "Pas cette fois"], reponses
         pauline.fill("#ask-mots", "Mon minibus a 14 places, libre vendredi après-midi.")
         pauline.click("#ask-proposer")                                                 # aucun modèle ici : la forme déterministe, dite
         pauline.locator("#ask-ia:has-text('forme déterministe, sans IA — aucun modèle configuré')").wait_for()
