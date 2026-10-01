@@ -20,6 +20,7 @@ on:
       - "prototype/tests/test_capacites*.py"
       - "prototype/tests/test_banc_finalite.py"
       - "prototype/setup.cfg"
+      - "prototype/scripts/mutation_capacites.py"   # la porte elle-même (H3) : la changer relance une campagne
       - "docs/audit/mutants_survivants.txt"
       - ".github/workflows/mutation.yml"
 
