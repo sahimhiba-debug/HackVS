@@ -157,7 +157,9 @@ class Annulation(BaseModel):
     raison: str = Field(default="annulé", min_length=3, max_length=200)
 
 
-def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: Callable, limiter_ia: Callable) -> None:
+def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: Callable, limiter_ia: Callable,
+                   limiter_ecritures: Callable) -> None:
+    """`limiter_ecritures(pid)` : 30 écritures par minute et par membre (offres, essais, notes — décision D2)."""
     def vue(c: ClubPulse, eid: str, pid: str) -> dict:
         return c.vues_essai.essai(eid, pid)
 
@@ -173,11 +175,13 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     # ------------------------------------------------------------------ offres volontaires (les siennes)
     @r.post("/moi/offres")
     def publier_offre(o: OffreEntree, pid: str = Depends(membre)) -> dict:
+        limiter_ecritures(pid)
         return au_monde(lambda c: {"offre": c.publier_offre(pid, o.nature, o.quoi, o.capacite, o.du or c.jour, o.au, o.duree_max_min,
                                                            o.conditions, o.concept, [x.model_dump() for x in o.plages])})
 
     @r.patch("/moi/offres/{oid}")
     def modifier_offre(oid: str, m: OffreModif, pid: str = Depends(membre)) -> dict:
+        limiter_ecritures(pid)
         return au_monde(lambda c: {"essais_a_adapter": c.modifier_offre(pid, oid, m.model_dump())})
 
     @r.post("/moi/offres/{oid}/retirer")
@@ -192,6 +196,8 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
 
     @r.post("/moi/actions/nouvelle")
     def creer_action(a: Action, pid: str = Depends(membre)) -> dict:
+        limiter_ecritures(pid)
+
         def f(c: ClubPulse) -> dict:
             eid = c.creer_action(pid, a.model_dump(mode="json"))
             return vue(c, eid, pid)
@@ -213,6 +219,8 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
 
     @r.post("/moi/essais")
     def creer(b: Brouillon, pid: str = Depends(membre)) -> dict:
+        limiter_ecritures(pid)
+
         def f(c: ClubPulse) -> dict:
             eid = c.creer_essai(pid, b.model_dump(mode="json"))
             return vue(c, eid, pid)
@@ -231,6 +239,7 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
 
     @r.put("/moi/essais/{eid}/brouillon")
     def corriger(eid: str, b: Brouillon, version: int, pid: str = Depends(membre)) -> dict:
+        limiter_ecritures(pid)
         return commande(eid, pid, lambda c: c.corriger_essai(pid, eid, version, b.model_dump(mode="json")))
 
     @r.post("/moi/essais/{eid}/publier")

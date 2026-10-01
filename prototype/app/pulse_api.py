@@ -128,8 +128,9 @@ class Limiteur:
     """Fenêtre glissante par clé (ex. adresse IP + route). En mémoire : suffit pour un processus de démonstration ;
     en production, derrière plusieurs instances, elle vivrait dans le proxy ou un magasin partagé."""
 
-    def __init__(self, maximum: int, fenetre_s: float, horloge: Callable[[], float] = time.monotonic):
-        self.maximum, self.fenetre_s, self._horloge = maximum, fenetre_s, horloge
+    def __init__(self, maximum: int, fenetre_s: float, horloge: Callable[[], float] = time.monotonic,
+                 message: str = "trop de demandes : réessayez dans une minute"):
+        self.maximum, self.fenetre_s, self._horloge, self.message = maximum, fenetre_s, horloge, message
         self._traces: dict[str, deque] = defaultdict(deque)
         self._v = threading.Lock()
         self._purge = horloge()
@@ -147,7 +148,7 @@ class Limiteur:
             while q and q[0] <= t - self.fenetre_s:
                 q.popleft()
             if len(q) >= self.maximum:
-                raise Limite("trop de demandes : réessayez dans une minute")
+                raise Limite(self.message)
             q.append(t)
 
 
@@ -210,6 +211,11 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     limite_acces_code = Limiteur(5, 60.0)
     limite_acces_global = Limiteur(300, 60.0)
     limite_ia = Limiteur(30, 60.0)                    # appels de langage (notes, demandes) : 30 par minute et par membre
+    # ÉCRITURES qui font grandir le journal (offres, essais, notes) : 30 par minute et par MEMBRE — un passe juré est une
+    # session de membre, il a donc le même plafond (décision D2 ; sans plafond, des centaines d'offres ou de brouillons
+    # alourdissaient chaque recalcul de l'Établi, voir durcissement H2)
+    limite_ecritures = Limiteur(30, 60.0, message="trop de publications en une minute : attendez un instant avant de publier "
+                                                  "de nouveau")
     # QR JURÉ : jamais par adresse IP (dans la salle, tout le public partage la même) — par CODE et par SESSION
     limite_jure_global = Limiteur(300, 60.0)          # plafond GLOBAL doux, comme `/acces` (R-02 : sans lui, des passes
     #                                                   inventés à la chaîne n'étaient freinés par rien)
@@ -339,6 +345,7 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
 
     @r.post("/moi/notes")
     def noter(n: Note, pid: str = Depends(membre)) -> dict:
+        limiter(limite_ecritures, f"ecrit|{pid}")
         limiter(limite_ia, f"ia|{pid}")
         return au_monde(lambda c: c.capturer(pid, n.texte, n.evenement))
 
@@ -377,6 +384,7 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
 
     @r.post("/moi/decouvertes/{oid}/essai", response_model=EssaiCree)
     def proposer_essai(oid: str, pid: str = Depends(membre)) -> dict:
+        limiter(limite_ecritures, f"ecrit|{pid}")
         return au_monde(lambda c: {"essai": c.proposer_essai(pid, oid)})    # un BROUILLON, visible de la personne seule
 
     # ------------------------------------------------------------------ salle de contrôle du Club (rôle animatrice)
@@ -392,7 +400,8 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     def c_temps(t: Temps) -> dict:
         return au_monde(lambda c: {"echeances": c.avancer(t.jours), "date": c.jour.isoformat()})
 
-    ajouter_routes_essai(r, au_monde, membre, console, lambda pid: limiter(limite_ia, f"ia|{pid}"))
+    ajouter_routes_essai(r, au_monde, membre, console, lambda pid: limiter(limite_ia, f"ia|{pid}"),
+                         lambda pid: limiter(limite_ecritures, f"ecrit|{pid}"))
     ajouter_routes_capacites(r, au_monde, membre, console)
 
     @r.get("/console/personas", dependencies=[Depends(console)])

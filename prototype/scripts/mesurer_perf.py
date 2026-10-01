@@ -10,7 +10,8 @@ Méthode :
 - latences HTTP par `urllib` depuis la même machine (boucle locale) : N requêtes séquentielles par point d'accès,
   moyenne, médiane, p95, max ;
 - « après écriture » : une écriture (offre publiée) puis la lecture de l'Établi, qui recalcule (cache invalidé) ;
-- « sous charge » : idem après 100 offres et 100 brouillons parasites publiés par UN membre (scénario d'abus H2).
+- « sous charge » : idem après 45 offres et 45 brouillons parasites — trois membres remplissent chacun le plafond de
+  30 écritures par minute (scénario d'abus H2, borné par D2) ; la 31e écriture d'un membre doit recevoir 429.
 Ce qui n'est PAS mesuré : un vrai téléphone, un vrai Wi-Fi, un modèle de langage (aucun n'est configuré).
 """
 from __future__ import annotations
@@ -25,6 +26,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -117,10 +119,17 @@ def mesurer(n: int = 50, n_demarrages: int = 5) -> dict:
                 return v
             res["latences_ms"]["Établi après une écriture (recalcul)"] = _stats(apres_ecriture(max(10, n // 5)))
 
-            for i in range(100):
-                _req(base, "/api/pulse/moi/offres", {"nature": "objet", "quoi": f"Offre parasite {i}", "au": "2026-10-10"}, sess["s14"])
-                _req(base, "/api/pulse/moi/essais", {"question": f"Question parasite fictive {i} ?", "echeance": "2026-10-09"}, sess["s14"])
-            res["latences_ms"]["Établi après une écriture, sous 100 offres + 100 brouillons parasites"] = _stats(apres_ecriture(10))
+            # abus (H2) borné par le plafond D2 : 30 écritures / min / membre — chacun des trois membres le remplit
+            for k in ("s14", "s01", "n01"):
+                for i in range(15):
+                    _req(base, "/api/pulse/moi/offres", {"nature": "objet", "quoi": f"Offre parasite {k} {i}", "au": "2026-10-10"}, sess[k])
+                    _req(base, "/api/pulse/moi/essais", {"question": f"Question parasite fictive {k} {i} ?", "echeance": "2026-10-09"}, sess[k])
+            try:
+                _req(base, "/api/pulse/moi/offres", {"nature": "objet", "quoi": "Une de trop", "au": "2026-10-10"}, sess["s14"])
+                res["plafond_ecritures"] = "NON APPLIQUÉ : la 31e écriture a été acceptée"
+            except urllib.error.HTTPError as e:
+                res["plafond_ecritures"] = f"31e écriture d'un membre dans la minute : {e.code}"
+            res["latences_ms"]["Établi après une écriture, sous 90 parasites (3 membres au plafond d'une minute)"] = _stats(apres_ecriture(10))
         finally:
             p.kill()
             p.wait()
@@ -136,6 +145,8 @@ def tableau(res: dict) -> str:
     lignes.append(f"| Démarrage à froid (processus → premier 200) | {d['n']} | {d['moyenne']} | {d['mediane']} | {d['p95']} | {d['max']} |")
     for nom, s in res["latences_ms"].items():
         lignes.append(f"| {nom} | {s['n']} | {s['moyenne']} | {s['mediane']} | {s['p95']} | {s['max']} |")
+    lignes.append("")
+    lignes.append(f"Plafond d'écritures : {res.get('plafond_ecritures', 'non mesuré')}.")
     return "\n".join(lignes) + "\n\nToutes les durées en millisecondes."
 
 
