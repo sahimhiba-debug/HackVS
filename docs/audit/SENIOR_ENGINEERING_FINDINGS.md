@@ -5,6 +5,7 @@
 > contre-épreuve, commit). Gravité : CRITICAL / HIGH / MEDIUM / LOW / INFO. États : FERMÉ (commit), OUVERT,
 > ACCEPTÉ (risque connu, borné, expliqué), MESURÉ (constat chiffré, sans correction). Aucun CRITICAL trouvé.
 > Gel du code : vendredi 02.10.2026, 18:00 — après, documentation, artefacts de démonstration et répétition seulement.
+> Revue publique du 01.10 (R-01 à R-15, classés, preuves, correctifs) : [REVUE_PUBLIQUE.md](REVUE_PUBLIQUE.md).
 
 | ID | Gravité | Domaine | Constat | État |
 |---|---|---|---|---|
