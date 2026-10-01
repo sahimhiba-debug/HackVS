@@ -53,7 +53,7 @@ audit:
 	cd $(P) && $(PY) -m pip_audit -r constraints.txt --progress-spinner off
 
 coverage:
-	cd $(P) && $(PY) -m coverage run --source=app,intelligence,plateforme,adaptateurs -m pytest -q && $(PY) -m coverage report --skip-covered | tail -25
+	cd $(P) && $(PY) -m coverage run --source=app,intelligence,plateforme,adaptateurs -m pytest -q && $(PY) -m coverage report --skip-covered
 
 # obligatoire avant tout tag de démonstration (demo-*) ; aussi en CI : nuit, à la demande, et quand le registre change
 # Jamais sur la machine de démonstration pendant le hackathon (TODO-DEMO.md) : nuit, CI, avant un tag demo-*.
