@@ -5,8 +5,8 @@
   "start_url": "/app#pouls",
   "scope": "/app",
   "display": "standalone",
-  "background_color": "#f5f4ef",
-  "theme_color": "#121212",
+  "background_color": "#F2F3F5",
+  "theme_color": "#F2F3F5",
   "lang": "fr",
   "icons": [{ "src": "/static/pulse/icone.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
 }

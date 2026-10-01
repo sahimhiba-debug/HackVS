@@ -1,7 +1,9 @@
 // Club Pulse — service worker minimal : l'enveloppe de l'application fonctionne hors ligne ; les DONNÉES jamais mises en
 // cache (elles sont personnelles et doivent rester à jour). Hors ligne, l'application le dit au lieu d'afficher du périmé.
-const ENVELOPPE = "club-pulse-v1";
-const FICHIERS = ["/app", "/static/pulse/pulse.css", "/static/pulse/icone.svg", "/app/manifest.webmanifest"];
+const ENVELOPPE = "club-pulse-v2";
+const FICHIERS = ["/app", "/static/pulse/pulse.css", "/static/pulse/tokens.css", "/static/pulse/icone.svg", "/app/manifest.webmanifest",
+  "/static/pulse/polices/plus-jakarta-sans-latin-wght-normal.woff2", "/static/pulse/polices/plus-jakarta-sans-latin-ext-wght-normal.woff2",
+  "/static/pulse/polices/jetbrains-mono-latin-400-normal.woff2", "/static/pulse/polices/jetbrains-mono-latin-500-normal.woff2"];
 self.addEventListener("install", (e) => e.waitUntil(caches.open(ENVELOPPE).then((c) => c.addAll(FICHIERS)).then(() => self.skipWaiting())));
 self.addEventListener("activate", (e) => e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== ENVELOPPE).map((k) => caches.delete(k))))));
 self.addEventListener("fetch", (e) => {
