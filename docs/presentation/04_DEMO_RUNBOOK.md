@@ -21,10 +21,10 @@ l'Établi montre une capacité à une pièce près
 C'est le parcours vérifié par `prototype/tests/test_e2e_capacites.py::test_etabli_telephones_reponse_recu_retrait_anonyme`
 (vrai navigateur), et la seule scène du produit qui enchaîne trois boutons, reçu et retrait anonyme en 90 secondes.
 
-Note de mise en scène : le brief parle d'un « anneau qui se ferme ». Dans le **produit réel**, l'Établi ne dessine pas
-d'anneau : la carte passe du statut « il manque une pièce » (pièce manquante en pointillés) à « le Club peut le faire »
-(bordure verte). L'anneau 3/4 → 4/4 est le langage des planches du design system (Cover, Passeport). Sur scène, on
-montre l'écran réel ; l'anneau peut vivre sur les slides, pas dans la démo.
+Arbitrage D-PRES-2 : dans le **produit réel**, l'Établi ne dessine pas d'anneau — la carte passe de « il manque une
+pièce » (pointillés) à « le Club peut le faire » (bordure verte). L'anneau 3/4 → 4/4 vit sur les slides et dans le film.
+Sur scène, on montre l'écran réel, et V1 fait le pont à la bordure verte : « L'anneau que vous avez vu se fermer chez
+Jean-Marc, dans le produit, c'est ça : le Club peut le faire. »
 
 ## 1. Matériel et réseau
 
@@ -58,25 +58,31 @@ montre l'écran réel ; l'anneau peut vivre sur les slides, pas dans la démo.
 
 Données : monde fictif, personnages fictifs, marqués « FICTIF » sur chaque écran. Aucun nom réel.
 
-## 3. L'IA pendant la démo — décision à prendre par Hiba avant samedi
+## 3. L'IA pendant la démo — arbitrage D-PRES-1
 
-Le brief impose « l'IA propose une structure ». Dans cette scène, l'IA intervient quand Pauline appuie sur
-**« Proposer à partir de mon texte »** : le modèle relève la quantité (« 14 places ») dans sa phrase, le code vérifie
-(entier, ≥ 12), et le téléphone dit soit « proposé par le modèle « … », vérifié par le code — Vérifiez, puis répondez. »,
-soit « forme déterministe, sans IA — … Remplissez le formulaire vous-même. ».
+**Par défaut : B, IA éteinte** (interrupteur « Éteindre l'IA » sur l'Établi avant la séance, ou aucune variable
+`APERTUS_*` sur la machine). Quand Pauline appuie sur « Proposer à partir de mon texte », le téléphone dit « forme
+déterministe, sans IA — … Remplissez le formulaire vous-même. » et V2 saisit 14. La réplique de V1 est celle de la
+parité : IA allumée ou éteinte, l'état du Club est le même (`test_parite_ia.py`) ; la démo sans modèle le démontre.
 
-Ce qui est **prouvé** (CLAIMS n° 38–40) concerne l'autre tâche IA du produit (« Agir à plusieurs → Comprendre ma
-demande ») : Apertus répond, est validé ou refusé, et sa qualité mesurée est faible (1/26). La tâche de cette scène
-(relever une quantité) n'a **pas** été mesurée (évaluation EXTRACT prête, non exécutée). Donc :
+**A, IA allumée, seulement si** samedi, au rituel § 9.5, la phrase EXACTE de l'étape 3 —
+`Mon minibus a 14 places, libre vendredi après-midi.` — obtient **3 fois sur 3** une proposition acceptable
+(« proposé par le modèle « … », vérifié par le code », champ « places » pré-rempli à 14). Un seul échec sur trois : B.
 
-| Option | Ce que le jury voit | Risque | Ce que V1 dit |
-|---|---|---|---|
-| **A — IA allumée** (variables `APERTUS_*` sur la machine, modèle `swiss-ai/Apertus-v1.5-70B`) | une attente de 1 à 7 s après « Proposer », puis l'un des deux messages | Internet de la salle requis pour cet appel seul ; sortie refusée possible | les deux répliques de l'acte 5 sont écrites ; aucune des deux n'est un échec |
-| **B — IA éteinte** (interrupteur « Éteindre l'IA » sur l'Établi, ou pas de variables) | « forme déterministe, sans IA » immédiatement | aucun | la réplique « formulaire » ; l'acte 8 porte seul le discours IA |
+Ce qui est **prouvé** (CLAIMS n° 38–40) concerne l'autre tâche IA (« Agir à plusieurs → Comprendre ma demande »).
+La tâche de cette scène (relever une quantité) n'a **pas** été mesurée (évaluation EXTRACT prête, non exécutée) :
+c'est pourquoi le constat de samedi décide, pas l'espoir.
 
-Recommandation de mise en scène : **A si le rituel de samedi a montré au moins une proposition acceptée sur cette
-phrase exacte, sinon B.** Dans les deux cas, la décision antérieure (« la démonstration de scène tourne sans modèle »)
-est modifiée par ce brief : à confirmer par Hiba. Le scénario guidé de la régie, lui, reste sans modèle quoi qu'il arrive.
+**Constat du rituel (à remplir samedi, sur la machine de démonstration, modèle `swiss-ai/Apertus-v1.5-70B`) :**
+
+| Essai | Heure | Affichage exact sous le champ | « places » pré-rempli | Attente (s) | Acceptable ? |
+|---|---|---|---|---|---|
+| 1 | | | | | |
+| 2 | | | | | |
+| 3 | | | | | |
+| **Décision** | | A seulement si 3/3 acceptables ; sinon **B** | | | **A / B :** |
+
+Quelle que soit la décision, le scénario guidé de la régie reste sans modèle.
 
 ## 4. Pendant le film (2:00–4:25) — V2, en silence
 
@@ -92,9 +98,9 @@ est modifiée par ce brief : à confirmer par Hiba. Le scénario guidé de la r�
 | 1 | 4:40 | V1 | basculer le projecteur sur l'Établi | la carte « il manque une pièce », le minibus en pointillés | **Établi vide / « hors ligne »** : F5 ; sinon `make demo` dans un terminal (le monde revient, ne pas réinitialiser) ; sinon capture `etabli-1-manque.png` et dire « capture de la répétition de ce matin » |
 | 2 | 5:10 | V2 | téléphone : onglet **Demandes** | la demande « Un minibus de 12 places ou plus », trois boutons | **téléphone ne charge pas** : régie `/demo/regie` sur l'écran, cadre « Téléphone 1 » ; **toujours pas** : capture `tel-1-demande.png` |
 | 3 | 5:25 | V2 | taper dans « Décrivez votre pièce avec vos mots » : `Mon minibus a 14 places, libre vendredi après-midi.` | le texte | — |
-| 4 | 5:35 | V2 | appuyer **« Proposer à partir de mon texte »** | sous le champ, l'une des deux phrases (§ 3) ; si proposition acceptée, « places » pré-rempli à 14 | **« Proposition indisponible »** (réseau) : V1 dit la réplique « formulaire » ; V2 saisit 14 |
-| 5 | 5:45 | V1 | la réplique qui correspond à l'écran (`03_SCRIPT_ORAL.md`, acte 5) | — | ne jamais commenter un message qui n'est pas à l'écran |
-| 6 | 6:00 | V2 | vérifier « places (au moins 12) » = 14, appuyer **Oui** | téléphone : le reçu apparaît dans « Mes consentements (reçus) » ; **Établi : « le Club peut le faire »**, bordure verte, plus de pointillés (≤ 1 s, l'Établi relit chaque seconde) | **l'Établi ne change pas en 3 s** : F5 ; **rien** : capture `etabli-2-peut.png` ; **le téléphone refuse (429 / erreur)** : capture `tel-2-recu.png`, et dire « plafond ou réseau : voici la répétition de ce matin » |
+| 4 | 5:35 | V2 | appuyer **« Proposer à partir de mon texte »** | **B (défaut)** : « forme déterministe, sans IA — … Remplissez le formulaire vous-même. » · **A** : « proposé par le modèle …, vérifié par le code — Vérifiez, puis répondez. », « places » pré-rempli à 14 | **« Proposition indisponible »** (réseau, en A) : V1 dit la réplique « formulaire » ; V2 saisit 14 |
+| 5 | 5:45 | V1 | la réplique qui correspond à l'écran (`03_SCRIPT_ORAL.md`, acte 5) — en B, la réplique de la parité | — | ne jamais commenter un message qui n'est pas à l'écran |
+| 6 | 6:00 | V2 | vérifier « places (au moins 12) » = 14, appuyer **Oui** | téléphone : le reçu apparaît dans « Mes consentements (reçus) » ; **Établi : « le Club peut le faire »**, bordure verte, plus de pointillés (≤ 1 s, l'Établi relit chaque seconde) — **V1 : la réplique-pont de l'anneau (D-PRES-2)** | **l'Établi ne change pas en 3 s** : F5 ; **rien** : capture `etabli-2-peut.png` ; **le téléphone refuse (429 / erreur)** : capture `tel-2-recu.png`, et dire « plafond ou réseau : voici la répétition de ce matin » |
 | 7 | 6:20 | V2 | montrer le reçu : « valable · donné le 06.10 · jusqu'au 09.10 · référence … » | la carte du reçu | — |
 | 8 | 6:40 | V2 | appuyer **« Retirer mon consentement »** | toast « Consentement retiré. Personne ne saura que c'est vous. » ; Établi : statut **« un consentement ne vaut plus »**, ligne **« transport : ce composant n'est plus disponible »** | **Établi inchangé** : F5 ; **rien** : capture `etabli-3-retrait.png` |
 | 9 | 6:55 | V2 | *(option)* montrer le QR juré sur l'Établi ; un juré scanne | sur son téléphone : bandeau « Jury : vous jouez Markus, personnage FICTIF, jusqu'à … », onglet Demandes avec la demande | **le QR n'ouvre rien / pointe vers 127.0.0.1** : ne pas insister ; V2 ouvre l'onglet Demandes sur le téléphone de secours (Markus) : la demande y est |
@@ -114,7 +120,7 @@ Aucune capture de cette scène n'est versionnée (TODO-DEMO.md). Les produire pe
 | `tel-1-demande.png` | téléphone, Demandes, trois boutons | étape 2 |
 | `tel-1b-proposition.png` | téléphone, après « Proposer à partir de mon texte » (le message réel, quel qu'il soit) | étape 4 |
 | `etabli-2-peut.png` | Établi, « le Club peut le faire » | étape 6 |
-| `tel-2-recu.png` | téléphone, « Mes consentements (reçus) » | étape 7 — **c'est aussi le reçu de la slide finale** |
+| `tel-2-recu.png` | téléphone, « Mes consentements (reçus) » | étape 7 — **c'est le reçu de la slide finale (D-PRES-3 : écran réel, référence longue, aucune maquette)** |
 | `etabli-3-retrait.png` | Établi, « transport : ce composant n'est plus disponible » | étape 8 |
 | `tel-3-jure.png` | téléphone du juré, bandeau « Jury : vous jouez Markus » | étape 9 |
 
@@ -134,8 +140,8 @@ Si une capture n'a pas pu être prise, l'étape correspondante n'a pas de plan B
 
 1. Rituel § 9.5 complet (kill -9, reprise, vrai téléphone, vrai scan de QR).
 2. Cette scène trois fois, chronométrée de 4:40 à 7:10, avec les captures du § 6 à la première.
-3. Une fois avec l'IA allumée (si option A) : noter ce que « Proposer à partir de mon texte » a affiché sur la phrase
-   exacte de l'étape 3, et le temps d'attente. Décider A ou B sur ce constat, pas sur l'espoir.
+3. Trois fois avec l'IA allumée, sur la phrase exacte de l'étape 3 : remplir le tableau du § 3. A seulement si 3/3 ;
+   sinon B (défaut). Puis remettre l'interrupteur dans l'état décidé et vérifier le bandeau de l'Établi.
 4. Une fois en coupant le Wi-Fi de la salle (pas le point d'accès) : rien ne doit changer, sauf l'IA en option A.
 5. Chronométrer les trois mesures de « Oui → le Club peut le faire » sur l'Établi et garder la pire pour l'oral
    (« moins d'une seconde » seulement si la pire est sous une seconde — sinon dire le chiffre).

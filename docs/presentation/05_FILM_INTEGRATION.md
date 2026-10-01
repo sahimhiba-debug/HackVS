@@ -34,18 +34,32 @@ regarde le jury pendant les trois premières secondes du film puis s'efface (pas
 Rien d'autre. Si le film finit sur un rire, attendre qu'il retombe avant « Jean-Marc a dit oui ». Si le film finit
 sur un silence, enchaîner immédiatement.
 
-## 4. Ce que le film doit laisser dans la tête du jury (contrat avec la production)
+## 4. Ce que le montage verrouillé montre (transfert film, 01.10)
 
-Pour que la révélation de l'acte 4 fonctionne, le film doit avoir montré — on le suppose d'après son titre et son
-sujet, à vérifier sur le montage final :
+Le montage final (21 plans, 2:25) montre :
 
-1. Jean-Marc dit oui à tout, à tout le monde, à chaque événement ; on le voit faire au moins deux fois (running gag).
-2. On voit **une demande lui arriver** (un message, un appel, un écran — peu importe) et lui dire oui.
-3. On comprend qu'après ce oui, d'habitude, **il ne se passe rien** — c'est le « on s'appelle » de l'acte 1 en action.
+1. **une demande qui arrive chez Jean-Marc** — insert de l'écran réel « Demandes » du produit ;
+2. **le reçu**, en insert plein cadre, 4 secondes ;
+3. **le premier refus** ;
+4. **un oui choisi** ;
+5. **la structuration d'une demande orale**, à l'apéro final.
 
-Si le montage final ne montre pas le point 2, la réplique de l'acte 4 « Cette demande, vous venez de la voir arriver
-chez Jean-Marc » devient : « Cette demande, c'est celle que Jean-Marc reçoit dix fois par Foire. Elle existe ici, pour
-de vrai. » À décider au visionnage de samedi.
+Cartons de fin : **« Si Jean-Marc dit oui, c'est que c'est oui. »** puis logo + **« Le Club sait ce qu'il peut faire
+cette semaine. »**
+
+Conséquences pour le pitch :
+
+- La réplique principale de l'acte 4 tient : « Cette demande, vous venez de la voir arriver chez Jean-Marc. Elle
+  existe ici, pour de vrai. » Variante de secours, si le montage final coupe l'insert : « Cette demande, c'est celle
+  que Jean-Marc reçoit dix fois par Foire. Elle existe ici, pour de vrai. »
+- Le reçu vu 4 secondes dans le film revient en conclusion, réel, sur le téléphone (D-PRES-3) : le jury le reconnaît.
+- L'anneau se ferme dans le film ; dans la démo, c'est la bordure verte, et V1 fait le pont (D-PRES-2).
+- La structuration d'une demande orale à l'apéro prépare l'acte 5 : Pauline écrit « avec ses mots », et le produit
+  propose une structure — ce soir sans modèle (D-PRES-1), et l'acte 8 dit pourquoi.
+- **La phrase finale du pitch reprend le premier carton de fin MOT POUR MOT** : « Si Jean-Marc dit oui, c'est que
+  c'est oui. » L'écho exact, deux fois dans la même heure, c'est ce qui la grave. Si ce carton change au montage, la
+  phrase finale change avec lui (`03_SCRIPT_ORAL.md`).
+- Le second carton (« Le Club sait ce qu'il peut faire cette semaine. ») n'est pas repris à l'oral : il reste au film.
 
 ## 5. Vérifications techniques (samedi, sur la machine de la salle)
 

@@ -10,11 +10,11 @@ Les cartons sont décrits dans `01_CONCEPT.md` ; leur contenu exact est dans `06
 | 3 | 2:00–4:25 | 2:25 | **Le film** « L'homme qui disait oui » (21 plans, verrouillé ailleurs — `05_FILM_INTEGRATION.md`). | Carton CONTRIBUTION — « L'homme qui disait oui. » (cut au noir, puis le film) | — |
 | — | 4:25–4:40 | 0:15 | **Respiration.** Une phrase, pas deux. Puis « Et après ? » (2/3). | slide « Et après ? » | V1 |
 | 4 | 4:40–5:10 | 0:30 | **La révélation.** On allume le vrai produit : l'Établi, plein écran, la capacité « Accueillir une délégation d'acheteurs germanophones — il manque une pièce ». La demande du film existe ici, pour de vrai. | Carton ESSAI — « Le même geste. Dans le vrai produit. » | V1 → passe la main |
-| 5 | 5:10–6:40 | 1:30 | **La démo live, cœur.** Sur un vrai téléphone : la demande arrive, trois boutons, le membre écrit sa pièce avec ses mots, l'IA propose, le code vérifie, « Oui », l'Établi passe à « le Club peut le faire », le reçu apparaît sur le téléphone. Fiction → réalité en 90 secondes. | écrans réels (Établi + téléphone) | Voix 2 (V2) à la manœuvre, V1 commente |
+| 5 | 5:10–6:40 | 1:30 | **La démo live, cœur.** Sur un vrai téléphone : la demande arrive, trois boutons, le membre écrit sa pièce avec ses mots, le produit propose une structure (IA éteinte par défaut, D-PRES-1 : la forme déterministe, dite), « Oui », l'Établi passe à « le Club peut le faire » — réplique-pont de l'anneau (D-PRES-2) —, le reçu apparaît sur le téléphone. Fiction → réalité en 90 secondes. | écrans réels (Établi + téléphone) | Voix 2 (V2) à la manœuvre, V1 commente |
 | 6 | 6:40–7:10 | 0:30 | **Le retrait anonyme et la recomposition.** Un geste : « Retirer mon consentement ». L'Établi dit « transport : ce composant n'est plus disponible » — jamais le nom. La demande repart vers un autre membre. Si le temps le permet : un juré la reçoit sur son téléphone (passe juré, 15 min, sans compte). | écrans réels | V2 manœuvre, V1 commente |
 | 7 | 7:10–8:10 | 1:00 | **Les preuves.** Le reçu, le journal rejouable (le serveur meurt, le monde revient), le retrait anonyme testé, les chiffres du gel. La techno comme preuve de sérieux, jamais comme sujet. | Carton RÉSULTAT — « Ce qui est prouvé. Rien de plus. » + 1 slide de chiffres | V1 |
 | 8 | 8:10–9:10 | 1:00 | **L'IA.** « L'IA propose. Les règles vérifient. Le membre décide. » Apertus, couche IA suisse. Dire exactement ce qui est mesuré — et que c'est faible aujourd'hui. | 1 slide : trois lignes | V1 |
-| 9 | 9:10–10:00 | 0:50 | **La carte revient**, avec le reçu à côté. « Et après ? » (3/3), inversé. Phrase finale. Noir. | Carton REÇU — « Et après, maintenant, il se passe quelque chose. » → carte + reçu → noir | V1 |
+| 9 | 9:10–10:00 | 0:50 | **La carte revient**, avec le reçu réel à côté (D-PRES-3). « Et après ? » (3/3), inversé. Phrase finale, dont le dernier membre reprend MOT POUR MOT le premier carton de fin du film : « Si Jean-Marc dit oui, c'est que c'est oui. » Noir. | Carton REÇU — « Et après, maintenant, il se passe quelque chose. » → carte + reçu → noir | V1 |
 
 ## Points de contrôle du chronomètre (à dire à voix haute en répétition)
 
@@ -31,8 +31,8 @@ Les cartons sont décrits dans `01_CONCEPT.md` ; leur contenu exact est dans `06
 
 ## Ce qui est verrouillé et ce qui respire
 
-- **Verrouillé** : le film (2:25), les trois « Et après ? », l'ouverture et la phrase finale mot pour mot, les cinq
-  cartons, l'ordre des actes.
+- **Verrouillé** : le film (2:25), les trois « Et après ? », l'ouverture et la phrase finale mot pour mot (son dernier
+  membre est le carton de fin du film, à l'identique), les cinq cartons, l'ordre des actes, l'IA éteinte en démo (D-PRES-1).
 - **Respire** : la durée de l'acte 6 (0:10 à 0:30 selon la salle), le nombre de chiffres lus à l'acte 7 (trois à cinq),
   l'exemple d'erreur de l'IA à l'acte 8.
 - **Jamais** : improviser une réponse du produit. Si le produit ne fait pas ce qui est prévu, on dit ce qu'il fait

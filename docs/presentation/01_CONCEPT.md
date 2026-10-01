@@ -34,11 +34,13 @@ révocable. Même geste de la main — on tend quelque chose — mais cette fois
 
 **La boucle carte → reçu EST le pitch.** Tout le reste la prépare.
 
-Note de rigueur : le reçu montré en conclusion est une capture **réelle** du produit, prise pendant la répétition de
-samedi (ou en direct, à la fin de la démo). Les planches du design system portent des reçus au format `R-118-2`
-(JetBrains Mono) ; le produit, lui, affiche une référence longue (empreinte + numéro). Si la slide utilise le format
-des planches, elle doit porter la mention « maquette » ; sinon, on montre l'écran réel. Jamais un reçu inventé
-présenté comme réel.
+Arbitrage D-PRES-3 : le reçu de la slide finale est une capture **réelle** de l'écran du téléphone, avec sa référence
+longue (empreinte + numéro), prise pendant la répétition de samedi. Aucune maquette. Le format `R-xxx-x` des planches
+reste réservé aux planches du design system et au film.
+
+Arbitrage D-PRES-2 : l'**anneau** qui se ferme (3/4 → 4/4) vit sur les slides et dans le film. La démo montre l'écran
+réel, où la carte passe à « le Club peut le faire » (bordure verte) — et V1 fait le pont à ce moment-là :
+« L'anneau que vous avez vu se fermer chez Jean-Marc, dans le produit, c'est ça : le Club peut le faire. »
 
 ## La structure en miroir du produit
 
@@ -72,7 +74,9 @@ Une slide, fond noir, deux mots. Elle revient trois fois :
 1. **La phrase.** « Club Pulse transforme une rencontre en possibilité d'action — sans jamais enlever la décision aux
    membres. »
 2. **L'image.** La carte de visite, puis le reçu.
-3. **Le personnage.** Jean-Marc, l'homme qui disait oui — et qui, cette fois, dit oui pour de vrai.
+3. **Le personnage.** Jean-Marc, l'homme qui disait oui — et le carton de fin de son film, repris mot pour mot en
+   phrase finale du pitch : « Si Jean-Marc dit oui, c'est que c'est oui. » Deux fois dans la même heure : c'est ce
+   qui la grave.
 
 ## Les interdits, rappelés aux présentateurs
 

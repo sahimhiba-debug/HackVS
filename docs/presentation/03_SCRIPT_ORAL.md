@@ -104,15 +104,22 @@ Le film « L'homme qui disait oui », 2:25, son de salle. V1 ne parle pas. V2 pr
 
 > **V2 —** « Mon minibus a quatorze places, libre vendredi après-midi. » Je demande une proposition.
 
-**V1 dit — SELON CE QUE L'ÉCRAN AFFICHE (`04_DEMO_RUNBOOK.md`, étape 5) :**
+**V1 dit — IA ÉTEINTE, cas par défaut (arbitrage D-PRES-1 ; l'écran affiche « forme déterministe, sans IA » et
+« Remplissez le formulaire vous-même. ») :**
 
-> *[Si l'écran dit « proposé par le modèle …, vérifié par le code » et « Vérifiez, puis répondez. »]*
+> Ce soir, l'IA est éteinte — volontairement. Le produit propose quand même une structure : trois champs, et Pauline
+> les remplit elle-même. Quatorze. C'est une garantie du produit : IA allumée ou éteinte, l'état du Club est le même —
+> et la démo sans modèle le démontre.
+
+**V1 dit — IA ALLUMÉE, seulement si le rituel de samedi a donné 3/3 sur cette phrase exacte (`04_DEMO_RUNBOOK.md` § 3) :**
+
+> *[l'écran dit « proposé par le modèle …, vérifié par le code » et « Vérifiez, puis répondez. »]*
 > Le modèle a relevé la quantité dans sa phrase : quatorze places. Il propose. Il ne décide de rien. C'est le code qui
 > vérifie que c'est un nombre, et que c'est au moins douze. Et c'est Pauline qui répond.
 >
-> *[Si l'écran dit « forme déterministe, sans IA » et « Remplissez le formulaire vous-même. »]*
-> Ce soir, le modèle n'a pas répondu assez bien, et le code a refusé sa proposition. C'est exactement le principe :
-> l'IA propose, le code vérifie — et Pauline remplit le champ elle-même. Quatorze.
+> *[si malgré tout l'écran dit « forme déterministe, sans IA »]*
+> Le modèle n'a pas répondu assez bien, et le code a refusé sa proposition. C'est exactement le principe : l'IA
+> propose, le code vérifie — et Pauline remplit le champ elle-même. Quatorze.
 
 **V2 :** [vérifie ou saisit « 14 » dans « places (au moins 12) », appuie sur **Oui**]
 
@@ -120,8 +127,9 @@ Le film « L'homme qui disait oui », 2:25, son de salle. V1 ne parle pas. V2 pr
 
 **V1 dit :** [regarder l'Établi]
 
-> Regardez l'Établi. [la carte passe à « le Club peut le faire »] « Le Club peut le faire. » Il y a une minute, il
-> manquait une pièce ; maintenant la capacité existe. Pas parce qu'un algorithme a décidé. Parce que Pauline a dit oui.
+> Regardez l'Établi. [la carte passe à « le Club peut le faire », bordure verte] L'anneau que vous avez vu se fermer
+> chez Jean-Marc, dans le produit, c'est ça : le Club peut le faire. Il y a une minute, il manquait une pièce ;
+> maintenant la capacité existe. Pas parce qu'un algorithme a décidé. Parce que Pauline a dit oui.
 >
 > Et sur son téléphone, elle a un reçu.
 
@@ -219,17 +227,21 @@ début, et à côté, le reçu réel du téléphone.
 >
 > La Foire crée la rencontre. Club Pulse crée l'après.
 >
-> Et quand Jean-Marc dit oui — cette fois, c'est oui.
+> Si Jean-Marc dit oui, c'est que c'est oui.
+
+[Arbitrage : ce dernier membre reprend MOT POUR MOT le premier carton de fin du film. Pas de paraphrase, pas de
+« quand », pas de « cette fois » : l'écho exact, deux fois dans la même heure, c'est ce qui la grave.]
 
 **Noir.** [V1 reste immobile deux secondes avant de dire « merci »]
 
 ---
 
-## Variantes de la phrase finale (choisir en répétition, garder l'esprit)
+## La phrase finale — figée (arbitrage transfert film)
 
-1. « La Foire crée la rencontre. Club Pulse crée l'après. Et quand Jean-Marc dit oui — cette fois, c'est oui. » *(recommandée)*
-2. « La Foire crée la rencontre. Club Pulse crée l'après. Et si Jean-Marc dit oui — c'est que c'est oui. » *(brief)*
-3. « La Foire crée la rencontre. Club Pulse crée l'après. Jean-Marc dit toujours oui. Maintenant, on le sait. »
+« La Foire crée la rencontre. Club Pulse crée l'après. Si Jean-Marc dit oui, c'est que c'est oui. »
+
+Le dernier membre est le premier carton de fin du film, à l'identique. Il n'y a plus de variante : si le montage final
+change ce carton, la phrase finale change avec lui, mot pour mot.
 
 ## Variantes de l'ouverture
 
@@ -245,3 +257,4 @@ début, et à côté, le reçu réel du téléphone.
 
 « Dix secondes ». « Sans compte » (sauf : « passe juré, quinze minutes, sans compte »). « Nos utilisateurs ».
 « Propulsé par Apertus ». « Révolutionnaire ». Un nom de technologie. Un chiffre qui n'est pas sur la slide 14.
+Une paraphrase du carton de fin du film.
