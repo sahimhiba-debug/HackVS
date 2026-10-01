@@ -23,7 +23,7 @@ registre : il est en quarantaine, et rien n'y doit être présenté.
 | 7 | Parité IA ON/OFF | A | `test_parite_ia.py` (non vacueuse : `test_la_parite_vacueuse_est_detectee`) |
 | 8 | « Apertus n'a jamais été appelé depuis cet environnement » ; qualité d'un vrai modèle NON DÉMONTRÉE | C (vrai, et dit) | aucune clé configurée ; `docs/audit/probe_publicai.md` |
 | 9 | « ~1 250 tests et 17 E2E hermétiques (aussi en mode salle) » | A pour 17 E2E (`test_readme.py::test_les_chiffres_du_readme_sont_ceux_du_depot`) ; B pour le total (compté au dernier `make test`) | CI : jobs `salle` et `reproductibilite` |
-| 10 | Mutation `capacites.py` : 1 229 / 1 327 tués, 98 survivants tous classés | B (campagne locale du 01.10) | `docs/audit/mutants_survivants.txt` ; la campagne GitHub (#12) ne l'a pas encore confirmé — voir FINAL_AUDIT § 10 |
+| 10 | Mutation `capacites.py` : 1 229 / 1 327 tués, 98 survivants tous classés | B (mesure reproductible, confirmée en CI) | campagne GitHub #15 avec la porte durcie (`4233cef`) : population 1 327, tués 1 229, survivants 98, sans test 0, non vérifiés 0, suspects 0, non classés 0 ; `docs/audit/mutants_survivants.txt` |
 | 11 | Console : exige un jeton hors de la machine locale | A | `test_securite_pulse.py::test_console_sans_jeton_ne_repond_qu_a_cette_machine`, `test_autorisation_balayage.py` |
 
 ## Script de démonstration (`docs/audit/club-pulse-pivot/DEMO_SCRIPT.md`)

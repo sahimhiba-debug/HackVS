@@ -50,7 +50,7 @@ make mutation                  # mutation (mutmut) du registre des capacités ; 
 
 Mesuré, pas supposé : ~1 270 tests et 17 E2E hermétiques (aussi en « mode salle », réseau coupé) ; oracle en force
 brute contre le compositeur ; mutation **sur `intelligence/capacites.py` seulement** (campagne locale du 01.10) :
-1 229 / 1 327 mutants tués, 98 survivants tous classés ([liste](docs/audit/mutants_survivants.txt)).
+1 229 / 1 327 mutants tués, 98 survivants tous classés — confirmé en CI par la porte durcie (campagne GitHub #15) ([liste](docs/audit/mutants_survivants.txt)).
 
 ## Documentation
 
