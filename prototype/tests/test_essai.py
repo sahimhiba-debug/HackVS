@@ -236,7 +236,7 @@ def test_droits_de_reutilisation_le_plus_restrictif_l_emporte():
     assert b.niveau_partage(eid) == "club"
     b.aviser(MARKUS, eid, 1, "conteste", "j'étais à 2 m, pas à 1 m")
     assert b._evs(eid, "AVIS")[-1].donnees["avis"] == "conteste"            # la contestation reste, rien n'est effacé
-    with pytest.raises(Interdit):
+    with pytest.raises(Introuvable):                                         # F36 : pour un inconnu, l'essai n'existe pas
         b.reutilisation("x99", eid, "club", "nom")
 
 

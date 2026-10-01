@@ -6,7 +6,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from intelligence.erreurs import Conflit, Interdit, Invalide
+from intelligence.erreurs import Conflit, Introuvable, Invalide
 from intelligence.essai import Banc, Etape, Protocole
 from plateforme.memoire import Memoire
 
@@ -141,7 +141,7 @@ def test_ancienne_memoire_non_reutilisable_par_un_nouveau_venu():
     for qui in (RESTO, CLIENT):
         c.b.reutilisation(qui, eid, "club", "anonyme")
     assert c.b.niveau_partage(eid) == "club"
-    with pytest.raises(Interdit):
+    with pytest.raises(Introuvable):                                         # F36 : pour un tiers, l'essai n'existe pas
         c.b.reutilisation(CHEF, eid, "club", "nom")                          # un tiers ne s'ajoute pas aux ayants droit
-    with pytest.raises(Interdit):
+    with pytest.raises(Introuvable):
         c.b.aviser(CHEF, eid, 1, "confirme")                                 # ni ne « confirme » ce qu'il n'a pas vécu

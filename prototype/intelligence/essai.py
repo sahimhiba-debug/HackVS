@@ -808,7 +808,14 @@ class Banc:
             self._transition(eid, "BROUILLON", porteur, "brouillon créé par le porteur")
         return eid
 
+    def _exiger_concerne(self, eid: str, qui: str) -> None:
+        """Pour qui l'essai ne concerne pas, il N'EXISTE PAS : « inconnu », comme à la lecture — jamais un refus qui en
+        confirmerait l'existence (F36). Qui est concerné apprend, lui, pourquoi il ne peut pas."""
+        if qui not in self.personnes(eid):
+            raise Introuvable("essai inconnu")
+
     def _exiger_porteur(self, eid: str, qui: str) -> None:
+        self._exiger_concerne(eid, qui)
         if self.porteur(eid) != qui:
             raise Interdit("réservé au porteur de l'essai")
 
@@ -1132,6 +1139,7 @@ class Banc:
 
     def aviser(self, membre: str, eid: str, revision: int, avis: str, raison: str = "") -> None:
         """Un participant CONFIRME ou CONTESTE l'observation. Une contestation reste visible ; rien n'est effacé."""
+        self._exiger_concerne(eid, membre)
         if avis not in ("confirme", "conteste"):
             raise Invalide("avis inconnu")
         if membre not in self.participants(eid) or membre == self.porteur(eid):
@@ -1144,6 +1152,7 @@ class Banc:
         self._ecrire("AVIS", [membre], essai=eid, revision=revision, avis=avis, raison=raison)
 
     def reutilisation(self, membre: str, eid: str, niveau: str, mention: str) -> None:
+        self._exiger_concerne(eid, membre)
         if niveau not in NIVEAUX or mention not in ("nom", "anonyme"):
             raise Invalide("niveau ou mention inconnus")
         if membre not in self.participants(eid):
