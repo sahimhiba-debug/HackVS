@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Club Pulse — Hack VS 2026</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='.5' y='.5' width='23' height='23' rx='7' fill='%23CD2128'/%3E%3Ccircle cx='12' cy='12' r='7' fill='none' stroke='%23FFF' stroke-width='2.7' stroke-linecap='round' stroke-dasharray='33 11' transform='rotate(-90 12 12)'/%3E%3Ccircle cx='7.05' cy='7.05' r='1.8' fill='%23FFF'/%3E%3C/svg%3E">
+<style>
+/* ── Polices locales (aucune requête réseau) ─────────────────────────────── */
+@font-face { font-family: "Plus Jakarta Sans"; src: url(assets/fonts/plus-jakarta-sans-latin-wght-normal.woff2) format("woff2"); font-weight: 200 800; font-display: block; }
+@font-face { font-family: "Plus Jakarta Sans"; src: url(assets/fonts/plus-jakarta-sans-latin-ext-wght-normal.woff2) format("woff2"); font-weight: 200 800; font-display: block;
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "JetBrains Mono"; src: url(assets/fonts/jetbrains-mono-latin-400-normal.woff2) format("woff2"); font-weight: 400; font-display: block; }
+@font-face { font-family: "JetBrains Mono"; src: url(assets/fonts/jetbrains-mono-latin-500-normal.woff2) format("woff2"); font-weight: 500; font-display: block; }
+
+/* ── Tokens : design system v1.0 (docs/design/DESIGN_SYSTEM.md § 1.1) + mouvement ─ */
+:root {
+  --brand: #CD2128; --brand-tint: #FDEDEE; --brand-tint-2: #FDF5F5; --brand-dash: #EFC3C5;
+  --ink: #141923; --ink-2: #3A414B; --secondary: #596273; --tertiary: #9AA3B0; --disabled: #C2C8D1;
+  --bg: #F2F3F5; --card: #FFFFFF; --hairline: #EEF0F2; --hairline-2: #E7EAEE;
+  --green: #0DA254; --green-deep: #0A7A3F; --green-tint: #E7F6EE;
+  --ombre-carte: 0 1px 2px rgba(16,24,40,.05), 0 10px 28px rgba(16,24,40,.07);
+  --ombre-fiche: 0 2px 6px rgba(16,24,40,.06), 0 28px 70px rgba(16,24,40,.18);
+  /* mouvement : trois durées, un seul easing */
+  --t-micro: 240ms; --t-entree: 480ms; --t-signature: 720ms;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  /* grille */
+  --marge: 160px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+body { font-family: "Plus Jakarta Sans", sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
+.mono { font-family: "JetBrains Mono", monospace; }
+
+/* ── Scène 1920×1080, mise à l'échelle (propre en 3840×2160 : tout est vectoriel) ─ */
+#scene { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; transform-origin: 0 0; background: #000; }
+.slide { position: absolute; inset: 0; visibility: hidden; opacity: 0; background: var(--card); }
+.slide.active { visibility: visible; opacity: 1; z-index: 2; }
+.slide.fondu { transition: opacity var(--t-micro) var(--ease), visibility 0s linear var(--t-micro); }
+.slide.fondu.active { transition: opacity var(--t-micro) var(--ease), visibility 0s; }
+.slide.gris { background: var(--bg); }
+.slide.noir { background: #000; color: #fff; }
+
+/* ── Fragments : une idée entre au clic (480 ms) ─────────────────────────── */
+.fr { opacity: 0; transform: translateY(24px); transition: opacity var(--t-entree) var(--ease), transform var(--t-entree) var(--ease); }
+.fr.on { opacity: 1; transform: none; }
+.fr.fade { transform: none; }
+
+/* ── Typographie ─────────────────────────────────────────────────────────── */
+.affiche { font-weight: 800; letter-spacing: -0.035em; line-height: 1.02; }
+.corps { font-size: 40px; font-weight: 500; line-height: 1.35; color: var(--secondary); letter-spacing: -0.005em; }
+.etiq { font-family: "JetBrains Mono", monospace; font-size: 28px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--secondary); }
+.rouge { color: var(--brand); }
+.abs { position: absolute; }
+
+/* ── M3 · cartons d'acte : noir, une phrase, entrée 480 ms, rien d'autre ne bouge ─ */
+.carton { display: flex; align-items: center; justify-content: center; text-align: center; }
+.carton p { text-wrap: balance; font-weight: 800; font-size: 112px; letter-spacing: -0.035em; line-height: 1.08; color: #fff; max-width: 1500px;
+  opacity: 0; transition: opacity var(--t-entree) var(--ease); }
+.slide.active .carton-in p, .carton.active p { opacity: 1; }
+
+/* ── M2 · « Et après ? » : une seule composition, réutilisée au pixel près ─── */
+.ea { position: absolute; left: var(--marge); top: 392px; font-size: 220px; font-weight: 800; letter-spacing: -0.045em; line-height: 1; }
+
+/* ── M1 · la carte de visite ─────────────────────────────────────────────── */
+.carte { position: absolute; left: 450px; top: 196px; width: 1020px; height: 660px; border-radius: 18px; background: #fff;
+  transform: rotate(-3deg); padding: 84px 92px; }
+.carte::before { content: ""; position: absolute; inset: 0; border-radius: 18px; box-shadow: var(--ombre-fiche); }
+.carte .lieu { font-family: "JetBrains Mono", monospace; font-size: 28px; font-weight: 500; color: var(--secondary); letter-spacing: .08em; }
+.carte .bas { position: absolute; left: 92px; right: 92px; bottom: 84px; display: flex; justify-content: space-between; align-items: flex-end; }
+.carte .nom { font-size: 136px; font-weight: 800; letter-spacing: -0.045em; line-height: .92; }
+.carte .metier { font-size: 40px; font-weight: 500; color: var(--secondary); margin-top: 24px; letter-spacing: -0.01em; }
+.carte .filets { display: grid; gap: 18px; justify-items: end; padding-bottom: 10px; }
+.carte .filets i { display: block; height: 12px; border-radius: 6px; background: var(--hairline-2); }
+@keyframes pose { from { opacity: 0; transform: translateY(-56px) rotate(-7deg) scale(1.04); } to { opacity: 1; transform: rotate(-3deg); } }
+.pose { animation: pose var(--t-signature) var(--ease) both; }
+.fictif { left: var(--marge); bottom: 72px; }
+
+/* ── M4 · l'anneau (construction exacte, tuile-sigle) ───────────────────── */
+.tuile { position: absolute; left: var(--marge); top: 320px; width: 440px; height: 440px; }
+.tuile .arc { stroke-dasharray: 44 44; stroke-dashoffset: 11; }
+.tuile .point { transform: translate(4.95px, 4.95px); opacity: 0; }
+@keyframes dessine { from { stroke-dashoffset: 44; } to { stroke-dashoffset: 11; } }
+@keyframes ferme { from { stroke-dashoffset: 11; } to { stroke-dashoffset: 0; } }
+@keyframes glisse { 0% { opacity: 0; transform: translate(4.95px, 4.95px) scale(.4); } 30% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+.slide.active .dessin .arc { animation: dessine var(--t-signature) var(--ease) both; }
+.slide.active .fermeture .arc { animation: ferme calc(var(--t-signature) / 2) var(--ease) calc(var(--t-signature) / 2) both; }
+.slide.active .fermeture .point { animation: glisse calc(var(--t-signature) / 2) var(--ease) both, absorbe var(--t-micro) var(--ease) var(--t-signature) both; }
+@keyframes absorbe { from { opacity: 1; } to { opacity: 0; } }
+.statut { position: absolute; left: 720px; top: 470px; font-size: 120px; }
+
+/* ── Le vide ─────────────────────────────────────────────────────────────── */
+.ligne { position: absolute; left: 280px; right: 280px; top: 686px; height: 4px; background: var(--ink); border-radius: 2px; }
+.noeud { position: absolute; top: 672px; width: 32px; height: 32px; border-radius: 50%; }
+.noeud-lab { position: absolute; top: 748px; font-size: 44px; font-weight: 700; letter-spacing: -0.015em; }
+.mono-pastille { position: absolute; width: 132px; height: 132px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-family: "JetBrains Mono", monospace; font-weight: 500; font-size: 32px; }
+
+/* ── Captures réelles + emplacement si le fichier manque ─────────────────── */
+.capture { display: block; }
+.emplacement { position: absolute; display: none; border: 3px dashed var(--brand-dash); background: var(--brand-tint-2); border-radius: 18px;
+  align-items: center; justify-content: center; flex-direction: column; gap: 18px; text-align: center; }
+.emplacement b { font-family: "JetBrains Mono", monospace; font-weight: 500; font-size: 40px; color: var(--brand); }
+.emplacement span { font-size: 32px; color: var(--secondary); font-weight: 600; }
+.manque .capture { display: none; }
+.manque .emplacement { display: flex; }
+
+/* ── Démo : fond discret ─────────────────────────────────────────────────── */
+.reperes { position: absolute; left: var(--marge); right: var(--marge); bottom: 120px; display: flex; gap: 0; border-top: 2px solid var(--hairline-2); }
+.reperes li { list-style: none; flex: 1; padding-top: 28px; font-family: "JetBrains Mono", monospace; font-size: 28px; font-weight: 500; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--secondary); position: relative; transition: color var(--t-micro) var(--ease); }
+.reperes li::before { content: ""; position: absolute; left: 0; top: -2px; height: 2px; width: 100%; background: var(--ink); transform: scaleX(0); transform-origin: left;
+  transition: transform var(--t-entree) var(--ease); }
+.reperes li.fait { color: var(--ink-2); }
+.reperes li.fait::before { transform: scaleX(1); }
+.reperes li.ici { color: var(--ink); }
+#secours { position: absolute; inset: 0; background: var(--bg); display: none; align-items: center; justify-content: center; z-index: 5; }
+#secours.on { display: flex; }
+#secours img { max-height: 940px; max-width: 1760px; border-radius: 18px; box-shadow: var(--ombre-carte); }
+#secours .etiq { position: absolute; left: var(--marge); top: 64px; }
+
+/* ── Preuves, chiffres, IA ───────────────────────────────────────────────── */
+.preuve { position: absolute; left: var(--marge); right: var(--marge); display: grid; grid-template-columns: 120px 1fr; align-items: baseline;
+  padding: 44px 0; border-top: 2px solid var(--hairline-2); }
+.preuve .n { font-family: "JetBrains Mono", monospace; font-size: 32px; font-weight: 500; color: var(--secondary); }
+.preuve h3 { font-size: 80px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; }
+.preuve p { font-size: 40px; font-weight: 500; color: var(--secondary); margin-top: 12px; }
+.chiffres { position: absolute; left: var(--marge); right: var(--marge); top: 232px; }
+.chiffre { display: grid; grid-template-columns: 720px 1fr; align-items: center; height: 136px; border-top: 2px solid var(--hairline-2); }
+.chiffre b { font-family: "JetBrains Mono", monospace; font-weight: 500; font-size: 104px; letter-spacing: -0.04em; line-height: 1; display: flex; align-items: center; gap: 28px; }
+.chiffre b.gel { color: var(--secondary); font-size: 72px; letter-spacing: 0; }
+.chiffre b.gel::after { content: ""; display: block; width: 180px; border-bottom: 3px dashed var(--disabled); align-self: flex-end; margin-bottom: 10px; }
+.chiffre span { font-size: 36px; font-weight: 500; color: var(--secondary); line-height: 1.25; }
+.medaillon { width: 64px; height: 64px; flex: none; }
+.alerte { position: absolute; left: var(--marge); bottom: 64px; font-family: "JetBrains Mono", monospace; font-size: 28px; color: var(--brand);
+  background: var(--brand-tint); padding: 14px 24px; border-radius: 999px; display: none; }
+.sans-gel .alerte { display: block; }
+.trois { position: absolute; left: var(--marge); top: 232px; }
+.trois p { font-size: 140px; font-weight: 800; letter-spacing: -0.04em; line-height: 1.12; }
+.souligne { position: relative; display: inline-block; }
+.souligne::after { content: ""; position: absolute; left: 0; right: 0; bottom: 6px; height: 12px; border-radius: 6px; background: var(--brand);
+  transform: scaleX(0); transform-origin: left; transition: transform var(--t-signature) var(--ease) var(--t-micro); }
+.fr.on .souligne::after { transform: scaleX(1); }
+.point-oui { display: inline-block; width: .2em; height: .2em; border-radius: 50%; background: var(--brand); margin-left: .035em; }
+.cases { position: absolute; left: var(--marge); top: 760px; display: flex; gap: 14px; }
+.cases i { width: 44px; height: 44px; border-radius: 10px; border: 3px solid var(--disabled); }
+.cases i.pleine { background: var(--brand); border-color: var(--brand); }
+
+/* ── M6 · la carte et le reçu ────────────────────────────────────────────── */
+.s18 .carte { transition: transform var(--t-signature) var(--ease); }
+.s18.ecarte .carte { transform: translateX(-330px) rotate(-3deg); }
+.recu { position: absolute; left: 1080px; top: 236px; width: 740px; height: 653px; opacity: 0; }
+.recu .capture { width: 740px; height: 653px; border-radius: 26px; object-fit: cover; box-shadow: var(--ombre-fiche); background: #fff; }
+.recu .emplacement { inset: 0; }
+.s18.ecarte .recu { animation: pose var(--t-signature) var(--ease) both; }
+@keyframes poseRecu { from { opacity: 0; transform: translateY(-56px) rotate(-4deg) scale(1.04); } to { opacity: 1; transform: rotate(0); } }
+.s18.ecarte .recu { animation-name: poseRecu; }
+
+/* ── Indicateur de progression : l'anneau qui se remplit au fil des 9 actes ─ */
+#progres { position: absolute; right: 64px; bottom: 56px; width: 72px; height: 72px; z-index: 6; transition: opacity var(--t-micro) var(--ease); }
+#progres path { fill: none; stroke-width: 3.2; stroke-linecap: round; stroke: var(--hairline-2); transition: stroke var(--t-micro) var(--ease); }
+#progres path.fait { stroke: var(--ink); }
+
+/* ── Noir (N), répétition (R) ───────────────────────────────────────────── */
+#noir { position: absolute; inset: 0; background: #000; z-index: 20; opacity: 0; visibility: hidden; transition: opacity var(--t-micro) var(--ease), visibility 0s linear var(--t-micro); }
+#noir.on { opacity: 1; visibility: visible; transition: opacity var(--t-micro) var(--ease), visibility 0s; }
+#repet { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; background: #fff; border-top: 2px solid var(--hairline-2); z-index: 15; display: none;
+  align-items: center; gap: 28px; padding: 0 32px; font-family: "JetBrains Mono", monospace; font-size: 26px; font-weight: 500; color: var(--ink-2); }
+#repet.on { display: flex; }
+#repet .pil { padding: 6px 18px; border-radius: 999px; display: inline-flex; align-items: center; gap: 10px; }
+#repet .ok { background: var(--green-tint); color: var(--green-deep); }
+#repet .ko { background: var(--brand-tint); color: var(--brand); }
+#repet .coupe { color: var(--brand); font-family: "Plus Jakarta Sans", sans-serif; font-weight: 700; }
+
+/* ── Film ───────────────────────────────────────────────────────────────── */
+#film { position: absolute; inset: 0; width: 1920px; height: 1080px; background: #000; object-fit: contain; display: none; }
+.film-ok #film { display: block; }
+.planb { display: none; position: absolute; inset: 0; padding: 200px var(--marge) 0; color: #fff; }
+.film-ko .planb { display: block; }
+.planb .etiq { color: #9AA3B0; }
+.planb p.l { font-size: 52px; font-weight: 700; line-height: 1.3; letter-spacing: -0.015em; max-width: 1500px; margin-top: 48px; }
+
+/* ── Mouvement réduit : tout devient fondu simple ───────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .fr, .fr.on { transform: none !important; }
+  .pose, .s18.ecarte .recu { animation: fondu var(--t-micro) linear both !important; }
+  .slide.active .dessin .arc, .slide.active .fermeture .arc, .slide.active .fermeture .point { animation: none !important; }
+  .fermeture .arc { stroke-dashoffset: 0 !important; }
+  .fermeture .point { opacity: 0 !important; }
+  .s18 .carte { transition: none; }
+  .souligne::after { transition: opacity var(--t-micro) linear; transform: none; opacity: 0; }
+  .fr.on .souligne::after { opacity: 1; }
+}
+@keyframes fondu { from { opacity: 0; } to { opacity: 1; } }
+/* rendu de revue : état final, sans transition */
+.statique *, .statique *::before, .statique *::after { transition: none !important; animation-duration: 0s !important; animation-delay: 0s !important; }
+</style>
+</head>
+<body>
+<div id="scene">
+
+<!-- 1 · La carte (M1) -->
+<section class="slide gris s1" data-id="1" data-acte="1" data-pas="0">
+  <div class="carte" id="carte-1">
+    <div class="lieu">ORSIÈRES · VALAIS</div>
+    <div class="bas"><div><div class="nom">Sophie</div><div class="metier">Tisanes de plantes alpines</div></div>
+      <div class="filets"><i style="width:260px"></i><i style="width:190px"></i></div></div>
+  </div>
+  <div class="abs etiq fictif">Personnage fictif</div>
+</section>
+
+<!-- 2 · Et après ? (1/3) -->
+<section class="slide" data-id="2" data-acte="1"><div class="ea">Et après<span class="rouge"> ?</span></div></section>
+
+<!-- 3 · Carton DEMANDE -->
+<section class="slide noir carton" data-id="3" data-acte="2" data-carton="1"><p>Ce qui se passe<br>entre deux événements.</p></section>
+
+<!-- 4 · Le vide -->
+<section class="slide" data-id="4" data-acte="2" data-pas="1">
+  <div class="mono-pastille" style="left:196px;top:452px;background:#E6F4F1;color:#0E7569">M-04</div>
+  <div class="mono-pastille" style="left:356px;top:420px;background:#EAEAFB;color:#4F46E5">M-11</div>
+  <div class="mono-pastille" style="left:248px;top:300px;background:#FCE7F0;color:#BE185D">M-17</div>
+  <div class="mono-pastille" style="left:420px;top:276px;background:#FBF0DC;color:#B45309">M-23</div>
+  <div class="mono-pastille" style="left:520px;top:404px;background:#E8E9EC;color:#596273">M-02</div>
+  <div class="ligne"></div>
+  <div class="noeud" style="left:264px;background:var(--brand)"></div>
+  <div class="noeud-lab" style="left:200px">Foire du Valais</div>
+  <div class="fr fade" data-f="1">
+    <div class="noeud" style="right:264px;border:4px solid var(--ink);background:#fff"></div>
+    <div class="noeud-lab" style="right:160px;text-align:right">Prochain événement du Club</div>
+  </div>
+</section>
+
+<!-- 5 · Oui. -->
+<section class="slide" data-id="5" data-acte="2">
+  <div class="abs affiche" style="left:var(--marge);top:250px;font-size:420px;letter-spacing:-0.06em">Oui<span class="point-oui"></span></div>
+  <div class="abs corps" style="left:180px;top:740px">(pas « on s'appelle »)</div>
+</section>
+
+<!-- 6 · Carton CONTRIBUTION -->
+<section class="slide noir carton" data-id="6" data-acte="2" data-carton="1"><p>L'homme qui disait oui.</p></section>
+
+<!-- F · Le film (et son plan B) -->
+<section class="slide noir" data-id="film" data-acte="3" data-film="1" data-carton="1">
+  <video id="film" src="assets/film.mp4" preload="auto" playsinline></video>
+  <div class="planb">
+    <div class="etiq">Plan B · le film ne se lance pas · on vous le raconte</div>
+    <p class="l fr fade" data-f="1">Jean-Marc est membre du Club depuis vingt ans. À chaque événement, quelqu'un lui demande un coup de main — un contact, une salle, un camion — et Jean-Marc dit oui. Toujours. Avec sa carte, et un « on s'appelle ».</p>
+    <p class="l fr fade" data-f="2">Il a dit oui cent fois. Il a été rappelé trois fois.</p>
+    <p class="l fr fade" data-f="3">Ce n'est pas Jean-Marc, le problème. C'est ce qui vient après le oui.</p>
+  </div>
+</section>
+
+<!-- 8 · Et après ? (2/3) -->
+<section class="slide" data-id="8" data-acte="3" data-carton-voisin="1"><div class="ea">Et après<span class="rouge"> ?</span></div></section>
+
+<!-- 9 · Carton ESSAI -->
+<section class="slide noir carton" data-id="9" data-acte="4" data-carton="1"><p>Le même geste.<br>Dans le vrai produit.</p></section>
+
+<!-- 10a · Il manque une pièce (M4, 1/2) -->
+<section class="slide" data-id="10a" data-acte="4">
+  <svg class="tuile dessin" viewBox="0 0 24 24"><rect x=".5" y=".5" width="23" height="23" rx="7" fill="#CD2128"/>
+    <circle class="arc" cx="12" cy="12" r="7" fill="none" stroke="#FFF" stroke-width="2.7" stroke-linecap="round" transform="rotate(-90 12 12)"/></svg>
+  <div class="affiche statut">Il manque<br>une pièce.</div>
+</section>
+
+<!-- 10 · L'Établi (écran réel) -->
+<section class="slide gris" data-id="10" data-acte="4">
+  <div class="cadre-capture" style="position:absolute;inset:0">
+    <img class="capture" src="assets/captures/etabli-1-manque.png" alt="Établi réel" style="width:1920px;height:1200px;object-fit:cover;object-position:top">
+    <div class="emplacement" style="inset:120px var(--marge)"><b>etabli-1-manque.png</b><span>Établi — « il manque une pièce » · capture de samedi</span></div>
+  </div>
+</section>
+
+<!-- 11 · Démo, fond discret -->
+<section class="slide gris" data-id="11" data-acte="5" data-pas="6" data-demo="1">
+  <svg class="abs" style="left:var(--marge);top:120px" width="72" height="72" viewBox="0 0 24 24"><rect x=".5" y=".5" width="23" height="23" rx="7" fill="#CD2128"/>
+    <circle cx="12" cy="12" r="7" fill="none" stroke="#FFF" stroke-width="2.7" stroke-linecap="round" stroke-dasharray="33 11" transform="rotate(-90 12 12)"/><circle cx="7.05" cy="7.05" r="1.8" fill="#FFF"/></svg>
+  <div class="abs etiq" style="left:264px;top:142px">Essai · le vrai produit, en direct</div>
+  <ol class="reperes">
+    <li>La demande</li><li>Ses mots</li><li>Oui</li><li>Le reçu</li><li>Le retrait</li><li>Le juré</li>
+  </ol>
+</section>
+
+<!-- 11R · Reprise : l'anneau se ferme (M4, 2/2) -->
+<section class="slide" data-id="11R" data-acte="6">
+  <svg class="tuile fermeture" viewBox="0 0 24 24"><rect x=".5" y=".5" width="23" height="23" rx="7" fill="#CD2128"/>
+    <circle class="arc" cx="12" cy="12" r="7" fill="none" stroke="#FFF" stroke-width="2.7" stroke-linecap="round" transform="rotate(-90 12 12)"/>
+    <g class="point"><circle cx="7.05" cy="7.05" r="1.8" fill="#FFF"/></g></svg>
+  <div class="affiche statut">Le Club peut<br>le faire.</div>
+</section>
+
+<!-- 12 · Carton RÉSULTAT -->
+<section class="slide noir carton" data-id="12" data-acte="7" data-carton="1"><p>Ce qui est prouvé.<br>Rien de plus.</p></section>
+
+<!-- 13 · Trois preuves -->
+<section class="slide" data-id="13" data-acte="7" data-pas="3">
+  <div class="preuve fr" data-f="1" style="top:184px"><span class="n">01</span><div><h3>Le reçu</h3><p>daté, référencé, révocable.</p></div></div>
+  <div class="preuve fr" data-f="2" style="top:438px"><span class="n">02</span><div><h3>Le journal</h3><p>le serveur meurt, le monde revient.</p></div></div>
+  <div class="preuve fr" data-f="3" style="top:692px"><span class="n">03</span><div><h3>Le retrait</h3><p>un rôle, <span style="color:var(--ink)">jamais un nom.</span></p></div></div>
+</section>
+
+<!-- 14 · Les chiffres du gel (M5) — valeurs lues dans data/gel.json -->
+<section class="slide" data-id="14" data-acte="7" data-pas="5">
+  <div class="abs etiq" style="left:var(--marge);top:128px" id="gel-titre">Les chiffres du gel</div>
+  <div class="chiffres" id="chiffres"></div>
+  <div class="alerte">data/gel.json non lu — lancer le deck avec lancer.py</div>
+</section>
+
+<!-- 15 · L'IA -->
+<section class="slide" data-id="15" data-acte="8" data-pas="3">
+  <div class="trois">
+    <p class="fr" data-f="1">L'IA propose.</p>
+    <p class="fr" data-f="2">Les règles vérifient.</p>
+    <p class="fr" data-f="3">Le membre <span class="souligne">décide</span>.</p>
+  </div>
+</section>
+
+<!-- 16 · 1 / 26 — valeurs lues dans data/gel.json -->
+<section class="slide" data-id="16" data-acte="8" data-pas="1">
+  <div class="abs etiq" style="left:var(--marge);top:128px;text-transform:none;letter-spacing:.02em" id="ia-source"></div>
+  <div class="abs mono" style="left:148px;top:230px;font-size:300px;font-weight:500;letter-spacing:-0.06em;line-height:1" id="ia-score"></div>
+  <div class="abs corps" style="left:var(--marge);top:584px;color:var(--ink)" id="ia-legende"></div>
+  <div class="cases fr fade" data-f="1" id="ia-cases"></div>
+  <div class="abs corps" style="left:var(--marge);top:880px;font-size:36px">Interrupteur. Même état du Club, IA allumée ou éteinte — testé.</div>
+  <div class="alerte">data/gel.json non lu — lancer le deck avec lancer.py</div>
+</section>
+
+<!-- 17a · Et après ? (3/3) -->
+<section class="slide" data-id="17a" data-acte="9" data-carton-voisin="1"><div class="ea">Et après<span class="rouge"> ?</span></div></section>
+
+<!-- 17b · Carton REÇU, en deux temps -->
+<section class="slide noir carton" data-id="17b" data-acte="9" data-carton="1" data-pas="1">
+  <p>Et après<span class="fr fade" data-f="1">, maintenant,<br>il se passe quelque chose.</span></p>
+</section>
+
+<!-- 18 · La carte et le reçu (M6) -->
+<section class="slide gris s18" data-id="18" data-acte="9" data-pas="1">
+  <div class="carte">
+    <div class="lieu">ORSIÈRES · VALAIS</div>
+    <div class="bas"><div><div class="nom">Sophie</div><div class="metier">Tisanes de plantes alpines</div></div>
+      <div class="filets"><i style="width:260px"></i><i style="width:190px"></i></div></div>
+  </div>
+  <div class="recu">
+    <img class="capture" src="assets/captures/tel-2-recu.png" alt="Reçu réel sur le téléphone" data-recadrage="472px 32px 584px 32px">
+    <div class="emplacement"><b>tel-2-recu.png</b><span>le reçu réel · capture de samedi</span></div>
+  </div>
+</section>
+
+<!-- 19 · Phrase finale (le dernier membre se dit, il ne s'écrit pas) -->
+<section class="slide" data-id="19" data-acte="9" data-carton-voisin="1">
+  <div class="abs affiche" style="left:var(--marge);top:356px;font-size:120px;line-height:1.15">La Foire crée la rencontre.<br>Club Pulse crée <span class="rouge">l'après.</span></div>
+</section>
+
+<!-- 20 · Noir -->
+<section class="slide noir" data-id="20" data-acte="9" data-carton="1"></section>
+
+<!-- 21 · Repères pour les questions -->
+<section class="slide gris" data-id="21" data-acte="9" data-carton-voisin="1">
+  <svg class="abs" style="left:var(--marge);top:340px" width="200" height="200" viewBox="0 0 24 24"><rect x=".5" y=".5" width="23" height="23" rx="7" fill="#CD2128"/>
+    <circle cx="12" cy="12" r="7" fill="none" stroke="#FFF" stroke-width="2.7" stroke-linecap="round" stroke-dasharray="33 11" transform="rotate(-90 12 12)"/><circle cx="7.05" cy="7.05" r="1.8" fill="#FFF"/></svg>
+  <div class="abs affiche" style="left:400px;top:352px;font-size:128px">Club Pulse</div>
+  <div class="abs corps" style="left:404px;top:500px;font-weight:600">Club des Affaires · Foire du Valais</div>
+  <div class="abs etiq" style="left:var(--marge);bottom:96px;text-transform:none;letter-spacing:.02em">monde de démonstration fictif · chaque affirmation : docs/audit/CLAIMS.md</div>
+</section>
+
+<div id="secours"><div class="etiq" id="secours-lab"></div><img alt="capture de secours"></div>
+<svg id="progres" viewBox="0 0 24 24" aria-hidden="true"></svg>
+<div id="repet"></div>
+<div id="noir"></div>
+</div>
+
+<script>
+"use strict";
+/* ── État ─────────────────────────────────────────────────────────────── */
+const scene = document.getElementById("scene");
+const S = [...document.querySelectorAll(".slide")];
+const ID = s => s.dataset.id;
+let i = 0, pas = 0, vus = new Set();
+const params = new URLSearchParams(location.search);
+const STATIQUE = params.has("statique");
+if (STATIQUE) document.body.classList.add("statique");
+
+/* ── Mise à l'échelle 1920×1080 → fenêtre ─────────────────────────────── */
+function ajuster() { const k = Math.min(innerWidth / 1920, innerHeight / 1080);
+  scene.style.transform = `translate(${(innerWidth - 1920 * k) / 2}px, ${(innerHeight - 1080 * k) / 2}px) scale(${k})`; }
+addEventListener("resize", ajuster); ajuster();
+
+/* ── Captures : si le fichier manque, l'emplacement porte son nom ─────── */
+document.querySelectorAll("img.capture").forEach(img => {
+  const marque = () => img.parentElement.classList.add("manque");
+  img.addEventListener("error", marque); if (img.complete && img.naturalWidth === 0) marque();
+});
+
+/* ── Données du gel (un seul fichier) ─────────────────────────────────── */
+const medaillon = `<svg class="medaillon" viewBox="0 0 24 24" aria-label="vérifié"><circle cx="12" cy="12" r="11" fill="#0DA254" stroke="#fff" stroke-width="1.4"/>
+  <path d="M7 12.4l3.2 3.1L17 8.8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+function remplir(g) {
+  const ch = document.getElementById("chiffres");
+  ch.innerHTML = (g ? g.chiffres : [{}, {}, {}, {}, {}]).map((c, k) => {
+    const v = c.valeur;
+    const val = v === null || v === undefined ? `<b class="gel">[GEL]</b>` : `<b>${esc(v)}${c.zero_verifie ? medaillon : ""}</b>`;
+    return `<div class="chiffre fr" data-f="${k + 1}">${val}<span>${esc(c.etiquette || "")}</span></div>`;
+  }).join("");
+  const t = document.getElementById("gel-titre");
+  t.textContent = g ? `Les chiffres du gel · ${g.gel.date}${g.gel.commit ? " · commit " + g.gel.commit : ""}` : "Les chiffres du gel";
+  const ia = g && g.ia;
+  document.getElementById("ia-source").textContent = ia ? ia.source : "";
+  document.getElementById("ia-score").innerHTML = ia ? `<span class="rouge">${esc(ia.justes)}</span><span style="color:var(--secondary);margin:0 .02em">/</span>${esc(ia.cas)}` : `[GEL]`;
+  document.getElementById("ia-legende").textContent = ia ? ia.legende : "";
+  const n = ia ? parseInt(ia.cas, 10) : 0, p = ia ? parseInt(ia.justes, 10) : 0;
+  document.getElementById("ia-cases").innerHTML = Array.from({ length: n }, (_, k) => `<i class="${k < p ? "pleine" : ""}"></i>`).join("");
+  if (!g) document.querySelectorAll('[data-id="14"],[data-id="16"]').forEach(s => s.classList.add("sans-gel"));
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+const gelPret = fetch("data/gel.json", { cache: "no-store" }).then(r => r.json()).then(g => { remplir(g); return true; })
+  .catch(() => { remplir(null); return false; });
+
+/* ── Film : local, plein écran ; sans fichier → plan B ────────────────── */
+const film = document.getElementById("film"), sFilm = S.find(s => s.dataset.film);
+let filmEtat = "inconnu";       // inconnu | ok | ko
+film.addEventListener("loadeddata", () => { filmEtat = "ok"; sFilm.classList.add("film-ok"); sFilm.classList.remove("film-ko"); });
+film.addEventListener("error", () => { filmEtat = "ko"; sFilm.classList.add("film-ko"); });
+setTimeout(() => { if (filmEtat === "inconnu") { filmEtat = "ko"; sFilm.classList.add("film-ko"); } }, 2500);
+film.addEventListener("ended", () => { film.pause(); });  // le dernier plan reste figé (ancienne slide 7)
+
+/* ── Nombre de pas d'une slide ────────────────────────────────────────── */
+function pasMax(s) { if (s.dataset.film) return filmEtat === "ko" ? 3 : 0; return +(s.dataset.pas || 0); }
+
+/* ── Affichage ────────────────────────────────────────────────────────── */
+const ACTES = 9, progres = document.getElementById("progres");
+progres.innerHTML = Array.from({ length: ACTES }, (_, k) => {           // 9 arcs, un par acte, en partant du haut
+  const a0 = (k / ACTES) * 2 * Math.PI + 0.2, a1 = ((k + 1) / ACTES) * 2 * Math.PI - 0.2, r = 9;
+  const P = a => `${(12 + r * Math.sin(a)).toFixed(3)} ${(12 - r * Math.cos(a)).toFixed(3)}`;
+  return `<path d="M${P(a0)} A${r} ${r} 0 0 1 ${P(a1)}"/>`; }).join("");
+document.querySelectorAll("img[data-recadrage]").forEach(im => { im.style.objectViewBox = `inset(${im.dataset.recadrage})`; });
+function montrer(n, p, depuis) {
+  const a = S[i], b = S[n];
+  const fondu = !STATIQUE && (a.dataset.carton || b.dataset.carton);
+  S.forEach(s => s.classList.toggle("fondu", !!fondu && (s === a || s === b)));
+  if (a !== b) { a.classList.remove("active"); if (a.dataset.film) film.pause(); }
+  i = n; pas = p; b.classList.add("active");
+  // fragments
+  b.querySelectorAll("[data-f]").forEach(f => f.classList.toggle("on", +f.dataset.f <= pas));
+  // M1 : la carte se pose une seule fois
+  if (ID(b) === "1" && !vus.has("1")) { const c = document.getElementById("carte-1"); c.classList.remove("pose"); void c.offsetWidth; c.classList.add("pose"); }
+  vus.add(ID(b));
+  // M4 : redéclencher dessin / fermeture à chaque entrée
+  if (a !== b) b.querySelectorAll(".dessin, .fermeture").forEach(svg => { const c = svg.getAttribute("class"); svg.setAttribute("class", "tuile"); void svg.getBBox(); svg.setAttribute("class", c); });
+  // M6 : la carte s'écarte, le reçu se pose
+  if (ID(b) === "18") b.classList.toggle("ecarte", pas >= 1);
+  // démo : repères
+  if (b.dataset.demo) b.querySelectorAll(".reperes li").forEach((li, k) => { li.classList.toggle("fait", k < pas); li.classList.toggle("ici", k === pas - 1); });
+  document.getElementById("secours").classList.remove("on");
+  // indicateur de progression (masqué sur noir, film, ouverture et finale)
+  const acte = +b.dataset.acte, cache = b.classList.contains("noir") || ["1", "10", "18", "19", "21"].includes(ID(b));
+  progres.style.opacity = cache ? 0 : 1;
+  progres.querySelectorAll("path").forEach((pa, k) => pa.classList.toggle("fait", k < acte));
+  repetition(depuis);
+  if (!STATIQUE) history.replaceState(null, "", `#${ID(b)}${pas ? "." + pas : ""}`);
+}
+function suivant() {
+  const s = S[i];
+  if (s.dataset.film && filmEtat === "ok") {               // clic 1 : lecture ; clic suivant : on passe
+    if (film.paused && !film.ended && film.currentTime === 0) { film.play(); return; }
+    if (!film.paused && !film.ended) { film.pause(); return; }
+  }
+  if (pas < pasMax(s)) return montrer(i, pas + 1, "avance");
+  if (i < S.length - 1) montrer(i + 1, 0, "avance");
+}
+function precedent() {
+  if (pas > 0) return montrer(i, pas - 1);
+  if (i > 0) montrer(i - 1, pasMax(S[i - 1]));
+}
+
+/* ── Plan B de la démo : capture de secours de l'étape (touche B) ──────── */
+const SECOURS = ["tel-1-demande.png", "tel-1b-proposition.png", "etabli-2-peut.png", "tel-2-recu.png", "etabli-3-retrait.png", "tel-3-jure.png"];
+function secours() {
+  const s = S[i]; if (!s.dataset.demo) return;
+  const box = document.getElementById("secours"); if (box.classList.contains("on")) return box.classList.remove("on");
+  const f = SECOURS[Math.max(0, pas - 1)], img = box.querySelector("img");
+  img.src = "assets/captures/" + f; document.getElementById("secours-lab").textContent = "Secours · capture réelle · " + f; box.classList.add("on");
+}
+
+/* ── Mode répétition (R) : chrono + 8 points de contrôle de 02_STRUCTURE ─ */
+const CP = [
+  { s: "2", p: 0, lab: "Mains levées, rire → « Et après ? »", cible: 35, coupe: "Couper la deuxième relance (« gardez la main levée… »)." },
+  { s: "6", p: 0, lab: "« Il s'appelle Jean-Marc. »", cible: 115, coupe: "Couper la dernière phrase de l'acte 2 (« on ne manque pas de rencontres »)." },
+  { s: "8", p: 0, lab: "Fin du film", cible: 265, coupe: "Respiration en une phrase de cinq mots." },
+  { s: "10", p: 0, lab: "Établi plein écran", cible: 285, coupe: "Aucune coupe : rattraper sur l'acte 6." },
+  { s: "11", p: 4, lab: "Reçu sur le téléphone", cible: 395, coupe: "Couper l'acte 6 au retrait seul (pas de juré)." },
+  { s: "14", p: 0, lab: "Slide chiffres", cible: 460, coupe: "Ne lire que trois chiffres sur cinq." },
+  { s: "15", p: 0, lab: "Slide IA", cible: 495, coupe: "Garder les trois lignes, couper l'exemple de l'erreur." },
+  { s: "18", p: 0, lab: "Carte + reçu", cible: 560, coupe: "La phrase finale, puis noir — rien d'autre." },
+];
+let repetOn = false, t0 = null, atteints = {};
+const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, "0")}`;
+const coche = `<svg width="22" height="22" viewBox="0 0 24 24"><path d="M5 12.5l4.2 4L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const croix = `<svg width="22" height="22" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>`;
+function repetition(depuis) {
+  if (!repetOn || t0 === null) return;
+  const t = (performance.now() - t0) / 1000;
+  CP.forEach((c, k) => { if (!(k in atteints) && ID(S[i]) === c.s && pas === c.p && depuis === "avance") atteints[k] = t; });
+}
+function dessinerRepet() {
+  const el = document.getElementById("repet"); if (!repetOn) return;
+  const t = t0 === null ? 0 : (performance.now() - t0) / 1000;
+  const dernier = Object.keys(atteints).map(Number).sort((a, b) => b - a)[0];
+  const prochain = CP.findIndex((c, k) => !(k in atteints));
+  let html = `<span>R · ${mmss(t)}</span>`;
+  if (dernier !== undefined) { const c = CP[dernier], d = atteints[dernier] - c.cible, ok = d <= 15;
+    html += `<span class="pil ${ok ? "ok" : "ko"}">${ok ? coche : croix}${c.lab} · ${mmss(atteints[dernier])} / ${mmss(c.cible)}</span>`;
+    if (!ok) html += `<span class="coupe">${c.coupe}</span>`; }
+  if (prochain >= 0) { const c = CP[prochain], retard = t - c.cible > 15;
+    html += `<span style="margin-left:auto" class="${retard ? "coupe" : ""}">${retard ? "En retard · " + c.coupe : "Prochain : " + c.lab + " · " + mmss(c.cible)}</span>`; }
+  el.innerHTML = html;
+}
+setInterval(dessinerRepet, 250);
+
+/* ── Clavier, clic, télécommande ─────────────────────────────────────── */
+addEventListener("keydown", e => {
+  const k = e.key;
+  if (["ArrowRight", "ArrowDown", " ", "PageDown", "Enter"].includes(k)) { e.preventDefault(); suivant(); }
+  else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(k)) { e.preventDefault(); precedent(); }
+  else if (k === "Home") montrer(0, 0);
+  else if (k === "End") montrer(S.length - 1, 0);
+  else if (k === "n" || k === "N") document.getElementById("noir").classList.toggle("on");
+  else if (k === "b" || k === "B") secours();
+  else if (k === "r" || k === "R") {
+    if (e.shiftKey) { t0 = performance.now(); atteints = {}; repetOn = true; }
+    else { repetOn = !repetOn; if (repetOn && t0 === null) t0 = performance.now(); }
+    document.getElementById("repet").classList.toggle("on", repetOn); dessinerRepet();
+  }
+  else if (k === "f" || k === "F") document.documentElement.requestFullscreen?.();
+});
+addEventListener("click", e => { if (e.button === 0) suivant(); });
+addEventListener("contextmenu", e => { e.preventDefault(); precedent(); });
+
+/* ── Démarrage : #id ou #id.pas dans l'URL (revue, reprise après incident) ─ */
+window.allerA = (id, p) => { const n = S.findIndex(s => ID(s) === String(id)); if (n >= 0) montrer(n, p === "max" ? pasMax(S[n]) : (p || 0)); };
+window.SLIDES = S.map(ID); window.pasDe = id => pasMax(S.find(s => ID(s) === String(id)));
+window.pret = Promise.all([document.fonts.ready, gelPret]);
+const h = location.hash.slice(1).split(".");
+montrer(0, 0);
+if (h[0]) window.allerA(h[0], +h[1] || 0);
+</script>
+</body>
+</html>

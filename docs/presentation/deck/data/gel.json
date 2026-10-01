@@ -1,0 +1,21 @@
+{
+  "_lire": "SEUL fichier de chiffres du deck. Vendredi 02.10 après le tag gel-demo : recopier les valeurs depuis docs/audit/club-pulse-pivot/PREUVES.md (et rien d'autre). null = affiché [GEL]. Les valeurs sont des textes, affichés tels quels.",
+  "gel": {
+    "date": "vendredi 02.10 · 18:00",
+    "commit": null
+  },
+  "chiffres": [
+    { "cle": "tests", "valeur": null, "etiquette": "tests" },
+    { "cle": "parcours", "valeur": null, "etiquette": "parcours de bout en bout, aussi réseau coupé" },
+    { "cle": "mutants", "valeur": null, "etiquette": "mutants tués, survivants tous classés — cœur du registre" },
+    { "cle": "geste", "valeur": null, "etiquette": "d'un geste sur le téléphone à l'écran commun — mesuré" },
+    { "cle": "ecritures", "valeur": null, "etiquette": "écriture sans geste — lire ne capte rien", "zero_verifie": true }
+  ],
+  "ia": {
+    "justes": "1",
+    "cas": "26",
+    "legende": "propositions justes du premier coup — 26 cas écrits avant l'appel",
+    "source": "Apertus · swiss-ai/Apertus-v1.5-70B · API d'inférence CSCS · mesure du 01.10",
+    "reference": "CLAIMS n° 39"
+  }
+}
