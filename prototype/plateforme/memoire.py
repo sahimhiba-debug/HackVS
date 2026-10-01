@@ -41,6 +41,10 @@ class Evt(BaseModel):
         return "e_" + hashlib.sha256(brut.encode()).hexdigest()[:16]
 
 
+class MondeRemplace(RuntimeError):
+    """Écriture dans le journal d'un monde REMPLACÉ (réinitialisation de la démonstration) : refusée, jamais égarée."""
+
+
 class Memoire:
     def __init__(self, chemin: str = ":memory:"):
         if chemin != ":memory:":
@@ -55,6 +59,7 @@ class Memoire:
         # appelés après l'ANNULATION de la transaction la plus externe : qui tient un état dérivé du journal (en mémoire,
         # en cache) le reconstruit — sinon il garderait des faits qui n'existent plus (F27)
         self.sur_annulation: list[Callable[[], None]] = []
+        self._ferme = False                # monde remplacé : plus aucune écriture (F28)
 
     def _synchroniser(self) -> list[Evt]:
         """Cache incrémental : ne désérialise que les événements nouveaux. Resynchronisé à chaque lecture par une
@@ -72,6 +77,8 @@ class Memoire:
     def ajouter(self, e: Evt) -> Evt:
         """Idempotent : le même événement (même contenu) n'est jamais compté deux fois."""
         with self._v:
+            if self._ferme:
+                raise MondeRemplace("ce monde a été remplacé : écriture refusée")
             cur = self._db.execute("INSERT OR IGNORE INTO evenements (id, donnees) VALUES (?, ?)",
                                    (e.id, e.model_dump_json(exclude={"seq"})))
             if not self._profondeur:
@@ -117,6 +124,11 @@ class Memoire:
 
     def empreinte(self) -> str:
         return hashlib.sha256("".join(e.id for e in self.evenements()).encode()).hexdigest()
+
+    def fermer(self) -> None:
+        """Le monde qui portait ce journal est remplacé : toute écriture ultérieure lève `MondeRemplace`."""
+        with self._v:
+            self._ferme = True
 
     def vider(self) -> None:
         with self._v:

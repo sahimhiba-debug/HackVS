@@ -16,7 +16,7 @@ import hmac
 import threading
 import time
 from collections import defaultdict, deque
-from typing import Callable, Literal, Optional, TypeVar
+from typing import Callable, Iterator, Literal, Optional, TypeVar
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -144,9 +144,58 @@ class Limiteur:
             q.append(t)
 
 
+class Passage:
+    """Verrou lecteurs / rédacteur, indépendant des fils (F28). Chaque requête est un LECTEUR du monde courant pour
+    toute sa durée ; remplacer le monde (réinitialiser, aller à une étape) est le RÉDACTEUR : il attend que les requêtes
+    en vol se terminent, et les nouvelles attendent qu'il ait fini. Aucune requête ne voit deux mondes."""
+
+    def __init__(self) -> None:
+        self._c = threading.Condition()
+        self._lecteurs, self._redacteur, self._en_attente = 0, False, 0
+
+    def entrer(self, rediger: bool) -> None:
+        with self._c:
+            if rediger:
+                self._en_attente += 1
+                self._c.wait_for(lambda: not self._redacteur and self._lecteurs == 0)
+                self._en_attente -= 1
+                self._redacteur = True
+            else:                                      # priorité au rédacteur : pas de famine de la réinitialisation
+                self._c.wait_for(lambda: not self._redacteur and self._en_attente == 0)
+                self._lecteurs += 1
+
+    def sortir(self, rediger: bool) -> None:
+        with self._c:
+            if rediger:
+                self._redacteur = False
+            else:
+                self._lecteurs -= 1
+            self._c.notify_all()
+
+
+REMPLACER_LE_MONDE = ("/api/pulse/demo/reinitialiser", "/api/pulse/demo/aller/")
+
+
 def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRouter:
-    r = APIRouter(prefix="/api/pulse", tags=["club pulse"], responses=ERREURS)  # type: ignore[arg-type]
+    passage = Passage()
+
+    def garde(request: Request) -> Iterator[None]:
+        rediger = request.url.path.startswith(REMPLACER_LE_MONDE)
+        passage.entrer(rediger)
+        try:
+            yield
+        finally:
+            passage.sortir(rediger)
+
+    r = APIRouter(prefix="/api/pulse", tags=["club pulse"], responses=ERREURS,  # type: ignore[arg-type]
+                  dependencies=[Depends(garde)])
     etat = {"demo": Demo(tax, reprendre=True)}        # démarrage : l'état est repris du journal (jamais effacé)
+
+    def remplacer(nouveau: Demo) -> None:
+        """Sous le passage RÉDACTEUR seulement : le monde neuf prend la place, l'ancien journal est fermé."""
+        ancien, etat["demo"] = etat["demo"], nouveau
+        if ancien is not nouveau:
+            ancien.club.journal.fermer()
     remplacement = threading.Lock()                   # réinitialiser / avancer la démo : une opération à la fois
     limite_acces = Limiteur(10, 60.0)                 # deviner un code d'invitation : 10 essais par minute et par client
     limite_ia = Limiteur(30, 60.0)                    # appels de langage (notes, demandes) : 30 par minute et par membre
@@ -199,7 +248,7 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     @r.post("/demo/reinitialiser", dependencies=[Depends(console)])
     def reinitialiser() -> dict:
         with remplacement:
-            etat["demo"] = Demo(tax)
+            remplacer(Demo(tax))
             return lire_etat()
 
     @r.post("/demo/suivant", dependencies=[Depends(console)])
@@ -219,7 +268,7 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
         with remplacement:
             d = Demo(tax)
             d.rejouer(n)
-            etat["demo"] = d
+            remplacer(d)
             return lire_etat()
 
     # ------------------------------------------------------------------ accès
