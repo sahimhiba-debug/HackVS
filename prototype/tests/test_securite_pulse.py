@@ -117,8 +117,10 @@ def test_deviner_un_code_d_invitation_est_limite():
     appli = FastAPI()
     appli.include_router(creer_routeur(TAX))
     c = TestClient(appli)
-    statuts = [c.post("/api/pulse/acces", json={"code": f"ZZZZ{i:02d}"}).status_code for i in range(12)]
-    assert statuts[:10] == [401] * 10 and statuts[10:] == [429, 429]
+    # par CODE tenté, jamais par client (F09 : une salle partage une adresse) — balayage : plafond global, voir
+    # tests/test_acces_limite_par_code.py
+    statuts = [c.post("/api/pulse/acces", json={"code": "ZZZZ00"}).status_code for _ in range(7)]
+    assert statuts[:5] == [401] * 5 and statuts[5:] == [429, 429]
     t = [0.0]
     lim = Limiteur(2, 60.0, horloge=lambda: t[0])
     lim.verifier("k")

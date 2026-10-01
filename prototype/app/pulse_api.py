@@ -197,7 +197,11 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
         if ancien is not nouveau:
             ancien.club.journal.fermer()
     remplacement = threading.Lock()                   # réinitialiser / avancer la démo : une opération à la fois
-    limite_acces = Limiteur(10, 60.0)                 # deviner un code d'invitation : 10 essais par minute et par client
+    # ACCÈS PAR CODE D'INVITATION : jamais par adresse IP (F09 — une salle entière sort par la même adresse, comme pour le
+    # QR juré). Par CODE tenté (deviner UN code : 5 essais par minute) et un plafond GLOBAL doux (balayer beaucoup de
+    # codes : 300 essais par minute pour tout le serveur, de quoi activer une salle entière en une minute)
+    limite_acces_code = Limiteur(5, 60.0)
+    limite_acces_global = Limiteur(300, 60.0)
     limite_ia = Limiteur(30, 60.0)                    # appels de langage (notes, demandes) : 30 par minute et par membre
     # QR JURÉ : jamais par adresse IP (dans la salle, tout le public partage la même) — par CODE et par SESSION
     limite_jure_code = Limiteur(5, 60.0)              # activations tentées sur un même passe
@@ -273,8 +277,9 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
 
     # ------------------------------------------------------------------ accès
     @r.post("/acces", response_model=Session)
-    def acces(a: Acces, request: Request) -> dict:
-        limiter(limite_acces, f"acces|{request.client.host if request.client else '?'}")
+    def acces(a: Acces) -> dict:
+        limiter(limite_acces_global, "acces")
+        limiter(limite_acces_code, "acces-code|" + a.code.strip().upper())
         return au_monde(lambda c: c.activer_compte(a.code))
 
     # ------------------------------------------------------------------ QR juré
