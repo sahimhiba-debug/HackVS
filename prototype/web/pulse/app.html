@@ -463,9 +463,12 @@
         section("Mes réponses aux demandes", d.reponses_aux_demandes.length ? d.reponses_aux_demandes.map((r) => h("p", {}, `${jourDe(r.le)} : ${r.reponse}`)) : vide("Aucune.")),
         section("Ailleurs", h("p", {}, d.hors_du_journal), h("p", { class: "note" }, `Notes privées : ${d.notes_privees} (vous seul·e)`)),
         section("Tout effacer", h("p", { class: "note" }, "Votre identité quitte le coffre ; vos déclarations, offres, consentements, "
-          + "participations en cours, préférences, notes et votre compte sont retirés. Ce qui reste vous est dit ensuite."),
+          + "participations en cours, préférences, notes et votre compte sont retirés. Ce qui RESTE : le journal du Club, qui "
+          + "ne s'efface pas, garde une trace technique sans nom ni contact (un identifiant et vos textes déjà anonymisés) — "
+          + "plus aucun écran ne la montre ; une contribution déjà reçue reste un fait."),
           h("button", { class: "btn discret petit", id: "tout-effacer", onclick: async () => {
-            if (!window.confirm("Tout effacer ? Cette action ne peut pas être annulée.")) return;
+            if (!window.confirm("Tout effacer ? Cette action ne peut pas être annulée. Le journal du Club gardera une trace "
+              + "technique sans nom ni contact, qu'aucun écran ne montrera plus.")) return;
             try {
               const r = await api("/api/pulse/moi/effacer", { corps: { confirme: true } });
               ecrire("pulse-session", null); session = null;

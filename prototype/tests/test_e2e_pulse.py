@@ -242,3 +242,31 @@ def test_contenu_hostile_affiche_comme_du_texte(url):  # noqa: F811
         assert lea.evaluate("window.__xss") is None and lea.locator("main img").count() == 0
         b.close()
     assert erreurs == [], erreurs
+
+
+def test_tout_effacer_annonce_ce_qui_reste_avant_le_geste(url):  # noqa: F811
+    """R4 (contre-expertise) : AVANT le geste, l'écran et la confirmation disent que le journal garde une trace
+    technique sans nom ni contact. Refuser la confirmation n'efface rien."""
+    pw = pytest.importorskip("playwright.sync_api")
+    _api(url, "/api/pulse/demo/reinitialiser", {})
+    session = next(x["session"] for x in _api(url, "/api/pulse/console/personas") if x["id"] == "s01")
+    with pw.sync_playwright() as p:
+        b = _chromium(p)
+        pg = b.new_context(viewport={"width": 390, "height": 844}).new_page()
+        pg.set_default_timeout(30_000)
+        pg.goto(url + f"/app?session={session}#donnees")
+        pg.wait_for_selector("#tout-effacer")
+        avant = pg.inner_text("main").lower()
+        assert "trace technique" in avant and "sans nom ni contact" in avant          # dit à l'écran, avant le geste
+        messages: list[str] = []
+
+        def refuser(d):
+            messages.append(d.message)
+            d.dismiss()
+        pg.once("dialog", refuser)
+        pg.click("#tout-effacer")
+        pg.wait_for_timeout(300)
+        assert messages and "trace technique" in messages[0].lower() and "sans nom ni contact" in messages[0].lower()
+        pg.evaluate("location.hash = '#actions'")
+        pg.wait_for_selector("h1:has-text('Mes actions')")                           # rien effacé : la session vit
+        b.close()
