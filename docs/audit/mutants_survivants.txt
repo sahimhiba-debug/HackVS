@@ -26,8 +26,6 @@ xǁPatronǁportee__mutmut_14 | return {"finalite": self.id, "version": self.vers
 xǁPatronǁportee__mutmut_17 | "fenetre": self.fenetre.model_dump(mode=None), "duree_min": self.duree_min, "partage": PARTAGE_FINALITE}
 xǁPatronǁportee__mutmut_18 | "fenetre": self.fenetre.model_dump(mode="XXjsonXX"), "duree_min": self.duree_min, "partage": PARTAGE_FINALITE}
 xǁPatronǁportee__mutmut_19 | "fenetre": self.fenetre.model_dump(mode="JSON"), "duree_min": self.duree_min, "partage": PARTAGE_FINALITE}
-xǁPatronǁportee__mutmut_20 | "fenetre": self.fenetre.model_dump(mode="json"), "XXduree_minXX": self.duree_min, "partage": PARTAGE_FINALITE}
-xǁPatronǁportee__mutmut_21 | "fenetre": self.fenetre.model_dump(mode="json"), "DUREE_MIN": self.duree_min, "partage": PARTAGE_FINALITE}
 xǁPatronǁportee__mutmut_4 | return {"XXfinaliteXX": self.id, "version": self.version, "titre": self.titre, "emplacement": e.model_dump(mode="json"),
 xǁPatronǁportee__mutmut_5 | return {"FINALITE": self.id, "version": self.version, "titre": self.titre, "emplacement": e.model_dump(mode="json"),
 xǁPatronǁportee__mutmut_8 | return {"finalite": self.id, "version": self.version, "XXtitreXX": self.titre, "emplacement": e.model_dump(mode="json"),
@@ -54,7 +52,6 @@ xǁRegistreǁ_composer__mutmut_65 | sol = sorted(toutes, key=lambda x: -sum(2 fo
 xǁRegistreǁ_composer__mutmut_70 | sol = sorted(toutes, key=lambda x: -sum(1 for r in consentis(x["choix"]).values() if r is None))[:2]
 xǁRegistreǁ_consentements__mutmut_33 | return valables, sorted(perdus, key=lambda x: ordre.index(x.split(None, 1)[0]))
 xǁRegistreǁ_consentements__mutmut_36 | return valables, sorted(perdus, key=lambda x: ordre.index(x.split(" : ", )[0]))
-xǁRegistreǁ_consentements__mutmut_37 | return valables, sorted(perdus, key=lambda x: ordre.index(x.rsplit(" : ", 1)[0]))
 xǁRegistreǁ_consentements__mutmut_39 | return valables, sorted(perdus, key=lambda x: ordre.index(x.split(" : ", 2)[0]))
 xǁRegistreǁ_critiques__mutmut_14 | if not self.b.solutions(None, p.protocole(), maximum=None, permis=permis):
 xǁRegistreǁ_critiques__mutmut_18 | if not self.b.solutions(None, p.protocole(), permis=permis):
@@ -77,7 +74,6 @@ xǁRegistreǁ_recomposer__mutmut_64 | seules = {e.id: bool(self.b.solutions(None
 xǁRegistreǁ_recomposer__mutmut_67 | seules = {e.id: bool(self.b.solutions(None, p.protocole(garder_seul=e.id), maximum=1, permis=self._permis(p, exclus, )))
 xǁRegistreǁ_recomposer__mutmut_73 | "cause": [f"{role[x.split(None, 1)[0]]} : ce composant n'est plus disponible" for x in inst.perdus],
 xǁRegistreǁ_recomposer__mutmut_76 | "cause": [f"{role[x.split(' : ', )[0]]} : ce composant n'est plus disponible" for x in inst.perdus],
-xǁRegistreǁ_recomposer__mutmut_77 | "cause": [f"{role[x.rsplit(' : ', 1)[0]]} : ce composant n'est plus disponible" for x in inst.perdus],
 xǁRegistreǁ_recomposer__mutmut_79 | "cause": [f"{role[x.split(' : ', 2)[0]]} : ce composant n'est plus disponible" for x in inst.perdus],
 xǁRegistreǁ_recomposer__mutmut_92 | "ignore": ["si d'autres membres pourraient fournir " + (", ".join(manquent) or "XXles pièces restantes au même momentXX")
 xǁRegistreǁ_recomposer__mutmut_93 | "ignore": ["si d'autres membres pourraient fournir " + (", ".join(manquent) or "LES PIÈCES RESTANTES AU MÊME MOMENT")
@@ -86,9 +82,9 @@ xǁRegistreǁinstance__mutmut_29 | if relance is not None and relance >= budget:
 xǁRegistreǁlevier__mutmut_11 | h = HypotheticalClaim(nature=ask.nature, concept=ask.concept, attributs=dict(ask.minimums),  # type: ignore[arg-type]
 xǁRegistreǁlevier__mutmut_24 | avant = {i.finalite: i.distance for i in self._projeter(levier=None)}
 xǁRegistreǁpatron__mutmut_3 | raise Introuvable("XXcapacité inconnueXX")
-xǁRegistreǁrepondre__mutmut_122 | raise Conflit(None)
-xǁRegistreǁrepondre__mutmut_123 | raise Conflit("XXvotre réponse ne complète pas cette capacité (horaire ou attributs) : rien n'a été enregistréXX")
-xǁRegistreǁrepondre__mutmut_124 | raise Conflit("VOTRE RÉPONSE NE COMPLÈTE PAS CETTE CAPACITÉ (HORAIRE OU ATTRIBUTS) : RIEN N'A ÉTÉ ENREGISTRÉ")
+xǁRegistreǁrepondre__mutmut_128 | raise Conflit(None)
+xǁRegistreǁrepondre__mutmut_129 | raise Conflit("XXvotre réponse ne complète pas cette capacité (horaire ou attributs) : rien n'a été enregistréXX")
+xǁRegistreǁrepondre__mutmut_130 | raise Conflit("VOTRE RÉPONSE NE COMPLÈTE PAS CETTE CAPACITÉ (HORAIRE OU ATTRIBUTS) : RIEN N'A ÉTÉ ENREGISTRÉ")
 xǁRegistreǁrepondre__mutmut_18 | raise Conflit("XXcette demande n'est plus d'actualité : la pièce a déjà été trouvée, ou la capacité a changéXX")
 xǁRegistreǁrepondre__mutmut_42 | raise Invalide("XXcapacité non déclarée dans votre profil : ajoutez-la d'abord à « je peux aider »XX")
 xǁRegistreǁrepondre__mutmut_5 | finalite = ask_id.split(":", )[0]

@@ -269,3 +269,34 @@ def test_une_competence_retiree_puis_redeclaree_garde_sa_date_de_retrait(club):
     club._remplacer_profil(p.model_copy(update={"offre": [*p.offre, club._profils_depart[md.LEA].offre[0]]}))
     trad = [c for c in club.claims() if c.membre == md.LEA and c.id.startswith("profil:") and c.concept == "traduction"]
     assert [c.superseded_at for c in trad] == [seq + 1, None] and trad[1].recorded_at == seq + 2
+
+
+# ---------------------------------------------------------------------- campagne après F26 / F31 (2026-10-01)
+def test_active_par_la_seconde_piece_consentie_quand_la_premiere_ne_tient_pas_le_creneau():
+    """Le chemin ACTIVE cherche une composition dont CHAQUE pièce est consentie, à n'importe quel créneau. Deux salles
+    consenties : la première (A) ne tient pas le seul créneau où l'objet est libre, la seconde (B) oui ; une troisième
+    salle, NON consentie, ressemble davantage au geste. Sans ce chemin, la composition libre prend la troisième et la
+    capacité reste « consentements en cours » (mutants _composer 27, 28, 40 de la campagne du 2026-10-01)."""
+    b = Banc(Memoire(), lambda: J, lambda pid: f"org-{pid}")
+    p = Patron(id="p_creneau", version=1, titre="Capacité à un créneau commun", auteur="Commission du Club", fictif=True,
+               fenetre=Fenetre(jour=JOUR, debut="10:00", fin="14:00"), duree_min=60,
+               emplacements=[Emplacement(id="lieu", role="lieu", nature="lieu", libelle="Un lieu", geste="Prêter un lieu"),
+                             Emplacement(id="objet", role="objet", nature="objet", libelle="Un objet", geste="Prêter un objet")])
+    a = b.publier_offre("m1", "lieu", "Salle A", 1, J, JOUR, plages=[Plage(jour=JOUR, debut="10:00", fin="11:00")])
+    bb = b.publier_offre("m2", "lieu", "Salle B", 1, J, JOUR, plages=[Plage(jour=JOUR, debut="13:00", fin="14:00")])
+    b.publier_offre("m4", "lieu", "Lieu à prêter", 1, J, JOUR, plages=[Plage(jour=JOUR, debut="10:00", fin="14:00")])
+    o = b.publier_offre("m3", "objet", "Objet", 1, J, JOUR, plages=[Plage(jour=JOUR, debut="13:00", fin="14:00")])
+    for membre, emp, oid in (("m1", "lieu", a), ("m2", "lieu", bb), ("m3", "objet", o)):
+        b.consentir_finalite(membre, p.id, emp, oid, p.portee(emp), JOUR)
+    inst = Registre(b, [p], lambda: J).instance(p)
+    assert (inst.statut, inst.liaisons) == ("ACTIVE", {"lieu": bb, "objet": o})
+
+
+def test_une_reponse_journalisee_avant_la_provenance_reste_declaree_par_le_membre():
+    """Un journal écrit AVANT F31 (ASK_REPONSE sans clé « provenance ») : la pièce reste SELF_DECLARED, jamais une
+    provenance inventée (mutants x_index_claims 99, 100)."""
+    m = Memoire()
+    b = Banc(m, lambda: J, lambda pid: f"org-{pid}")
+    oid = b.publier_offre("m1", "objet", "Un minibus", 1, J, JOUR, attributs={"places": 14})
+    b._ecrire("ASK_REPONSE", ["m1"], ask="p:1:minibus", oui=True, offre=oid)
+    assert [x.provenance for x in index_claims(m, {}) if x.id.startswith(oid)] == ["SELF_DECLARED"]
