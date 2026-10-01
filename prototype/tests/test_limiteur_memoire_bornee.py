@@ -36,10 +36,13 @@ def test_oublier_ne_rouvre_pas_une_cle_encore_freinee():
     """Contre-épreuve : la purge ne touche qu'aux clés dont toutes les traces sont sorties de la fenêtre."""
     h = Horloge()
     lim = Limiteur(2, 60.0, horloge=h)
-    lim.verifier("a"); lim.verifier("a")                                    # noqa: E702
     for i in range(5_000):
-        h.t = 30.0
-        lim.verifier(f"autre|{i}")
+        lim.verifier(f"autre|{i}")                                         # t = 0 : expirées à t = 60
+    h.t = 30.0
+    lim.verifier("a"); lim.verifier("a")                                    # noqa: E702  — « a » : traces à t = 30
+    h.t = 61.0
+    lim.verifier("declencheur")                                            # une fenêtre passée : la purge a lieu ICI
+    assert "autre|0" not in lim._traces and "a" in lim._traces             # la purge a bien eu lieu, « a » est gardée
     with pytest.raises(Limite):                                            # « a » reste freinée dans sa fenêtre
         lim.verifier("a")
 
