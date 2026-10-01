@@ -3,6 +3,7 @@
 Avant : chaque clé jamais vue (un préfixe de passe juré inventé, un code d'invitation tenté) créait une file conservée pour
 toujours, et `POST /api/pulse/jure` n'avait AUCUN plafond global — un client non authentifié faisait croître la mémoire
 du serveur sans borne, à la vitesse de ses requêtes. Données FICTIVES."""
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -39,12 +40,8 @@ def test_oublier_ne_rouvre_pas_une_cle_encore_freinee():
     for i in range(5_000):
         h.t = 30.0
         lim.verifier(f"autre|{i}")
-    try:
+    with pytest.raises(Limite):                                            # « a » reste freinée dans sa fenêtre
         lim.verifier("a")
-    except Limite:
-        pass
-    else:
-        raise AssertionError("la clé « a » devait rester freinée dans sa fenêtre")
 
 
 def test_le_passe_jure_a_un_plafond_global_comme_l_acces():
