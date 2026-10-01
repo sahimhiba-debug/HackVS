@@ -79,7 +79,11 @@ def serveur(**env_en_plus: str):
                 assert s.connect_ex(("1.1.1.1", 443)) != 0, "mode salle : l'extérieur est joignable"
             requete = urllib.request.Request(base + "/api/pulse/etat", headers={"X-Pulse-Console": env.get("HACKVS_CONSOLE_JETON") or "1"})
             ia = json.load(urllib.request.urlopen(requete, timeout=5))["ia"]
-            assert ia["configure"] is False and ia["fournisseur"] == "deterministe", ia
+            local = env.get("APERTUS_BASE_URL", "").startswith(("http://127.0.0.1:", "http://localhost:"))
+            if local:                                       # un FAUX fournisseur sur la boucle locale (test_e2e_ia) : rien ne sort
+                assert ia["fournisseur"] == "apertus", ia
+            else:                                           # sinon : IA OFF, prouvé côté serveur
+                assert ia["configure"] is False and ia["fournisseur"] == "deterministe", ia
         yield base
     finally:
         srv.terminate()
