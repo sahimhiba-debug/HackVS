@@ -19,7 +19,7 @@ def _vivre(c: ClubPulse) -> None:
     c.modifier_profil(md.LEA, retirer_capacite="traduction", disponible=False, visibilite={"capacites": "PRIVE"})
     c.onboarding(md.SOPHIE, aide=[{"texte": "tisanes de plantes alpines bio", "concept": "boissons"}],
                  cherche=[{"texte": "Trouver un distributeur en Allemagne", "concept": "export_allemagne"}], visible=True)
-    c.demander(md.SOPHIE, "Je cherche quelqu'un pour traduire nos fiches produit en allemand.")
+    c.confirmer_demande(md.SOPHIE, c.demander(md.SOPHIE, "Je cherche quelqu'un pour traduire nos fiches produit en allemand.")["proposition"])
     c.avancer(3)
 
 

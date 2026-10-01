@@ -101,6 +101,7 @@ class ClubPulse:
         self.vues_essai = VuesEssai(self)
         self.vues_capacites = VuesCapacites(self)
         self.notes: dict[str, list[dict]] = {}
+        self._propositions_demande: dict[str, dict] = {}      # F01 : interprétations à confirmer (brouillons, hors journal)
         self.preferences: dict[str, dict] = {}
         self._scan: Optional[dict] = None
         self._etat: Optional[Etat] = None
@@ -519,6 +520,8 @@ class ClubPulse:
 
     # ------------------------------------------------------------------ demande explicite (jury ou membre)
     def demander(self, pid: str, texte: str) -> dict:
+        """INTERPRÉTER (F01) : ce que le modèle — ou les règles — comprend de la demande, à CONFIRMER. Rien n'est écrit
+        (hors la trace de l'appel IA) : la proposition attend en mémoire, comme un brouillon, jusqu'à `confirmer_demande`."""
         if not 3 <= len(texte.strip()) <= 600:
             raise Invalide("demande vide ou trop longue")
         texte = self._net(texte)
@@ -539,16 +542,32 @@ class ClubPulse:
                 relu.avertissements.insert(0, "« " + ", ".join(c.extrait or c.libelle for c in exp)
                                            + " » lu comme votre activité (contexte), pas comme un besoin.")
                 b = relu
-        self._enregistrer("BESOIN", [pid], besoin={"id": f"bj{len(self.r.besoins):05d}", "auteur": pid, "texte": texte.strip(),
-                                                   "le": self.jour.isoformat(), "besoin": b.model_dump(mode="json"), "anonyme": False})
-        scan = self.scanner()
-        miennes = [o for o in scan["opportunites"] if o.beneficiaire == pid]    # seulement ce qui le concerne : où il est aidé
-        bloques = [x for x in scan["bloques"] if x["auteur"] == pid]
+        self._propositions_demande[pid] = prop = {"id": f"dm-{len(self.journal.evenements()):06d}", "texte": texte.strip(), "besoin": b,
+                                                   "ia": rep.appel.model_dump(include={"fournisseur", "modele", "statut", "repli", "latence_ms"})}
+        return {"proposition": prop["id"], "a_confirmer": "Rien n'est publié tant que vous ne confirmez pas ce qui a été compris.",
+                **self._compris(b), "ia": prop["ia"]}
+
+    @staticmethod
+    def _compris(b) -> dict:
         return {"compris": [{"type": c.type, "libelle": c.libelle, "extrait": c.extrait, "obligatoire": c.obligatoire}
                             for c in b.criteres] + ([{"type": "contrainte", "libelle": "pas un concurrent direct", "extrait": None,
                                                       "obligatoire": True}] if b.exclure_concurrents else []),
-                "incertain": [a.terme for a in b.ambiguites] + b.avertissements,
-                "ia": rep.appel.model_dump(include={"fournisseur", "modele", "statut", "repli", "latence_ms"}),
+                "incertain": [a.terme for a in b.ambiguites] + b.avertissements}
+
+    def confirmer_demande(self, pid: str, proposition: str) -> dict:
+        """CONFIRMER : publier EXACTEMENT l'interprétation montrée (une fois, par son auteur), puis chercher."""
+        prop = self._propositions_demande.get(pid)
+        if prop is None or prop["id"] != proposition:
+            raise Introuvable("proposition inconnue ou déjà publiée : reformulez votre demande")
+        del self._propositions_demande[pid]
+        texte, b = prop["texte"], prop["besoin"]
+        self._enregistrer("BESOIN", [pid], besoin={"id": f"bj{len(self.r.besoins):05d}", "auteur": pid, "texte": texte,
+                                                   "le": self.jour.isoformat(), "besoin": b.model_dump(mode="json"), "anonyme": False,
+                                                   "confirme": True})
+        scan = self.scanner()
+        miennes = [o for o in scan["opportunites"] if o.beneficiaire == pid]    # seulement ce qui le concerne : où il est aidé
+        bloques = [x for x in scan["bloques"] if x["auteur"] == pid]
+        return {**self._compris(b), "ia": prop["ia"],
                 "decouvertes": [self.vues.decouverte(o, Spectateur("membre", pid)) for o in miennes],
                 "sans_solution": [self.vues.vue_blocage(x) for x in bloques]}
 

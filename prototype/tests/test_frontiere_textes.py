@@ -60,7 +60,8 @@ def test_un_interet_ajoute_au_profil(club):
 
 def test_un_besoin_publie(club):
     nom, org, courriel = _identites(club, md.MARKUS)
-    club.demander(md.SOPHIE, f"Je cherche quelqu'un comme {nom} de {org} pour traduire nos fiches ; écrire à {courriel}.")
+    prop = club.demander(md.SOPHIE, f"Je cherche quelqu'un comme {nom} de {org} pour traduire nos fiches ; écrire à {courriel}.")
+    club.confirmer_demande(md.SOPHIE, prop["proposition"])
     _absent(club.r.besoins[-1].texte, nom, org, courriel)
     _absent(_journal(club), nom, org, courriel)
 

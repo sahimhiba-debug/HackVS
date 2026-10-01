@@ -277,7 +277,11 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     @r.post("/moi/demandes")
     def demander(d: Demande, pid: str = Depends(membre)) -> dict:
         limiter(limite_ia, f"ia|{pid}")
-        return au_monde(lambda c: c.demander(pid, d.texte))
+        return au_monde(lambda c: c.demander(pid, d.texte))                 # une INTERPRÉTATION : rien n'est publié
+
+    @r.post("/moi/demandes/{proposition}/confirmer")
+    def confirmer_demande(proposition: str, pid: str = Depends(membre)) -> dict:
+        return au_monde(lambda c: c.confirmer_demande(pid, proposition[:16]))
 
     # ------------------------------------------------------------------ découvertes (Network Intelligence → la personne aidée)
     @r.get("/moi/decouvertes")
