@@ -20,12 +20,13 @@
     .grand { font-size: clamp(19px, 5.6vw, 22px); font-weight: 800; letter-spacing: -0.015em; line-height: 1.22; }
     nav.onglets { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--hairline-2); z-index: 6;
       display: grid; grid-template-columns: repeat(5, 1fr); padding-bottom: env(safe-area-inset-bottom); }
-    nav.onglets a { text-decoration: none; font-size: 10px; font-weight: 600; color: var(--faint); display: grid; justify-items: center; align-content: start; gap: 3px; padding: 10px 2px 10px; min-height: 56px; text-align: center; }
+    nav.onglets a { text-decoration: none; font-size: 10px; font-weight: 600; color: var(--secondary); display: grid; justify-items: center; align-content: start; gap: 3px; padding: 10px 2px 10px; min-height: 56px; text-align: center; }
     nav.onglets a span { font-size: 0; width: 21px; height: 21px; background: currentColor; -webkit-mask: var(--ic) center / contain no-repeat; mask: var(--ic) center / contain no-repeat; }   /* icônes pleines SVG, pas de caractères (§ 5.4) */
     nav.onglets a[data-o="actions"] { --ic: var(--ic-actions); } nav.onglets a[data-o="action"] { --ic: var(--ic-action); }
     nav.onglets a[data-o="nouveau"] { --ic: var(--ic-nouveau); } nav.onglets a[data-o="souvenirs"] { --ic: var(--ic-souvenirs); }
     nav.onglets a[data-o="demandes"] { --ic: var(--ic-demandes); }
     nav.onglets a[aria-current="page"] { color: var(--brand); font-weight: 800; }
+    nav.onglets a:not([aria-current="page"]) span { background: var(--faint); }   /* icône : --faint (planche) ; libellé : --secondary, lisible (R-03 : 1,93:1 → 6:1) */
     .ligne { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
     .geste { border-left: 3px solid var(--ligne-forte); padding: 6px 0 6px 10px; margin-top: 10px; }
     .geste.vous { border-left-color: var(--ink); }
@@ -33,7 +34,7 @@
     fieldset { border: 0; padding: 0; margin: 0; }
     .radios label { display: inline-flex; gap: 6px; align-items: center; margin: 6px 12px 0 0; font-size: 15px; }
     input[type="number"] { width: 90px; }
-    details summary { cursor: pointer; font-weight: 600; margin-top: 12px; }
+    details summary { cursor: pointer; font-weight: 600; margin-top: 12px; padding: 10px 0; min-height: 44px; }
     .creneau { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; margin-top: 6px; }
     .palier { font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: var(--r-pill); background: var(--chip-neutral); color: var(--secondary); }
     .palier.reçu, .palier.apporté { background: var(--green); color: #FFFFFF; }

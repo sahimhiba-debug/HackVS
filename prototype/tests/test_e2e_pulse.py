@@ -270,3 +270,52 @@ def test_tout_effacer_annonce_ce_qui_reste_avant_le_geste(url):  # noqa: F811
         pg.evaluate("location.hash = '#actions'")
         pg.wait_for_selector("h1:has-text('Mes actions')")                           # rien effacé : la session vit
         b.close()
+
+
+# Revue publique R-03 / R-04 : mesuré dans le navigateur, pas supposé. Texte : contraste WCAG AA (4,5:1 ; 3:1 au-delà
+# de 24 px ou 18,66 px gras) contre le fond effectif ; téléphone : chaque cible tactile fait au moins 44 px de haut.
+_CONTRASTES = r"""() => {
+  const lum = c => { const m = c.match(/[\d.]+/g).map(Number); const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+                     return 0.2126 * f(m[0]) + 0.7152 * f(m[1]) + 0.0722 * f(m[2]); };
+  const fond = el => { for (let e = el; e; e = e.parentElement) { const a = (getComputedStyle(e).backgroundColor.match(/[\d.]+/g) || []).map(Number);
+                       if (a.length === 3 || (a.length === 4 && a[3] > 0.5)) return getComputedStyle(e).backgroundColor; } return "rgb(255,255,255)"; };
+  const ko = [];
+  for (const el of document.querySelectorAll("body *")) {
+    if (el.closest("[aria-hidden=true]") || !el.getClientRects().length) continue;
+    if (![...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())) continue;
+    const cs = getComputedStyle(el), taille = parseFloat(cs.fontSize);
+    if (!taille || cs.visibility === "hidden") continue;
+    const a = lum(cs.color), b = lum(fond(el)), r = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    const grand = taille >= 24 || (taille >= 18.66 && +cs.fontWeight >= 700);
+    if (r < (grand ? 3 : 4.5)) ko.push(`${r.toFixed(2)} ${cs.color} ${taille}px « ${el.textContent.trim().slice(0, 30)} »`);
+  }
+  return ko;
+}"""
+_CIBLES = """() => [...document.querySelectorAll('button, a[href], input, select, textarea, summary')]
+  .filter(e => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden')
+  .map(e => [e.getBoundingClientRect().height, (e.textContent || e.type || '').trim().slice(0, 30)])
+  .filter(([h]) => h < 44).map(([h, t]) => `${Math.round(h)} px « ${t} »`)"""
+
+
+def test_lisible_et_touchable_au_telephone_et_sur_les_ecrans(url):  # noqa: F811
+    pw = pytest.importorskip("playwright.sync_api")
+    _api(url, "/api/pulse/demo/reinitialiser", {})
+    _api(url, "/api/pulse/demo/aller/4", {})
+    codes = {p["id"]: p["code"] for p in _api(url, "/api/pulse/console/personas")}
+    erreurs: list[str] = []
+    ko: dict[str, list[str]] = {}
+    with pw.sync_playwright() as p:
+        b = _chromium(p)
+        _, s = _telephone(b, url, codes["n01"], (390, 844), erreurs)
+        for onglet in ("actions", "action", "nouveau", "souvenirs", "demandes"):
+            s.click(f"nav.onglets a[data-o={onglet}]")
+            s.wait_for_timeout(800)
+            ko[f"/app#{onglet} contraste"] = s.evaluate(_CONTRASTES)
+            ko[f"/app#{onglet} cibles"] = s.evaluate(_CIBLES)
+        for ecran in ("/etabli", "/console"):
+            pg = b.new_page(viewport={"width": 1440, "height": 900})
+            pg.goto(url + ecran)
+            pg.wait_for_timeout(1500)
+            ko[f"{ecran} contraste"] = pg.evaluate(_CONTRASTES)
+    assert not erreurs, erreurs
+    assert not {k: v for k, v in ko.items() if v}, {k: v for k, v in ko.items() if v}

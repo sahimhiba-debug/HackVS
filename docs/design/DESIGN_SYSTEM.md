@@ -190,6 +190,25 @@ Ce qui précède est la spécification figée, recopiée telle quelle. Ce qui su
   - le bleu « accepté » de l'ancien thème n'existe pas dans la palette. Il devient une chip neutre (`--chip-neutral` /
     `--ink-2`) : l'état reste porté par le texte ;
   - l'ambre n'est plus qu'une pastille (§ 1.1) ; le texte des états « en attente » passe en `--secondary`.
+- **Accessibilité mesurée — écarts aux planches, assumés (revue publique R-03 / R-04).** Le § 6 affirme « contrastes
+  validés » ; mesuré dans Chromium, trois couleurs des planches échouent WCAG AA sur du petit texte :
+  - libellés d'onglets inactifs en `--faint` : 1,93:1 → `--secondary` (6:1). L'icône reste `--faint`.
+  - en-têtes de colonnes en `--tertiary` : 2,55:1 → `--secondary`.
+  - texte secondaire en `--brand-muted` dans la zone manquante : 3,83:1 → `--brand`.
+
+  Cibles tactiles : boutons « petit » à 36 px, champs et `summary` à 24–30 px → 44 px (§ 6). La règle est figée par
+  le test navigateur `test_lisible_et_touchable_au_telephone_et_sur_les_ecrans`, et les planches devraient la suivre.
+- **Ne jamais afficher ce que le produit ne prouve pas** (revue publique R-06). Les planches portent des contenus
+  d'illustration qui ne sont PAS des fonctions du produit :
+  - « chaîne HMAC vérifiée ✓ » : le journal n'a pas de chaîne HMAC ; il a des identifiants de faits par empreinte de
+    contenu, ce qui n'est pas une chaîne ;
+  - « 1 198 événements », « MODEL_CALLED · 678 ms » ;
+  - « 0 capté passivement » : aucun compteur n'existe ;
+  - « Répondre à une demande : 10 secondes, sans compte, sans nom » : non mesuré, et répondre exige un compte activé
+    par code d'invitation — seul le passe juré est sans compte.
+
+  Implémenter le § 7.3 « pixel-fidèle » ne doit pas les reproduire tels quels. Chaque chiffre ou badge affiché vient
+  du journal, ou n'est pas affiché.
 - **Vérifié** sur ce changement :
   - 1239 tests ;
   - E2E 16/16, en réseau normal et en mode salle (réseau local seul, IA OFF) ;

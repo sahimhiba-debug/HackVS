@@ -17,6 +17,7 @@ html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--papier); color: var(--encre); font: 500 16px/1.5 var(--police); font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased; }
 button, input, select, textarea { font: inherit; color: inherit; }
+input:not([type=checkbox]):not([type=radio]), select { min-height: 44px; }   /* cibles tactiles ≥ 44 px (§ 6, R-04) */
 :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 [hidden] { display: none !important; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -48,7 +49,7 @@ p { margin: 0; }
 .btn.plein { background: var(--ink); border-color: var(--ink); color: #FFFFFF; font-weight: 800; }
 .btn.rouge { background: var(--brand); border-color: var(--brand); color: #FFFFFF; font-weight: 800; box-shadow: var(--sh-cta); }
 .btn.discret { background: var(--card); border-color: var(--border-btn); color: var(--secondary); }
-.btn.petit { min-height: 36px; padding: 6px 14px; font-size: 13px; }
+.btn.petit { min-height: 44px; padding: 6px 14px; font-size: 13px; }   /* cibles ≥ 44 px (§ 6, R-04) */
 .btn[disabled] { opacity: .45; cursor: not-allowed; box-shadow: none; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
