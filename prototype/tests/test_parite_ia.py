@@ -44,19 +44,21 @@ def jouer(club) -> dict:
 
 
 def etat_metier(club) -> dict:
-    """L'état métier, sans les traces d'appels IA ; les identifiants d'offres (qui dépendent de la position dans le
-    journal) sont remplacés par leur rang d'apparition — tout le reste doit être IDENTIQUE."""
+    """L'état métier, sans les faits de PILOTAGE de l'IA (appels, interrupteur) ; ce qui dépend de la position dans le
+    journal (identifiants d'offres, suffixe de position d'une référence de reçu) est remplacé par un rang ou retiré —
+    tout le reste doit être IDENTIQUE (l'empreinte de la référence comprise)."""
     rangs: dict[str, str] = {}
 
     def canon(x):
         if isinstance(x, dict):
-            return {k: canon(v) for k, v in x.items() if k != "n"}
+            return {k: re.sub(r"-\d+$", "", v) if k == "reference" else canon(v) for k, v in x.items() if k != "n"}
         if isinstance(x, list):
             return [canon(v) for v in x]
         if isinstance(x, str):
             return re.sub(r"of-[0-9a-f]{8}", lambda m: rangs.setdefault(m.group(), f"offre#{len(rangs) + 1}"), x)
         return x
-    evs = [(e.type, e.le.isoformat(), e.acteurs, e.statut.value, canon(e.donnees)) for e in club.journal.evenements() if e.type != "APPEL_IA"]
+    evs = [(e.type, e.le.isoformat(), e.acteurs, e.statut.value, canon(e.donnees)) for e in club.journal.evenements()
+           if e.type not in ("APPEL_IA", "IA_INTERRUPTEUR")]
     return {"journal": evs, "capacites": canon([i.model_dump(mode="json") for i in club.capacites.projeter()]),
             "recus": {pid: canon(club.capacites.recus(pid)) for pid in (md.PAULINE, md.MARKUS)}, "jour": club.jour.isoformat()}
 

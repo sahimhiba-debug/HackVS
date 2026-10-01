@@ -4,7 +4,8 @@
 ARG BASE=python:3.11-slim
 FROM ${BASE}
 ENV ORT_DISABLE_TELEMETRY=1
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=8080 HACKVS_MODE=demo HACKVS_DB=/tmp/fil.db
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=8080 HACKVS_MODE=demo HACKVS_DB=/tmp/fil.db \
+    HACKVS_ESSAIS_DB=/srv/prototype/var/club_pulse.db
 WORKDIR /srv
 COPY prototype/requirements.txt prototype/requirements.txt
 COPY prototype/constraints.txt prototype/constraints.txt
@@ -24,7 +25,9 @@ RUN useradd --create-home app && chown -R app /srv
 USER app
 EXPOSE 8080
 # Une seule instance : SQLite et le flux temps réel sont locaux au conteneur.
-# Secrets : HACKVS_SECRET (≥ 32 caractères) et HACKVS_CONSOLE_JETON se passent à `docker run -e`. Sans secret : secret
-# aléatoire par démarrage (sessions invalidées au redémarrage). Sans jeton, la console du Club ne répond qu'à la machine
+# Journal de Club Pulse : /srv/prototype/var/club_pulse.db — un volume (`-v pulse:/srv/prototype/var`) le garde d'un
+# conteneur à l'autre. Secrets : HACKVS_SECRET (≥ 32 caractères, STABLE : sessions, passes juré et rejeu IA en dépendent)
+# et HACKVS_CONSOLE_JETON se passent à `docker run -e`. Sans secret : secret aléatoire par démarrage (sessions
+# invalidées, sorties IA non rejouées après un redémarrage). Sans jeton, la console du Club ne répond qu'à la machine
 # locale — depuis l'hôte d'un conteneur, il FAUT donc `-e HACKVS_CONSOLE_JETON=<jeton>` (la console le demande).
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --no-access-log --timeout-keep-alive 5"]

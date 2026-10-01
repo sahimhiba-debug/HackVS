@@ -131,6 +131,17 @@ class ClubPulse:
                              "(videz-le, ou choisissez un autre HACKVS_ESSAIS_DB)")
         for e in self.journal.evenements(*ETAT_MEMBRES):
             self._appliquer(e)
+        # REDÉMARRAGE (F29) : ce que la démonstration vivante a fait, relu du journal — comptes activés, interrupteur IA,
+        # appels IA (compteurs et numérotation des traces continus), passes juré émis, consommés et sessions ouvertes
+        self.coffre.actives |= {e.acteurs[0] for e in self.journal.evenements("ACTIVATION") if e.acteurs[0] in self.coffre._personnes}
+        interrupteur = self.journal.evenements("IA_INTERRUPTEUR")
+        if interrupteur:
+            self.ia.actif = bool(interrupteur[-1].donnees["actif"])
+        self.ia.appels = [AppelIA(**(e.donnees["appel"] | {"latence_ms": 0.0})) for e in self.journal.evenements("APPEL_IA")]
+        jures = self.journal.evenements("PASSE_JURE")
+        self.passes_jure.reprendre([(e.donnees["nonce"], e.acteurs[0], e.donnees["jusqu_a"]) for e in self.journal.evenements("PASSE_EMIS")],
+                                   [e.donnees["nonce"] for e in jures if "nonce" in e.donnees],
+                                   [(e.acteurs[0], e.donnees["jusqu_a"]) for e in jures])
 
     def _appliquer(self, e: Evt) -> None:
         """LE seul chemin qui modifie profils, besoins, préférences et horloge : en direct comme au rejeu."""
@@ -341,6 +352,8 @@ class ClubPulse:
         return {"faits": faits, "phrases": rep.sortie["phrases"]}, rep.appel
 
     def basculer_ia(self, actif: bool) -> dict:
+        if actif != self.ia.actif:                            # décision de l'animation, journalisée : survit au redémarrage
+            self.banc._ecrire("IA_INTERRUPTEUR", [], actif=actif)
         self.ia.actif = actif
         return self.ia.etat()
 
@@ -365,14 +378,15 @@ class ClubPulse:
         if per is None:
             raise Introuvable("personnage inconnu")
         jeton, exp = self.passes_jure.emettre(pid, minutes * 60)
+        self.banc._ecrire("PASSE_EMIS", [pid], Statut.OBSERVE, nonce=self.passes_jure.nonce(jeton), jusqu_a=exp)
         return {"jeton": jeton, "chemin": f"/app?jure={jeton}", "personnage": per.nom, "expire": exp, "minutes": minutes}
 
     def utiliser_pass_jure(self, jeton: str) -> dict:
         pid, exp = self.passes_jure.utiliser(jeton)
         session = self.sessions.emettre(pid, jusqu_a=exp)             # la session meurt avec le passe
-        self.passes_jure.sessions[session] = exp
+        self.passes_jure.noter_session(pid, exp)
         # journalisé : ce que ce personnage fait pendant la validité du passe est attribuable au jury, jamais au membre
-        self.banc._ecrire("PASSE_JURE", [pid], Statut.OBSERVE, jusqu_a=exp)
+        self.banc._ecrire("PASSE_JURE", [pid], Statut.OBSERVE, jusqu_a=exp, nonce=self.passes_jure.nonce(jeton))
         per = self.coffre.identite(pid)
         assert per is not None
         return {"session": session, "nom": per.nom, "jure": True, "jusqu_a": exp,
@@ -380,9 +394,12 @@ class ClubPulse:
                          "jusqu'à son expiration est attribué au jury."}
 
     def activer_compte(self, code: str) -> dict:
+        deja = set(self.coffre.actives)
         pid = self.coffre.activer(code)
         if not pid:
             raise NonAuthentifie("code d'invitation inconnu ou adhésion inactive")
+        if pid not in deja:                                   # journalisé (identifiant seul) : survit au redémarrage
+            self.banc._ecrire("ACTIVATION", [pid], Statut.OBSERVE)
         per = self.coffre.identite(pid)
         org = self.coffre.organisation_de(pid)
         assert per is not None

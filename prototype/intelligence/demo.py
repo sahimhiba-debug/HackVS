@@ -106,10 +106,14 @@ class Demo:
             with self.club.banc.origine(Statut.SYNTHETIQUE):  # données PRÉPARÉES : jamais présentées comme déclarées
                 semer_offres(self.club)
                 semer_capacites(self.club)
-        self.etape = len(self.ETAPES) if repris else 0
-        self.ctx: dict = {}
-        self.traces: list[dict] = [{"acte": "reprise", "legende": "état repris du journal ; « Nouvelle démonstration » pour "
-                                                                  "rejouer le scénario"}] if repris else []
+        # la position du scénario guidé est JOURNALISÉE (étape, essai) : un redémarrage reprend où la régie était (F29) ;
+        # un monde vécu hors scénario (aucune étape journalisée) reste « terminé »
+        jalons = self.club.journal.evenements("DEMO_ETAPE")
+        self.etape = jalons[-1].donnees["etape"] if jalons else (len(self.ETAPES) if repris else 0)
+        self.ctx: dict = {"essai": jalons[-1].donnees["essai"]} if jalons and jalons[-1].donnees.get("essai") else {}
+        self.traces: list[dict] = [{"acte": "reprise", "legende": f"état repris du journal à l'étape {self.etape}/{len(self.ETAPES)}"
+                                    if jalons else "état repris du journal ; « Nouvelle démonstration » pour rejouer le scénario"}] \
+            if repris else []
 
     # --------------------------------------------------------------- utilitaires
     def _essai(self) -> tuple[str, int]:
@@ -237,6 +241,7 @@ class Demo:
             t = self.ETAPES[self.etape](self) | {"etape": self.etape + 1, "total": len(self.ETAPES), "date": self.club.jour.isoformat()}
         self.traces.append(t)
         self.etape += 1
+        self.club.banc._ecrire("DEMO_ETAPE", [], Statut.JOUE, etape=self.etape, essai=self.ctx.get("essai"))
         return t
 
     def rejouer(self, n: int) -> None:

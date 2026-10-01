@@ -3,7 +3,9 @@
 Un passe = « nonce.expiration.personnage.signature » (HMAC du secret du processus) :
 - EXPIRATION : courte (15 min par défaut) ; la session obtenue expire avec le passe, pas plus tard ;
 - NONCE UNIQUE : tiré au hasard à l'émission, CONSOMMÉ à la première activation — un QR photographié et rescanné ne
-  donne rien ; un passe émis par un autre processus (redémarrage) ne vaut rien ;
+  donne rien ; un passe émis par un autre monde ne vaut rien. Émission et activation sont JOURNALISÉES (nonce,
+  personnage, expiration — jamais la signature) : après un redémarrage sur le même journal et le même secret, un
+  passe encore valable le reste, un passe consommé le reste aussi (F29) ;
 - LIMITATION par CODE (activations tentées sur un même nonce) et par SESSION (actions d'une session de juré) — jamais
   par adresse IP : dans une salle, tout le public sort par la même adresse, et le premier bloquerait les autres.
 Aucune donnée réelle : le passe ne désigne qu'un personnage du monde fictif."""
@@ -23,7 +25,7 @@ class PassesJure:
         self._secret, self._horloge = secret, horloge
         self._en_attente: dict[str, tuple[str, int]] = {}        # nonce → (personnage, expiration)
         self._utilises: set[str] = set()
-        self.sessions: dict[str, int] = {}                       # session de juré → expiration
+        self._sessions: set[tuple[str, int]] = set()              # sessions de juré : (personnage, expiration)
 
     def _signature(self, nonce: str, exp: int, pid: str) -> str:
         return hmac.new(self._secret, f"jure|{nonce}|{exp}|{pid}".encode(), hashlib.sha256).hexdigest()[:32]
@@ -56,6 +58,19 @@ class PassesJure:
         self._utilises.add(nonce)
         return pid, exp
 
+    def reprendre(self, emis: list[tuple[str, str, int]], utilises: list[str], sessions: list[tuple[str, int]]) -> None:
+        """Redémarrage : l'état des passes RELU du journal (émis, consommés, sessions ouvertes)."""
+        self._utilises = set(utilises)
+        self._en_attente = {n: (pid, exp) for n, pid, exp in emis if n not in self._utilises}
+        self._sessions = set(sessions)
+
+    def noter_session(self, pid: str, exp: int) -> None:
+        self._sessions.add((pid, exp))
+
     def est_session_de_jure(self, session: str) -> bool:
-        exp = self.sessions.get(session)
-        return exp is not None and exp >= self._horloge()
+        """Une session de juré expire avec son passe : son jeton porte (personnage, expiration) ; aucun jeton n'est gardé."""
+        morceaux = (session or "").split(".")
+        if len(morceaux) != 3 or not morceaux[1].isdigit():
+            return False
+        cle = (morceaux[0], int(morceaux[1]))
+        return cle in self._sessions and cle[1] >= self._horloge()

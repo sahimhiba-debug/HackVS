@@ -53,7 +53,8 @@ def test_les_types_recents_se_rejouent_a_l_identique_sans_appel_au_modele(tmp_pa
     assert len(relu.journal.evenements()) == len(c.journal.evenements())
     assert relu.empreinte_etat() == c.empreinte_etat()
     assert _projection(relu) == _projection(c)
-    assert relu.ia.appels == []                                                       # rejouer ne rappelle jamais le modèle
+    assert muet.recus == []                                                           # rejouer ne rappelle jamais le modèle
+    assert [a.trace for a in relu.ia.appels] == [a.trace for a in c.ia.appels]        # l'historique, relu du journal (F29)
 
     recit, appel = relu.raconter_capacite(A)                                          # déjà raconté : RELU, pas redemandé
     assert appel.issue == "CACHE_REPLAY" and recit["phrases"] == RECIT["phrases"]
@@ -77,6 +78,7 @@ def test_sans_secret_fourni_le_redemarrage_ne_rejoue_pas_l_ia_mais_garde_l_etat(
     monkeypatch.delenv("HACKVS_SECRET", raising=False)
     c = Demo(TAX, ia=Intelligence(TAX, ModeleScripte(extraire_piece={"attributs": {"places": 14}}, raconter_capacite=RECIT))).club
     _vivre(c)
-    relu = Demo(TAX, ia=Intelligence(TAX, ModeleScripte()), reprendre=True).club
-    assert relu.empreinte_etat() == c.empreinte_etat() and relu.ia.appels == []
+    muet = ModeleScripte()
+    relu = Demo(TAX, ia=Intelligence(TAX, muet), reprendre=True).club
+    assert relu.empreinte_etat() == c.empreinte_etat() and muet.recus == []
     assert relu.raconter_capacite(A)[1].issue != "CACHE_REPLAY"
