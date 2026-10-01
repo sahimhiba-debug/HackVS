@@ -132,10 +132,17 @@ class Limiteur:
         self.maximum, self.fenetre_s, self._horloge = maximum, fenetre_s, horloge
         self._traces: dict[str, deque] = defaultdict(deque)
         self._v = threading.Lock()
+        self._purge = horloge()
 
     def verifier(self, cle: str) -> None:
         with self._v:
             t = self._horloge()
+            if t - self._purge >= self.fenetre_s:
+                # une fois par fenêtre : oublier les clés dont TOUTES les traces en sont sorties (sinon chaque clé jamais
+                # vue — un code inventé — resterait en mémoire pour toujours : revue publique R-02)
+                for k in [k for k, q in self._traces.items() if not q or q[-1] <= t - self.fenetre_s]:
+                    del self._traces[k]
+                self._purge = t
             q = self._traces[cle]
             while q and q[0] <= t - self.fenetre_s:
                 q.popleft()
@@ -204,6 +211,8 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     limite_acces_global = Limiteur(300, 60.0)
     limite_ia = Limiteur(30, 60.0)                    # appels de langage (notes, demandes) : 30 par minute et par membre
     # QR JURÉ : jamais par adresse IP (dans la salle, tout le public partage la même) — par CODE et par SESSION
+    limite_jure_global = Limiteur(300, 60.0)          # plafond GLOBAL doux, comme `/acces` (R-02 : sans lui, des passes
+    #                                                   inventés à la chaîne n'étaient freinés par rien)
     limite_jure_code = Limiteur(5, 60.0)              # activations tentées sur un même passe
     limite_jure_session = Limiteur(90, 60.0)          # requêtes d'une session de juré
 
@@ -292,6 +301,7 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
 
     @r.post("/jure", response_model=None)
     def activer_jure(a: ActivationJure) -> dict:
+        limiter(limite_jure_global, "jure")
         limiter(limite_jure_code, "jure-code|" + au_monde(lambda c: c.passes_jure.nonce(a.jeton)))
         return au_monde(lambda c: c.utiliser_pass_jure(a.jeton))
 
