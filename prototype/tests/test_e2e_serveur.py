@@ -42,13 +42,13 @@ def test_le_serveur_e2e_tourne_dans_la_configuration_du_produit():
 # par les liens de la console (nouvel onglet, rel=noopener : sessionStorage NON copié), restaient en 403 sans rien
 # demander. Exigences : le jeton suit dans un nouvel onglet SANS passer par l'URL ni par un stockage durable, et la
 # protection reste entière (sans jeton, ou avec un faux, rien ne s'ouvre).
-JETON_E2E = "jeton-console-e2e-" + "k" * 24
+JETON_TEST_E2E = "jeton-console-e2e-" + "k" * 24
 ECRANS = {"/console": "date simulée", "/etabli": "date du Club", "/projection": "date simulée|jour des offres"}   # écrits après un appel réussi
 
 
 @pytest.fixture(scope="module")
 def url_jeton():
-    with serveur(HACKVS_CONSOLE_JETON=JETON_E2E) as base:
+    with serveur(HACKVS_CONSOLE_JETON=JETON_TEST_E2E) as base:
         yield base
 
 
@@ -72,9 +72,9 @@ def _ouvert(pg, chemin):
 
 
 def _jeton_jamais_expose(ctx, journal):
-    assert not [u for u in journal["urls"] if JETON_E2E in u], "le jeton est passé dans une URL"
+    assert not [u for u in journal["urls"] if JETON_TEST_E2E in u], "le jeton est passé dans une URL"
     for pg in ctx.pages:
-        assert JETON_E2E not in (pg.evaluate("JSON.stringify(localStorage)") or ""), f"jeton en stockage durable : {pg.url}"
+        assert JETON_TEST_E2E not in (pg.evaluate("JSON.stringify(localStorage)") or ""), f"jeton en stockage durable : {pg.url}"
 
 
 def test_l_etabli_et_la_projection_ouverts_depuis_la_console_recoivent_le_jeton(url_jeton):
@@ -82,7 +82,7 @@ def test_l_etabli_et_la_projection_ouverts_depuis_la_console_recoivent_le_jeton(
     from tests.test_e2e_scene import _chromium
     with pw.sync_playwright() as p:
         b = _chromium(p)
-        ctx, journal = _contexte(b, JETON_E2E)
+        ctx, journal = _contexte(b, JETON_TEST_E2E)
         c = ctx.new_page()
         c.goto(url_jeton + "/console")
         _ouvert(c, "/console")
@@ -105,7 +105,7 @@ def test_la_regie_utilise_le_jeton_de_console(url_jeton):
     with pw.sync_playwright() as p:
         b = _chromium(p)
         # 1. ouverte seule (aucun autre onglet) : le jeton est demandé, puis la régie se monte
-        ctx, journal = _contexte(b, JETON_E2E)
+        ctx, journal = _contexte(b, JETON_TEST_E2E)
         r = ctx.new_page()
         r.goto(url_jeton + "/demo/regie")
         r.wait_for_function("() => window.pret === true", timeout=15_000)
@@ -114,7 +114,7 @@ def test_la_regie_utilise_le_jeton_de_console(url_jeton):
         _jeton_jamais_expose(ctx, journal)
         ctx.close()
         # 2. console déjà déverrouillée dans un autre onglet : la régie, ouverte à la main, ne redemande rien
-        ctx, journal = _contexte(b, JETON_E2E)
+        ctx, journal = _contexte(b, JETON_TEST_E2E)
         c = ctx.new_page()
         c.goto(url_jeton + "/console")
         _ouvert(c, "/console")
