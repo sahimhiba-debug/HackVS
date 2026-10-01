@@ -21,7 +21,7 @@ import hashlib
 import json
 import threading
 from datetime import date, timedelta
-from typing import Optional
+from typing import Callable, Optional, TypeVar
 
 from app.models import Besoin, Offre, Profil
 from app.parser_rules import extraire_profil
@@ -55,6 +55,7 @@ CRITERE_ACTION = ("La présentation a lieu au créneau convenu et la fiche promi
                   "je dirai ce que les acheteurs en ont retenu.")
 # Ce qu'un membre DÉCLARE dans son profil et qui est journalisé (événement PROFIL) : rien d'autre ne change un profil.
 DECLARATIFS = ("offre", "recherche", "secteurs", "disponible", "accepte_introductions", "maj")
+T = TypeVar("T")
 ETAT_MEMBRES = ("PROFIL", "BESOIN", "PREFERENCES", "HORLOGE")
 
 
@@ -242,9 +243,10 @@ class ClubPulse:
     def _remplacer_profil(self, p: Profil) -> None:
         champs = self._champs_declares(p)
         if champs:
-            with self.journal.transaction():
+            def ecrire() -> None:
                 self._enregistrer("PROFIL", [p.id], membre=p.id, champs=champs)
                 self.banc.revoir_membre(p.id)
+            self._retablir(ecrire)
 
     def contexte(self) -> Contexte:
         """Faits de relation (journal du Club) et de CONSENTEMENT (accords donnés dans un essai) : le porteur et chaque
@@ -343,12 +345,27 @@ class ClubPulse:
         prop = next((e for e in reversed(self.journal.evenements("PROPOSITION_IA"))
                      if e.acteurs == [pid] and e.donnees["ask"] == ask_id), None)
         ia = oui and prop is not None and {k: v for k, v in (attributs or {}).items() if v} == prop.donnees["attributs"]
-        return self.capacites.repondre(pid, ask_id, oui, attributs, self._net(quoi) if quoi else None,
-                                       {o.concept for o in self.profil(pid).offre if o.concept},
-                                       provenance=("AI_PROPOSED_CONFIRMED", prop.donnees["trace"]) if ia and prop else ("SELF_DECLARED", None))
+        return self._retablir(lambda: self.capacites.repondre(
+            pid, ask_id, oui, attributs, self._net(quoi) if quoi else None, {o.concept for o in self.profil(pid).offre if o.concept},
+            provenance=("AI_PROPOSED_CONFIRMED", prop.donnees["trace"]) if ia and prop else ("SELF_DECLARED", None)))
 
     def consentir_capacite(self, pid: str, finalite: str) -> Instance:
-        return self.capacites.consentir(pid, finalite)
+        return self._retablir(lambda: self.capacites.consentir(pid, finalite))
+
+    def _retablir(self, commande: Callable[[], T]) -> T:
+        """Une commande qui peut rendre une pièce (offre, réponse, consentement, profil) : dans la MÊME transaction, chaque
+        capacité DÉGRADÉE avant et ACTIVE après est journalisée CAPACITE_RETABLIE — finalité et RÔLES des pièces revenues,
+        jamais qui, jamais quelle offre (R3, symétrique de CONSENTEMENT_ETAT)."""
+        avant = {i.finalite: i for i in self.projection_capacites() if i.statut == "DEGRADED"}
+        with self.journal.transaction():
+            res = commande()
+            for f, i in sorted(avant.items()):
+                p = self.capacites.patron(f)
+                if self.capacites.instance(p).statut == "ACTIVE":
+                    roles = {e.id: e.role for e in p.emplacements}
+                    self.banc._ecrire("CAPACITE_RETABLIE", [], Statut.OBSERVE, finalite=f,
+                                      roles=sorted({roles[k] for k, r in i.consentements.items() if r is not None}))
+        return res
 
     def retirer_consentement(self, pid: str, finalite: str) -> Instance:
         return self.capacites.retirer(pid, finalite)
@@ -534,13 +551,16 @@ class ClubPulse:
         # retire explicitement dans cet essai (dit, daté), jamais en silence.
         nouveau = Profil(**p.model_copy(update=maj).model_dump())              # validé AVANT toute écriture
         champs = self._champs_declares(nouveau)
+        self._retablir(lambda: self._ecrire_profil(pid, visibilite, champs))
+        return self.vues.vue_profil(pid)
+
+    def _ecrire_profil(self, pid: str, visibilite: Optional[dict[str, str]], champs: dict) -> None:
         with self.journal.transaction():
             if visibilite:
                 self._enregistrer("PREFERENCES", [pid], membre=pid, preferences=self.preferences.get(pid, {}) | visibilite)
             if champs:
                 self._enregistrer("PROFIL", [pid], membre=pid, champs=champs)
                 self.banc.revoir_membre(pid)                  # ses accords en cours : réévalués, comme un changement d'offre
-        return self.vues.vue_profil(pid)
 
     # ------------------------------------------------------------------ mémoire privée : capture d'une rencontre
     def capturer(self, pid: str, texte: str, evenement: Optional[str] = None) -> dict:
@@ -874,7 +894,7 @@ class ClubPulse:
         for k in ("quoi", "conditions"):
             if champs.get(k):
                 champs = champs | {k: self._net(champs[k])}
-        return self.banc.modifier_offre(pid, oid, **champs)
+        return self._retablir(lambda: self.banc.modifier_offre(pid, oid, **champs))
 
     def creer_essai(self, pid: str, champs: dict) -> str:
         return self.banc.brouillon(pid, self._protocole(champs))

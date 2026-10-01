@@ -71,3 +71,32 @@ def test_un_horaire_change_qui_couvre_encore_ne_touche_a_rien(tmp_path, monkeypa
     oid = _pauline_active(c)
     c.modifier_offre(md.PAULINE, oid, {"plages": [{"jour": "2026-10-09", "debut": "13:00", "fin": "16:00"}]})
     assert _instance(c).statut == "ACTIVE" and not c.journal.evenements("CONSENTEMENT_ETAT")
+
+
+def _retablissements(c):
+    return [(e.acteurs, e.donnees["finalite"], e.donnees["roles"]) for e in c.journal.evenements("CAPACITE_RETABLIE")]
+
+
+def test_r3_horaire_retabli_un_fait_de_retablissement_anonyme_par_role(tmp_path, monkeypatch):
+    """R3 (contre-expertise) : la capacité DÉGRADÉE redevient couverte — un fait de RÉTABLISSEMENT est journalisé, par
+    rôle, sans personne ni offre."""
+    monkeypatch.setenv("HACKVS_ESSAIS_DB", str(tmp_path / "journal.db"))
+    c = Demo(TAX).club
+    oid = _pauline_active(c)
+    c.modifier_offre(md.PAULINE, oid, {"plages": HORS_FENETRE})
+    assert _retablissements(c) == []
+    c.modifier_offre(md.PAULINE, oid, {"plages": [{"jour": "2026-10-09", "debut": "13:30", "fin": "15:00"}]})
+    assert _retablissements(c) == [([], A, ["transport"])]
+    fait = c.journal.evenements("CAPACITE_RETABLIE")[-1]
+    assert md.PAULINE not in json.dumps(fait.donnees) and oid not in json.dumps(fait.donnees)
+
+
+def test_r3_une_autre_piece_retablit_la_capacite_et_c_est_journalise(tmp_path, monkeypatch):
+    """Autre chemin : la pièce perdue est REMPLACÉE par la réponse d'un autre membre à la nouvelle demande."""
+    monkeypatch.setenv("HACKVS_ESSAIS_DB", str(tmp_path / "journal.db"))
+    c = Demo(TAX).club
+    oid = _pauline_active(c)
+    c.modifier_offre(md.PAULINE, oid, {"plages": HORS_FENETRE})
+    ask = next(a for _, a in c.asks_pour(md.MARKUS) if a.startswith(A))
+    assert c.repondre_ask(md.MARKUS, ask, True, {"places": 20}).statut == "ACTIVE"
+    assert _retablissements(c) == [([], A, ["transport"])]
