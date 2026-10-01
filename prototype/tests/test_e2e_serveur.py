@@ -18,7 +18,7 @@ def test_un_serveur_sain_est_pret_en_quelques_secondes():
 def test_un_serveur_qui_ne_demarre_pas_est_une_erreur_claire():
     t = time.perf_counter()
     with pytest.raises(RuntimeError, match="serveur de démonstration non démarré"):
-        with serveur(HACKVS_SECRET="trop-court"):                     # Reglages refuse un secret < 32 caractères
+        with serveur(HACKVS_SECRET="x" * 10):                          # Reglages refuse un secret < 32 caractères
             pass
     assert time.perf_counter() - t < 15
 
