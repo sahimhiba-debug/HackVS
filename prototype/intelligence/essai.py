@@ -329,7 +329,9 @@ class Banc:
             raise Conflit("offre retirée")
         nouvelle = OffreVolontaire(**(o.model_dump() | {k: v for k, v in champs.items() if v is not None} | {"version": o.version + 1}))
         with self.m.transaction():
+            avant = self._validites_finalite()
             self._ecrire("OFFRE", [auteur], offre=nouvelle.model_dump(mode="json"))
+            self._noter_validites(avant)
             return self._revoir_essais_de_l_offre(oid, f"{self._nom_offre(nouvelle)} : conditions modifiées par son auteur")
 
     def retirer_offre(self, auteur: str, oid: str) -> list[str]:
@@ -337,7 +339,9 @@ class Banc:
         if o.auteur != auteur:
             raise Interdit("seul l'auteur retire son offre")
         with self.m.transaction():
+            avant = self._validites_finalite()
             self._ecrire("OFFRE_RETIREE", [auteur], offre=oid)
+            self._noter_validites(avant)
             return self._revoir_essais_de_l_offre(oid, f"{self._nom_offre(o)} : offre retirée par son auteur")
 
     @staticmethod
@@ -1213,9 +1217,47 @@ class Banc:
             return {"retiree": "offre retirée", "expiree": "offre expirée", "a_venir": "offre pas encore ouverte"}[self.etat_offre(o.id)]
         if e.donnees["materiel"] != self._materiel(o):
             return "les conditions de l'offre ont changé depuis le consentement"
+        couvre = self._couvre_portee(o, e.donnees["portee"])
+        if couvre:                                            # F26 : ce qui se vérifie par un nombre ou un horaire
+            return f"l'offre ne couvre plus la pièce : {couvre}"
         if not self._membre_peut(o.auteur, o.concept):
             return "le membre ne peut plus assurer cette pièce"
         return None
+
+    @staticmethod
+    def _couvre_portee(o: OffreVolontaire, portee_: dict) -> Optional[str]:
+        """Pourquoi l'offre ne peut plus servir CE QUI A ÉTÉ CONSENTI (la portée gardée dans l'accord : emplacement,
+        fenêtre, durée) — None : elle le peut encore. Même grille que la composition (quart d'heure, dans la fenêtre).
+        La disponibilité au moment de la composition (occupations, capacité) reste l'affaire du compositeur."""
+        emp, f, duree = portee_["emplacement"], portee_["fenetre"], portee_["duree_min"]
+        if o.nature != emp["nature"] or (emp.get("concept") and o.concept != emp["concept"]):
+            return "elle n'offre plus ce qui est demandé"
+        for cle, minimum in sorted((emp.get("minimums") or {}).items()):
+            if o.attributs.get(cle, 0) < minimum:
+                return f"{cle} : {o.attributs.get(cle, 0)} déclaré(s), {minimum} demandé(s)"
+        if o.duree_max_min is not None and duree > o.duree_max_min:
+            return f"demande {duree} min, l'offre en accepte {o.duree_max_min}"
+        jour, debut, fin = date.fromisoformat(f["jour"]), minutes(f["debut"]), minutes(f["fin"])
+        if not any(pl.jour == jour and minutes(pl.debut) <= m and m + duree <= minutes(pl.fin)
+                   for pl in o.plages for m in range(debut, fin - duree + 1, PAS_MIN)):
+            return f"horaire déclaré hors de la fenêtre ({jour.strftime('%d.%m')} {f['debut']}–{f['fin']})"
+        return None
+
+    def _validites_finalite(self) -> dict[tuple[str, str, str], Optional[str]]:
+        """Pour chaque consentement de finalité EN COURS (dernier fait = ACCORD) : None s'il vaut, sinon la raison."""
+        dern: dict[tuple[str, str, str], Evt] = {}
+        for e in self.m.evenements("ACCORD", "RETRAIT"):
+            if e.donnees.get("finalite"):
+                dern[(e.donnees["finalite"], e.acteurs[0], e.donnees["emplacement"])] = e
+        return {k: self.raison_consentement(e, e.donnees["portee"]) for k, e in dern.items() if e.type == "ACCORD"}
+
+    def _noter_validites(self, avant: dict[tuple[str, str, str], Optional[str]]) -> None:
+        """Après une commande sur une offre ou un profil : chaque consentement de finalité qui CESSE ou RECOMMENCE de
+        valoir est journalisé — finalité, emplacement, raison ; jamais qui, jamais quelle offre (F26)."""
+        for (finalite, _membre, emplacement), raison in sorted(self._validites_finalite().items()):
+            if (finalite, _membre, emplacement) in avant and (avant[(finalite, _membre, emplacement)] is None) != (raison is None):
+                self._ecrire("CONSENTEMENT_ETAT", [], Statut.OBSERVE, finalite=finalite, emplacement=emplacement,
+                             vaut=raison is None, raison=raison)
 
     def etat_canonique(self) -> dict:
         """L'état CALCULÉ du banc (offres et essais), sous une forme canonique : ce que `empreinte_etat` compare."""

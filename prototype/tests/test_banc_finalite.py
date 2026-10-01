@@ -20,6 +20,13 @@ def banc():
     return b
 
 
+# la portée telle que le registre l'écrit (`Patron.portee`) : finalité, version, emplacement, fenêtre, durée
+PORTEE = {"finalite": "f", "version": 1, "duree_min": 60,
+          "emplacement": {"id": "salle", "role": "lieu", "nature": "lieu", "concept": None, "libelle": "Une salle de 15 places",
+                          "geste": "Prêter une salle", "minimums": {"places": 15}},
+          "fenetre": {"jour": (J + timedelta(days=3)).isoformat(), "debut": "13:00", "fin": "18:00"}}
+
+
 def _salle(b, places):
     return b.publier_offre("m1", "lieu", "Une salle", 1, J, J + timedelta(days=3), attributs={"places": places} if places else None,
                            plages=[Plage(jour=J + timedelta(days=3), debut="13:00", fin="18:00")])
@@ -34,7 +41,7 @@ def test_une_contrainte_numerique_n_est_couverte_que_si_l_offre_la_declare(banc)
 
 def test_le_consentement_de_finalite_suit_l_offre_la_finalite_et_le_temps(banc):
     oid = _salle(banc, 24)
-    portee = {"finalite": "f", "version": 1}
+    portee = PORTEE
     banc.consentir_finalite("m1", "f", "salle", oid, portee, J + timedelta(days=3))
     dernier = lambda: banc.consentements_finalite("f")[-1]  # noqa: E731
     assert banc.raison_consentement(dernier(), portee) is None
@@ -58,5 +65,5 @@ def test_on_ne_consent_que_pour_sa_propre_offre_active(banc):
 
 def test_un_consentement_de_finalite_n_est_pas_un_accord_d_essai(banc):
     oid = _salle(banc, 24)
-    banc.consentir_finalite("m1", "f", "salle", oid, {}, J + timedelta(days=3))
+    banc.consentir_finalite("m1", "f", "salle", oid, PORTEE, J + timedelta(days=3))
     assert banc.essais() == [] and banc.reservations(oid) == 0         # il ne réserve rien et n'engage aucun essai

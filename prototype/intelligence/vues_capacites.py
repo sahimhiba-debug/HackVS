@@ -50,8 +50,11 @@ class VuesCapacites:
                 "ask": {"texte": i.ask.texte, "expire": i.ask.expire.isoformat(), "levier": i.ask.levier, "debloque": i.ask.debloque,
                         "libelle": i.ask.libelle} if i.ask else None,
                 "critiques": [roles[k] for k in i.critiques], "resultats": "aucun résultat déclaré pour cette capacité",
-                # une pièce perdue est dite par son RÔLE, sans la raison : ni qui, ni pourquoi (retrait jamais attribué)
-                "perdus": [f"{roles.get(x.split(' : ', 1)[0], x.split(' : ', 1)[0])} : ce composant n'est plus disponible" for x in i.perdus],
+                # une pièce perdue est dite par son RÔLE : jamais qui ; un RETRAIT jamais motivé (jamais attribué) ; une pièce
+                # qui ne couvre plus la fenêtre est dite telle (F26 : une cause, pas une personne)
+                "perdus": [f"{roles.get(x.split(' : ', 1)[0], x.split(' : ', 1)[0])} : ce composant n'est plus disponible"
+                           + (" — la pièce déclarée ne couvre plus la fenêtre" if " : l'offre ne couvre plus la pièce" in x else "")
+                           for x in i.perdus],
                 "recomposition": {k: v for k, v in i.recomposition.items() if k != "pieces"} if i.recomposition else None,
                 "sans_solution": i.sans_solution, "hypotheses": i.hypotheses, "fictif": i.fictif}
 
