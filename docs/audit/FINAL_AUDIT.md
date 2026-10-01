@@ -210,6 +210,10 @@ téléchargé), **17/17 E2E** (réseau normal et mode salle), ruff et mypy propr
 | `intelligence/capacites.py` | 1 327 | 1 229 | 98, **tous classés équivalents** (`mutants_survivants.txt`) | 0 | campagne locale du 01.10 (`0fa7620`). Campagne GitHub avec la porte durcie : run #15 en cours au moment d'écrire (démarré 15:00 UTC) |
 | `intelligence/essai.py` (F37) | 3 528 | partiel : 1 921 au mutant 3 025 | 1 037 au mutant 3 025, **NON classés** | 67 | locale, en cours. Mesurée sur `essai.py` **d'avant H2** (copie figée) : les index ajoutés depuis ne sont pas dans cette population. Aucune classification de masse avant le gel (consigne). Le taux de survivants (≈ 1/3) est élevé et dit tel quel |
 
+**Règle au gel (contre-expertise).** `PREUVES.md` et le deck ne reprennent QUE des chiffres produits par la porte durcie
+(campagne GitHub #15 et suivantes, population complète affichée). Les chiffres de `essai.py` ci-dessus restent étiquetés
+« avant H2, non classés » et ne vont ni dans PREUVES ni dans le deck.
+
 **Porte de mutation (H3).** Elle ne peut plus être verte sans avoir muté. Elle échoue si mutmut échoue, si la campagne
 est vide, si rien n'est tué, si la campagne est interrompue (« not checked »), ou s'il reste un survivant non classé,
 un mutant « no tests » ou un mutant « suspicious » (`test_porte_mutation.py`). Démontré : l'ancienne porte disait 0 sur
