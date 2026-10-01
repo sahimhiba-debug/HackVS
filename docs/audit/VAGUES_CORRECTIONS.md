@@ -52,3 +52,18 @@ campagne, tel quel).
 F02 (architecture à réécrire — documentation), F05 (charges d'événements non typées), F06 (`Banc`), F08 (classement
 des routes sans écran), F10 (4 tests d'absence), F11/F16 (frontière de l'héritage dans `docs/`), F17 (contrat de
 configuration du rejeu), F38 (hygiène), F39–F40 (à documenter). Aucun ne touche une garantie démontrée en scène.
+
+## 6. Durcissement final avant le gel (01.10, après-midi) — détail dans [FINAL_AUDIT.md](FINAL_AUDIT.md)
+
+| Problème (preuve) | Impact | Test ajouté (rouge d'abord) | Commit |
+|---|---|---|---|
+| H2 — chaque recherche d'offre relisait tout le journal : 200 offres parasites → 27–31 s par projection, sous le verrou du monde | démo figée par un membre ou un juré | `test_charge_offres.py` (lectures du journal comptées ; offre annulée jamais servie par l'index) | `107c6cb` |
+| H2 — idem pour les faits d'essai : 100 brouillons parasites → 8,5 s | idem | `test_charge_offres.py::…brouillons_parasites` | `edb0f5d` |
+| H3 — la porte de mutation ignorait le code de sortie de mutmut et les mutants « not checked » / « no tests » : verte après 16 mutants sur 1 327 | preuve de mutation possiblement fausse | `test_porte_mutation.py` (7 cas) | `d374f75`, `4233cef` |
+| H3 — `make coverage` masquait son code de sortie (`\| tail`) ; ma propre contre-épreuve du limiteur ne déclenchait jamais la purge | faux verts | `test_limiteur_memoire_bornee.py` renforcé | `d374f75`, `d549aa6` |
+| H1 — aucune garde n'était vérifiée route par route | régression silencieuse possible | `test_autorisation_balayage.py` (routes énumérées depuis le routeur, matrice A → B, gestes doubles) | `7359277` |
+| H5 — la concurrence n'était testée qu'en séquence | — | `test_concurrence_http.py` (vrais fils, barrière) | `7e6b24b` |
+| Claim « recomposition jamais appliquée » seulement implicite | claim non gardé | `test_recomposition_jamais_appliquee.py` | `40fa659` |
+| `DEMO_SCRIPT` et `TODO-DEMO` : « après un redémarrage, Nouvelle démonstration » | l'opérateur aurait EFFACÉ le monde restauré, en direct | — (documentation) | `00d221b` |
+| Six champs du téléphone sans nom accessible (placeholder seul) | lecteurs d'écran | `test_lisible_et_touchable…` étendu | `22bddf8` |
+| 19 documents d'avant le pivot non marqués ; ADR 0004 décrivant un module supprimé ; claims D | crédibilité | `test_docs_classees.py` | `ab664b5` |
