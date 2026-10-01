@@ -35,7 +35,7 @@ from . import monde_demo as md
 from .acces import Sessions
 from .detection import Detecteur
 from .erreurs import Conflit, ErreurMetier, Interdit, Introuvable, Invalide, NonAuthentifie
-from .essai import Banc, Etape, Plage, Protocole
+from .essai import FINAUX, Banc, Etape, Plage, Protocole
 from .ia import AppelIA, Intelligence, besoin_de
 from .jure import PassesJure
 from .roles_ia import RolesIA
@@ -139,6 +139,8 @@ class ClubPulse:
         if interrupteur:
             self.ia.actif = bool(interrupteur[-1].donnees["actif"])
         self.ia.appels = [AppelIA(**(e.donnees["appel"] | {"latence_ms": 0.0})) for e in self.journal.evenements("APPEL_IA")]
+        for e in self.journal.evenements("EFFACEMENT"):         # F34 : après les activations — un effacement les annule
+            self._oublier(e.acteurs[0])
         jures = self.journal.evenements("PASSE_JURE")
         self.passes_jure.reprendre([(e.donnees["nonce"], e.acteurs[0], e.donnees["jusqu_a"]) for e in self.journal.evenements("PASSE_EMIS")],
                                    [e.donnees["nonce"] for e in jures if "nonce" in e.donnees],
@@ -404,6 +406,53 @@ class ClubPulse:
         return {"session": session, "nom": per.nom, "jure": True, "jusqu_a": exp,
                 "regle": "Vous jouez ce personnage FICTIF pour le jury ; votre passe est journalisé : ce que ce personnage fait "
                          "jusqu'à son expiration est attribué au jury."}
+
+    def effacer(self, pid: str) -> dict:
+        """TOUT EFFACER (F34), à la demande du membre. Dans UNE transaction : ses consentements de finalité retirés, ses
+        offres retirées, ses participations aux essais vivants retirées (porteur : essai annulé), son profil vidé, ses
+        préférences remises à zéro, puis le fait EFFACEMENT. APRÈS validation : son identité quitte le coffre, son compte
+        et ses notes privées disparaissent. Le redémarrage rejoue l'effacement. Ce qui reste est dit."""
+        if self.coffre.identite(pid) is None:
+            raise Introuvable("membre inconnu")
+        with self.journal.transaction():
+            for f in sorted(self.capacites.patrons):
+                if any(e.acteurs[0] == pid and e.type == "ACCORD" for e in self.banc.consentements_finalite(f)):
+                    self.capacites.retirer(pid, f)
+            for o in self.banc.offres():
+                if o.auteur == pid and self.banc.etat_offre(o.id) != "retiree":
+                    self.banc.retirer_offre(pid, o.id)
+            for eid in self.banc.essais():
+                if self.banc.etat(eid) in FINAUX or pid not in self.banc.personnes(eid):
+                    continue
+                try:
+                    if self.banc.porteur(eid) == pid:
+                        self.banc.annuler(pid, eid, "la personne qui portait cet essai a effacé ses données")
+                    else:
+                        self.banc.retirer(pid, eid)
+                except (Conflit, Interdit):              # l'action a déjà eu lieu : ce qui est fait reste fait (dit au bilan)
+                    pass
+            vide = {"offre": [], "recherche": [], "secteurs": [], "disponible": False, "accepte_introductions": False,
+                    "presentation": "", "note_disponibilite": "", "maj": self.jour.isoformat()}
+            avant = self.profil(pid).model_dump(mode="json")
+            champs = {k: v for k, v in vide.items() if avant[k] != v}
+            if champs:
+                self._enregistrer("PROFIL", [pid], membre=pid, champs=champs)
+                self.banc.revoir_membre(pid)
+            self._enregistrer("PREFERENCES", [pid], membre=pid, preferences={})
+            self.banc._ecrire("EFFACEMENT", [pid], Statut.DECLARE)
+        self._oublier(pid)
+        return {"efface": ["votre nom, votre organisation et vos coordonnées (supprimés du coffre)",
+                           "vos déclarations, offres et consentements (retirés : plus aucune capacité ne les utilise)",
+                           "vos participations aux actions en cours (retirées ; une action que vous portiez est annulée)",
+                           "vos préférences, vos notes privées et votre compte"],
+                "reste": "le journal du Club, en ajout seul, garde votre identifiant technique et les textes que vous aviez "
+                         "déclarés (déjà sans nom ni coordonnées) ; plus aucune vue ne les montre. Ce qui a déjà eu lieu "
+                         "(une contribution reçue) reste un fait."}
+
+    def _oublier(self, pid: str) -> None:
+        self.coffre.supprimer(pid)
+        self.notes.pop(pid, None)
+        self._propositions_demande.pop(pid, None)
 
     def activer_compte(self, code: str) -> dict:
         deja = set(self.coffre.actives)

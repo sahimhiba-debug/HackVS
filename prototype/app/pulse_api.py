@@ -102,6 +102,10 @@ class Demande(BaseModel):
     texte: str = Field(min_length=3, max_length=600)
 
 
+class Effacement(BaseModel):
+    confirme: Literal[True]                            # « Tout effacer » : jamais sans une confirmation explicite
+
+
 class Temps(BaseModel):
     jours: int = Field(ge=1, le=60)
 
@@ -260,6 +264,10 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
         return au_monde(lambda c: c.modifier_profil(pid, retirer_capacite=m.retirer_capacite, ajouter_recherche=m.ajouter_recherche,
                                                     disponible=m.disponible, accepte=m.sollicitable,
                                                     visibilite={str(k): v for k, v in m.visibilite.items()} if m.visibilite else None))
+
+    @r.post("/moi/effacer")
+    def effacer(x: Effacement, pid: str = Depends(membre)) -> dict:
+        return au_monde(lambda c: c.effacer(pid))
 
     @r.get("/moi/notes")
     def notes(pid: str = Depends(membre)) -> list[dict]:
