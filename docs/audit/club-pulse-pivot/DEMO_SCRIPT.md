@@ -38,6 +38,11 @@ ce qui est encore possible — ou qu'il est bloqué.
   La vidéo `captures/action/demo_action.webm` et les captures ont été **réenregistrées au commit `a03bfa6`** (Phase 3),
   aux dates actuelles (06.10 / 08.10) : `scripts/enregistrer_demo.py`.
 - Aucune action n'existe ; l'écran commun (`/projection`) montre « Jeudi 08.10 : 6 contributions proposées, dispersées ».
+- **Vrais téléphones** (point d'accès du portable) : `make demo HOTE=0.0.0.0 URL_PUBLIQUE=http://<ip-du-portable>:8000`
+  (l'adresse du portable SUR son point d'accès). Sans ces deux valeurs, le serveur n'écoute que le portable et le QR juré
+  encode `127.0.0.1`, qu'un téléphone prend pour lui-même (revue R-01). La console et l'Établi s'ouvrent sur le portable
+  (`http://127.0.0.1:8000/…`) : la console refuse tout autre appareil (403, testé). Les téléphones restent en HTTP
+  local : le mode hors ligne du service worker n'y est pas actif, rien d'autre n'en dépend (vérifié dans Chromium).
 - Téléphone 1 = Sophie (code affiché dans la console), téléphone 2 = Léa (voix allemande). Régie de tournage :
   `/demo/regie` (écran commun + deux téléphones côte à côte ; aucun code affiché).
 
@@ -106,7 +111,7 @@ exécuté, l'IA non nécessaire à cette démo ; (3) le test terrain proposé (`
 ## 8. Secours
 | Panne | Secours | Ce qu'on dit |
 |---|---|---|
-| Internet de la salle | tout tourne sur l'ordinateur de démonstration ; téléphones sur son point d'accès | — |
+| Internet de la salle | tout tourne sur l'ordinateur de démonstration ; téléphones sur son point d'accès (`make demo HOTE=0.0.0.0 URL_PUBLIQUE=…`, § 2) | — |
 | Téléphones qui ne se connectent pas | régie `/demo/regie` sur un seul écran : deux sessions distinctes dans deux cadres | « deux sessions sur une machine » |
 | Fournisseur IA | aucun impact : Établi → « Éteindre l'IA » (ou aucun modèle configuré) ; chaque résultat dit « forme déterministe, sans IA » ; même état métier (parité testée) | « l'IA propose, le code décide : sans elle, le formulaire » |
 | Réseau de la salle | tout est local : E2E vérifiés en « mode salle » (espace réseau vide, IA OFF) en CI | — |
@@ -129,4 +134,6 @@ exécuté, l'IA non nécessaire à cette démo ; (3) le test terrain proposé (`
    4. `make demo`.
    5. Vérifier : même étape à la régie, même Établi, même nombre d'actions ; le téléphone de Sophie, rafraîchi, est
       toujours connecté ; le QR juré non scanné s'active ; l'interrupteur IA est dans l'état laissé.
-   6. Un écart, un seul : ne pas improviser — le noter, « Nouvelle démonstration », et prévoir la vidéo de secours.
+   6. Avec un VRAI téléphone sur le point d'accès : ouvrir `/app` par l'adresse du portable, puis scanner un QR juré
+      depuis l'Établi — il doit ouvrir « Jury : vous jouez … ». Un QR qui pointe vers `127.0.0.1` = `URL_PUBLIQUE` oublié.
+   7. Un écart, un seul : ne pas improviser — le noter, « Nouvelle démonstration », et prévoir la vidéo de secours.

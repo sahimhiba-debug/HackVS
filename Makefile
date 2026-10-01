@@ -2,9 +2,14 @@
 #   make setup          dépendances (exécution + facultatives + outils), versions exactes de constraints.txt
 #   make quality-check  TOUT : secrets, lint, types, tests, bout en bout, évaluations, cohérence du pitch
 #   make demo           serveur de démonstration : http://127.0.0.1:8000/console et /app
+#   make demo HOTE=0.0.0.0 URL_PUBLIQUE=http://<ip-du-portable>:8000
+#                       la même, joignable par de VRAIS téléphones (point d'accès du portable) ; la console reste
+#                       réservée à cette machine
 PY ?= python
 P = prototype
 export HACKVS_SEMANTIQUE ?= 0
+HOTE ?= 127.0.0.1
+URL_PUBLIQUE ?=
 
 .PHONY: setup browsers lint typecheck test e2e e2e-salle sonde-ia eval secrets audit coverage demo quality-check mutation
 
@@ -58,11 +63,13 @@ mutation:
 # Démonstration DURABLE (F29) : journal de Club Pulse dans un FICHIER, secret STABLE tiré une fois et gardé hors dépôt
 # (prototype/var/ est ignoré par git). Un kill -9 puis `make demo` : même monde, mêmes sessions, même passe juré, rejeu
 # IA sans rappeler le modèle. Nouvelle démonstration : bouton de la régie (le journal est vidé, le secret reste).
+# Téléphones réels (R-01) : HOTE=0.0.0.0 pour écouter le point d'accès, URL_PUBLIQUE pour que le QR juré et les liens
+# pointent vers le portable (sinon ils encodent 127.0.0.1, que le téléphone prend pour lui-même).
 demo:
 	cd $(P) && mkdir -p var && (test -s var/secret_demo || $(PY) -c "import secrets; print(secrets.token_urlsafe(48))" > var/secret_demo) \
 	  && chmod 600 var/secret_demo && HACKVS_SECRET="$$(cat var/secret_demo)" HACKVS_ESSAIS_DB=var/club_pulse.db \
 	  HACKVS_MODE=demo HACKVS_DB=:memory: HACKVS_DECISIONS_DB=:memory: HACKVS_CYCLE_DB=:memory: \
-	  $(PY) -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log
+	  HACKVS_URL_PUBLIQUE="$(URL_PUBLIQUE)" $(PY) -m uvicorn app.main:app --host $(HOTE) --port 8000 --no-access-log
 
 quality-check: secrets lint typecheck test e2e eval
 	@echo "quality-check : tout est vert"
