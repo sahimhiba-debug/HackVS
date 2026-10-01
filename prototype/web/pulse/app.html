@@ -458,7 +458,7 @@
       const d = await api("/api/pulse/moi/donnees");
       afficher(h("h1", { class: "grand" }, "Mes données"), h("p", { class: "note", style: "margin-top:4px" }, `Au ${jourDe(d.date)} (date simulée)`),
         section("Ce que j'ai déclaré", d.declarations.length ? d.declarations.map((x) => h("div", { class: "carte" }, h("div", { class: "ligne" }, h("b", {}, x.type), h("span", { class: "puce" }, x.etat)),
-          h("p", {}, x.texte), h("p", { class: "note" }, `Jusqu'au : ${x.valable_jusqu_au} · pourquoi : ${x.pourquoi}`))) : vide("Rien.")),
+          h("p", {}, x.texte), h("p", { class: "note" }, `Jusqu'au : ${x.valable_jusqu_au} · pourquoi : ${x.pourquoi} · ${x.provenance}`))) : vide("Rien.")),
         section("Mes consentements", d.consentements.length ? d.consentements.map((r) => h("p", {}, `${r.titre} — ${r.etat}`)) : vide("Aucun.")),
         section("Mes réponses aux demandes", d.reponses_aux_demandes.length ? d.reponses_aux_demandes.map((r) => h("p", {}, `${jourDe(r.le)} : ${r.reponse}`)) : vide("Aucune.")),
         section("Ailleurs", h("p", {}, d.hors_du_journal), h("p", { class: "note" }, `Notes privées : ${d.notes_privees} (vous seul·e)`)));

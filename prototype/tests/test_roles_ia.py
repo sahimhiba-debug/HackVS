@@ -33,7 +33,8 @@ def test_extract_accepte_est_model_called_et_ne_declare_rien():
     sortie, ext, nor = c.proposer_reponse(md.PAULINE, _ask(c), TEXTE)
     assert sortie["attributs"] == {"places": 14} and ext.issue == "MODEL_CALLED" and ext.tentatives == 1 and nor is None
     nouveaux = c.journal.evenements()[avant:]
-    assert [e.type for e in nouveaux] == ["APPEL_IA"]                       # une proposition : rien déclaré, rien consenti
+    # une proposition : rien déclaré, rien consenti — la trace de l'appel, et ce qui a été proposé à qui (F31)
+    assert [e.type for e in nouveaux] == ["APPEL_IA", "PROPOSITION_IA"]
     assert next(i.statut for i in c.projection_capacites() if i.finalite == A) == "ONE_AWAY"
 
 

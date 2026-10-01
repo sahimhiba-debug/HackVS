@@ -179,6 +179,8 @@ def index_claims(m: Memoire, profils_de_depart: dict[str, Profil]) -> list[Claim
     for pid in sorted(profils_de_depart):
         p = profils_de_depart[pid]
         profil(pid, p.model_dump(mode="json", include={"offre", "recherche"}), 0, "SYNTHETIQUE")
+    # une pièce déclarée EN RÉPONSE à une demande porte la provenance de cette réponse (F31) ; toute autre : le membre
+    provenance = {e.donnees["offre"]: e.donnees.get("provenance") or "SELF_DECLARED" for e in m.evenements("ASK_REPONSE") if e.donnees["oui"]}
     for e in m.evenements("OFFRE", "OFFRE_RETIREE", "PROFIL"):
         if e.type == "PROFIL":
             profil(e.donnees["membre"], e.donnees["champs"], e.seq, e.statut.value)
@@ -188,7 +190,7 @@ def index_claims(m: Memoire, profils_de_depart: dict[str, Profil]) -> list[Claim
             o = OffreVolontaire(**e.donnees["offre"])
             ouvrir(f"offre:{o.id}", Claim(id=f"{o.id}@v{o.version}", kind=_nature_kind(o), membre=o.auteur, concept=o.concept,
                                           texte=o.quoi, valid_from=o.du, valid_until=o.au, recorded_at=e.seq, statut=e.statut.value,
-                                          plages=o.plages))
+                                          plages=o.plages, provenance=provenance.get(o.id, "SELF_DECLARED")))  # type: ignore[arg-type]
     return res
 
 
@@ -498,7 +500,8 @@ class Registre:
 
     # ------------------------------------------------------------------ commandes
     def repondre(self, membre: str, ask_id: str, oui: bool, attributs: Optional[dict[str, int]] = None,
-                 quoi: Optional[str] = None, competences: Optional[set[str]] = None) -> Instance:
+                 quoi: Optional[str] = None, competences: Optional[set[str]] = None,
+                 provenance: tuple[str, Optional[str]] = ("SELF_DECLARED", None)) -> Instance:
         """Répondre à une Ask. « Oui » = déclarer SA pièce (une offre datée, pour le créneau demandé, avec ses attributs)
         ET consentir à son usage pour CETTE finalité jusqu'à la fin de la fenêtre — rien de plus. « Non » : journalisé,
         sans effet sur personne, jamais attribué. L'Ask est relue AU MOMENT de répondre : si elle n'existe plus (une autre
@@ -525,7 +528,7 @@ class Registre:
                                        conditions=f"déclarée en réponse à une demande pour « {p.titre[:80]} »", attributs=attributs,
                                        plages=[Plage(jour=c.jour, debut=c.debut, fin=c.fin)])
             self.b.consentir_finalite(membre, p.id, e.id, oid, p.portee(e.id), p.fenetre.jour)
-            self.b._ecrire("ASK_REPONSE", [membre], ask=ask_id, oui=True, offre=oid)
+            self.b._ecrire("ASK_REPONSE", [membre], ask=ask_id, oui=True, offre=oid, provenance=provenance[0], trace=provenance[1])
             apres = self.instance(p)
             if apres.liaisons.get(e.id) != oid:                  # la pièce déclarée ne comble pas : rien n'est écrit
                 raise Conflit("votre réponse ne complète pas cette capacité (horaire ou attributs) : rien n'a été enregistré")

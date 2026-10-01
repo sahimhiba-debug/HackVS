@@ -118,7 +118,9 @@ class VuesCapacites:
                 "declarations": [{"type": nature[x.kind], "texte": x.texte, "depuis_position": x.recorded_at,
                                   "valable_jusqu_au": x.valid_until.isoformat() if x.valid_until else "sans date (jusqu'à ce que vous la retiriez)",
                                   "etat": "valable" if x.valable(j) else "expirée (gardée dans l'historique, plus utilisée)",
-                                  "pourquoi": "composer ce que le Club peut faire ; jamais affiché avec votre nom sans votre accord"}
+                                  "pourquoi": "composer ce que le Club peut faire ; jamais affiché avec votre nom sans votre accord",
+                                  "provenance": "proposé par l'IA à partir de votre texte, confirmé par vous"
+                                                if x.provenance == "AI_PROPOSED_CONFIRMED" else "déclaré par vous"}
                                  for x in courants],
                 "historique": len(claims) - len(courants),
                 "consentements": self.c.capacites.recus(pid),

@@ -321,8 +321,14 @@ class ClubPulse:
         la même demande donnent une seule liaison — la seconde ne trouve plus la demande."""
         if ask_id not in {a for _, a in self.asks_pour(pid)}:
             raise Introuvable("demande inconnue ou plus d'actualité")
+        # PROVENANCE (F31) : les valeurs confirmées sont-elles EXACTEMENT celles que le modèle a proposées à CE membre pour
+        # CETTE demande ? Alors elles sont « proposées par l'IA, confirmées », avec la trace de l'appel ; sinon déclarées.
+        prop = next((e for e in reversed(self.journal.evenements("PROPOSITION_IA"))
+                     if e.acteurs == [pid] and e.donnees["ask"] == ask_id), None)
+        ia = oui and prop is not None and {k: v for k, v in (attributs or {}).items() if v} == prop.donnees["attributs"]
         return self.capacites.repondre(pid, ask_id, oui, attributs, self._net(quoi) if quoi else None,
-                                       {o.concept for o in self.profil(pid).offre if o.concept})
+                                       {o.concept for o in self.profil(pid).offre if o.concept},
+                                       provenance=("AI_PROPOSED_CONFIRMED", prop.donnees["trace"]) if ia and prop else ("SELF_DECLARED", None))
 
     def consentir_capacite(self, pid: str, finalite: str) -> Instance:
         return self.capacites.consentir(pid, finalite)
@@ -340,6 +346,11 @@ class ClubPulse:
         texte = self._net(texte)
         ext = self.roles_ia.extraire(texte, ask.minimums)
         nor = self.roles_ia.normaliser(texte) if ask.concept else None
+        if ext.appel.issue in ("MODEL_CALLED", "CACHE_REPLAY") and ext.sortie["attributs"]:
+            # ce que le modèle a proposé, à QUI, pour QUELLE demande — des nombres seulement (la provenance d'une
+            # confirmation en dépend : F31) ; jamais le texte du membre
+            self.banc._ecrire("PROPOSITION_IA", [pid], Statut.OBSERVE, ask=ask_id, trace=ext.appel.trace,
+                              attributs=dict(ext.sortie["attributs"]))
         return {"attributs": ext.sortie["attributs"], "incertitudes": ext.sortie["incertitudes"],
                 "concept": nor.sortie["concept"] if nor else None, "concept_attendu": ask.concept}, ext.appel, nor.appel if nor else None
 

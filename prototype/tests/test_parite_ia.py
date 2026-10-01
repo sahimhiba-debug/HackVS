@@ -44,21 +44,23 @@ def jouer(club) -> dict:
 
 
 def etat_metier(club) -> dict:
-    """L'état métier, sans les faits de PILOTAGE de l'IA (appels, interrupteur) ; ce qui dépend de la position dans le
+    """L'état métier, sans les faits de PILOTAGE de l'IA (appels, interrupteur, propositions) ni la PROVENANCE d'une
+    réponse (qui DOIT différer : vérifiée à part, `_provenances`) ; ce qui dépend de la position dans le
     journal (identifiants d'offres, suffixe de position d'une référence de reçu) est remplacé par un rang ou retiré —
     tout le reste doit être IDENTIQUE (l'empreinte de la référence comprise)."""
     rangs: dict[str, str] = {}
 
     def canon(x):
         if isinstance(x, dict):
-            return {k: re.sub(r"-\d+$", "", v) if k == "reference" else canon(v) for k, v in x.items() if k != "n"}
+            return {k: re.sub(r"-\d+$", "", v) if k == "reference" else canon(v) for k, v in x.items()
+                    if k not in ("n", "provenance", "trace")}
         if isinstance(x, list):
             return [canon(v) for v in x]
         if isinstance(x, str):
             return re.sub(r"of-[0-9a-f]{8}", lambda m: rangs.setdefault(m.group(), f"offre#{len(rangs) + 1}"), x)
         return x
     evs = [(e.type, e.le.isoformat(), e.acteurs, e.statut.value, canon(e.donnees)) for e in club.journal.evenements()
-           if e.type not in ("APPEL_IA", "IA_INTERRUPTEUR")]
+           if e.type not in ("APPEL_IA", "IA_INTERRUPTEUR", "PROPOSITION_IA")]
     return {"journal": evs, "capacites": canon([i.model_dump(mode="json") for i in club.capacites.projeter()]),
             "recus": {pid: canon(club.capacites.recus(pid)) for pid in (md.PAULINE, md.MARKUS)}, "jour": club.jour.isoformat()}
 
@@ -69,6 +71,13 @@ def verifier_parite(on, off, apports) -> None:
         raise AssertionError(f"parité vacueuse : aucune sortie du modèle acceptée ni retenue (issues ON : {issues})")
     assert all(a.issue == "FALLBACK_FORM" for a in off.ia.appels) and off.ia.appels  # OFF : vraiment sans modèle
     assert etat_metier(on) == etat_metier(off)
+    # la seule différence permise, et EXIGÉE : la provenance dit la vérité (F31)
+    assert _provenances(on) == {pid: "AI_PROPOSED_CONFIRMED" for pid in apports}
+    assert set(_provenances(off).values()) == {"SELF_DECLARED"}
+
+
+def _provenances(club) -> dict:
+    return {e.acteurs[0]: e.donnees["provenance"] for e in club.journal.evenements("ASK_REPONSE") if e.donnees["oui"]}
 
 
 def test_parite_on_off_non_vacueuse():
