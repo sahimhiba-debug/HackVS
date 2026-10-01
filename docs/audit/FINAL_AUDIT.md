@@ -233,10 +233,12 @@ test cité existe. Claims **D** (non prouvés) :
 
 ## 12. Known limitations
 
-- **IA.** Apertus (`swiss-ai/Apertus-v1.5-70B`, API d'inférence CSCS) répond depuis cet environnement : JSON, schéma
-  strict, tools (sonde du 01.10, `probe_publicai.md`). Qualité sur les tâches du Club NON DÉMONTRÉE : l'évaluation EXTRACT
-  est prête et gelée, mais n'a pas tourné. La démo tourne sans modèle. Latence : mesure séparée, `make latence-ia`
-  (`latence_apertus.md`) — non mesurée tant que ce fichier n'existe pas.
+- **IA.** Apertus (`swiss-ai/Apertus-v1.5-70B`, API d'inférence CSCS) est appelé par « Agir à plusieurs → Comprendre
+  ma demande » quand `APERTUS_*` est configuré (CLAIMS n° 38). Mesuré le 01.10 sur 26 cas métier fictifs (CLAIMS n° 39) :
+  sortie acceptée et juste **1/26** ; 25 rejetées par la validation ; résultat vu par le membre juste
+  17/26 contre 16/26 pour les règles seules. Latence (CLAIMS n° 40) : médiane 5.3 s, p95
+  6.0 s. La qualité de l'IA sur les tâches du Club n'est donc PAS démontrée — elle est mesurée, et insuffisante avec
+  le prompt v1. L'évaluation EXTRACT n'a pas tourné. La démonstration de scène tourne sans modèle.
 - **Utilité.** Aucun membre réel ; toutes les données sont fictives ou synthétiques. Utilité non mesurée.
 - **Démonstration.** Un seul processus, état en mémoire dérivé d'un SQLite local ; pas de mise à l'échelle horizontale.
 - **Sessions.** Sans état (pas de révocation serveur à la déconnexion) ; pas de TLS en salle (§ 3).
@@ -320,6 +322,11 @@ Tout ce qui change ce qu'un utilisateur, un opérateur ou un développeur peut o
 | Porte de mutation | verte si aucun survivant non classé n'était listé | rouge si mutmut échoue, si la campagne est vide / interrompue, ou s'il reste des mutants « no tests » / « suspicious » | `d374f75` |
 | Déconnexion | côté client seulement | **inchangé, risque connu accepté** (contre-expertise) : le jeton n'est pas révoqué côté serveur avant son expiration (12 h), sauf effacement du compte | — |
 | Jeton de console (`HACKVS_CONSOLE_JETON`, déploiement joignable du réseau) | la régie envoyait toujours « 1 » (403) ; l'Établi et la projection ouverts par les liens de la console (nouvel onglet `noopener`) restaient en 403 sans rien demander ; la console redemandait le jeton à chaque appel refusé | `web/pulse/jeton-console.js` : chaque écran d'animation demande le jeton aux onglets déjà déverrouillés (canal `BroadcastChannel` de la même origine), sinon à l'animatrice ; au plus deux demandes par chargement de page ; jamais dans l'URL ni en stockage durable ; la garde serveur est inchangée. **Sans jeton configuré (`make demo`) : rien ne change.** Vérifié dans un conteneur de l'image (29/29) | ce commit |
+| Appel au modèle (« Préparer » d'une action ou d'un essai) | sous le verrou du monde : tout le serveur attendait pendant l'appel | hors du verrou ; lecture et trace sous le verrou ; la requête reste lectrice du monde (une réinitialisation l'attend) | `c11a386` |
+| Attente d'Apertus | jusqu'à 3 × 30 s + pauses | budget total `APERTUS_BUDGET_S` (12 s par défaut), puis repli — avant l'abandon du téléphone (15 s) | `c11a386` |
+| Scénario guidé de la régie | aurait utilisé un modèle s'il était configuré | toujours en forme déterministe (décision du 01.10), tracé comme tel | `c11a386` |
+| Filtre d'identité vers le modèle | retirait aussi les dates (« 2026-10-06 » pris pour un numéro) | les dates passent ; les numéros restent retirés | `c11a386` |
+| Suite de tests | une clé présente sur la machine changeait les résultats | hermétique : `APERTUS_*` retirées par `conftest.py` | `c11a386` |
 
 ## Annexe B — levée des réserves R2, R3, R4 (contre-expertise des vagues 1–2)
 

@@ -32,8 +32,16 @@ L'écran commun relit le serveur toutes les 0,7 s : le délai attendu est 0–0,
 | perturbation → écran commun | enregistrement (régie à 3 cadres + capture vidéo) | 929 à 944 ms |
 Machine de développement, en local : **pas** un réseau de salle.
 
+### Ajouts du 01.10 (IA réelle — n'annulent rien de ce qui précède, daté)
+| Commande | Résultat |
+|---|---|
+| `make sonde-ia` (APERTUS_MODEL=swiss-ai/Apertus-v1.5-70B, API CSCS) | modèles, JSON simple, `json_schema` strict, tools, non-thinking : **SUPPORTED** (`3c2ff23`, `docs/audit/probe_publicai.md`) |
+| `make banc-ia` (26 cas fictifs, chemin du produit) | modèle accepté et juste **1/26** ; rejetées 25 ; vu par le membre juste 17/26 (règles seules 16/26) — `prototype/eval/resultats_comprendre_action.md` |
+| `make latence-ia N=30` | tâche du produit : médiane 5329.2 ms, p95 6021.2 ms, n = 30, 0 erreur ; requête courte : médiane 425.9 ms, p95 458.4 ms — `docs/audit/latence_apertus.md` |
+| `make test` · `make e2e` | 1301 réussis · 22/22 (dont `test_e2e_ia.py`, faux Apertus HTTP local) |
+
 ## Non exécuté (et pourquoi)
-- Apertus réel : aucun identifiant fourni.
+- Apertus réel : aucun identifiant fourni. *(vrai au 30.09 ; depuis le 01.10, voir « Ajouts du 01.10 » ci-dessus.)*
 - Vrais téléphones sur le réseau d'une salle : remplacés par des contextes de navigateur indépendants.
 - Jury, membres, exposants réels : aucun contact (interdit par le mandat) ; aucune mesure d'usage.
 - Chronométrage humain des scripts : temps de parole **estimés** (150 mots/min).

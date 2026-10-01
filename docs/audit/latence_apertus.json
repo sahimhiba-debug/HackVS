@@ -1,0 +1,650 @@
+{
+ "contexte": {
+  "debut_utc": "2026-10-01T19:47:52+00:00",
+  "fin_utc": "2026-10-01T19:50:54+00:00",
+  "endpoint": "https://api.inference.cscs.ch/v1/chat/completions",
+  "modele": "swiss-ai/Apertus-v1.5-70B",
+  "delai_s": 30.0,
+  "appels_par_profil": 30,
+  "sequentiel": true,
+  "nouvelles_tentatives": 0,
+  "commit": "c11a386",
+  "python": "3.11.15",
+  "systeme": "Linux-6.18.44-fc-v50-x86_64-with-glibc2.39",
+  "processeurs": 4,
+  "charge": [
+   0.0,
+   0.32,
+   0.56
+  ],
+  "reseau": "via le proxy HTTPS sortant de l'environnement",
+  "prompt": "comprendre_action_v1"
+ },
+ "tache": {
+  "appels": 30,
+  "reussis": 30,
+  "erreurs_http": 0,
+  "delais_ou_reseau": 0,
+  "causes": [],
+  "http_ms": {
+   "n": 30,
+   "moyenne": 5434.4,
+   "mediane": 5329.2,
+   "p95": 6021.2,
+   "min": 4862.9,
+   "max": 6105.4
+  },
+  "echauffement_ms": 6001.0,
+  "jetons_sortie": {
+   "n": 30,
+   "moyenne": 360.8,
+   "mediane": 355.0,
+   "p95": 400.0,
+   "min": 323.0,
+   "max": 400.0
+  },
+  "bout_en_bout_ms": {
+   "n": 30,
+   "moyenne": 5435.7,
+   "mediane": 5330.7,
+   "p95": 6022.3,
+   "min": 4864.0,
+   "max": 6106.4
+  },
+  "acceptees": 0,
+  "rejetees": 30,
+  "causes_rejet": [
+   "capacité hors catalogue",
+   "geste ou durée hors bornes",
+   "structure inattendue"
+  ]
+ },
+ "court": {
+  "appels": 30,
+  "reussis": 30,
+  "erreurs_http": 0,
+  "delais_ou_reseau": 0,
+  "causes": [],
+  "http_ms": {
+   "n": 30,
+   "moyenne": 429.6,
+   "mediane": 425.9,
+   "p95": 458.4,
+   "min": 417.7,
+   "max": 468.3
+  },
+  "echauffement_ms": 426.2,
+  "jetons_sortie": {
+   "n": 30,
+   "moyenne": 14.0,
+   "mediane": 14.0,
+   "p95": 14.0,
+   "min": 14.0,
+   "max": 14.0
+  }
+ },
+ "brut": {
+  "tache": [
+   {
+    "http_ms": 6001.0,
+    "statut": 200,
+    "jetons_sortie": 355,
+    "jetons_entree": 1376,
+    "bout_en_bout_ms": 6009.4,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "geste ou durée hors bornes",
+    "texte": 0,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 5910.9,
+    "statut": 200,
+    "jetons_sortie": 395,
+    "jetons_entree": 1371,
+    "bout_en_bout_ms": 5912.4,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "capacité hors catalogue",
+    "texte": 1,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 6007.6,
+    "statut": 200,
+    "jetons_sortie": 400,
+    "jetons_entree": 1371,
+    "bout_en_bout_ms": 6008.9,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "capacité hors catalogue",
+    "texte": 2,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 4869.1,
+    "statut": 200,
+    "jetons_sortie": 323,
+    "jetons_entree": 1373,
+    "bout_en_bout_ms": 4870.3,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "capacité hors catalogue",
+    "texte": 3,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 4992.5,
+    "statut": 200,
+    "jetons_sortie": 331,
+    "jetons_entree": 1369,
+    "bout_en_bout_ms": 4993.8,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "structure inattendue",
+    "texte": 4,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 5335.5,
+    "statut": 200,
+    "jetons_sortie": 355,
+    "jetons_entree": 1376,
+    "bout_en_bout_ms": 5336.6,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "geste ou durée hors bornes",
+    "texte": 0,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 6021.2,
+    "statut": 200,
+    "jetons_sortie": 395,
+    "jetons_entree": 1371,
+    "bout_en_bout_ms": 6022.3,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "capacité hors catalogue",
+    "texte": 1,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 5976.4,
+    "statut": 200,
+    "jetons_sortie": 400,
+    "jetons_entree": 1371,
+    "bout_en_bout_ms": 5977.5,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "capacité hors catalogue",
+    "texte": 2,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 4870.0,
+    "statut": 200,
+    "jetons_sortie": 323,
+    "jetons_entree": 1373,
+    "bout_en_bout_ms": 4871.2,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "capacité hors catalogue",
+    "texte": 3,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 5012.3,
+    "statut": 200,
+    "jetons_sortie": 331,
+    "jetons_entree": 1369,
+    "bout_en_bout_ms": 5013.9,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "structure inattendue",
+    "texte": 4,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 5321.8,
+    "statut": 200,
+    "jetons_sortie": 355,
+    "jetons_entree": 1376,
+    "bout_en_bout_ms": 5323.4,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "geste ou durée hors bornes",
+    "texte": 0,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 5918.0,
+    "statut": 200,
+    "jetons_sortie": 395,
+    "jetons_entree": 1371,
+    "bout_en_bout_ms": 5919.4,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "capacité hors catalogue",
+    "texte": 1,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 6105.4,
+    "statut": 200,
+    "jetons_sortie": 400,
+    "jetons_entree": 1371,
+    "bout_en_bout_ms": 6106.4,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "capacité hors catalogue",
+    "texte": 2,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 4862.9,
+    "statut": 200,
+    "jetons_sortie": 323,
+    "jetons_entree": 1373,
+    "bout_en_bout_ms": 4864.0,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "capacité hors catalogue",
+    "texte": 3,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 4995.9,
+    "statut": 200,
+    "jetons_sortie": 331,
+    "jetons_entree": 1369,
+    "bout_en_bout_ms": 4997.2,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "structure inattendue",
+    "texte": 4,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 5326.2,
+    "statut": 200,
+    "jetons_sortie": 355,
+    "jetons_entree": 1376,
+    "bout_en_bout_ms": 5327.7,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "geste ou durée hors bornes",
+    "texte": 0,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 5897.1,
+    "statut": 200,
+    "jetons_sortie": 395,
+    "jetons_entree": 1371,
+    "bout_en_bout_ms": 5898.4,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "capacité hors catalogue",
+    "texte": 1,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 5970.5,
+    "statut": 200,
+    "jetons_sortie": 400,
+    "jetons_entree": 1371,
+    "bout_en_bout_ms": 5972.1,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "capacité hors catalogue",
+    "texte": 2,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 4996.2,
+    "statut": 200,
+    "jetons_sortie": 323,
+    "jetons_entree": 1373,
+    "bout_en_bout_ms": 4998.7,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "capacité hors catalogue",
+    "texte": 3,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 4975.9,
+    "statut": 200,
+    "jetons_sortie": 331,
+    "jetons_entree": 1369,
+    "bout_en_bout_ms": 4977.0,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "structure inattendue",
+    "texte": 4,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 5311.0,
+    "statut": 200,
+    "jetons_sortie": 355,
+    "jetons_entree": 1376,
+    "bout_en_bout_ms": 5312.1,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "geste ou durée hors bornes",
+    "texte": 0,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 5919.9,
+    "statut": 200,
+    "jetons_sortie": 395,
+    "jetons_entree": 1371,
+    "bout_en_bout_ms": 5920.9,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "capacité hors catalogue",
+    "texte": 1,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 6003.0,
+    "statut": 200,
+    "jetons_sortie": 400,
+    "jetons_entree": 1371,
+    "bout_en_bout_ms": 6004.0,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "capacité hors catalogue",
+    "texte": 2,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 4886.4,
+    "statut": 200,
+    "jetons_sortie": 323,
+    "jetons_entree": 1373,
+    "bout_en_bout_ms": 4887.8,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "capacité hors catalogue",
+    "texte": 3,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 5037.7,
+    "statut": 200,
+    "jetons_sortie": 331,
+    "jetons_entree": 1369,
+    "bout_en_bout_ms": 5039.2,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "structure inattendue",
+    "texte": 4,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 5332.3,
+    "statut": 200,
+    "jetons_sortie": 355,
+    "jetons_entree": 1376,
+    "bout_en_bout_ms": 5333.7,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "geste ou durée hors bornes",
+    "texte": 0,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 5929.3,
+    "statut": 200,
+    "jetons_sortie": 395,
+    "jetons_entree": 1371,
+    "bout_en_bout_ms": 5930.6,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "capacité hors catalogue",
+    "texte": 1,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 5964.4,
+    "statut": 200,
+    "jetons_sortie": 400,
+    "jetons_entree": 1371,
+    "bout_en_bout_ms": 5965.5,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "capacité hors catalogue",
+    "texte": 2,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 4873.2,
+    "statut": 200,
+    "jetons_sortie": 323,
+    "jetons_entree": 1373,
+    "bout_en_bout_ms": 4874.4,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "capacité hors catalogue",
+    "texte": 3,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 4979.9,
+    "statut": 200,
+    "jetons_sortie": 331,
+    "jetons_entree": 1369,
+    "bout_en_bout_ms": 4981.8,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "structure inattendue",
+    "texte": 4,
+    "appels_http": 1
+   },
+   {
+    "http_ms": 5428.1,
+    "statut": 200,
+    "jetons_sortie": 355,
+    "jetons_entree": 1376,
+    "bout_en_bout_ms": 5430.3,
+    "issue": "REJETE",
+    "repli": true,
+    "cause": "geste ou durée hors bornes",
+    "texte": 0,
+    "appels_http": 1
+   }
+  ],
+  "court": [
+   {
+    "http_ms": 426.2,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 425.3,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 419.6,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 422.4,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 450.1,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 435.6,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 421.2,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 420.5,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 426.0,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 434.7,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 431.8,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 425.5,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 424.6,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 428.6,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 441.1,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 420.4,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 432.7,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 427.4,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 425.9,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 417.7,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 440.1,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 422.5,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 422.4,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 426.4,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 422.7,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 426.1,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 458.4,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 468.3,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 427.2,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 420.8,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   },
+   {
+    "http_ms": 422.8,
+    "statut": 200,
+    "jetons_sortie": 14,
+    "jetons_entree": 69
+   }
+  ]
+ }
+}

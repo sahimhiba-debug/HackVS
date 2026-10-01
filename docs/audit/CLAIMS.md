@@ -81,3 +81,15 @@ registre : il est en quarantaine, et rien n'y doit être présenté.
   « Répondre : trois boutons · passe juré 15 min, sans compte » (« Retrait toujours anonyme » est déjà le badge 2).
 - Même claim « Capté passivement 0 » sur les planches Main (tuile KPI) et Phone-Retrait (« tout vient de vous ») :
   maquettes du produit, pas la couverture ; à aligner sur la même formulation lors du § 7.3 du design system.
+
+## IA dans le parcours (mesures du 01.10, Apertus-v1.5-70B, API CSCS)
+
+| # | Affirmation | Classe | Preuve |
+|---|---|---|---|
+| 38 | « Comprendre ma demande » (Agir à plusieurs) appelle réellement le modèle configuré ; sa sortie est validée (schéma, vocabulaire, catalogue, bornes, aucune donnée personnelle) ; sinon repli déterministe dit à l'écran ; le parcours continue toujours ; le serveur ne gèle pas pendant l'appel ; attente bornée | A | `test_ia_preparer_action.py` (sortie valide, JSON invalide, hors schéma, incohérente, délai, 503/401/réseau, budget, pas de gel) ; E2E `test_e2e_ia.py` (vrai navigateur, vrai serveur, faux Apertus HTTP local) |
+| 39 | Qualité d'Apertus sur cette tâche : sortie **acceptée et juste dans 1/26 cas** ; 25 sorties rejetées par la validation (durées hors bornes, capacités hors catalogue, jours non ISO) ; ce que voit le membre est juste dans 17/26 cas, contre 16/26 pour les règles seules | B | `make banc-ia` → `prototype/eval/resultats_comprendre_action.md` (26 cas fictifs, attentes fixées avant exécution, SHA-256 `34bfcc37bf2f…`) ; **ne démontre pas une qualité générale** ; prompt `comprendre_action_v1` inchangé |
+| 40 | Latence d'une complétion de la tâche du produit : médiane **5.3 s**, p95 **6.0 s** (n = 30, séquentiel, 0 erreur) ; requête courte : médiane 425.9 ms | B | `make latence-ia` → `docs/audit/latence_apertus.md` (01.10, depuis l'environnement de développement, via son proxy sortant ; pas depuis Cloud Run ni la salle) |
+
+Conséquence, dite telle quelle : avec le prompt actuel, Apertus n'améliore la tâche que marginalement (+1 cas) ; la
+validation et le repli empêchent qu'une sortie inventive atteigne le membre. La démonstration de scène reste sans modèle.
+
