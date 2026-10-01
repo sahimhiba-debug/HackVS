@@ -36,7 +36,7 @@ concurrency:
 jobs:
   mutation:
     runs-on: ubuntu-latest
-    timeout-minutes: 150         # campagne complète ≈ 1 à 2 h sur un exécuteur GitHub ; au-delà, c'est une panne
+    timeout-minutes: 330         # run #11 (01.10) coupé à 150 min : la sélection a grandi (tests F26, F31, F32, R3 sur le monde de démo) ; 330 < plafond GitHub 360
     defaults:
       run:
         working-directory: prototype
