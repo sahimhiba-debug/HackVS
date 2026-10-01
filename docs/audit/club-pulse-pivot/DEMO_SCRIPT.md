@@ -31,7 +31,9 @@ accepte **sa** part sur **son** téléphone, le jury change une condition, le sy
 ce qui est encore possible — ou qu'il est bloqué.
 
 ## 2. État initial reproductible
-- `make demo` (ou `cd prototype && HACKVS_MODE=demo … uvicorn app.main:app`), puis console → « Nouvelle démonstration »
+- `make demo` — journal dans un FICHIER (`prototype/var/club_pulse.db`) et secret STABLE (`prototype/var/secret_demo`,
+  tiré une fois, hors dépôt : ne jamais le supprimer pendant le hackathon, sessions et QR juré en dépendent) ; puis
+  console → « Nouvelle démonstration »
   (ou `POST /api/pulse/demo/reinitialiser`). Date simulée : mardi 06.10.2026, pendant la Foire du Valais (2–11 octobre 2026) ; la scène : jeudi 08.10.
   La vidéo `captures/action/demo_action.webm` et les captures ont été **réenregistrées au commit `a03bfa6`** (Phase 3),
   aux dates actuelles (06.10 / 08.10) : `scripts/enregistrer_demo.py`.
@@ -108,6 +110,7 @@ exécuté, l'IA non nécessaire à cette démo ; (3) le test terrain proposé (`
 | Téléphones qui ne se connectent pas | régie `/demo/regie` sur un seul écran : deux sessions distinctes dans deux cadres | « deux sessions sur une machine » |
 | Fournisseur IA | aucun impact : Établi → « Éteindre l'IA » (ou aucun modèle configuré) ; chaque résultat dit « forme déterministe, sans IA » ; même état métier (parité testée) | « l'IA propose, le code décide : sans elle, le formulaire » |
 | Réseau de la salle | tout est local : E2E vérifiés en « mode salle » (espace réseau vide, IA OFF) en CI | — |
+| Le serveur plante, l'ordinateur redémarre | `make demo` : le monde revient tel quel — étape de la régie, Établi, sessions des téléphones, QR juré non scanné, interrupteur IA, sorties IA rejouées sans modèle (`tests/test_redemarrage_kill9.py`, répété samedi matin : § 9) | « le journal est la source de vérité : on rejoue, on n'improvise pas » |
 | Tout tombe | la vidéo `demo_action.webm` : **exécution réelle enregistrée, sans montage**, commit indiqué à l'image | « enregistrement, pas du direct » |
 
 ## 9. Répétition
@@ -116,3 +119,14 @@ exécuté, l'IA non nécessaire à cette démo ; (3) le test terrain proposé (`
 2. Nouvelle démonstration ; parcours complet deux fois, dont une fois avec une heure « bloquante » (18:00).
 3. Vérifier sur l'écran commun : aucun nom, aucun texte d'offre, « joué par l'équipe » présent, date simulée affichée.
 4. Chronométrer le script à voix haute ; couper s'il dépasse (priorité : la question au jury avant 0:45).
+5. **Rituel d'avant-scène — samedi matin, SUR LA MACHINE DE DÉMONSTRATION** (F29 : on prouve la reprise, on ne la
+   suppose pas) :
+   1. `make demo` ; console → « Nouvelle démonstration » ; régie → avancer de deux étapes ; activer Sophie sur son
+      téléphone ; émettre un QR juré **sans le scanner** ; éteindre puis rallumer l'IA (Établi).
+   2. Noter : l'étape de la régie, le statut de « Accueillir une délégation d'acheteurs germanophones » sur l'Établi, le
+      nombre d'actions de la console.
+   3. Tuer le serveur sans arrêt propre : `kill -9 $(pgrep -f "uvicorn app.main:app")`.
+   4. `make demo`.
+   5. Vérifier : même étape à la régie, même Établi, même nombre d'actions ; le téléphone de Sophie, rafraîchi, est
+      toujours connecté ; le QR juré non scanné s'active ; l'interrupteur IA est dans l'état laissé.
+   6. Un écart, un seul : ne pas improviser — le noter, « Nouvelle démonstration », et prévoir la vidéo de secours.
