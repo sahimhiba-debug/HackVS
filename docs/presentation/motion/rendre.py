@@ -5,7 +5,9 @@
 ffmpeg : n'importe quel binaire avec libx264 (par ex. `pip install imageio-ffmpeg`). Version complète : 0 → 610 s ;
 plusieurs segments en parallèle se recollent avec `ffmpeg -f concat`. Le rendu ne dépend que du temps : deux rendus
 du même fichier donnent les mêmes images."""
-import subprocess, sys, time
+import subprocess
+import sys
+import time
 from playwright.sync_api import sync_playwright
 FF = sys.argv[1]; t0 = float(sys.argv[2]); t1 = float(sys.argv[3]); out = sys.argv[4]; fps = 30
 from pathlib import Path
