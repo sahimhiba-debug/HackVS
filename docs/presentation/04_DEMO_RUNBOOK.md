@@ -111,8 +111,12 @@ montre la capture de la répétition en le disant. On ne clique jamais « Nouvel
 
 ## 6. Captures de secours (à produire SAMEDI MATIN, pendant le rituel, sur la machine de démonstration)
 
-Aucune capture de cette scène n'est versionnée (TODO-DEMO.md). Les produire pendant la répétition, dans l'ordre du
-§ 5, et les ranger dans `docs/presentation/captures/` (hors gel : documentation) :
+Une première série est versionnée depuis le 01.10 : `prototype/scripts/capturer_presentation.py` rejoue cette
+scène sur un serveur de démonstration neuf, IA éteinte, et écrit les captures ci-dessous (plus trois agrandissements
+pour les fiches du présentateur : `tel-2-recu-carte.png`, `etabli-3-retrait-carte.png`, `etabli-4-qr-jure-zoom.png`,
+et `tel-2b-retrait.png`, `etabli-4-qr-jure.png`). Ce sont des écrans réels, mais pris sur la machine de
+développement : samedi, les reprendre pendant la répétition, sur la machine de démonstration, dans l'ordre du § 5, et
+les ranger au même endroit, sous les mêmes noms (hors gel : documentation) :
 
 | Fichier | Écran | Moment |
 |---|---|---|
