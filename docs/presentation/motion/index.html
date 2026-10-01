@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Club Pulse — Motion</title>
+<style>
+@font-face { font-family: PJS; src: url(../../../prototype/web/pulse/polices/plus-jakarta-sans-latin-wght-normal.woff2) format('woff2'); font-weight: 200 800; }
+@font-face { font-family: PJS; src: url(../../../prototype/web/pulse/polices/plus-jakarta-sans-latin-ext-wght-normal.woff2) format('woff2'); font-weight: 200 800; unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: JBM; src: url(../../../prototype/web/pulse/polices/jetbrains-mono-latin-400-normal.woff2) format('woff2'); font-weight: 400; }
+@font-face { font-family: JBM; src: url(../../../prototype/web/pulse/polices/jetbrains-mono-latin-500-normal.woff2) format('woff2'); font-weight: 500; }
+:root { --rouge: #CD2128; --rouge2: #FF3B44; --encre: #141923; --nuit: #06080C; --blanc: #F5F3EF; --gris: #8A93A3; --vert: #16A34A; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+body { font-family: PJS, sans-serif; color: var(--blanc); -webkit-font-smoothing: antialiased; cursor: none; }
+#scene { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; background: var(--nuit); transform-origin: 0 0; }
+.sc { position: absolute; inset: 0; display: none; }
+.abs { position: absolute; }
+.mono { font-family: JBM, monospace; }
+.centre { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.titre { font-weight: 800; letter-spacing: -0.035em; line-height: 1.02; }
+.w { display: inline-block; overflow: hidden; vertical-align: top; padding: 0 0.04em 0.12em; margin-bottom: -0.12em; }
+.w > i { display: inline-block; font-style: normal; will-change: transform; }
+#lueur { position: absolute; inset: -20%; pointer-events: none; }
+#grain { position: absolute; inset: 0; pointer-events: none; opacity: .055; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+#vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55) 100%); }
+#hud { position: absolute; left: 64px; right: 64px; bottom: 44px; display: flex; justify-content: space-between; font-family: JBM, monospace; font-size: 15px; letter-spacing: .18em; text-transform: uppercase; color: rgba(245,243,239,.38); pointer-events: none; }
+#hud b { color: var(--rouge2); font-weight: 500; }
+.etiquette { font-family: JBM, monospace; font-size: 17px; letter-spacing: .16em; text-transform: uppercase; color: rgba(245,243,239,.55); }
+.pastille { display: inline-flex; align-items: center; gap: 10px; font-family: JBM, monospace; font-size: 16px; letter-spacing: .14em; text-transform: uppercase; padding: 9px 16px; border-radius: 99px; background: rgba(22,163,74,.16); color: #4ADE80; border: 1px solid rgba(74,222,128,.35); }
+.pastille::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: #4ADE80; box-shadow: 0 0 12px #4ADE80; }
+/* carte de visite */
+.persp { position: absolute; inset: 0; perspective: 2200px; }
+.carte { position: absolute; width: 760px; height: 492px; left: 50%; top: 50%; margin: -246px 0 0 -380px; border-radius: 12px; padding: 58px 62px;
+  background: linear-gradient(140deg, #FBF7EF 0%, #F1EADD 55%, #E9E0CF 100%); color: var(--encre); transform-style: preserve-3d;
+  box-shadow: 0 2px 0 rgba(255,255,255,.6) inset, 0 60px 120px rgba(0,0,0,.55), 0 18px 40px rgba(0,0,0,.35); }
+.carte .nom { font-size: 58px; font-weight: 800; letter-spacing: -0.03em; margin-top: 26px; }
+.carte .metier { font-size: 27px; font-weight: 500; color: #4B5563; margin-top: 8px; }
+.carte .lieu { position: absolute; left: 62px; bottom: 56px; font-size: 21px; color: #6B7280; font-weight: 600; letter-spacing: .02em; }
+.carte .barres { position: absolute; right: 62px; bottom: 58px; display: grid; gap: 14px; justify-items: end; }
+.carte .barres i { display: block; height: 10px; border-radius: 6px; background: #D6CDBD; }
+.carte .brin { position: absolute; right: 58px; top: 52px; }
+.mini { position: absolute; width: 150px; height: 97px; border-radius: 5px; box-shadow: 0 6px 14px rgba(0,0,0,.45); padding: 14px; }
+.mini i { display: block; height: 7px; border-radius: 4px; background: rgba(20,25,35,.18); margin-bottom: 8px; }
+/* écrans réels */
+.ecran { position: absolute; left: 0; top: 0; width: 1440px; height: 900px; transform-origin: 0 0; border-radius: 10px; overflow: hidden; box-shadow: 0 40px 120px rgba(0,0,0,.6); }
+.ecran img { width: 1440px; height: 900px; display: block; }
+.spot { position: absolute; border-radius: 16px; box-shadow: 0 0 0 3000px rgba(6,8,12,.82); border: 3px solid #fff; }
+.tel { position: absolute; width: 440px; height: 916px; border-radius: 64px; background: #0B0D12; padding: 16px; box-shadow: 0 0 0 2px #2A2F3A, 0 50px 120px rgba(0,0,0,.6); }
+.tel .vitre { width: 408px; height: 884px; border-radius: 50px; overflow: hidden; position: relative; background: #F1F2F4; }
+.tel .vitre img { position: absolute; left: 0; top: 0; width: 408px; }
+.fondu { transition: none; }
+/* chiffres */
+.chiffre b { display: block; font-family: JBM, monospace; font-weight: 500; font-size: 96px; letter-spacing: -0.04em; color: var(--blanc); line-height: 1; }
+.chiffre b.gel { color: rgba(245,243,239,.28); font-size: 64px; letter-spacing: .02em; border-bottom: 2px dashed rgba(245,243,239,.22); padding-bottom: 10px; display: inline-block; }
+.chiffre span { display: block; font-size: 22px; color: var(--gris); margin-top: 18px; line-height: 1.35; font-weight: 500; }
+.bloc { position: absolute; width: 74px; height: 74px; border-radius: 12px; }
+.point { position: absolute; width: 26px; height: 26px; border-radius: 50%; }
+#aide { position: absolute; right: 30px; top: 30px; background: rgba(0,0,0,.8); color: #fff; font: 15px/1.6 JBM, monospace; padding: 18px 22px; border-radius: 12px; display: none; z-index: 9; }
+video#film { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; display: none; object-fit: contain; }
+</style>
+</head>
+<body>
+<div id="scene">
+  <div id="lueur"></div>
+  <div id="couches"></div>
+  <div id="grain"></div>
+  <div id="vignette"></div>
+  <div id="hud"><span>Club Pulse <b>·</b> Hack VS 2026</span><span id="hud-chap"></span></div>
+</div>
+<video id="film" src="film.mp4" preload="auto" playsinline></video>
+<div id="aide">Espace / → / clic : suivant<br>← : revenir<br>1–8 : chapitre<br>D : démo de secours<br>F : plein écran · H : aide</div>
+<script src="chiffres.js"></script>
+<script>
+"use strict";
+// ============================================================ outils
+const CAP = "../captures/";
+const $ = (s, r = document) => r.querySelector(s);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, p) => a + (b - a) * p;
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+const E = {
+  out: p => 1 - Math.pow(1 - p, 3),
+  expo: p => p >= 1 ? 1 : 1 - Math.pow(2, -10 * p),
+  inout: p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2,
+  back: p => { const c = 1.45; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); },
+  in: p => p * p * p,
+};
+const tw = (t, a, b, ease = E.out) => ease(prog(t, a, b));
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function mots(texte) { return texte.split(" ").map(m => `<span class="w"><i>${m}</i></span>`).join(" "); }
+// révèle les mots d'un élément : entrée à t0 (décalage par mot), sortie à t1
+function texte(el, t, t0, t1 = 1e9, pas = 0.07, duree = 0.85) {
+  const ws = el.querySelectorAll(".w > i");
+  ws.forEach((w, k) => {
+    const pin = E.expo(prog(t, t0 + k * pas, t0 + k * pas + duree));
+    const pout = E.in(prog(t, t1 + k * pas * 0.5, t1 + k * pas * 0.5 + 0.5));
+    w.style.transform = `translateY(${(1 - pin) * 112 - pout * 112}%)`;
+    w.style.opacity = pin * (1 - pout);
+  });
+}
+const vis = (el, o) => { el.style.opacity = o; el.style.visibility = o <= 0.001 ? "hidden" : "visible"; };
+const anneau = (r, ep, coul, ouv = 0.25, rot = -90, extra = "") =>
+  `<svg width="${2 * r + ep * 2}" height="${2 * r + ep * 2}" viewBox="${-r - ep} ${-r - ep} ${2 * r + 2 * ep} ${2 * r + 2 * ep}" ${extra}>
+     <circle r="${r}" fill="none" stroke="${coul}" stroke-width="${ep}" stroke-linecap="round" data-anneau="${ouv}" transform="rotate(${rot})"
+       stroke-dasharray="${2 * Math.PI * r * (1 - ouv)} ${2 * Math.PI * r * ouv}"/></svg>`;
+function ouvrir(svg, ouv) { const c = svg.querySelector("circle"); const r = +c.getAttribute("r"); const L = 2 * Math.PI * r;
+  c.setAttribute("stroke-dasharray", `${L * (1 - ouv)} ${Math.max(L * ouv, 0.001)}`); }
+const LOGO = (taille, ouv = 11 / 44) => `<svg width="${taille}" height="${taille}" viewBox="0 0 24 24" class="logo"><rect x=".5" y=".5" width="23" height="23" rx="7" fill="#CD2128"/>
+  <circle cx="12" cy="12" r="7" fill="none" stroke="#FFF" stroke-width="2.7" stroke-linecap="round" stroke-dasharray="${44 * (1 - ouv)} ${44 * ouv}" transform="rotate(-90 12 12)"/>
+  <circle cx="7.05" cy="7.05" r="1.8" fill="#FFF"/></svg>`;
+
+// ============================================================ chapitres (temps continu, en secondes)
+// La version continue suit le minutage de 02_STRUCTURE (10:00) ; le lecteur de scène s'arrête aux repères.
+const CH = [
+  { id: 1, nom: "01 — La carte", t0: 0, t1: 45 },
+  { id: 2, nom: "02 — Entre deux événements", t0: 45, t1: 120 },
+  { id: 3, nom: "Le court métrage", t0: 120, t1: 265, film: true },
+  { id: 4, nom: "03 — Le vrai produit", t0: 265, t1: 310 },
+  { id: 5, nom: "04 — La démo · secours", t0: 310, t1: 430, demo: true },
+  { id: 6, nom: "05 — Ce qui est prouvé", t0: 430, t1: 490 },
+  { id: 7, nom: "06 — L'IA", t0: 490, t1: 550 },
+  { id: 8, nom: "07 — Et après", t0: 550, t1: 610 },
+];
+const FIN = 610;
+// repères du lecteur : [pause, reprise] — la version continue joue les attentes, le lecteur les saute au clic
+const REPERES = [
+  [8, 26], [34.5, 35], [44.9, 45],
+  [58.5, 59], [86, 86], [96.5, 97], [119.9, 120],
+  [271.5, 280], [284.5, 287], [306.5, 309.9], [309.95, 430],
+  [314, 340], [344, 370], [373, 385], [388, 400], [405, 420], [429.9, 430],
+  [435, 437], [446, 447], [459, 460], [467.5, 468], [489.9, 490],
+  [500.5, 504], [517.5, 520], [536.5, 540], [549.9, 550],
+  [558.5, 562], [568.5, 580], [585.5, 590], [599.9, 600], [609.9, 610],
+];
+
+const couches = $("#couches");
+const SC = [];
+function scene(t0, t1, html, maj, init) {
+  const el = document.createElement("div"); el.className = "sc"; el.innerHTML = html; couches.appendChild(el);
+  const s = { t0, t1, el, maj }; if (init) init(el); SC.push(s); return s;
+}
+
+// ------------------------------------------------------------ 1. LA CARTE (0–45)
+const brin = `<svg class="brin" width="70" height="90" viewBox="0 0 70 90"><path d="M35 88 C35 60 36 35 40 6" stroke="#5B7F55" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M37 52 C22 48 12 36 11 22 C25 25 35 36 37 52Z" fill="#7FA273"/><path d="M38 38 C52 33 60 22 60 9 C47 13 39 24 38 38Z" fill="#6E9564"/>
+  <path d="M36 68 C50 66 60 57 63 45 C49 47 39 56 36 68Z" fill="#8DB081"/></svg>`;
+const CARTE = `<div class="carte">${brin}<div class="mono" style="font-size:15px;letter-spacing:.2em;color:#9A8F7A">CARTE DE VISITE</div>
+  <div class="nom">Sophie</div><div class="metier">Tisanes de plantes alpines</div><div class="lieu">Orsières · Valais</div>
+  <div class="barres"><i style="width:230px"></i><i style="width:180px"></i></div></div>`;
+{
+  const R = rng(7); const minis = [];
+  const coul = ["#F7F2E8", "#E6ECF5", "#F4E4E4", "#E7F0E2", "#F3EED9", "#ECE7F3", "#FFFFFF"];
+  let mh = ""; for (let k = 0; k < 46; k++) {
+    const m = { x: 760 + R() * 400 - 75, y: 850 - Math.floor(k / 6) * 14 - R() * 10, r: (R() - .5) * 50, d: 26 + k * 0.105, c: coul[k % coul.length] };
+    minis.push(m); mh += `<div class="mini" style="background:${m.c}"><i style="width:70%"></i><i style="width:45%"></i></div>`; }
+  scene(0, 45, `
+    <div class="persp">${CARTE}</div>
+    <div class="abs titre q" style="left:1100px;top:400px;font-size:116px;width:760px;color:var(--blanc)">${mots("« On")} ${mots("s'appelle. »")}</div>
+    <div class="abs mono fictif" style="left:64px;top:52px;font-size:15px;letter-spacing:.2em;color:rgba(245,243,239,.4)">PERSONNAGE FICTIF</div>
+    <svg class="abs boite" width="1920" height="1080" style="left:0;top:0"><g fill="none" stroke="rgba(245,243,239,.75)" stroke-width="3" stroke-linejoin="round">
+      <path class="b1" d="M640 760 L1280 760 L1280 990 L640 990 Z"/><path class="b2" d="M640 760 L720 690 L1360 690 L1280 760 M1280 990 L1360 920 L1360 690"/></g></svg>
+    <div class="minis">${mh}</div>
+    <div class="centre apres"><div class="anneau-fond abs" style="left:50%;top:50%">${anneau(330, 26, "#CD2128", 0.22)}</div>
+      <div class="titre ea" style="font-size:210px;position:relative">${mots("Et")} ${mots("après ?")}</div></div>`,
+  (t, el, A) => {
+    const c = el.querySelector(".carte");
+    const pd = tw(t, 0.4, 3.6, E.out);
+    const sortie = tw(t, 26, 27.6, E.inout);
+    const x = lerp(-260, -260, pd) + sortie * 80, y = lerp(-1250, 0, pd) + sortie * 520;
+    const rx = lerp(70, 14, pd), rz = lerp(-24, -5, pd) + sortie * 30;
+    const sc = lerp(1, 1, pd) * (1 - sortie * 0.78);
+    c.style.transform = `translate3d(${x}px, ${y}px, 0) rotateX(${rx + Math.sin(A * .6) * 1.2}deg) rotateY(${Math.sin(A * .4) * 2}deg) rotateZ(${rz}deg) scale(${sc})`;
+    vis(c, Math.min(1, prog(t, 0.4, 0.9)) * (1 - prog(t, 27.4, 27.8)));
+    texte(el.querySelector(".q"), t, 4.4, 25.2, 0.12, 1.0);
+    vis(el.querySelector(".fictif"), prog(t, 3, 4) * (1 - prog(t, 25, 26)));
+    // boîte à chaussures : les cartons tombent
+    const boite = el.querySelector(".boite"); vis(boite, prog(t, 25.6, 26.4) * (1 - prog(t, 33, 34)));
+    boite.querySelectorAll("path").forEach((p, k) => { const L = 2600; p.style.strokeDasharray = L; p.style.strokeDashoffset = L * (1 - tw(t, 25.6 + k * .3, 27 + k * .3, E.inout)); });
+    el.querySelectorAll(".mini").forEach((m, k) => {
+      const d = minisData[k]; const p = tw(t, d.d, d.d + 0.75, E.back);
+      m.style.transform = `translate(${d.x}px, ${lerp(-180, d.y, p)}px) rotate(${d.r * p + (1 - p) * 40}deg)`;
+      vis(m, prog(t, d.d, d.d + .05) * (1 - prog(t, 33, 34)));
+    });
+    // « Et après ? »
+    const ap = el.querySelector(".apres"); vis(ap, prog(t, 34.6, 35.2));
+    texte(el.querySelector(".ea"), t, 35.4, 1e9, 0.14, 1.1);
+    const an = el.querySelector(".anneau-fond"); const pa = tw(t, 35, 37.5, E.expo);
+    an.style.transform = `translate(-50%,-50%) rotate(${lerp(-60, 0, pa) + A * 4}deg) scale(${lerp(.6, 1, pa)})`; an.style.opacity = pa * .95;
+    ouvrir(an.querySelector("svg"), 0.22 + Math.sin(A * 1.3) * 0.015);
+  });
+  var minisData = minis;
+}
+
+// ------------------------------------------------------------ 2. ENTRE DEUX ÉVÉNEMENTS (45–120)
+{
+  const N = 220, R = rng(42); const P = [];
+  for (let k = 0; k < N; k++) { const a = R() * Math.PI * 2, r = 40 + Math.pow(R(), .7) * 250;
+    P.push({ a, r, dx: 280 + R() * 520, dy: (R() - .5) * 260, f: 23 + R() * 13, s: 1.4 + R() * 2.6, rouge: R() < .28 }); }
+  scene(45, 120, `
+    <div class="centre c1"><div class="titre l" style="font-size:104px;max-width:1500px">${mots("Ce qui se passe")}<br>${mots("entre deux événements.")}</div></div>
+    <canvas class="abs res" width="1920" height="1080" style="left:0;top:0"></canvas>
+    <div class="abs etiquette n1" style="left:180px;top:720px;width:360px;text-align:center">Foire du Valais</div>
+    <div class="abs etiquette n2" style="left:1380px;top:720px;width:360px;text-align:center">Prochain événement du Club</div>
+    <div class="abs titre vide" style="left:0;right:0;top:480px;text-align:center;font-size:120px;color:var(--rouge2)">${mots("l'après.")}</div>
+    <div class="abs oui-fond" style="inset:0;background:var(--blanc)"></div>
+    <div class="centre oui"><div class="titre o" style="font-size:400px;color:var(--encre);letter-spacing:-0.05em">${mots("Oui.")}</div>
+      <div class="sous" style="font-size:40px;color:#6B7280;font-weight:500;margin-top:10px">(pas « on s'appelle »)</div></div>
+    <div class="centre jm"><div class="titre h" style="font-size:132px">${mots("L'homme qui")}<br>${mots("disait oui.")}</div></div>`,
+  (t, el, A) => {
+    texte(el.querySelector(".l"), t, 1, 13.4, 0.09, 1);
+    const cv = el.querySelector(".res"), g = cv.getContext("2d"); g.clearRect(0, 0, 1920, 1080);
+    const on = prog(t, 14, 15) * (1 - prog(t, 46, 47));
+    vis(cv, on); vis(el.querySelector(".n1"), on * prog(t, 15, 16)); vis(el.querySelector(".n2"), on * prog(t, 16, 17));
+    if (on > 0) {
+      const X1 = 360, X2 = 1560, Y = 640, ax = tw(t, 14.5, 17, E.inout);
+      g.strokeStyle = "rgba(245,243,239,.35)"; g.lineWidth = 2; g.beginPath(); g.moveTo(X1, Y); g.lineTo(lerp(X1, X2, ax), Y); g.stroke();
+      const pts = [];
+      for (const p of P) {
+        const b = tw(t, 17, 20.5, E.expo); const dr = tw(t, 21, 40, E.inout);
+        const x = X1 + Math.cos(p.a) * p.r * b + p.dx * dr, y = Y + Math.sin(p.a) * p.r * b * .62 + p.dy * dr * .4 - 40 * b;
+        const al = prog(t, 17, 17.6) * (1 - prog(t, p.f, p.f + 2.2));
+        if (al > 0) pts.push([x, y, al, p]);
+      }
+      for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+        const dx = pts[i][0] - pts[j][0], dy = pts[i][1] - pts[j][1], d = dx * dx + dy * dy;
+        if (d < 8100) { g.strokeStyle = `rgba(245,243,239,${Math.min(pts[i][2], pts[j][2]) * (1 - Math.sqrt(d) / 90) * .32})`; g.lineWidth = 1; g.beginPath(); g.moveTo(pts[i][0], pts[i][1]); g.lineTo(pts[j][0], pts[j][1]); g.stroke(); }
+      }
+      for (const [x, y, al, p] of pts) { g.fillStyle = p.rouge ? `rgba(255,59,68,${al})` : `rgba(245,243,239,${al * .9})`; g.beginPath(); g.arc(x, y, p.s, 0, 7); g.fill(); }
+      for (const [X, k] of [[X1, 0], [X2, 1]]) { const pu = k ? .5 + .5 * Math.sin(A * 2.2) : 1; const a = prog(t, 15 + k, 16 + k);
+        g.fillStyle = `rgba(205,33,40,${a})`; g.beginPath(); g.arc(X, Y, 13, 0, 7); g.fill();
+        g.strokeStyle = `rgba(255,59,68,${a * .5 * pu})`; g.lineWidth = 2; g.beginPath(); g.arc(X, Y, 26 + (k ? 10 * (1 - pu) : 0), 0, 7); g.stroke(); }
+    }
+    texte(el.querySelector(".vide"), t, 40.5, 46.2, 0.1, 1.2);
+    const of = el.querySelector(".oui-fond"); vis(of, prog(t, 47, 47.35) * (1 - prog(t, 70, 70.2)));
+    const ou = el.querySelector(".oui"); vis(ou, prog(t, 47.2, 47.3) * (1 - prog(t, 70, 70.2)));
+    texte(el.querySelector(".o"), t, 47.6, 1e9, 0, 1.1);
+    const o = el.querySelector(".o"); o.style.transform = `scale(${lerp(1.08, 1, tw(t, 47.6, 52, E.out))})`;
+    vis(el.querySelector(".sous"), prog(t, 49, 50));
+    vis(el.querySelector(".jm"), prog(t, 71.5, 71.6));
+    texte(el.querySelector(".h"), t, 71.8, 74.2, 0.12, 1);
+  });
+}
+
+// ------------------------------------------------------------ COURT MÉTRAGE (120–265)
+scene(120, 265, `<div class="centre"><div class="etiquette" style="font-size:20px;color:rgba(245,243,239,.5)">Court métrage</div>
+  <div class="titre" style="font-size:44px;margin-top:22px;color:rgba(245,243,239,.8)">L'homme qui disait oui</div>
+  <div class="abs barre" style="left:760px;top:640px;width:400px;height:2px;background:rgba(245,243,239,.12)"><div class="rempli" style="height:2px;background:var(--rouge2);width:0"></div></div>
+  <div class="abs mono tc" style="left:0;right:0;top:666px;font-size:16px;letter-spacing:.2em;color:rgba(245,243,239,.35)"></div></div>`,
+  (t, el) => {
+    el.firstElementChild.style.opacity = prog(t, 1, 2) * (1 - prog(t, 143, 144.5));
+    el.querySelector(".rempli").style.width = (prog(t, 0, 145) * 100) + "%";
+    const s = Math.floor(Math.min(t, 145)); el.querySelector(".tc").textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")} / 2:25 · emplacement du film`;
+  });
+
+// ------------------------------------------------------------ 3. LE VRAI PRODUIT (265–310)
+{
+  const PIECES = [ // colonnes de la carte (coordonnées CSS de l'Établi 1440×900)
+    { x: 46, y: 380, w: 129, h: 389, mot: "une salle", ok: true },
+    { x: 325, y: 380, w: 129, h: 389, mot: "quelqu'un qui parle allemand", ok: true },
+    { x: 185, y: 380, w: 130, h: 389, mot: "un minibus", ok: false },
+  ];
+  scene(265, 310, `
+    <div class="centre e1"><div class="anneau-fond abs" style="left:50%;top:50%">${anneau(330, 26, "#CD2128", 0.22)}</div>
+      <div class="titre ea" style="font-size:210px;position:relative">${mots("Et")} ${mots("après ?")}</div></div>
+    <div class="centre e2"><div class="titre g" style="font-size:112px">${mots("Le même geste.")}<br>${mots("Dans le vrai produit.")}</div></div>
+    <div class="abs iris" style="inset:0"><div class="ecran"><img src="${CAP}etabli-1-manque.png"></div><div class="spot"></div></div>
+    <div class="abs iris-anneau" style="left:960px;top:540px">${anneau(100, 14, "#CD2128", 0.22)}</div>
+    <div class="abs panneau" style="left:1020px;top:0;width:900px;height:1080px;background:linear-gradient(90deg,rgba(6,8,12,0),rgba(6,8,12,.92) 22%,rgba(6,8,12,.96))"></div>
+    <div class="abs reel" style="left:64px;top:52px"><span class="pastille">Écran réel · /etabli · IA éteinte</span></div>
+    <div class="abs legendes" style="left:1130px;top:300px;width:700px">
+      ${PIECES.map((p, k) => `<div class="lg" style="position:absolute;top:${k * 170}px;left:0;width:700px">
+        <div class="mono" style="font-size:18px;letter-spacing:.18em;color:${p.ok ? "#4ADE80" : "var(--rouge2)"}">${p.ok ? "✓ DÉCLARÉE · CONSENTIE" : "● IL MANQUE"}</div>
+        <div class="titre" style="font-size:58px;margin-top:8px;color:${p.ok ? "var(--blanc)" : "var(--rouge2)"}">${p.mot}</div></div>`).join("")}
+    </div>`,
+  (t, el, A) => {
+    vis(el.querySelector(".e1"), prog(t, 2.5, 3) * (1 - prog(t, 14.5, 15.2)));
+    texte(el.querySelector(".ea"), t, 3, 14.4, 0.14, 1.1);
+    const an = el.querySelector(".e1 .anneau-fond"); const pa = tw(t, 2.6, 5, E.expo);
+    an.style.transform = `translate(-50%,-50%) rotate(${lerp(-60, 0, pa) + A * 4}deg) scale(${lerp(.6, 1, pa)})`; an.style.opacity = pa * .95;
+    vis(el.querySelector(".e2"), prog(t, 15.6, 15.7) * (1 - prog(t, 22.4, 22.8)));
+    texte(el.querySelector(".e2 .g"), t, 15.8, 21.6, 0.1, 1);
+    // iris : l'anneau s'ouvre sur l'écran réel
+    const pi = tw(t, 22.4, 25.2, E.inout); const rayon = lerp(0, 1250, pi);
+    const ia = el.querySelector(".iris-anneau"); vis(ia, prog(t, 22.2, 22.5) * (1 - prog(t, 24.6, 25.3)));
+    ia.style.transform = `translate(-50%,-50%) scale(${lerp(0.4, 12.5, pi)}) rotate(${pi * 90}deg)`;
+    const iris = el.querySelector(".iris"); vis(iris, prog(t, 22.4, 22.6));
+    iris.style.clipPath = `circle(${rayon}px at 960px 540px)`;
+    // caméra : plan large → la carte
+    const pc = tw(t, 26, 29.5, E.inout);
+    const cx = lerp(720, 549, pc), cy = lerp(450, 528, pc), z = lerp(1.3, 1.62, pc);
+    const ec = el.querySelector(".ecran"); ec.style.transform = `translate(${960 - cx * z}px, ${540 - cy * z}px) scale(${z})`;
+    vis(el.querySelector(".reel"), prog(t, 25.5, 26.5)); vis(el.querySelector(".panneau"), prog(t, 29.6, 30.6));
+    // projecteur sur chaque pièce
+    const etapes = [30.5, 32.8, 35.2]; let k = -1; etapes.forEach((e, i) => { if (t >= e) k = i; });
+    const sp = el.querySelector(".spot"); const on = prog(t, 30.2, 30.8);
+    vis(sp, on);
+    const proj = (x, y) => [960 + (x - cx) * z, 540 + (y - cy) * z];
+    if (k >= 0) {
+      const a = PIECES[Math.max(0, k - 1)], b = PIECES[k]; const pm = k === 0 ? 1 : tw(t, etapes[k], etapes[k] + .7, E.inout);
+      const x = lerp(a.x, b.x, pm) - 6, y = lerp(a.y, b.y, pm) - 6; const [px, py] = proj(x, y);
+      sp.style.left = px + "px"; sp.style.top = py + "px"; sp.style.width = (b.w + 12) * z + "px"; sp.style.height = (b.h + 12) * z + "px";
+      const rouge = !b.ok && pm > .5; const pul = rouge ? .5 + .5 * Math.sin(A * 5) : 0;
+      sp.style.borderColor = rouge ? `rgba(255,59,68,${.7 + .3 * pul})` : "#4ADE80";
+      sp.style.boxShadow = `0 0 0 3000px rgba(6,8,12,.82), 0 0 ${rouge ? 40 + 30 * pul : 24}px ${rouge ? "rgba(255,59,68,.8)" : "rgba(74,222,128,.5)"}`;
+    }
+    el.querySelectorAll(".lg").forEach((l, i) => { const p = tw(t, etapes[i] + .2, etapes[i] + 1, E.expo);
+      l.style.transform = `translateX(${(1 - p) * 60}px)`; vis(l, p * (i < k ? .45 : 1)); });
+  });
+}
+
+// ------------------------------------------------------------ 4. DÉMO · SECOURS (310–430)
+{
+  const ET = [ // [début local, téléphone, établi, légende]
+    [0, "tel-1-demande.png", "etabli-1-manque.png", "La demande arrive", "Trois boutons. Refuser sans se justifier."],
+    [30, "tel-1b-proposition.png", "etabli-1-manque.png", "Pauline écrit avec ses mots", "IA éteinte : forme déterministe. Elle remplit « 14 »."],
+    [60, "tel-1b-proposition.png", "etabli-2-peut.png", "Oui.", "Le Club peut le faire."],
+    [75, "tel-2-recu.png", "etabli-2-peut.png", "Le reçu", "Daté. Référencé. Révocable."],
+    [90, "tel-2b-retrait.png", "etabli-3-retrait.png", "Le retrait", "Un rôle, jamais un nom."],
+    [110, "tel-3-jure.png", "etabli-4-qr-jure.png", "Le passe juré", "Vous jouez Markus — personnage fictif."],
+  ];
+  scene(310, 430, `
+    <div class="abs" style="left:64px;top:52px"><span class="pastille">Plan B · captures réelles de la démo</span></div>
+    <div class="tel" style="left:150px;top:96px"><div class="vitre">${ET.map(e => `<img class="ti" src="${CAP}${e[1]}">`).join("")}
+      <div class="hl abs" style="border:3px solid var(--rouge2);border-radius:12px;box-shadow:0 0 30px rgba(255,59,68,.6)"></div></div></div>
+    <div class="abs" style="left:680px;top:150px;width:1180px;height:737px;border-radius:10px;overflow:hidden;box-shadow:0 40px 120px rgba(0,0,0,.6)">
+      ${ET.map(e => `<img class="ei abs" src="${CAP}${e[2]}" style="left:0;top:0;width:1180px">`).join("")}</div>
+    <div class="abs leg" style="left:680px;top:912px;width:1180px">${ET.map((e, k) => `<div class="lgd abs" style="left:0;top:0">
+      <span class="mono" style="font-size:18px;letter-spacing:.18em;color:var(--rouge2)">0${k + 1}</span>
+      <span class="titre" style="font-size:44px;margin-left:18px">${e[3]}</span>
+      <span style="font-size:26px;color:var(--gris);margin-left:18px;font-weight:500">${e[4]}</span></div>`).join("")}</div>`,
+  (t, el) => {
+    let k = 0; ET.forEach((e, i) => { if (t >= e[0]) k = i; });
+    const tis = el.querySelectorAll(".ti"), eis = el.querySelectorAll(".ei"), lgs = el.querySelectorAll(".lgd");
+    ET.forEach((e, i) => {
+      const a = i === 0 ? 1 : tw(t, e[0], e[0] + .8, E.inout); const b = i + 1 < ET.length ? 1 - tw(t, ET[i + 1][0], ET[i + 1][0] + .8, E.inout) : 1;
+      const sameT = i > 0 && ET[i - 1][1] === e[1], sameE = i > 0 && ET[i - 1][2] === e[2];
+      vis(tis[i], i === k ? 1 : (i === k - 1 ? b : 0)); vis(eis[i], i === k ? 1 : (i === k - 1 ? b : 0));
+      if (i === k && !sameT) vis(tis[i], a); if (i === k && !sameE) vis(eis[i], a);
+      const pl = tw(t, e[0] + .3, e[0] + 1.1, E.expo); lgs[i].style.transform = `translateY(${(1 - pl) * 30}px)`; vis(lgs[i], i === k ? pl : 0);
+    });
+    // défilement doux du reçu, mise en évidence « forme déterministe »
+    const s = 408 / 390; tis[3].style.transform = `translateY(${-tw(t, 77, 80, E.inout) * 180}px)`;
+    const hl = el.querySelector(".hl"); const hon = prog(t, 34, 35) * (1 - prog(t, 59, 60));
+    vis(hl, hon); hl.style.left = 30 * s + "px"; hl.style.top = 548 * s + "px"; hl.style.width = 312 * s + "px"; hl.style.height = 38 * s + "px";
+  });
+}
+
+// ------------------------------------------------------------ 5. CE QUI EST PROUVÉ (430–490)
+{
+  const C = window.CHIFFRES || {};
+  const fmt = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  const val = v => v === null || v === undefined ? null : v;
+  const COL = [
+    [val(C.tests), "tests"], [val(C.parcours), "parcours de bout en bout, aussi réseau coupé"],
+    [C.mutants_tues != null && C.mutants_total != null ? `${fmt(C.mutants_tues)}/${fmt(C.mutants_total)}` : null, "mutants tués, survivants tous classés"],
+    ["< 1 s", "geste → écran commun, mesuré"], ["0", "écriture sans geste"]];
+  const blocs = []; const R = rng(9); for (let k = 0; k < 24; k++) blocs.push({ c: R() < .35 ? "var(--rouge)" : (R() < .5 ? "rgba(245,243,239,.9)" : "rgba(245,243,239,.25)"), fx: (R() - .5) * 600, fy: 300 + R() * 300, fr: (R() - .5) * 200 });
+  scene(430, 490, `
+    <div class="centre p0"><div class="titre l" style="font-size:112px">${mots("Ce qui est prouvé.")}<br>${mots("Rien de plus.")}</div></div>
+    <div class="abs p1" style="inset:0">
+      <div class="abs" style="left:150px;top:330px;width:760px"><div class="mono" style="font-size:20px;letter-spacing:.2em;color:var(--rouge2)">01</div>
+        <div class="titre tt" style="font-size:120px;margin-top:10px">${mots("Le reçu")}</div>
+        <div class="trois" style="margin-top:30px;font-size:44px;font-weight:700">${["daté", "référencé", "révocable"].map(m => `<span class="m" style="margin-right:28px">${m}</span>`).join("")}</div></div>
+      <div class="abs recu" style="left:1040px;top:200px;width:716px;height:636px;transform-origin:50% 50%">
+        <img src="${CAP}tel-2-recu-carte.png" style="width:716px;border-radius:22px;box-shadow:0 50px 120px rgba(0,0,0,.6);display:block">
+        ${[[36, 278, 420, 40], [36, 316, 300, 40], [36, 512, 404, 92]].map(r => `<div class="hr abs" style="left:${r[0]}px;top:${r[1]}px;width:${r[2]}px;height:${r[3]}px;border:3px solid var(--rouge2);border-radius:12px;box-shadow:0 0 24px rgba(255,59,68,.55)"></div>`).join("")}
+        <div class="abs mono" style="left:0;top:660px;font-size:15px;letter-spacing:.18em;color:rgba(245,243,239,.45)">ÉCRAN RÉEL · TÉLÉPHONE DE PAULINE (FICTIVE)</div></div></div>
+    <div class="abs p2" style="inset:0">
+      <div class="abs" style="left:150px;top:330px;width:760px"><div class="mono" style="font-size:20px;letter-spacing:.2em;color:var(--rouge2)">02</div>
+        <div class="titre tt" style="font-size:120px;margin-top:10px">${mots("Le journal")}</div>
+        <div class="st" style="margin-top:30px;font-size:40px;font-weight:600;color:var(--gris)">le serveur meurt,<br><span style="color:var(--blanc)">le monde revient.</span></div></div>
+      <div class="abs monde" style="left:1080px;top:230px;width:640px;height:560px">
+        ${blocs.map((b, k) => `<div class="bloc" style="left:${(k % 6) * 106}px;top:${Math.floor(k / 6) * 106}px;background:${b.c}"></div>`).join("")}
+        <div class="abs bande" style="left:0;top:470px;width:620px;height:10px;border-radius:5px;background:rgba(245,243,239,.12)"><div class="br" style="height:10px;border-radius:5px;background:var(--rouge2);width:0"></div></div>
+        <div class="abs mono etat" style="left:0;top:500px;font-size:18px;letter-spacing:.16em"></div></div>
+      <div class="abs flash" style="inset:0;background:var(--rouge)"></div></div>
+    <div class="abs p3" style="inset:0">
+      <div class="centre"><div class="mono" style="font-size:20px;letter-spacing:.2em;color:var(--rouge2)">03 · LE RETRAIT</div>
+        <div class="titre nom mono" style="font-size:170px;margin-top:26px;letter-spacing:-0.02em;font-family:JBM,monospace;font-weight:500"></div>
+        <div class="st" style="margin-top:34px;font-size:44px;font-weight:700">un rôle, <span style="color:var(--rouge2)">jamais un nom.</span></div></div></div>
+    <div class="abs p4" style="inset:0">
+      <div class="abs mono" style="left:150px;top:190px;font-size:20px;letter-spacing:.2em;color:var(--rouge2)">LES CHIFFRES DU GEL · VENDREDI 02.10 · 18:00</div>
+      <div class="abs" style="left:150px;right:150px;top:330px;display:grid;grid-template-columns:repeat(5,1fr);gap:44px">
+        ${COL.map(c => `<div class="chiffre">${c[0] === null ? `<b class="gel">[GEL]</b>` : `<b>${typeof c[0] === "number" ? fmt(c[0]) : c[0]}</b>`}<span>${c[1]}</span></div>`).join("")}</div>
+      <div class="abs mono" style="left:150px;bottom:120px;font-size:16px;letter-spacing:.14em;color:rgba(245,243,239,.35)">SOURCE : PREUVES.MD · TAG GEL-DEMO</div></div>`,
+  (t, el, A) => {
+    vis(el.querySelector(".p0"), prog(t, .1, .2) * (1 - prog(t, 6.2, 6.8))); texte(el.querySelector(".p0 .l"), t, .5, 6, .09, 1);
+    // 01 le reçu
+    const p1 = el.querySelector(".p1"); vis(p1, prog(t, 6.8, 7) * (1 - prog(t, 16.4, 17)));
+    texte(p1.querySelector(".tt"), t, 7, 16.2, .1, 1);
+    const r = p1.querySelector(".recu"); const pr = tw(t, 7.2, 9, E.expo);
+    r.style.transform = `perspective(1600px) translateY(${(1 - pr) * 120}px) rotateY(${lerp(-28, -10, pr) + Math.sin(A * .5) * 2}deg) rotateX(${4 + Math.sin(A * .4)}deg)`; vis(r, pr);
+    p1.querySelectorAll(".m").forEach((m, k) => { const p = prog(t, 9.6 + k * 1.6, 10.2 + k * 1.6); m.style.color = p > 0 ? "var(--blanc)" : "rgba(245,243,239,.25)"; m.style.textShadow = p > 0 ? "0 0 30px rgba(255,59,68,.6)" : "none"; });
+    p1.querySelectorAll(".hr").forEach((h, k) => vis(h, prog(t, 9.6 + k * 1.6, 10 + k * 1.6)));
+    // 02 le journal
+    const p2 = el.querySelector(".p2"); vis(p2, prog(t, 16.8, 17.2) * (1 - prog(t, 29.4, 30)));
+    texte(p2.querySelector(".tt"), t, 17, 29.2, .1, 1);
+    const mort = 21, rejeu = 23.2;
+    p2.querySelectorAll(".bloc").forEach((b, k) => {
+      const d = blocs[k]; const app = tw(t, 17.4 + k * .06, 18 + k * .06, E.back);
+      const chute = tw(t, mort, mort + .9, E.in); const ret = tw(t, rejeu + k * .13, rejeu + k * .13 + .5, E.back);
+      const dead = t >= mort && t < rejeu + k * .13;
+      const x = dead ? d.fx * chute : 0, y = dead ? d.fy * chute : (t >= rejeu ? (1 - ret) * 380 : 0);
+      b.style.transform = `translate(${x}px, ${y}px) rotate(${dead ? d.fr * chute : 0}deg) scale(${t < mort ? app : (dead ? 1 : ret)})`;
+      vis(b, t < mort ? app : (dead ? 1 - chute : ret));
+    });
+    p2.querySelector(".br").style.width = (t < rejeu ? prog(t, 17.4, mort) : prog(t, rejeu, rejeu + 3.3)) * 100 + "%";
+    const et = p2.querySelector(".etat");
+    et.textContent = t < mort ? "journal : chaque geste s'ajoute" : (t < rejeu ? "arrêt brutal du serveur" : (t < rejeu + 3.4 ? "rejeu du journal…" : "le monde revient, tel quel"));
+    et.style.color = t >= mort && t < rejeu ? "var(--rouge2)" : (t >= rejeu + 3.4 ? "#4ADE80" : "rgba(245,243,239,.55)");
+    const fl = p2.querySelector(".flash"); vis(fl, t >= mort && t < mort + .5 ? (1 - prog(t, mort, mort + .5)) * .55 * (Math.floor(t * 30) % 2 ? 1 : .3) : 0);
+    // 03 le retrait : le nom devient un rôle
+    const p3 = el.querySelector(".p3"); vis(p3, prog(t, 30, 30.3) * (1 - prog(t, 37.6, 38.2)));
+    const A1 = "Pauline", A2 = "transport", G = "ABCDEFGHJKLMNPRSTUVWXYZ#%&*+<>?";
+    const pm = prog(t, 31.8, 33.6); const L = Math.round(lerp(A1.length, A2.length, pm)); let s = "";
+    for (let i = 0; i < L; i++) { const seuil = i / L; s += pm <= 0 ? (A1[i] || "") : (pm >= 1 ? A2[i] : (pm > seuil + .25 ? A2[i] : (pm > seuil - .2 ? G[(Math.floor(t * 24) + i * 7) % G.length] : (A1[i] || "·")))); }
+    const nm = p3.querySelector(".nom"); nm.textContent = s; nm.style.color = pm >= 1 ? "var(--rouge2)" : "var(--blanc)";
+    vis(p3.querySelector(".st"), prog(t, 34, 34.8));
+    // 04 chiffres
+    const p4 = el.querySelector(".p4"); vis(p4, prog(t, 38.2, 38.6));
+    p4.querySelectorAll(".chiffre").forEach((c, k) => { const p = tw(t, 38.6 + k * .25, 39.6 + k * .25, E.expo); c.style.transform = `translateY(${(1 - p) * 50}px)`; vis(c, p); });
+  });
+}
+
+// ------------------------------------------------------------ 6. L'IA (490–550)
+{
+  const pts = []; for (let k = 0; k < 26; k++) pts.push({ ok: k === 17 });
+  scene(490, 550, `
+    <div class="centre i0"><div class="titre" style="font-size:118px;line-height:1.12">
+      <div class="li l1" style="color:rgba(245,243,239,.92)">L'IA propose.</div>
+      <div class="li l2">Les règles vérifient.</div>
+      <div class="li l3">Le membre <span style="position:relative">décide.<i class="soul abs" style="left:0;bottom:-6px;height:10px;background:var(--rouge);border-radius:5px;width:0"></i></span></div></div></div>
+    <div class="abs i1" style="inset:0">
+      <div class="abs bulle" style="left:90px;top:430px;width:560px;padding:30px 34px;border-radius:28px 28px 28px 6px;background:var(--blanc);color:var(--encre);font-size:31px;font-weight:600;line-height:1.3">« Mon minibus a 14 places, libre vendredi après-midi. »</div>
+      <div class="abs etiquette" style="left:90px;top:376px">les mots du membre</div>
+      <div class="abs prop" style="left:720px;top:450px;width:330px;padding:26px 30px;border-radius:18px;border:2px dashed rgba(245,243,239,.5)"><div class="mono" style="font-size:30px">places : <b style="color:var(--rouge2)">14</b></div></div>
+      <div class="abs etiquette" style="left:720px;top:396px">l'IA propose</div>
+      <div class="abs porte" style="left:1150px;top:330px;width:120px;height:380px"><i class="abs" style="left:0;top:0;width:8px;height:380px;background:var(--blanc);border-radius:4px"></i><i class="abs" style="left:112px;top:0;width:8px;height:380px;background:var(--blanc);border-radius:4px"></i>
+        <div class="abs mono ch" style="left:-30px;top:400px;width:200px;font-size:20px;line-height:1.7;text-align:center;color:#4ADE80">nombre ✓<br>≥ 12 ✓</div></div>
+      <div class="abs etiquette" style="left:1110px;top:276px;width:200px;text-align:center">les règles</div>
+      <div class="abs ouibtn" style="left:1420px;top:470px;padding:22px 64px;border-radius:99px;background:var(--blanc);color:var(--encre);font-size:44px;font-weight:800">Oui</div>
+      <div class="abs etiquette" style="left:1420px;top:396px">le membre décide</div>
+      <div class="abs jeton" style="width:22px;height:22px;border-radius:50%;background:var(--rouge2);box-shadow:0 0 24px var(--rouge2)"></div></div>
+    <div class="abs i2" style="inset:0">
+      <div class="abs mono" style="left:0;right:0;top:120px;text-align:center;font-size:20px;letter-spacing:.14em;color:rgba(245,243,239,.55)">APERTUS · SWISS-AI/APERTUS-V1.5-70B · API D'INFÉRENCE CSCS · MESURE DU 01.10</div>
+      <div class="abs porte2" style="left:955px;top:300px;width:10px;height:300px;background:var(--blanc);border-radius:5px"></div>
+      ${pts.map(() => `<div class="point"></div>`).join("")}
+      <div class="abs score" style="left:0;right:0;top:660px;text-align:center"><span class="mono" style="font-size:190px;font-weight:500;letter-spacing:-0.04em">1 / 26</span>
+        <div style="font-size:32px;color:var(--gris);font-weight:500;margin-top:6px">propositions justes du premier coup — 26 cas écrits avant l'appel</div></div>
+      <div class="abs mono lb1" style="left:1080px;top:270px;font-size:18px;letter-spacing:.14em;color:#4ADE80">ACCEPTÉE ET JUSTE</div>
+      <div class="abs mono lb2" style="left:150px;top:620px;width:760px;font-size:18px;letter-spacing:.14em;color:rgba(245,243,239,.55)">25 REJETÉES PAR LA VALIDATION → LE MEMBRE VOIT LE FORMULAIRE</div></div>
+    <div class="abs i3" style="inset:0">
+      <div class="centre"><div class="abs inter" style="left:810px;top:300px;width:300px;height:140px;border-radius:99px;border:3px solid var(--blanc)"><div class="bou abs" style="top:12px;width:110px;height:110px;border-radius:50%"></div>
+        <div class="abs mono lab" style="left:0;right:0;top:170px;font-size:22px;letter-spacing:.2em"></div></div>
+        <div class="titre" style="position:absolute;top:620px;left:0;right:0;font-size:64px">Même état du Club,<br><span style="color:var(--gris)">IA allumée ou éteinte.</span> <span style="color:#4ADE80">Testé.</span></div></div></div>`,
+  (t, el, A) => {
+    const i0 = el.querySelector(".i0"); vis(i0, prog(t, .1, .3) * (1 - prog(t, 13.4, 14)));
+    const l1 = el.querySelector(".l1"), l2 = el.querySelector(".l2"), l3 = el.querySelector(".l3");
+    const a1 = tw(t, .6, 2.4, E.out); l1.style.filter = `blur(${(1 - a1) * 24}px)`; l1.style.transform = `translateX(${Math.sin(A * 1.7) * 6 * a1}px)`; vis(l1, a1);
+    const a2 = t >= 3.4 ? 1 : 0; vis(l2, a2); l2.style.letterSpacing = t >= 3.4 && t < 3.55 ? "0.02em" : "-0.035em";
+    vis(l3, tw(t, 6, 6.8)); l3.style.transform = `translateY(${(1 - tw(t, 6, 6.8, E.expo)) * 40}px)`;
+    el.querySelector(".soul").style.width = tw(t, 7.2, 8.4, E.inout) * 100 + "%";
+    // chaîne
+    const i1 = el.querySelector(".i1"); vis(i1, prog(t, 14, 14.5) * (1 - prog(t, 29.4, 30)));
+    vis(el.querySelector(".bulle"), tw(t, 14.4, 15.2)); vis(el.querySelector(".prop"), tw(t, 18, 18.8)); vis(el.querySelector(".porte .ch"), tw(t, 21.6, 22.2));
+    const ob = el.querySelector(".ouibtn"); const pres = prog(t, 24.6, 24.9) * (1 - prog(t, 25.1, 25.5));
+    ob.style.transform = `scale(${1 - pres * .08})`; ob.style.background = t > 24.8 ? "var(--encre)" : "var(--blanc)"; ob.style.color = t > 24.8 ? "var(--blanc)" : "var(--encre)"; ob.style.boxShadow = t > 24.8 ? "0 0 0 3px var(--blanc), 0 0 50px rgba(255,255,255,.3)" : "none";
+    const j = el.querySelector(".jeton"); const seg = [[15.4, 17.6, 580, 545, 720, 545], [18.8, 20.8, 1050, 545, 1150, 520], [20.8, 22.4, 1150, 520, 1270, 520], [22.6, 24.4, 1270, 520, 1420, 545]];
+    let jx = 580, jy = 545; for (const [a, b, x1, y1, x2, y2] of seg) { if (t >= a) { const p = tw(t, a, b, E.inout); jx = lerp(x1, x2, p); jy = lerp(y1, y2, p); } }
+    j.style.left = jx - 11 + "px"; j.style.top = jy - 11 + "px"; vis(j, prog(t, 15.4, 15.6) * (1 - prog(t, 24.4, 24.6)));
+    // 1 sur 26
+    const i2 = el.querySelector(".i2"); vis(i2, prog(t, 30, 30.4) * (1 - prog(t, 49.4, 50)));
+    let rej = 0;
+    el.querySelectorAll(".point").forEach((p, k) => {
+      const d = pts[k]; const t0 = 31 + k * .38; const pa = tw(t, t0, t0 + .9, E.inout);
+      const sx = 150 + (k % 13) * 46, sy = 380 + Math.floor(k / 13) * 46;
+      let x, y, c, o = prog(t, 30.4 + k * .02, 30.8 + k * .02);
+      if (d.ok) { const p2 = tw(t, t0 + .9, t0 + 1.8, E.inout); x = lerp(sx, 950, pa) + p2 * 230; y = lerp(sy, 440, pa) - p2 * 120; c = pa >= 1 ? "#4ADE80" : "var(--blanc)"; }
+      else { const p2 = tw(t, t0 + .9, t0 + 1.5, E.out); const r = d.ok ? 0 : (k > 17 ? k - 1 : k); x = lerp(sx, 925, pa); y = lerp(sy, 440, pa);
+        if (pa >= 1) { x = lerp(925, 150 + r * 30.5, p2); y = lerp(440, 580, p2); rej++; } c = pa >= 1 ? "rgba(245,243,239,.35)" : "var(--blanc)"; }
+      p.style.left = x + "px"; p.style.top = y + "px"; p.style.background = c; vis(p, o);
+      if (d.ok && pa >= 1) p.style.boxShadow = "0 0 26px #4ADE80"; else p.style.boxShadow = "none";
+    });
+    vis(el.querySelector(".lb1"), prog(t, 31 + 17 * .38 + 1.8, 31 + 17 * .38 + 2.3));
+    vis(el.querySelector(".lb2"), prog(t, 38, 39));
+    const sc = el.querySelector(".score"); const ps = tw(t, 42.4, 43.6, E.expo); sc.style.transform = `translateY(${(1 - ps) * 40}px)`; vis(sc, ps);
+    // interrupteur
+    const i3 = el.querySelector(".i3"); vis(i3, prog(t, 50, 50.5));
+    const on = Math.floor(Math.max(0, t - 51) / 1.6) % 2 === 0; const pb = on ? 1 : 0;
+    const bo = el.querySelector(".bou"); bo.style.left = (on ? 176 : 12) + "px"; bo.style.background = on ? "var(--rouge)" : "rgba(245,243,239,.5)";
+    el.querySelector(".lab").textContent = on ? "IA ALLUMÉE" : "IA ÉTEINTE";
+    el.querySelector(".lab").style.color = on ? "var(--rouge2)" : "var(--gris)";
+  });
+}
+
+// ------------------------------------------------------------ 7. ET APRÈS (550–610)
+{
+  scene(550, 610, `
+    <div class="centre f0"><div class="anneau-fond abs" style="left:50%;top:50%">${anneau(330, 26, "#CD2128", 0.22)}</div>
+      <div class="titre ea" style="font-size:132px;position:relative;max-width:1760px">${mots("Et")} ${mots("après")}<span class="qm">&nbsp;?</span><span class="suite">${mots(", maintenant,")}<br>${mots("il se passe quelque chose.")}</span></div></div>
+    <div class="abs f1" style="inset:0">
+      <div class="persp" style="transform:translateX(-450px) scale(.82)">${CARTE}</div>
+      <div class="abs recu" style="left:1060px;top:222px"><img src="${CAP}tel-2-recu-carte.png" style="width:716px;border-radius:22px;display:block;box-shadow:0 50px 120px rgba(0,0,0,.6)"></div>
+      <div class="abs lien" style="left:880px;top:538px;height:3px;background:linear-gradient(90deg,rgba(245,243,239,.15),var(--rouge2));width:0"></div>
+      <div class="abs mono l1" style="left:285px;top:880px;width:640px;text-align:center;font-size:22px;letter-spacing:.18em;color:var(--gris)">« ON S'APPELLE. »</div>
+      <div class="abs mono l2" style="left:1060px;top:880px;width:716px;text-align:center;font-size:22px;letter-spacing:.18em;color:var(--blanc)">DATÉ · RÉFÉRENCÉ · <span style="color:var(--rouge2)">RÉVOCABLE</span></div>
+      <div class="abs mono l3" style="left:0;right:0;top:120px;text-align:center;font-size:22px;letter-spacing:.24em;color:rgba(245,243,239,.6)">MÊME GESTE DE LA MAIN. CETTE FOIS, IL ENGAGE.</div></div>
+    <div class="centre f2"><div class="titre ph" style="font-size:112px;line-height:1.15">${mots("La Foire crée la rencontre.")}<br><span class="cp">${mots("Club Pulse crée l'après.")}</span></div></div>
+    <div class="centre f3"><div class="lg3"></div></div>
+    <div class="centre f4"><div class="lg4"></div><div class="titre" style="font-size:72px;margin-top:40px">Club Pulse</div>
+      <div style="font-size:30px;color:var(--gris);margin-top:16px;font-weight:500">Club des Affaires · Foire du Valais</div>
+      <div class="mono" style="position:absolute;bottom:110px;font-size:16px;letter-spacing:.14em;color:rgba(245,243,239,.35)">MONDE DE DÉMONSTRATION FICTIF · CHAQUE AFFIRMATION : DOCS/AUDIT/CLAIMS.MD</div></div>`,
+  (t, el, A) => {
+    const f0 = el.querySelector(".f0"); vis(f0, prog(t, 1, 1.4) * (1 - prog(t, 11.4, 12)));
+    texte(el.querySelector(".f0 .ea"), t, 1.4, 1e9, .14, 1.1);
+    const qm = el.querySelector(".qm"); vis(qm, prog(t, 2, 2.6) * (1 - prog(t, 4.4, 4.8))); qm.style.display = t > 4.8 ? "none" : "inline";
+    const su = el.querySelector(".suite"); su.style.display = t > 4.8 ? "inline" : "none"; texte(su, t, 5, 1e9, .1, 1);
+    const an = el.querySelector(".f0 .anneau-fond"); const pa = tw(t, 1, 3.5, E.expo);
+    an.style.transform = `translate(-50%,-50%) rotate(${lerp(-60, 0, pa) + A * 4}deg) scale(${lerp(.6, 1.35, pa) + tw(t, 5, 8, E.inout) * .5})`; an.style.opacity = pa * lerp(.6, .22, tw(t, 4.8, 6.5));
+    ouvrir(an.querySelector("svg"), lerp(.22, .02, tw(t, 5, 8, E.inout)));
+    // carte + reçu
+    const f1 = el.querySelector(".f1"); vis(f1, prog(t, 12, 12.4) * (1 - prog(t, 29.4, 30)));
+    const c = f1.querySelector(".carte"); const pc = tw(t, 12.2, 14.6, E.out);
+    c.style.transform = `translate3d(0, ${lerp(-900, 0, pc)}px, 0) rotateX(${lerp(60, 14, pc)}deg) rotateZ(${lerp(-20, -5, pc)}deg)`;
+    c.style.filter = `grayscale(${tw(t, 20, 23)}) brightness(${1 - tw(t, 20, 23) * .35})`;
+    const r = f1.querySelector(".recu"); const pr = tw(t, 14.6, 16.6, E.expo); r.style.transform = `perspective(1600px) translateX(${(1 - pr) * 200}px) rotateY(${lerp(-25, -8, pr) + Math.sin(A * .5) * 1.5}deg)`; vis(r, pr);
+    r.firstElementChild.style.boxShadow = `0 50px 120px rgba(0,0,0,.6), 0 0 ${tw(t, 20, 23) * 70}px rgba(255,59,68,${tw(t, 20, 23) * .55})`;
+    f1.querySelector(".lien").style.width = tw(t, 17, 18.6, E.inout) * 180 + "px";
+    vis(f1.querySelector(".l1"), prog(t, 16.8, 17.6)); vis(f1.querySelector(".l2"), prog(t, 17.4, 18.2)); vis(f1.querySelector(".l3"), prog(t, 18.6, 19.6));
+    // phrase finale (écrite) — le dernier membre se dit, il ne s'écrit pas
+    vis(el.querySelector(".f2"), prog(t, 30, 30.2) * (1 - prog(t, 39.4, 40)));
+    texte(el.querySelector(".ph"), t, 30.4, 39.2, .1, 1.1);
+    el.querySelector(".cp").style.color = "var(--rouge2)";
+    // l'anneau se ferme
+    const f3 = el.querySelector(".f3"); vis(f3, prog(t, 40.4, 41) * (1 - prog(t, 46.6, 47.6)));
+    const ferm = tw(t, 42, 44, E.inout); const lg = f3.querySelector(".lg3");
+    lg.innerHTML = LOGO(300, lerp(11 / 44, 0.0001, ferm));
+    lg.style.transform = `scale(${lerp(.9, 1, tw(t, 40.4, 42, E.expo)) + ferm * .04})`;
+    lg.style.filter = `drop-shadow(0 0 ${ferm * 80}px rgba(255,59,68,.7))`;
+    // fin : repères pour les questions
+    const f4 = el.querySelector(".f4"); vis(f4, prog(t, 50, 51.5));
+    const l4 = f4.querySelector(".lg4"); if (!l4.innerHTML) l4.innerHTML = LOGO(150);
+  });
+}
+
+// ============================================================ moteur
+const lueur = $("#lueur"), hudChap = $("#hud-chap"), hud = $("#hud");
+function rendre(t, A) {
+  for (const s of SC) {
+    const on = t >= s.t0 && t < s.t1;
+    s.el.style.display = on ? "block" : "none";
+    if (on) s.maj(t - s.t0, s.el, A);
+  }
+  const ch = CH.find(c => t >= c.t0 && t < c.t1) || CH[CH.length - 1];
+  hudChap.textContent = ch.film ? "" : ch.nom;
+  const hv = !ch.film && !(t > 597 && t < 600.5) && !(t >= 92 && t < 115) ? 1 : 0;
+  hud.style.opacity = hv * (t < 2 ? prog(t, 1, 2) : 1);
+  // lueur rouge, lente, différente par chapitre
+  const i = CH.indexOf(ch), ang = A * .05 + i * 1.7;
+  const lx = 50 + Math.cos(ang) * 22, ly = 55 + Math.sin(ang * 1.3) * 18;
+  const fort = ch.film ? 0 : (t >= 92 && t < 115 ? 0 : .22);
+  lueur.style.background = `radial-gradient(40% 50% at ${lx}% ${ly}%, rgba(205,33,40,${fort}), transparent 70%), radial-gradient(30% 40% at ${100 - lx}% ${100 - ly}%, rgba(80,90,120,${fort * .5}), transparent 70%)`;
+}
+
+const RENDU = new URLSearchParams(location.search).has("rendu");
+const scene_ = $("#scene");
+function ajuster() { const k = Math.min(innerWidth / 1920, innerHeight / 1080); scene_.style.transform = `translate(${(innerWidth - 1920 * k) / 2}px, ${(innerHeight - 1080 * k) / 2}px) scale(${k})`; }
+if (RENDU) {
+  window.seek = t => { rendre(t, t); return document.fonts.ready.then(() => true); };
+  window.DUREE = FIN;
+} else {
+  ajuster(); addEventListener("resize", ajuster);
+  let t = 0, dernier = performance.now(), arret = null, filmOk = false;
+  const film = $("#film");
+  film.addEventListener("loadeddata", () => { filmOk = true; });
+  film.addEventListener("ended", () => { film.style.display = "none"; t = 265; arret = null; });
+  const prochain = () => REPERES.find(r => r[0] > t + 1e-6);
+  function suivant() {
+    if (film.style.display === "block") { film.pause(); film.style.display = "none"; t = 265; arret = null; return; }
+    if (arret) { t = arret[1]; arret = null; }
+    else { const r = prochain(); if (r && !(t >= 120 && t < 265)) { t = r[0]; arret = r; return; } }
+    if (t >= 120 && t < 265 && filmOk) { film.currentTime = 0; film.style.display = "block"; film.play(); }
+  }
+  function precedent() { const r = [...REPERES].reverse().find(r => r[1] < t - .5); t = r ? r[1] : 0; arret = null; }
+  addEventListener("keydown", e => {
+    if (e.key === " " || e.key === "ArrowRight" || e.key === "PageDown" || e.key === "Enter") { e.preventDefault(); suivant(); }
+    else if (e.key === "ArrowLeft" || e.key === "PageUp") precedent();
+    else if (e.key >= "1" && e.key <= "8") { const c = CH[+e.key - 1]; t = c.t0; arret = null; film.pause(); film.style.display = "none"; }
+    else if (e.key === "d" || e.key === "D") { t = 310; arret = null; }
+    else if (e.key === "f" || e.key === "F") document.documentElement.requestFullscreen?.();
+    else if (e.key === "h" || e.key === "H") { const a = $("#aide"); a.style.display = a.style.display === "block" ? "none" : "block"; }
+  });
+  addEventListener("click", suivant);
+  (function boucle(now) {
+    const dt = Math.min(.1, (now - dernier) / 1000); dernier = now;
+    if (!arret && film.style.display !== "block") {
+      const r = prochain(); const nt = t + dt;
+      if (r && nt >= r[0]) { t = r[0]; arret = r; if (t >= 120 && t < 121 && filmOk) {} } else t = Math.min(nt, FIN - .01);
+      if (t >= 120 && t < 120.2 && filmOk && film.style.display !== "block") { film.currentTime = 0; film.style.display = "block"; film.play(); }
+    }
+    rendre(t, now / 1000);
+    requestAnimationFrame(boucle);
+  })(performance.now());
+}
+</script>
+</body>
+</html>
