@@ -233,8 +233,10 @@ test cité existe. Claims **D** (non prouvés) :
 
 ## 12. Known limitations
 
-- **IA.** Apertus n'a jamais été appelé depuis cet environnement ; l'évaluation EXTRACT est prête et gelée, mais n'a
-  pas tourné. Latence médiane du modèle : **non mesurée**.
+- **IA.** Apertus (`swiss-ai/Apertus-v1.5-70B`, API d'inférence CSCS) répond depuis cet environnement : JSON, schéma
+  strict, tools (sonde du 01.10, `probe_publicai.md`). Qualité sur les tâches du Club NON DÉMONTRÉE : l'évaluation EXTRACT
+  est prête et gelée, mais n'a pas tourné. La démo tourne sans modèle. Latence : mesure séparée, `make latence-ia`
+  (`latence_apertus.md`) — non mesurée tant que ce fichier n'existe pas.
 - **Utilité.** Aucun membre réel ; toutes les données sont fictives ou synthétiques. Utilité non mesurée.
 - **Démonstration.** Un seul processus, état en mémoire dérivé d'un SQLite local ; pas de mise à l'échelle horizontale.
 - **Sessions.** Sans état (pas de révocation serveur à la déconnexion) ; pas de TLS en salle (§ 3).

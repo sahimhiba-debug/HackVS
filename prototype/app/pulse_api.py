@@ -233,6 +233,16 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
             except ErreurMetier as e:
                 raise traduire(e) from None
 
+    def hors_verrou(f: Callable[[ClubPulse], T]) -> T:
+        """Comme `au_monde`, SANS le verrou du monde : pour un appel au modèle de langage (secondes) qui n'écrit rien —
+        la méthode prend elle-même le verrou pour ce qu'elle lit et pour la trace. La requête reste LECTRICE du monde
+        courant (passage) : une réinitialisation attend qu'elle se termine."""
+        c = etat["demo"].club
+        try:
+            return f(c)
+        except ErreurMetier as e:
+            raise traduire(e) from None
+
     def membre(x_pulse_session: Optional[str] = Header(None)) -> str:
         pid = au_monde(lambda c: c.verifier_session(x_pulse_session or ""))
         if au_monde(lambda c: c.passes_jure.est_session_de_jure(x_pulse_session or "")):
@@ -401,7 +411,7 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
         return au_monde(lambda c: {"echeances": c.avancer(t.jours), "date": c.jour.isoformat()})
 
     ajouter_routes_essai(r, au_monde, membre, console, lambda pid: limiter(limite_ia, f"ia|{pid}"),
-                         lambda pid: limiter(limite_ecritures, f"ecrit|{pid}"))
+                         lambda pid: limiter(limite_ecritures, f"ecrit|{pid}"), hors_verrou)
     ajouter_routes_capacites(r, au_monde, membre, console)
 
     @r.get("/console/personas", dependencies=[Depends(console)])

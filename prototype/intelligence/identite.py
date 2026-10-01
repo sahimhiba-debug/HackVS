@@ -127,7 +127,8 @@ class AdhesionsCSV:
 
 
 _COURRIEL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
-_TELEPHONE = re.compile(r"(?<!\w)(?:\+|00)?\d[\d .-]{7,}\d(?!\w)")
+_TELEPHONE = re.compile(r"(?<!\w)(?!\d{4}-\d{2}-\d{2}(?![\d.-])|\d{2}\.\d{2}\.\d{4}(?![\d.-]))"   # une date n'est pas un numéro
+                        r"(?:\+|00)?\d[\d .-]{7,}\d(?!\w)")
 _URL = re.compile(r"https?://\S+|www\.\S+", re.I)
 RETIRE = "[retiré]"
 

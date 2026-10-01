@@ -158,8 +158,10 @@ class Annulation(BaseModel):
 
 
 def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: Callable, limiter_ia: Callable,
-                   limiter_ecritures: Callable) -> None:
-    """`limiter_ecritures(pid)` : 30 écritures par minute et par membre (offres, essais, notes — décision D2)."""
+                   limiter_ecritures: Callable, hors_verrou: Optional[Callable] = None) -> None:
+    """`limiter_ecritures(pid)` : 30 écritures par minute et par membre (offres, essais, notes — décision D2).
+    `hors_verrou` : pour les deux « Préparer » (appel au modèle, rien n'est écrit) — le serveur ne gèle pas pendant l'appel."""
+    sans_verrou = hors_verrou or au_monde
     def vue(c: ClubPulse, eid: str, pid: str) -> dict:
         return c.vues_essai.essai(eid, pid)
 
@@ -192,7 +194,7 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     @r.post("/moi/actions/preparer")
     def preparer_action(f: Formulation, pid: str = Depends(membre)) -> dict:
         limiter_ia(pid)
-        return au_monde(lambda c: c.preparer_action(pid, f.texte))        # une proposition à confirmer ; rien n'est écrit
+        return sans_verrou(lambda c: c.preparer_action(pid, f.texte))     # une proposition à confirmer ; rien n'est écrit
 
     @r.post("/moi/actions/nouvelle")
     def creer_action(a: Action, pid: str = Depends(membre)) -> dict:
@@ -215,7 +217,7 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     @r.post("/moi/essais/preparer")
     def preparer(f: Formulation, pid: str = Depends(membre)) -> dict:
         limiter_ia(pid)
-        return au_monde(lambda c: c.preparer_essai(pid, f.texte))           # rien n'est écrit : un brouillon à corriger
+        return sans_verrou(lambda c: c.preparer_essai(pid, f.texte))        # rien n'est écrit : un brouillon à corriger
 
     @r.post("/moi/essais")
     def creer(b: Brouillon, pid: str = Depends(membre)) -> dict:

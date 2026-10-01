@@ -139,6 +139,9 @@ class Apertus:
         self.modele = os.environ["APERTUS_MODEL"]
         self._cle = os.environ["APERTUS_API_KEY"]
         self.delai = float(os.environ.get("APERTUS_DELAI_S", "30"))
+        # BUDGET TOTAL d'une complétion, tentatives et pauses comprises : le repli doit arriver AVANT que le téléphone
+        # abandonne (15 s) — une IA lente ne bloque jamais le parcours
+        self.budget = float(os.environ.get("APERTUS_BUDGET_S", "12"))
         self.http = http
         self._dormir, self._alea = dormir, alea or random.Random()
 
@@ -160,14 +163,22 @@ class Apertus:
             corps["response_format"] = {"type": "json_schema", "json_schema": {"name": "sortie", "schema": schema, "strict": True}}
         entetes = {"Authorization": f"Bearer {self._cle}", "Content-Type": "application/json"}
         derniere = ErreurFournisseur("aucune tentative")
+        debut = time.monotonic()
+        restant = lambda: self.budget - (time.monotonic() - debut)  # noqa: E731
         for tentative in range(self.TENTATIVES):
             if tentative:
-                self._dormir(min(4.0, 0.5 * 2 ** (tentative - 1)) * (0.5 + self._alea.random()))   # recul + gigue
+                pause = min(4.0, 0.5 * 2 ** (tentative - 1)) * (0.5 + self._alea.random())     # recul + gigue
+                if restant() - pause < 1.0:
+                    break                                    # plus assez de budget : on se replie au lieu d'insister
+                self._dormir(pause)
+            if restant() < 1.0:
+                break
+            delai = lambda: httpx.Timeout(min(self.delai, max(0.5, restant())), connect=min(10.0, max(0.5, restant())))  # noqa: E731
             try:
-                rep = client.post(f"{self.base}/chat/completions", headers=entetes, json=corps)
-                if rep.status_code in (400, 422) and "response_format" in corps:
+                rep = client.post(f"{self.base}/chat/completions", headers=entetes, json=corps, timeout=delai())
+                if rep.status_code in (400, 422) and "response_format" in corps and restant() >= 1.0:
                     corps.pop("response_format")              # serveur sans sortie contrainte : la consigne reste
-                    rep = client.post(f"{self.base}/chat/completions", headers=entetes, json=corps)
+                    rep = client.post(f"{self.base}/chat/completions", headers=entetes, json=corps, timeout=delai())
             except (httpx.TimeoutException, httpx.TransportError) as e:
                 derniere = ErreurFournisseur(type(e).__name__, reessayable=True)
                 continue
@@ -484,7 +495,7 @@ class Intelligence:
     MOMENTS = {"apres-midi": ("14:00", "18:00"), "apres midi": ("14:00", "18:00"), "matin": ("08:00", "12:00"),
                "soir": ("17:00", "20:00"), "midi": ("11:30", "14:00")}
 
-    def comprendre_action(self, texte: str, aujourd_hui: date) -> Reponse:
+    def comprendre_action(self, texte: str, aujourd_hui: date, politique: Optional[str] = None) -> Reponse:
         """Formulation libre d'un membre → EXIGENCES d'une action collective (qui apporterait quoi, quand) et ce qui
         MANQUE pour la préparer. Une proposition à confirmer par le membre, jamais une décision : aucune offre, aucune
         disponibilité, aucun nom ne peut en sortir (le schéma ne les contient pas ; le serveur cherche les offres).
@@ -516,7 +527,7 @@ class Intelligence:
                     self.LANGUES else None, "exigences": propres, "fenetre": fenetre, "manquant": manquant, "reconnu": [],
                     "mode": "apertus"}, None
         return self._executer("comprendre_action", "comprendre_action", message, SCHEMA_ACTION, valide,
-                              lambda: self._action_regles(texte, aujourd_hui))
+                              lambda: self._action_regles(texte, aujourd_hui), local_seulement=politique)
 
     @staticmethod
     def _fenetre_valide(jour: Optional[str], debut: Optional[str], fin: Optional[str], aujourd_hui: date) -> dict:

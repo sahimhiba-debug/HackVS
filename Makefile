@@ -11,7 +11,7 @@ export HACKVS_SEMANTIQUE ?= 0
 HOTE ?= 127.0.0.1
 URL_PUBLIQUE ?=
 
-.PHONY: setup browsers lint typecheck test e2e e2e-salle sonde-ia eval secrets audit coverage demo quality-check mutation perf
+.PHONY: setup browsers lint typecheck test e2e e2e-salle sonde-ia latence-ia banc-ia eval secrets audit coverage demo quality-check mutation perf
 
 setup:
 	cd $(P) && $(PY) -m pip install -r requirements-dev.txt -c constraints.txt
@@ -28,22 +28,33 @@ lint:
 typecheck:
 	cd $(P) && $(PY) -m mypy app adaptateurs plateforme intelligence
 
-E2E = tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py tests/test_e2e_capacites.py tests/test_e2e_hermetique.py tests/test_e2e_serveur.py
+E2E = tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py tests/test_e2e_capacites.py tests/test_e2e_hermetique.py tests/test_e2e_serveur.py tests/test_e2e_ia.py
 
 test:
 	cd $(P) && $(PY) -m pytest -q $(addprefix --ignore=,$(E2E))
 
 e2e:
-	cd $(P) && HACKVS_E2E_OBLIGATOIRE=1 $(PY) -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py tests/test_e2e_capacites.py tests/test_e2e_hermetique.py tests/test_e2e_serveur.py
+	cd $(P) && HACKVS_E2E_OBLIGATOIRE=1 $(PY) -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py tests/test_e2e_capacites.py tests/test_e2e_hermetique.py tests/test_e2e_serveur.py tests/test_e2e_ia.py
 
 # Mode salle : les mêmes E2E, réseau LOCAL seul (espace réseau vide, extérieur injoignable vérifié) et IA OFF
 e2e-salle:
 	cd $(P) && sudo -E env "PATH=$$PATH" HACKVS_E2E_OBLIGATOIRE=1 unshare --net $(PY) scripts/mode_salle.py -- \
-	  $(PY) -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py tests/test_e2e_capacites.py tests/test_e2e_hermetique.py tests/test_e2e_serveur.py
+	  $(PY) -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py tests/test_e2e_capacites.py tests/test_e2e_hermetique.py tests/test_e2e_serveur.py tests/test_e2e_ia.py
 
 # Sonde du fournisseur de langage (clé en variable d'environnement APERTUS_API_KEY ; sans clé : UNKNOWN, dit)
 sonde-ia:
 	cd $(P) && $(PY) scripts/sonde_publicai.py
+
+# Latence RÉELLE d'Apertus (n appels séquentiels, médiane, p95, erreurs) → docs/audit/latence_apertus.md. Preuve technique
+# SÉPARÉE de la démonstration (qui tourne sans modèle). Exige APERTUS_API_KEY, APERTUS_BASE_URL, APERTUS_MODEL ; N=30 par défaut.
+N ?= 30
+latence-ia:
+	cd $(P) && $(PY) scripts/mesurer_latence_apertus.py --n $(N)
+
+# Banc MÉTIER de la tâche IA du produit (comprendre_action, 26 cas fictifs, attentes fixées avant exécution) contre
+# Apertus, par le chemin du produit → eval/resultats_comprendre_action.md (+ .json, sorties brutes). Exige APERTUS_*.
+banc-ia:
+	cd $(P) && $(PY) -m eval.banc_comprendre_action
 
 eval:
 	cd $(P) && $(PY) -m eval.run_eval --verifier && $(PY) -m eval.eval_decisions --verifier \

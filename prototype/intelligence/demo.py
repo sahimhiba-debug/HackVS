@@ -135,7 +135,7 @@ class Demo:
         self.ctx["session_sophie"] = acces["session"]
         aide = c.proposer("tisanes de plantes alpines bio", "aide")
         c.onboarding(md.SOPHIE, aide=[aide[0]], cherche=[], visible=True)
-        prop = c.preparer_action(md.SOPHIE, BESOIN_SOPHIE)
+        prop = c.preparer_action(md.SOPHIE, BESOIN_SOPHIE, modele=False)   # scénario de scène : aucun modèle
         self.ctx["comprehension"] = prop
         eid = c.creer_action(md.SOPHIE, {"question": "Présenter nos tisanes à des acheteurs germanophones", "objet": prop["objet"],
                                           "critere": CRITERE_ACTION, "exigences": prop["exigences"], "fenetre": prop["fenetre"],

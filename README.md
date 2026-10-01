@@ -17,7 +17,7 @@ est calculée, jamais appliquée.
 | **RÉEL** (code + tests) | registre des capacités (patrons, composition, distance 0/1, Ask, levier, pièces critiques, recomposition), consentement de finalité (reçu, retrait, re-consentement), Pulse par rejeu du journal, action collective (banc d'essai), rôles IA EXTRACT / NORMALIZE / NARRATE en *propositions* validées, parité IA ON/OFF, QR juré, « Tout effacer », journal rejouable (redémarrage à l'identique) |
 | **SYNTHÉTIQUE** | tous les membres, entreprises, offres, horaires et patrons (marqués FICTIF, statut `SYNTHETIQUE` dans le journal) |
 | **SIMULÉ / JOUÉ** | l'horloge de démonstration ; les gestes des personnages absents, joués depuis la console (statut `JOUE`, affiché) |
-| **NON DÉMONTRÉ** | la qualité d'un vrai modèle : Apertus n'a jamais été appelé depuis cet environnement ; l'évaluation EXTRACT est prête et gelée mais n'a pas tourné ([EXTRACTION_EVAL](docs/audit/EXTRACTION_EVAL.md)). Utilité auprès de vrais membres : non mesurée |
+| **NON DÉMONTRÉ** | la qualité d'un vrai modèle sur les tâches du Club : Apertus (`swiss-ai/Apertus-v1.5-70B`, API d'inférence CSCS) répond depuis cet environnement (sonde du 01.10, [probe](docs/audit/probe_publicai.md)), mais la démo tourne sans modèle ; l'évaluation EXTRACT est prête et gelée mais n'a pas tourné ([EXTRACTION_EVAL](docs/audit/EXTRACTION_EVAL.md)). Utilité auprès de vrais membres : non mesurée |
 
 ## Lancer
 
@@ -48,7 +48,7 @@ make quality-check             # secrets, lint, types, suite complète, E2E Chro
 make mutation                  # mutation (mutmut) du registre des capacités ; jamais sur la machine de démonstration
 ```
 
-Mesuré, pas supposé : ~1 270 tests et 20 E2E hermétiques (aussi en « mode salle », réseau coupé) ; oracle en force
+Mesuré, pas supposé : ~1 270 tests et 21 E2E hermétiques (aussi en « mode salle », réseau coupé) ; oracle en force
 brute contre le compositeur ; mutation **sur `intelligence/capacites.py` seulement** (campagne locale du 01.10) :
 1 229 / 1 327 mutants tués, 98 survivants tous classés — confirmé en CI par la porte durcie (campagne GitHub #15) ([liste](docs/audit/mutants_survivants.txt)).
 

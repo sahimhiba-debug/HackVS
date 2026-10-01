@@ -86,7 +86,7 @@ class ClubPulse:
         self.ia = ia or Intelligence.depuis_environnement(tax, journal=self._tracer_ia,
                                                           notes_privees_autorisees=self.reglages.notes_privees_vers_ia)
         self.ia.journal = self._tracer_ia
-        self.ia.identites = self._identites                   # rien du coffre ne part vers un modèle (défense centrale)
+        self.ia.identites = self._identites_sous_verrou       # rien du coffre ne part vers un modèle (défense centrale)
         self.ia.secret_empreinte = self.reglages.secret        # empreintes de rejeu : non confirmables sans le secret
         self.ia.rejeu = self._rejeu_ia                        # un appel accepté déjà journalisé est rejoué, pas rappelé
         self.roles_ia = RolesIA(self.ia, tax)                 # EXTRACT, NORMALIZE, NARRATE (registre des capacités)
@@ -208,7 +208,8 @@ class ClubPulse:
     def _tracer_ia(self, a: AppelIA) -> None:
         # la latence reste dans `ia.appels` (mesure) ; le journal garde un contenu déterministe, donc rejouable à l'octet.
         # Un appel est un fait OBSERVÉ par le système (jamais « simulé ») ; son `issue` dit ce qui a produit la sortie.
-        self.banc._ecrire("APPEL_IA", [], Statut.OBSERVE, appel=a.model_dump(exclude={"latence_ms"}))
+        with self.verrou:                                   # l'appel au modèle peut avoir eu lieu HORS du verrou du monde
+            self.banc._ecrire("APPEL_IA", [], Statut.OBSERVE, appel=a.model_dump(exclude={"latence_ms"}))
 
     def _rejeu_ia(self, cle: str) -> Optional[dict]:
         return next((e.donnees["appel"] for e in reversed(self.journal.evenements("APPEL_IA"))
@@ -220,6 +221,10 @@ class ClubPulse:
         téléphones —, la sienne comprise. Les textes échangés de personne à personne (question d'un essai, livrable,
         observation) restent tels quels ; vers un modèle, ils passent par `Intelligence.proteger`."""
         return nettoyer(texte, [x for x in self._identites() if x])
+
+    def _identites_sous_verrou(self) -> list[str]:
+        with self.verrou:
+            return self._identites()
 
     def _identites(self) -> list[str]:
         per = list(self.coffre._personnes.values())
@@ -803,10 +808,11 @@ class ClubPulse:
         courriels et téléphones des membres connus en sont retirés avant tout envoi (défense complémentaire)."""
         if not 3 <= len(texte.strip()) <= 600:
             raise Invalide("formulation vide ou trop longue")
-        noms = [per.nom for per in self.coffre._personnes.values()] + [o.nom for o in self.coffre.orgs.values()]
-        propre = nettoyer(texte, noms)
-        rep = self.ia.structurer_essai(propre)
-        return rep.sortie | {"echeance": (self.jour + timedelta(days=10)).isoformat(),
+        with self.verrou:                                   # lu sous le verrou ; le MODÈLE est appelé hors du verrou
+            noms = [per.nom for per in self.coffre._personnes.values()] + [o.nom for o in self.coffre.orgs.values()]
+            jour, ia = self.jour, self.ia
+        rep = ia.structurer_essai(nettoyer(texte, noms))
+        return rep.sortie | {"echeance": (jour + timedelta(days=10)).isoformat(),
                              "ia": {"fournisseur": rep.appel.fournisseur, "modele": rep.appel.modele, "statut": rep.appel.statut,
                                     "repli": rep.appel.repli, "mode": rep.sortie.get("mode")}}
 
@@ -840,13 +846,18 @@ class ClubPulse:
         return next((e.role for e in self.banc.protocole(eid).etapes if e.contributeur == pid and e.role), None)
 
     # ------------------------------------------------------------------ ACTION COLLECTIVE : demande → exigences → proposition
-    def preparer_action(self, pid: str, texte: str) -> dict:
+    def preparer_action(self, pid: str, texte: str, modele: bool = True) -> dict:
         """Les mots du membre → exigences PROPOSÉES et ce qui manque (IA contrôlée ou règles simples, déclaré). Rien n'est
-        écrit : le membre confirme ou corrige. Les noms connus du Club sont retirés du texte avant tout envoi."""
+        écrit : le membre confirme ou corrige. Les noms connus du Club sont retirés du texte avant tout envoi.
+        Le modèle est appelé HORS du verrou du monde (l'appeler dessous gelait tout le serveur pendant l'appel) ;
+        `modele=False` : forme déterministe imposée (scénario guidé de la régie, décision du 01.10)."""
         if not 3 <= len(texte.strip()) <= 600:
             raise Invalide("formulation vide ou trop longue")
-        noms = [per.nom for per in self.coffre._personnes.values()] + [o.nom for o in self.coffre.orgs.values()]
-        rep = self.ia.comprendre_action(nettoyer(texte, noms), self.jour)
+        with self.verrou:
+            noms = [per.nom for per in self.coffre._personnes.values()] + [o.nom for o in self.coffre.orgs.values()]
+            jour, ia = self.jour, self.ia
+        rep = ia.comprendre_action(nettoyer(texte, noms), jour,
+                                   politique=None if modele else "scénario guidé de la démonstration : forme déterministe")
         livrables = [x["livrable"] for x in rep.sortie.get("exigences", []) if x.get("livrable")]
         critere = ("L'action a lieu au créneau convenu" + (f" et « {livrables[0]} » est remis" if livrables else "")
                    + " ; je dirai ce que j'en ai observé.")          # jamais une fiche que personne n'a demandée
