@@ -1,102 +1,62 @@
 # Club Pulse — le registre vivant de ce que le Club peut faire ensemble (Hack VS 2026)
 
-**IA → moteur déterministe → décision humaine.** Un modèle de langage peut seulement *proposer* (comprendre une
-formulation, rédiger un texte) ; un moteur déterministe compose, vérifie et invalide ; une personne décide et consent.
-Aucune capacité, aucun consentement, aucun destinataire n'est jamais choisi par un modèle.
+**IA → moteur déterministe → décision humaine.** Un modèle de langage peut seulement *proposer* (relever une quantité
+dans une phrase, rapprocher un mot du catalogue, raconter des faits fermés) ; un moteur déterministe compose, vérifie
+et invalide ; une personne décide et consent. Aucune capacité, aucun consentement, aucun destinataire n'est jamais
+choisi par un modèle.
 
-> **Pivot en cours (Phase 1 livrée le 2026-09-30).** Une *capacité* du Club (ex. « Accueillir une délégation
-> d'acheteurs germanophones ») est un assemblage de pièces déclarées par des membres — une salle ≥ 15 places, un
-> minibus ≥ 12 places, une interprétation FR–DE — valables à une date et consenties pour cette finalité. S'il en
-> manque une seule, le système formule une demande minimale (Ask) à une catégorie de membres ; une réponse la rend
-> ACTIVE. Plan et état : [PIVOT_INSPECTION](docs/audit/PIVOT_INSPECTION.md) · [PHASE_1](docs/audit/PHASE_1.md).
-> L'action collective précédente (Sophie, jeudi 08.10) reste le parcours démontré et n'est pas modifiée.
+Une **capacité** du Club (ex. « Accueillir une délégation d'acheteurs germanophones ») est un assemblage de pièces
+déclarées par des membres — une salle ≥ 15 places, un minibus ≥ 12 places, une interprétation FR–DE — valables à une
+date et **consenties pour cette finalité**. S'il en manque une seule, le système formule une demande minimale (Ask) à
+une catégorie de membres ; une réponse la rend ACTIVE. Si une pièce disparaît (retrait, horaire changé, membre
+indisponible), la capacité est DÉGRADÉE, la cause est dite par son rôle — jamais la personne — et une recomposition
+est calculée, jamais appliquée.
 
 | Statut | Ce qui l'est |
 |---|---|
-| **RÉEL** | le code et ses tests ; le registre (patrons, composition, distance 0/1, Ask, consentement de finalité), l'action collective, le journal rejouable |
+| **RÉEL** (code + tests) | registre des capacités (patrons, composition, distance 0/1, Ask, levier, pièces critiques, recomposition), consentement de finalité (reçu, retrait, re-consentement), Pulse par rejeu du journal, action collective (banc d'essai), rôles IA EXTRACT / NORMALIZE / NARRATE en *propositions* validées, parité IA ON/OFF, QR juré, « Tout effacer », journal rejouable (redémarrage à l'identique) |
 | **SYNTHÉTIQUE** | tous les membres, entreprises, offres, horaires et patrons (marqués FICTIF, statut `SYNTHETIQUE` dans le journal) |
 | **SIMULÉ / JOUÉ** | l'horloge de démonstration ; les gestes des personnages absents, joués depuis la console (statut `JOUE`, affiché) |
-| **NON IMPLÉMENTÉ** | levier, composants critiques, plafond d'Ask, retrait de consentement de finalité, Pulse (Phase 2) ; IA dans le registre, parité IA ON/OFF, QR juré (Phase 3) ; écrans « Établi » et « Passeport » ; Apertus jamais appelé (aucun identifiant) |
-
-- Lancer : `make setup && make demo` → `/projection` (écran commun), `/app` (téléphones), `/console`, `/demo/regie` · tout vérifier : `make quality-check`
-- Registre (API) : `GET /api/pulse/console/capacites` · `GET /api/pulse/moi/asks` · `POST /api/pulse/moi/asks/{id}/reponse`
-- Le serveur ne sert **que** Club Pulse. L'ancien prototype (« Le Fil du Club », identité par en-tête) n'est servi
-  qu'avec `HACKVS_ANCIEN_PROTOTYPE=1`, et alors à cette machine seulement (ou avec `HACKVS_CONSOLE_JETON`).
-- Démonstration de l'action collective : [DEMO_SCRIPT](docs/audit/club-pulse-pivot/DEMO_SCRIPT.md) — ⚠️ vidéo et captures
-  aux anciennes dates, à régénérer en fin de Phase 3 ([TODO-DEMO](TODO-DEMO.md)).
-- Architecture : [ARCHITECTURE](docs/ARCHITECTURE.md) · menaces : [THREAT_MODEL](docs/THREAT_MODEL.md) · décisions : [ADR](docs/ADR/README.md)
-
-> La suite de ce fichier décrit le **prototype précédent** (« Le Fil du Club »), conservé mais **non servi** par défaut.
-
----
-
-# Réseau vivant (anciennement « Le Fil du Club ») : préparation Hack VS 2026
-
-> **Prototype préparé AVANT Hack VS** (Martigny, 3–4 octobre 2026), pour le challenge « construire une plateforme de
-> networking qui active le réseau du Club des Affaires toute l'année ». Le brief officiel complet n'est pas encore connu.
-> **Toutes les personnes et entreprises sont fictives.** Aucun message réel n'est envoyé.
-
-**Le problème.** La Foire crée des rencontres. Quand elle se termine, ces relations peuvent disparaître avec elle.
-
-**Ce que fait le produit.** Un membre écrit son besoin comme il le dirait ; le système lui propose seulement les membres
-dont le profil **prouve** qu'ils peuvent aider (avec l'extrait qui le justifie), organise l'introduction **avec l'accord
-des deux**, relance **seulement** quand une raison nouvelle existe, et montre à l'organisatrice ce que ses introductions
-changeraient au réseau entier. Quand rien n'est prouvé, il **s'abstient** — et dit pourquoi.
-
-**Où est l'IA.** Pas dans la démonstration : la phrase du besoin est comprise par des règles vérifiables (chaque
-critère cite le texte ; l'ambigu est demandé, pas deviné). Une IA générative (Claude ou Apertus) peut s'y brancher pour
-les phrases très libres, **sous contrôle du code, sans jamais décider** ; elle n'a pas encore été mesurée (aucun modèle
-accessible ici) : [GENAI_RESEARCH](competition/GENAI_RESEARCH.md).
-
-**Voir en 3 minutes** : `/demo/stage` (l'histoire en 11 étapes, touche T : tour de contrôle) · `/presentation` (deck) ·
-vidéo de secours [`competition/video/demo.webm`](competition/video/demo.webm) · dossier : [`competition/`](competition/README.md).
-
-## Ce qui fonctionne (vérifié)
-| | Détail | Preuve |
-|---|---|---|
-| Histoire de démonstration | nouveau membre → besoin → candidats → accord → rencontre → suivi → opportunité → réseau avant/après → abstention → soirées → bilan ; rejouable à l'identique | `tests/test_scene.py`, `tests/test_e2e_scene.py` (vrai navigateur, bureau + mobile, en CI) |
-| Compréhension du besoin | règles + taxonomie ; phrase du scénario et variantes comprises ; ambiguïtés explicites | `tests/test_compilateur_besoin.py` ; 112 cas écrits avant exécution |
-| Preuve et abstention | chaque proposition cite une preuve ; sans preuve, abstention motivée | registre des preuves C01, C23, C24 |
-| Consentement | invisible par défaut, double accord, refus jamais contourné (règle unique, vérifiée sur toutes les paires) | `test_scene.py`, `test_securite_api.py`, `test_adversarial_sprint.py` |
-| Réseau | diagnostic (8 phénomènes), front de plans en conflit, contrefactuel « si cette relation disparaît », tour de contrôle | `competition/06_BENCHMARKS.md` (SYNTHETIC_BENCHMARK) |
-| Ingénierie | suite pytest complète, lint, CI (qualité, bout en bout, reproductibilité des benchmarks à l'octet), registre des affirmations exécutable | `.github/workflows/ci.yml`, `competition/14_PROOF_LEDGER.md` |
-
-**Simulé / fictif** : tous les profils, rencontres et besoins ; toutes les projections du réseau (étiquetées
-SIMULATION). **Non vérifié** : Claude et Apertus contre leurs API réelles ; utilité auprès de vrais membres. Voir
-[16_LIMITATIONS](competition/16_LIMITATIONS.md) et [FAILURES](competition/FAILURES.md) (48 défauts trouvés en attaquant notre propre système).
+| **NON DÉMONTRÉ** | la qualité d'un vrai modèle : Apertus n'a jamais été appelé depuis cet environnement ; l'évaluation EXTRACT est prête et gelée mais n'a pas tourné ([EXTRACTION_EVAL](docs/audit/EXTRACTION_EVAL.md)). Utilité auprès de vrais membres : non mesurée |
 
 ## Lancer
-```bash
-cd prototype
-pip install -r requirements.txt            # + requirements-dev.txt pour tests et captures
-python scripts/telecharger_modele.py       # facultatif : IA locale (2,2 Go, sans clé)
-uvicorn app.main:app                       # http://localhost:8000
-```
-Pages : `/demo/stage` démonstration · `/` espace membre · `/decision` espace de décision · `/cycle` cycle des relations · `/soiree` plan de soirée · `/club` vue du Club · `/scene` deux membres en direct ·
-`/presentation` pitch hors ligne. Docker : `docker build -t fil-du-club . && docker run -p 8080:8080 fil-du-club`.
 
-Brancher un assistant IA : `claude mcp add fil-du-club -e HACKVS_API_URL=http://localhost:8000 -e HACKVS_MCP_MEMBRE=p00 -- python <chemin>/prototype/scripts/mcp_club.py` (détails : [HANDOFF.md](docs/HANDOFF.md)).
+```bash
+make setup && make demo        # http://127.0.0.1:8000
+```
+
+`make demo` garde le journal dans un fichier (`prototype/var/club_pulse.db`) et tire **une fois** un secret stable
+(`prototype/var/secret_demo`, hors dépôt) : un `kill -9` puis `make demo` rend le même monde, les mêmes sessions, le
+même passe juré, et rejoue les sorties IA sans rappeler le modèle (`tests/test_redemarrage_kill9.py`). Nouvelle
+démonstration : bouton de la régie.
+
+Pages servies : `/app` (téléphone d'un membre) · `/projection` (écran commun, en rôles, sans noms) · `/etabli`
+(l'Établi : le registre pour l'animation) · `/console` · `/demo/regie` (les deux téléphones côte à côte). Rien
+d'autre n'est servi : l'ancien prototype répond 404 sauf `HACKVS_ANCIEN_PROTOTYPE=1`, et alors à cette machine
+seulement ([historique](docs/ANCIEN_PROTOTYPE.md)).
 
 | Variable | Effet |
 |---|---|
-| `HACKVS_MODE=demo` (défaut) / `reel` | `reel` : uniquement `HACKVS_PROFILS=<fichier autorisé>` ; sinon 503/501, jamais de simulation |
-| `HACKVS_LLM=claude` + `ANTHROPIC_API_KEY` | Analyse par Claude en flux, validée par le code ; repli affiché sur les règles |
-| `HACKVS_LLM=apertus` + `APERTUS_API_KEY`, `APERTUS_BASE_URL`, `APERTUS_MODEL` | Même chose avec Apertus (API compatible OpenAI) |
-| `HACKVS_SEMANTIQUE=0` | Désactive l'IA locale |
+| `HACKVS_ESSAIS_DB`, `HACKVS_SECRET` | journal fichier et secret stable (posés par `make demo`) ; sans eux : mémoire et secret aléatoire |
+| `HACKVS_CONSOLE_JETON` | exigé par la console hors de la machine locale |
+| `APERTUS_BASE_URL`, `APERTUS_API_KEY`, `APERTUS_MODEL` | branche Apertus (API compatible OpenAI) ; absent → forme déterministe, dite telle |
 
 ## Vérifier
+
 ```bash
-python -m pytest -q                        # suite complète (dont MCP stdio/HTTP et navigateur réel si Chromium est présent)
-python -m eval.eval_decisions              # 20 scénarios de la plateforme de décision
-python -m eval.run_eval --verifier         # non-régression des 6 jeux
-python scripts/validate_competition_claims.py   # chaque chiffre du pitch, du deck et de la vidéo est-il prouvé ?
-python scripts/mesurer_scene.py            # lisibilité de la démo dans un vrai navigateur
-python scripts/parcours_demo.py --url http://localhost:8000   # navigateur réel → docs/captures/
-python scripts/demo_agent_mcp.py           # transcription de l'agent MCP
+make quality-check             # secrets, lint, types, suite complète, E2E Chromium, évaluations
+make mutation                  # mutation (mutmut) du registre des capacités ; jamais sur la machine de démonstration
 ```
 
+Mesuré, pas supposé : ~1 200 tests et 15 E2E hermétiques (aussi en « mode salle », réseau coupé) ; oracle en force
+brute contre le compositeur ; mutation **sur `intelligence/capacites.py` seulement** : 1 197 / 1 299 mutants tués,
+102 survivants tous classés ([liste](docs/audit/mutants_survivants.txt)).
+
 ## Documentation
-[ARCHITECTURE](docs/ARCHITECTURE.md) · [DEMO](docs/DEMO.md) (scénarios 60 s / 3 min / 5 min, objections) ·
-[EVALUATION](docs/EVALUATION.md) · [LIMITATIONS](docs/LIMITATIONS.md) · [DECISIONS](docs/DECISIONS.md) ·
-[OPEN_SOURCE_RECON](docs/OPEN_SOURCE_RECON.md) · [RESEARCH](docs/RESEARCH.md) · [ASSUMPTIONS](docs/ASSUMPTIONS.md) ·
-[HANDOFF](docs/HANDOFF.md) · [DEPLOIEMENT](docs/DEPLOIEMENT.md) · [AUDIT_PACKET](docs/AUDIT_PACKET.md) · [REPRISE](docs/REPRISE.md) · [LEARNING](docs/LEARNING.md)
+
+- État réel, constats et corrections : [SENIOR_ENGINEERING_AUDIT](docs/audit/SENIOR_ENGINEERING_AUDIT.md) ·
+  [SENIOR_ENGINEERING_FINDINGS](docs/audit/SENIOR_ENGINEERING_FINDINGS.md) · phases : [PHASE_3](docs/audit/PHASE_3.md)
+- Démonstration : [DEMO_SCRIPT](docs/audit/club-pulse-pivot/DEMO_SCRIPT.md) · [TODO-DEMO](TODO-DEMO.md)
+- Menaces : [THREAT_MODEL](docs/THREAT_MODEL.md) · décisions : [ADR](docs/ADR/README.md)
+- `docs/ARCHITECTURE.md` décrit encore le produit d'avant le pivot (constat F02, réécriture en cours) ; le dossier
+  `competition/` est en quarantaine (bannière sur chaque fichier).
