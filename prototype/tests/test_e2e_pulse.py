@@ -297,6 +297,17 @@ _CIBLES = """() => [...document.querySelectorAll('button, a[href], input, select
   .filter(([h]) => h < 44).map(([h, t]) => `${Math.round(h)} px « ${t} »`)"""
 
 
+_SANS_NOM = """() => {
+  const vis = e => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden';
+  const lab = e => (e.id && document.querySelector(`label[for="${e.id}"]`)) || e.closest('label') || e.getAttribute('aria-label')
+                   || e.getAttribute('aria-labelledby');
+  const nom = e => (e.getAttribute('aria-label') || e.textContent || e.value || '').trim();
+  return [...[...document.querySelectorAll('input:not([type=hidden]), select, textarea')].filter(e => vis(e) && !lab(e))
+            .map(e => `champ sans étiquette : ${e.id || e.outerHTML.slice(0, 40)}`),
+          ...[...document.querySelectorAll('button, a[href]')].filter(e => vis(e) && !nom(e)).map(e => `sans nom : ${e.outerHTML.slice(0, 40)}`)];
+}"""
+
+
 def test_lisible_et_touchable_au_telephone_et_sur_les_ecrans(url):  # noqa: F811
     pw = pytest.importorskip("playwright.sync_api")
     _api(url, "/api/pulse/demo/reinitialiser", {})
@@ -312,6 +323,7 @@ def test_lisible_et_touchable_au_telephone_et_sur_les_ecrans(url):  # noqa: F811
             s.wait_for_timeout(800)
             ko[f"/app#{onglet} contraste"] = s.evaluate(_CONTRASTES)
             ko[f"/app#{onglet} cibles"] = s.evaluate(_CIBLES)
+            ko[f"/app#{onglet} noms accessibles"] = s.evaluate(_SANS_NOM)     # un placeholder n'est pas une étiquette
         for ecran in ("/etabli", "/console"):
             pg = b.new_page(viewport={"width": 1440, "height": 900})
             pg.goto(url + ecran)

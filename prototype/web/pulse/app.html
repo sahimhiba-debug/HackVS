@@ -393,7 +393,7 @@
     // ------------------------------------------------------------------ C. souvenirs et accords
     async function ecranSouvenirs() {
       const s = await api("/api/pulse/moi/souvenirs");
-      const note = h("textarea", { id: "note", rows: 3, maxlength: 2000, placeholder: "Une rencontre, une idée — visible par vous seul·e" });
+      const note = h("textarea", { id: "note", "aria-label": "Note privée", rows: 3, maxlength: 2000, placeholder: "Une rencontre, une idée — visible par vous seul·e" });
       const nouvelle = offreForm();
       afficher(h("h1", { class: "grand" }, "Souvenirs et accords"), h("p", { class: "note", style: "margin-top:6px" }, s.rappel),
         section("Notes privées · vous seul·e", h("div", { class: "champ" }, note), h("button", { class: "btn discret petit", onclick: agir(() => api("/api/pulse/moi/notes", { corps: { texte: note.value } }), "Note gardée, privée.") }, "Garder cette note"),
@@ -411,10 +411,10 @@
         h("div", { class: "actions", style: "margin-top:18px" }, h("button", { class: "btn discret petit", onclick: () => { ecrire("pulse-session", null); session = null; location.hash = "#acces"; } }, "Se déconnecter")));
     }
     function offreForm() {
-      const q = h("input", { id: "o-quoi", maxlength: 200, placeholder: "Ce que vous acceptez de donner" });
-      const n = h("select", { id: "o-nature" }, ["temps", "lieu", "objet", "competence"].map((x) => h("option", { value: x }, x)));
-      const d = h("input", { id: "o-duree", type: "number", min: 1, max: 240, value: 15 });
-      const au = h("input", { id: "o-au", type: "date" });
+      const q = h("input", { id: "o-quoi", "aria-label": "Ce que vous offrez", maxlength: 200, placeholder: "Ce que vous acceptez de donner" });
+      const n = h("select", { id: "o-nature", "aria-label": "Nature de l'offre" }, ["temps", "lieu", "objet", "competence"].map((x) => h("option", { value: x }, x)));
+      const d = h("input", { id: "o-duree", "aria-label": "Durée au plus, en minutes", type: "number", min: 1, max: 240, value: 15 });
+      const au = h("input", { id: "o-au", "aria-label": "Offre valable jusqu'au", type: "date" });
       return h("details", {}, h("summary", {}, "Publier une offre"), h("div", { class: "champ" }, q), h("div", { class: "ligne" }, n, d, h("span", {}, "min au plus · jusqu'au"), au),
         h("button", { class: "btn discret petit", style: "margin-top:8px", onclick: agir(() => api("/api/pulse/moi/offres", { corps: { nature: n.value, quoi: q.value, duree_max_min: Number(d.value),
           capacite: 1, au: au.value } }), "Offre publiée.") }, "Publier"));
@@ -429,7 +429,7 @@
         const champs = Object.entries(a.minimums).map(([k, v]) => h("div", { class: "champ" }, h("label", { for: `att-${k}` }, `${k} (au moins ${v})`),
           h("input", { id: `att-${k}`, type: "number", min: 0, max: 1000, "data-attribut": k })));
         // avec ses mots : le modèle PROPOSE (s'il y en a un, et s'il est allumé), le membre confirme — ou remplit lui-même
-        const mots = h("textarea", { id: "ask-mots", rows: 2, maxlength: 400, placeholder: "Décrivez votre pièce avec vos mots (facultatif)" });
+        const mots = h("textarea", { id: "ask-mots", "aria-label": "Votre pièce, avec vos mots (facultatif)", rows: 2, maxlength: 400, placeholder: "Décrivez votre pièce avec vos mots (facultatif)" });
         const statutIA = h("p", { class: "note", id: "ask-ia", "aria-live": "polite" });
         const proposer = h("button", { class: "btn discret petit", id: "ask-proposer", onclick: async () => {
           try {
