@@ -107,12 +107,12 @@ animation ─► CONSOLE /console, ÉTABLI /etabli ─┤      garde : Passage l
 |---|---|---|---|---|
 | `POST /acces` | publique | code 4–12 caractères | 5/min par code + 300/min global (F09, jamais par IP) | réactivation sans effet |
 | `POST /jure` | publique | jeton 10–160 caractères | 5/min par passe + 300/min global (R-02) | usage unique (`test_qr_jure.py`) |
-| `/moi/*` (≈ 50) | session | Pydantic (longueurs, bornes, `Literal`), 422 sinon | IA : 30/min/membre ; juré : 90 req/min | réponse double → 404 ; consentement idempotent ; retrait double → 404 (`test_autorisation_balayage.py`, `test_concurrence_http.py`) |
+| `/moi/*` (≈ 50) | session | Pydantic (longueurs, bornes, `Literal`), 422 sinon | écritures (offres, essais, brouillons, notes) : 30/min/membre, passe juré compris (D2, `test_plafond_ecritures.py`) ; IA : 30/min/membre ; juré : 90 req/min | réponse double → 404 ; consentement idempotent ; retrait double → 404 (`test_autorisation_balayage.py`, `test_concurrence_http.py`) |
 | `/console/*`, `/demo/*`, `/etat` | en-tête + local / jeton | Pydantic | — (opérateur) | réinitialiser : rédacteur exclusif (F28) |
 
 Erreurs typées traduites à UN endroit : 401 / 403 / 404 / 409 / 422 / 429. Toute autre exception → 500 JSON portant
-l'identifiant de requête, journalisée sans contenu. **Non borné, dit** : le nombre d'écritures d'un membre authentifié
-(offres, brouillons) — voir § 8 et § 16.
+l'identifiant de requête, journalisée sans contenu. Le plafond d'écritures répond 429 au même format :
+`{"detail": "trop de publications en une minute : attendez un instant avant de publier de nouveau"}`.
 
 ## 5. State / concurrency review
 
@@ -175,9 +175,10 @@ locale, charge moyenne ≈ 3,2–4,0) : les chiffres sont donc pessimistes.
 Durées en millisecondes. L'Établi relit toutes les 1 s, l'écran commun toutes les 0,7 s ; une lecture en cache coûte
 quelques millisecondes.
 
-**Abus mesuré (H2).** Avant le correctif, 200 offres parasites coûtaient 27 à 31 s PAR projection, sous le verrou du
-monde : la salle entière attendait. Après, la croissance est linéaire et modeste (≈ 1,1 s sous 200 parasites). Un
-plafond d'écritures par membre la supprimerait : décision de Hiba, car cela changerait un comportement visible (429).
+**Abus mesuré (H2 puis D2).** Avant H2, 200 offres parasites coûtaient 27 à 31 s PAR projection, sous le verrou du
+monde : la salle entière attendait. Après H2 : ≈ 1,1 s sous 200 parasites (ligne du tableau). Depuis D2, un membre ne
+peut plus écrire que 30 fois par minute : `make perf` fait remplir leur plafond à trois membres (90 parasites) →
+recalcul de l'Établi 484 ms en moyenne, 569 ms au p95 (n = 10, même machine) ; la 31e écriture d'un membre reçoit 429.
 
 **Non mesuré** : un vrai téléphone, un vrai Wi-Fi, un modèle de langage, plusieurs heures de fonctionnement continu.
 
@@ -221,8 +222,10 @@ test cité existe. Claims **D** (non prouvés) :
 
 - clôturés dans le produit : « chaîne HMAC vérifiée » (FAUX : aucune chaîne HMAC), « 1 198 événements »,
   « MODEL_CALLED · 678 ms », « contrastes validés » (FAUX, corrigé) ;
-- **restant sur la couverture du pitch, décision de Hiba** : « 0 capté passivement » (aucun compteur) et « Répondre à une
-  demande : 10 secondes, sans compte, sans nom » (non mesuré ; « sans compte » FAUX).
+- **couverture du pitch, décision D1 de Hiba** : reformulés et désormais classe A — « Lire ne capte rien : aucune écriture
+  sans geste » (balayage de CHAQUE route de lecture, journal compté) ; « Répondre : trois boutons » (E2E) ; « passe juré
+  15 min, sans compte ». La durée de réponse ne sera affichée qu'après le chronométrage du rituel § 9.5 (3 mesures, la
+  pire). Report sur la planche Cover : voir CLAIMS.md (modification de l'artefact partagé refusée par les permissions).
 
 ## 12. Known limitations
 
@@ -232,7 +235,8 @@ test cité existe. Claims **D** (non prouvés) :
 - **Démonstration.** Un seul processus, état en mémoire dérivé d'un SQLite local ; pas de mise à l'échelle horizontale.
 - **Sessions.** Sans état (pas de révocation serveur à la déconnexion) ; pas de TLS en salle (§ 3).
 - **Terrain.** Vrais téléphones, vrai Wi-Fi, lecteurs d'écran et réseau lent : non testés.
-- **Écritures.** Le nombre d'écritures d'un membre authentifié n'est pas plafonné (coût linéaire, § 8).
+- **Écritures.** Plafonnées à 30 par minute et par membre, passe juré compris (D2) ; au-delà de ce plafond, le coût
+  d'un recalcul reste linéaire dans le nombre total de faits (§ 8).
 
 ## 13. Technical debt intentionally left
 
@@ -288,9 +292,35 @@ Dépendances externes à l'exécution : **aucune** (polices locales, QR produit 
 |---|---|---|---|---|
 | Le Wi-Fi ou les téléphones de la salle ne joignent pas le portable | moyenne | démo des téléphones | point d'accès du portable + `HOTE` / `URL_PUBLIQUE` ; régie à deux cadres sur un écran ; vidéo | vrais téléphones jamais testés : rituel de samedi |
 | Plantage du serveur en direct | faible | moyen | `kill -9` + `make demo` restaure tout (testé) ; ne PAS réinitialiser | — |
-| Un juré abuse de son passe (écritures en masse) | faible | Établi ralenti (≈ 1 s) | correctif H2 ; passe de 15 min, 90 req/min | pas de plafond d'écritures (décision Hiba) |
+| Un juré abuse de son passe (écritures en masse) | faible | Établi ralenti | correctif H2 ; plafond D2 : 30 écritures / min / membre (passe juré compris) ; passe de 15 min | ≈ 0,5 s par recalcul si trois membres saturent leur plafond une minute (mesuré § 8) |
 | Point d'accès ouvert : jetons lisibles | faible | sessions fictives volées | point d'accès WPA2 | pas de TLS |
 | Un relecteur cite un document historique comme actuel | moyenne | crédibilité | bannières + index `docs/README.md` + test | — |
-| Le pitch affiche « 0 capté passivement » / « 10 s, sans compte » | élevée si non tranché | crédibilité | registre des claims | **décision de Hiba** |
+| La planche Cover affiche encore l'ancienne formulation | élevée tant que non reportée | crédibilité | textes exacts dans CLAIMS.md (D1) | **report manuel sur l'artefact Design** (refusé à cette session) |
 | Campagne de mutation GitHub rouge au gel | faible | preuve manquante | porte durcie ; run #15 en cours | résultat à relever |
 | Mutation `essai.py` : ≈ 1/3 de survivants non classés | certaine | « tests insuffisants » sur le banc d'essai | dit tel quel (F37) | classification après le gel |
+
+## Annexe A — changements de comportement DÉCLARÉS pendant le durcissement
+
+Tout ce qui change ce qu'un utilisateur, un opérateur ou un développeur peut observer — même rarement.
+
+| Changement | Avant | Après | Commit |
+|---|---|---|---|
+| `OffreVolontaire` est immuable (`frozen=True`) | un code qui modifiait une offre sur place passait en silence | il lève une exception (pydantic `ValidationError`) : l'index des offres partage ses instances. Aucun code du dépôt ne le faisait (recherché) | `107c6cb` |
+| Plafond d'écritures (D2) | écritures illimitées | 31e écriture d'un membre dans la minute (offres, essais, brouillons, notes ; passe juré compris) → **429** « trop de publications en une minute… » | `9acaa99` |
+| Plafond global sur `POST /jure` | aucun | 301e tentative de la minute → 429 | `e0f6545` |
+| CSP sur `/projection` et `/demo/regie` | aucune | la même politique par empreintes que les autres pages | `e37f31e` |
+| `make demo HOTE=… URL_PUBLIQUE=…` | serveur toujours sur 127.0.0.1, QR vers 127.0.0.1 | défaut inchangé ; sur demande : écoute réseau et QR vers le portable | `ab9c07a` |
+| Contraste, cibles 44 px, `aria-label` | couleurs littérales des planches, boutons de 36 px, champs nommés par leur placeholder | écarts aux planches écrits dans `DESIGN_SYSTEM.md` § 8 ; rien d'autre de visible | `e67b20f`, `22bddf8` |
+| Porte de mutation | verte si aucun survivant non classé n'était listé | rouge si mutmut échoue, si la campagne est vide / interrompue, ou s'il reste des mutants « no tests » / « suspicious » | `d374f75` |
+| Déconnexion | côté client seulement | **inchangé, risque connu accepté** (contre-expertise) : le jeton n'est pas révoqué côté serveur avant son expiration (12 h), sauf effacement du compte | — |
+
+## Annexe B — levée des réserves R2, R3, R4 (contre-expertise des vagues 1–2)
+
+Les trois réserves ont été levées le 01.10 au matin. Elles n'avaient pas été rapportées explicitement : c'est fait ici.
+Toutes repassent vertes au commit de ce document.
+
+| Réserve | Demande | Levée | Preuve |
+|---|---|---|---|
+| R2 | réinitialisation console → `kill -9` → relance : c'est le monde d'APRÈS la réinitialisation qui revient, et l'ancien journal reste clos | test sur un VRAI uvicorn tué par SIGKILL. Discrimine A et B par la transition AUTORISE de l'action de A et par les `DEMO_ETAPE` présents dans le fichier (les identifiants d'essai sont déterministes) | `7a2f1e8` — `test_redemarrage_kill9.py::test_reinitialisation_puis_kill_9_le_monde_rendu_est_celui_d_apres_la_reinitialisation` ; contre-épreuve : `vider` désactivé → rouge |
+| R3 | un fait de RÉTABLISSEMENT journalisé quand une capacité redevient couverte | `CAPACITE_RETABLIE {finalite, roles}`, sans acteur ni offre, écrit dans la même transaction que le geste qui rétablit | `f1abce4` — `test_capacites_offre_ne_couvre_plus.py::test_r3_horaire_retabli_un_fait_de_retablissement_anonyme_par_role` et `::test_r3_une_autre_piece_retablit_la_capacite_et_c_est_journalise` |
+| R4 | « Tout effacer » annonce AVANT le geste que le journal garde une trace technique | la note et la boîte de confirmation le disent avant le geste ; contre-épreuve : refuser la confirmation n'efface rien | `f58e213` — E2E `test_e2e_pulse.py::test_tout_effacer_annonce_ce_qui_reste_avant_le_geste` |

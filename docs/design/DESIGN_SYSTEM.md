@@ -209,6 +209,10 @@ Ce qui précède est la spécification figée, recopiée telle quelle. Ce qui su
 
   Implémenter le § 7.3 « pixel-fidèle » ne doit pas les reproduire tels quels. Chaque chiffre ou badge affiché vient
   du journal, ou n'est pas affiché.
+- **Couverture (décision D1 de Hiba, 01.10)** : « 0 capté passivement » → « Lire ne capte rien : aucune écriture sans
+  geste » ; « Répondre à une demande : 10 secondes, sans compte, sans nom » → « Répondre : trois boutons · passe juré
+  15 min, sans compte ». Chaque formulation a son test (`docs/audit/CLAIMS.md` n° 28–29). La durée ne revient qu'après
+  chronométrage (§ 9.5 du script de démo, la pire de 3 mesures). Report sur la planche Cover : à faire à la main.
 - **Vérifié** sur ce changement :
   - 1239 tests ;
   - E2E 16/16, en réseau normal et en mode salle (réseau local seul, IA OFF) ;

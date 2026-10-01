@@ -56,8 +56,8 @@ registre : il est en quarantaine, et rien n'y doit être présenté.
 | # | Affirmation | Classe | Décision |
 |---|---|---|---|
 | 27 | « chaîne HMAC vérifiée ✓ » (planche Passeport) | **D** | **FAUX** : le journal n'a pas de chaîne HMAC (identifiants de faits par empreinte de contenu, sans chaînage). Clôturé dans DESIGN_SYSTEM § 8 : jamais affiché |
-| 28 | « 0 capté passivement » (couverture, planche Mes données) | **D** | aucun compteur dans le produit. Clôturé § 8 ; **couverture du pitch : décision de Hiba** |
-| 29 | « Répondre à une demande : 10 secondes, sans compte, sans nom » (couverture) | **D** | « 10 secondes » non mesuré ; « sans compte » FAUX (répondre exige un compte activé par code ; seul le passe juré est sans compte). **Couverture du pitch : décision de Hiba** (retirer, ou chronométrer au rituel) |
+| 28 | ~~« 0 capté passivement »~~ → **« Lire ne capte rien : aucune écriture sans geste »** (couverture ; décision D1) | **A** | `test_autorisation_balayage.py::test_lire_ne_capte_rien_aucune_route_de_lecture_n_ecrit_au_journal` (CHAQUE route GET servie appelée, lignes du journal SQLite comptées avant / après) et `test_recomposition_jamais_appliquee.py`. L'ancienne formulation était D (aucun compteur) |
+| 29 | ~~« Répondre à une demande : 10 secondes, sans compte, sans nom »~~ → **« Répondre : trois boutons »** + **« Retrait toujours anonyme »** ; « sans compte » réservé au **« passe juré 15 min, sans compte »** (décision D1) | **A** | trois boutons : E2E `test_etabli_telephones_reponse_recu_retrait_anonyme` (Oui / Non / Pas cette fois) ; retrait anonyme : `test_capacites_retrait.py` ; passe juré : `test_qr_jure.py`. **La durée** (« N secondes ») : **non affichée** tant qu'elle n'est pas chronométrée au rituel § 9.5 (3 mesures, la PIRE affichée) — classe B ensuite. « Sans compte » pour répondre à une demande : FAUX, retiré |
 | 30 | « 1 198 événements », « MODEL_CALLED · 678 ms » (planche Passeport) | **D** | contenus d'illustration ; clôturés § 8 |
 | 31 | § 6 « contrastes validés » | **D → corrigé** | mesuré : trois couleurs des planches échouaient WCAG AA ; le produit s'en écarte (§ 8) et le test navigateur `test_lisible_et_touchable_au_telephone_et_sur_les_ecrans` garde contraste et cibles ≥ 44 px |
 | 32 | Polices auto-hébergées, aucune requête externe | A | E2E hermétiques (`test_e2e_hermetique.py` : toute requête externe échoue le test) |
@@ -72,7 +72,12 @@ registre : il est en quarantaine, et rien n'y doit être présenté.
 | 36 | Mutation de `essai.py` (F37) | B (en cours) | chiffres bruts, survivants NON classés ; mesurés sur `essai.py` d'AVANT les correctifs H2 (copie figée) — dit dans FINAL_AUDIT § 10 |
 | 37 | « Aucun CRITICAL » | C | constat d'audit, pas une preuve d'absence |
 
-## Ce qui reste à décider par Hiba (claims du pitch)
+## Couverture du pitch (décision D1 de Hiba, 01.10)
 
-- n° 28 et 29 : la couverture du deck porte deux affirmations non prouvées (« 0 capté passivement », « 10 secondes, sans
-  compte »). Rien n'a été modifié dans le pitch (consigne : demander avant de toucher un claim important du pitch).
+- n° 28 et 29 reformulés comme ci-dessus, chacun adossé à un test. **La planche « Cover » de l'artefact Design n'a PAS
+  encore été modifiée** : la modification d'un artefact partagé a été refusée par les permissions de cette session.
+  Textes exacts à reporter (deux remplacements, rien d'autre) : badge 1 « 0 capté passivement » → « Lire ne capte rien :
+  aucune écriture sans geste » ; ligne de pied « Répondre à une demande : 10 secondes, sans compte, sans nom » →
+  « Répondre : trois boutons · passe juré 15 min, sans compte » (« Retrait toujours anonyme » est déjà le badge 2).
+- Même claim « Capté passivement 0 » sur les planches Main (tuile KPI) et Phone-Retrait (« tout vient de vous ») :
+  maquettes du produit, pas la couverture ; à aligner sur la même formulation lors du § 7.3 du design system.
