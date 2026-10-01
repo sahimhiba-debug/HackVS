@@ -149,3 +149,15 @@ Si une capture n'a pas pu être prise, l'étape correspondante n'a pas de plan B
 4. Une fois en coupant le Wi-Fi de la salle (pas le point d'accès) : rien ne doit changer, sauf l'IA en option A.
 5. Chronométrer les trois mesures de « Oui → le Club peut le faire » sur l'Établi et garder la pire pour l'oral
    (« moins d'une seconde » seulement si la pire est sous une seconde — sinon dire le chiffre).
+6. **Test de salle : mode jour ou nuit du deck** (`deck/README.md`).
+   - **Conditions** : lumières de présentation réelles, et non la salle éteinte du matin. V1 se met au fond de la
+     salle.
+   - **Ce qu'on affiche** : le carton CONTRIBUTION (« L'homme qui disait oui. »), puis la slide 14 (chiffres).
+   - **Si le carton noir lit mal** (fond gris délavé, texte qui flotte) : **mode jour pour tout le deck**. On le fige
+     en lançant le deck avec `index.html?mode=jour`. On ne panache jamais carton par carton.
+   - **Consigne au monteur du film, dans la même heure** : les cartons de fin du film suivent la même décision. Même
+     fond (`#F2F3F5` en jour, noir en nuit), même encre (`#141923` en jour, blanc en nuit), même typographie. Le
+     raccord deck/film tient à ça : « Si Jean-Marc dit oui, c'est que c'est oui. » doit avoir l'air de sortir du même
+     deck.
+   - **Consigner** la décision (jour ou nuit), l'heure et les conditions de lumière ici :
+     `Mode retenu : ____ · heure : ____ · lumière : ____`.

@@ -71,6 +71,7 @@ Conséquences pour le pitch :
 | Enchaînement | le carton CONTRIBUTION est une slide du deck ; le film est lancé à la main par V2 au cut noir (pas d'auto-play incertain) ; retour au deck sur la slide « Et après ? » |
 | Durée réelle | chronométrer le fichier final ; si ≠ 2:25 de plus de 10 s, décaler les repères de `02_STRUCTURE.md` d'autant |
 | Image figée | savoir mettre en pause sur le dernier plan (ou prévoir une capture du dernier plan comme slide) |
+| Cartons de fin, jour ou nuit | mêmes fond et encre que les cartons du deck, selon le mode retenu au test de salle (`04_DEMO_RUNBOOK.md` § 8, point 6) : jour = `#F2F3F5` et `#141923`, nuit = noir et blanc |
 
 ## 6. PLAN B — le film n'est pas prêt samedi
 

@@ -164,6 +164,20 @@ body { font-family: "Plus Jakarta Sans", sans-serif; color: var(--ink); -webkit-
 /* ── Noir (N), répétition (R) ───────────────────────────────────────────── */
 #noir { position: absolute; inset: 0; background: #000; z-index: 20; opacity: 0; visibility: hidden; transition: opacity var(--t-micro) var(--ease), visibility 0s linear var(--t-micro); }
 #noir.on { opacity: 1; visibility: visible; transition: opacity var(--t-micro) var(--ease), visibility 0s; }
+
+/* ── Mode jour (J, ?mode=jour) : un projecteur ne fait pas de noir en salle éclairée.
+      Seuls changent les slides sombres (5 cartons, film/plan B, noir final) et l'écran N :
+      même composition au pixel, même apparition, fondus clairs. ─────────────────────── */
+body.jour #scene { background: var(--bg); }
+body.jour .slide.noir { background: var(--bg); color: var(--ink); }
+body.jour .carton p { color: var(--ink); }
+body.jour .planb { color: var(--ink); }
+body.jour .planb .etiq { color: var(--secondary); }
+body.jour #noir { background: var(--bg); }
+#bascule { position: absolute; right: 64px; top: 56px; z-index: 25; padding: 12px 24px; border-radius: 999px; background: #fff; color: var(--ink-2);
+  border: 2px solid var(--hairline-2); font-family: "JetBrains Mono", monospace; font-size: 26px; font-weight: 500; letter-spacing: .06em;
+  opacity: 0; transition: opacity var(--t-micro) var(--ease); pointer-events: none; }
+#bascule.on { opacity: 1; }
 #repet { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; background: #fff; border-top: 2px solid var(--hairline-2); z-index: 15; display: none;
   align-items: center; gap: 28px; padding: 0 32px; font-family: "JetBrains Mono", monospace; font-size: 26px; font-weight: 500; color: var(--ink-2); }
 #repet.on { display: flex; }
@@ -368,6 +382,7 @@ body { font-family: "Plus Jakarta Sans", sans-serif; color: var(--ink); -webkit-
 <svg id="progres" viewBox="0 0 24 24" aria-hidden="true"></svg>
 <div id="repet"></div>
 <div id="noir"></div>
+<div id="bascule" aria-live="polite"></div>
 </div>
 
 <script>
@@ -380,6 +395,21 @@ let i = 0, pas = 0, vus = new Set();
 const params = new URLSearchParams(location.search);
 const STATIQUE = params.has("statique");
 if (STATIQUE) document.body.classList.add("statique");
+
+/* ── Jour / nuit : tout le deck bascule ensemble. ?mode= fige le choix au lancement ;
+      J bascule ; le choix survit à un rechargement (incident) dans le même onglet. ─── */
+function lireMode() { const m = params.get("mode"); if (m === "jour" || m === "nuit") return m;
+  try { const v = sessionStorage.getItem("deck-mode"); if (v === "jour" || v === "nuit") return v; } catch (e) {} return "nuit"; }
+let basculeMinuteur = null;
+function appliquerMode(m, annoncer) {
+  document.body.classList.toggle("jour", m === "jour");
+  try { sessionStorage.setItem("deck-mode", m); } catch (e) {}
+  if (!annoncer) return;
+  const b = document.getElementById("bascule"); b.textContent = m === "jour" ? "MODE JOUR · cartons clairs" : "MODE NUIT · cartons noirs";
+  b.classList.add("on"); clearTimeout(basculeMinuteur); basculeMinuteur = setTimeout(() => b.classList.remove("on"), 2000);
+}
+appliquerMode(lireMode(), false);
+window.modeDeck = () => document.body.classList.contains("jour") ? "jour" : "nuit";
 
 /* ── Mise à l'échelle 1920×1080 → fenêtre ─────────────────────────────── */
 function ajuster() { const k = Math.min(innerWidth / 1920, innerHeight / 1080);
@@ -524,7 +554,8 @@ addEventListener("keydown", e => {
   else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(k)) { e.preventDefault(); precedent(); }
   else if (k === "Home") montrer(0, 0);
   else if (k === "End") montrer(S.length - 1, 0);
-  else if (k === "n" || k === "N") document.getElementById("noir").classList.toggle("on");
+  else if (k === "n" || k === "N") document.getElementById("noir").classList.toggle("on");   // jour : écran neutre gris
+  else if (k === "j" || k === "J") appliquerMode(window.modeDeck() === "jour" ? "nuit" : "jour", true);
   else if (k === "b" || k === "B") secours();
   else if (k === "r" || k === "R") {
     if (e.shiftKey) { t0 = performance.now(); atteints = {}; repetOn = true; }

@@ -130,3 +130,15 @@
 
 - **Slide 11 (démo) très vide.** Elle est faite pour ne pas rivaliser avec le produit projeté par ailleurs.
 - **Plan B du film en texte long (52 px).** Il ne s'affiche que si le film ne part pas, et V1 le dit en même temps.
+
+### Ajout — mode jour (projection en salle éclairée)
+
+Un projecteur ne fait pas de noir. Les cinq cartons, la slide du film et le noir final existent donc en deux rendus :
+
+- **nuit** : noir et blanc ;
+- **jour** : `#F2F3F5` et `#141923`.
+
+Tout le reste est inchangé, à l'octet près. Le choix est global : `J`, ou `?mode=` au lancement ; il n'y a jamais de
+choix slide par slide. En mode jour, l'écran `N` devient un gris neutre, parce qu'un noir en salle claire attire plus
+l'œil qu'un gris calme. Contraste AA vérifié dans les deux modes. Revue : `review/final/nuit/` et
+`review/final/jour/`.

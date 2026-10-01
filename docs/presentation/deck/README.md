@@ -2,7 +2,7 @@
 
 Le deck visuel de la finale (Hack VS 2026), construit à partir de `06_SLIDE_CONTENT.md` et `02_STRUCTURE.md` dans le
 design system figé. La direction artistique et les intentions slide par slide sont dans `DIRECTION.md`. Les rendus
-de validation sont dans `review/final/`, un PNG par slide, numéroté.
+de validation sont dans `review/final/nuit/` et `review/final/jour/`, un PNG par slide, numéroté.
 
 ## Lancer
 
@@ -26,7 +26,8 @@ Puis appuyer sur `F` pour passer en plein écran.
 |---|---|
 | → · ↓ · Espace · Entrée · Page Down · clic | étape suivante, puis slide suivante |
 | ← · ↑ · Page Up · Retour arrière · clic droit | étape précédente |
-| `N` | noir (et retour) |
+| `N` | écran noir en mode nuit, écran neutre gris en mode jour (et retour) |
+| `J` | bascule jour / nuit pour tout le deck, annoncée 2 s en haut à droite |
 | `R` | mode répétition : chrono et 8 points de contrôle. `Maj+R` remet le chrono à zéro |
 | `B` | sur la slide de démo : capture de secours de l'étape en cours (et retour) |
 | `F` | plein écran |
@@ -45,8 +46,24 @@ endroit.
 - `gel.commit` s'imprime en petit au-dessus des chiffres.
 - La mesure IA (slide 16) est dans le même fichier, sous `ia`.
 
-Vérifier ensuite : `python3 docs/presentation/deck/revue.py docs/presentation/deck/review/final`, puis relire
-`16-14.png` et `18-16.png`.
+Vérifier ensuite : `python3 docs/presentation/deck/revue.py docs/presentation/deck/review/final/nuit 1 nuit` (puis la
+même chose avec `jour`), et relire `16-14.png` et `18-16.png`.
+
+## Mode jour (salle éclairée)
+
+Un projecteur ne fait pas de noir : en salle éclairée, un carton noir devient gris délavé.
+
+- **Le mode jour** passe en clair les seules slides sombres : les cinq cartons, la slide du film (plan B compris) et le
+  noir final. Fond `#F2F3F5`, encre `#141923`, même composition au pixel, même apparition en 480 ms. Les fondus
+  deviennent clairs, et l'écran `N` devient un gris neutre.
+- **Aucune autre slide ne change.** C'est vérifié : les 17 autres PNG de `review/final/jour/` et `review/final/nuit/`
+  sont identiques à l'octet.
+- **Pour figer le mode au lancement** : `index.html?mode=jour` ou `?mode=nuit`. Le défaut est nuit.
+- **Pendant la présentation**, `J` bascule tout le deck d'un coup. Il n'y a pas de choix slide par slide.
+- **Le choix survit à un rechargement** de la page, dans le même onglet.
+- **Pendant le film**, la vidéo garde ses propres noirs. Le raccord se fait par les cartons de fin du film, qui suivent
+  la même décision.
+- **Décision samedi** : test de salle, `04_DEMO_RUNBOOK.md` § 8, point 6.
 
 ## Déposer le film
 
@@ -112,6 +129,6 @@ Le mode est éteint par défaut. On ne présente jamais avec.
   `DIRECTION.md`).
 - **Fluidité** : 17 ms par image en moyenne pendant les deux moments signature, sur un Chromium sans GPU.
 - **`prefers-reduced-motion`** : tout devient un fondu simple.
-- **Contraste** : AA partout. Le plus bas est la pastille « M-23 », à 4,45:1 en 32 px, alors que AA exige 3:1 pour du
+- **Contraste** : AA partout, dans les deux modes (83 textes contrôlés, aucun échec). Le plus bas est la pastille « M-23 », à 4,45:1 en 32 px, alors que AA exige 3:1 pour du
   texte de cette taille.
 - **Plan B du film et emplacement de capture manquante** : testés.
