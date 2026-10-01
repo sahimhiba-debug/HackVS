@@ -17,8 +17,10 @@ Horloge de démonstration (simulée, affichée sur chaque écran) : **mardi 06.1
 | Registre — retrait (Phase 2) | **vendredi 09.10** | `/etabli`, téléphones | retrait en un geste → « ce composant n'est plus disponible » → la demande repart vers un autre membre |
 | Après l'événement | **+30 jours (simulé)** | console | ce qui reste : reçu, résultat inconnu, capacités éteintes |
 
-**Règle de scène : après tout redémarrage du serveur, console → « Nouvelle démonstration »** (le journal est repris,
-le scénario guidé non ; voir `TODO-DEMO.md`).
+**Règle de scène : après un redémarrage du serveur, NE PAS faire « Nouvelle démonstration »** : `make demo` rend le même
+monde, y compris l'étape de la régie (F29, `tests/test_redemarrage_kill9.py`) ; « Nouvelle démonstration » l'effacerait.
+Elle sert seulement à recommencer volontairement (§ 2, § 9). L'ancienne règle, d'avant F29, est corrigée ici et dans
+`TODO-DEMO.md`.
 
 ## 1. Scénario du pitch
 Sophie (fictive) produit des tisanes. Pendant la Foire, jeudi après-midi, elle veut les présenter à des acheteurs

@@ -21,11 +21,13 @@ Aux dates actuelles (horloge au mardi **06.10.2026**, action collective le jeudi
 
 Non concernés : `docs/captures/*` (ancien prototype « Le Fil du Club ») ; `eval/resultats_*` (vérifiés à l'octet par la CI).
 
-## Redémarrage du serveur = nouvelle démonstration
+## Redémarrage du serveur : le monde REVIENT — ne PAS faire « Nouvelle démonstration »
 
-Depuis `18829d4`, le serveur **reprend** son journal au démarrage (`HACKVS_ESSAIS_DB`) au lieu de l'effacer ; le
-scénario guidé, lui, ne reprend pas au milieu (son contexte n'est pas journalisé : la console affiche « état repris du
-journal »). **Règle de scène : après tout redémarrage, console → « Nouvelle démonstration » avant de commencer.**
+Corrigé le 01.10 : cette section disait l'inverse (« après tout redémarrage, console → Nouvelle démonstration »). C'était
+vrai avant F29 ; depuis, l'étape de la régie (`DEMO_ETAPE`), les sessions, le passe juré, l'interrupteur IA et les sorties
+IA sont journalisés et rejoués (`tests/test_redemarrage_kill9.py`). Après un plantage : `make demo`, et l'on reprend où
+l'on était (`DEMO_SCRIPT.md` § 8 et rituel § 9.5). « Nouvelle démonstration » EFFACE le monde : seulement pour
+recommencer volontairement, jamais pour « réparer » après un redémarrage.
 
 ## Aucune campagne de mutation sur la machine de démonstration
 
