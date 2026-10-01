@@ -11,7 +11,7 @@ export HACKVS_SEMANTIQUE ?= 0
 HOTE ?= 127.0.0.1
 URL_PUBLIQUE ?=
 
-.PHONY: setup browsers lint typecheck test e2e e2e-salle sonde-ia eval secrets audit coverage demo quality-check mutation
+.PHONY: setup browsers lint typecheck test e2e e2e-salle sonde-ia eval secrets audit coverage demo quality-check mutation perf
 
 setup:
 	cd $(P) && $(PY) -m pip install -r requirements-dev.txt -c constraints.txt
@@ -73,3 +73,7 @@ demo:
 
 quality-check: secrets lint typecheck test e2e eval
 	@echo "quality-check : tout est vert"
+
+# Mesures de performance reproductibles (vrai serveur, n itérations, moyenne / médiane / p95) : docs/audit/FINAL_AUDIT.md § 8
+perf:
+	cd $(P) && $(PY) scripts/mesurer_perf.py
