@@ -79,3 +79,16 @@ def test_une_offre_annulee_ne_survit_pas_dans_l_index():
         b.offre(x)
     assert [o.quoi for o in b.offres()].count("Offre fictive annulée") == 0
     assert b.offre(y).quoi == "Offre fictive suivante" and len(b.offres()) == nb + 1
+
+
+def test_les_lectures_du_journal_ne_croissent_pas_avec_les_brouillons_parasites(monkeypatch):
+    """Même attaque par des BROUILLONS d'essai (jamais publiés) : avant, 100 brouillons faisaient passer la projection de
+    l'Établi de 88 ms à 8,5 s (chaque recherche relisait tout le journal pour chaque essai : 162 000 lectures)."""
+    c = Demo(TAX).club
+    sql0, lectures0, avant = _lectures(c, monkeypatch)
+    for i in range(60):
+        c.creer_essai("s14", {"question": f"Question parasite fictive {i} ?", "echeance": "2026-10-09"})
+    sql, lectures, apres = _lectures(c, monkeypatch)
+    assert lectures <= lectures0 * 1.1 + 10, (lectures0, lectures)
+    assert sql <= sql0 * 1.1 + 2, (sql0, sql)
+    assert [(i.finalite, i.statut, i.liaisons) for i in apres] == [(i.finalite, i.statut, i.liaisons) for i in avant]

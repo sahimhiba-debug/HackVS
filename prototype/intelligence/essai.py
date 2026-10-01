@@ -237,6 +237,7 @@ class Banc:
         self.noeuds_max = 0                                   # plus grande recherche d'équipe depuis la création du banc
         self._hypotheses: dict[str, OffreVolontaire] = {}
         self._index: Optional[tuple[tuple[int, int, int], dict[str, OffreVolontaire], frozenset[str]]] = None
+        self._index_e: Optional[tuple[tuple[int, int, int], dict[str, list[Evt]], list[str]]] = None
 
     # ------------------------------------------------------------------ journal
     @contextmanager
@@ -254,8 +255,24 @@ class Banc:
         self.m.ajouter(Evt(type=type_, le=self._jour(), acteurs=acteurs, statut=statut,
                            donnees=donnees | {"n": len(self.m.evenements())}))    # deux gestes identiques restent deux faits
 
+    def _index_essais(self) -> tuple[dict[str, list[Evt]], list[str]]:
+        """Les faits de chaque essai (ordre du journal) et l'ordre de création des essais, en UN passage sur le journal,
+        recalculés seulement quand il change (H2 : chaque lecture d'un essai relisait tout le journal — 100 brouillons
+        parasites portaient la projection de l'Établi de 88 ms à 8,5 s)."""
+        version = self.m.version()
+        if self._index_e is None or self._index_e[0] != version:
+            par_essai: dict[str, list[Evt]] = {}
+            for e in self.m.evenements():
+                eid = e.donnees.get("essai")
+                if isinstance(eid, str):
+                    par_essai.setdefault(eid, []).append(e)
+            ordre = [eid for eid, evs in par_essai.items() if any(e.type == "ESSAI_VERSION" for e in evs)]
+            ordre.sort(key=lambda eid: next(e.seq for e in par_essai[eid] if e.type == "ESSAI_VERSION"))
+            self._index_e = (version, par_essai, ordre)
+        return self._index_e[1], self._index_e[2]
+
     def _evs(self, eid: str, *types: str) -> list[Evt]:
-        return [e for e in self.m.evenements(*types) if e.donnees.get("essai") == eid]
+        return [e for e in self._index_essais()[0].get(eid, []) if not types or e.type in types]
 
     # ------------------------------------------------------------------ offres volontaires
     def publier_offre(self, auteur: str, nature: str, quoi: str, capacite: int, du: date, au: date,
@@ -429,7 +446,7 @@ class Banc:
 
     # ------------------------------------------------------------------ lecture d'un essai (repli pur)
     def essais(self) -> list[str]:
-        return list(dict.fromkeys(e.donnees["essai"] for e in self.m.evenements("ESSAI_VERSION")))
+        return list(self._index_essais()[1])
 
     def _versions(self, eid: str) -> list[Evt]:
         v = self._evs(eid, "ESSAI_VERSION")
