@@ -125,43 +125,68 @@ class NonConfigure(RuntimeError):
     pass
 
 
-class Apertus:
-    """Apertus via une API compatible OpenAI. Délai borné, 3 tentatives au plus avec recul exponentiel et gigue sur
-    les erreurs RÉESSAYABLES (réseau, délai, 429, 5xx) — une requête ne peut ni pendre, ni boucler."""
-    nom = "apertus"
+class ConfigurationInvalide(ValueError):
+    """Configuration du fournisseur impossible (ex. LLM_PROVIDER inconnu) : erreur explicite au démarrage. Le message ne
+    porte que des noms de variables et la valeur saisie par l'opérateur — jamais une sortie de modèle ni une clé."""
+
+
+class _FournisseurHTTP:
+    """Mécanique COMMUNE aux fournisseurs distants : configuration par l'environnement seulement (aucune clé dans le
+    code), délai et BUDGET TOTAL bornés, 3 tentatives au plus avec recul exponentiel et gigue sur les erreurs
+    RÉESSAYABLES (réseau, délai, 429, 5xx), sortie contrainte côté serveur quand il l'accepte (sinon la consigne seule,
+    dite dans `contrainte`), toute panne levée en `ErreurFournisseur`. Chaque sous-classe ne dit QUE le format de son
+    API : la sortie brute repart toujours dans la MÊME validation du produit (`Intelligence._executer`)."""
+    nom = "?"
+    PREFIXE = ""                                        # variables d'environnement : <PREFIXE>_API_KEY, _MODEL, _DELAI_S, _BUDGET_S
+    VAR_BASE = ""                                       # variable de l'URL de base (vide : seulement la valeur par défaut)
+    BASE_DEFAUT: Optional[str] = None                   # None : l'URL de base est obligatoire
     TENTATIVES = 3
+    JETONS_MAX = 900                                    # identique pour tous les fournisseurs
+
+    @classmethod
+    def variables_requises(cls) -> list[str]:
+        return [f"{cls.PREFIXE}_API_KEY", f"{cls.PREFIXE}_MODEL"] + ([cls.VAR_BASE] if cls.BASE_DEFAUT is None else [])
+
+    @classmethod
+    def configure(cls) -> bool:
+        return all(os.environ.get(k) for k in cls.variables_requises())
 
     def __init__(self, http=None, dormir: Callable[[float], None] = time.sleep, alea: Optional[random.Random] = None):
-        manque = [k for k in ("APERTUS_BASE_URL", "APERTUS_API_KEY", "APERTUS_MODEL") if not os.environ.get(k)]
+        manque = [k for k in self.variables_requises() if not os.environ.get(k)]
         if manque:
             raise NonConfigure("variables absentes : " + ", ".join(manque))
-        self.base = os.environ["APERTUS_BASE_URL"].rstrip("/")
-        self.modele = os.environ["APERTUS_MODEL"]
-        self._cle = os.environ["APERTUS_API_KEY"]
-        self.delai = float(os.environ.get("APERTUS_DELAI_S", "30"))
+        p = self.PREFIXE
+        self.base = ((os.environ.get(self.VAR_BASE) if self.VAR_BASE else None) or self.BASE_DEFAUT or "").rstrip("/")
+        self.modele = os.environ[f"{p}_MODEL"]
+        self._cle = os.environ[f"{p}_API_KEY"]
+        self.delai = float(os.environ.get(f"{p}_DELAI_S", "30"))
         # BUDGET TOTAL d'une complétion, tentatives et pauses comprises : le repli doit arriver AVANT que le téléphone
         # abandonne (15 s) — une IA lente ne bloque jamais le parcours
-        self.budget = float(os.environ.get("APERTUS_BUDGET_S", "12"))
+        self.budget = float(os.environ.get(f"{p}_BUDGET_S", "12"))
         self.http = http
         self._dormir, self._alea = dormir, alea or random.Random()
+        self.contrainte: Optional[str] = None             # dernière complétion : « serveur » | « consigne » | None
 
     def __repr__(self) -> str:                               # jamais la clé dans une trace ou un journal
-        return f"Apertus(base={self.base!r}, modele={self.modele!r})"
+        return f"{type(self).__name__}(base={self.base!r}, modele={self.modele!r})"
 
-    @staticmethod
-    def configure() -> bool:
-        return all(os.environ.get(k) for k in ("APERTUS_BASE_URL", "APERTUS_API_KEY", "APERTUS_MODEL"))
+    # ---- ce que chaque API définit
+    def _requete(self, systeme: str, message: str, schema: Optional[dict]) -> tuple[str, dict, dict]:
+        raise NotImplementedError
+
+    def _sans_contrainte(self, corps: dict) -> Optional[dict]:
+        raise NotImplementedError
+
+    def _extraire(self, reponse: dict) -> str:
+        raise NotImplementedError
 
     def completer(self, systeme_txt: str, message: str, schema: Optional[dict]) -> str:
         import httpx
         client = self.http or httpx.Client(timeout=httpx.Timeout(self.delai, connect=10.0))
-        corps: dict = {"model": self.modele, "temperature": 0, "max_tokens": 900,
-                       "messages": [{"role": "system", "content": systeme_txt + (
-                           "\nRéponds UNIQUEMENT par un objet JSON conforme à ce schéma :\n" + json.dumps(schema, ensure_ascii=False)
-                           if schema else "")}, {"role": "user", "content": message}]}
-        if schema:
-            corps["response_format"] = {"type": "json_schema", "json_schema": {"name": "sortie", "schema": schema, "strict": True}}
-        entetes = {"Authorization": f"Bearer {self._cle}", "Content-Type": "application/json"}
+        systeme = systeme_txt + ("\nRéponds UNIQUEMENT par un objet JSON conforme à ce schéma :\n" + json.dumps(schema, ensure_ascii=False)
+                                 if schema else "")
+        url, entetes, corps = self._requete(systeme, message, schema)
+        self.contrainte = "serveur" if schema else None
         derniere = ErreurFournisseur("aucune tentative")
         debut = time.monotonic()
         restant = lambda: self.budget - (time.monotonic() - debut)  # noqa: E731
@@ -175,10 +200,11 @@ class Apertus:
                 break
             delai = lambda: httpx.Timeout(min(self.delai, max(0.5, restant())), connect=min(10.0, max(0.5, restant())))  # noqa: E731
             try:
-                rep = client.post(f"{self.base}/chat/completions", headers=entetes, json=corps, timeout=delai())
-                if rep.status_code in (400, 422) and "response_format" in corps and restant() >= 1.0:
-                    corps.pop("response_format")              # serveur sans sortie contrainte : la consigne reste
-                    rep = client.post(f"{self.base}/chat/completions", headers=entetes, json=corps, timeout=delai())
+                rep = client.post(url, headers=entetes, json=corps, timeout=delai())
+                sans = self._sans_contrainte(corps) if rep.status_code in (400, 422) else None
+                if sans is not None and restant() >= 1.0:
+                    corps, self.contrainte = sans, "consigne"  # serveur sans sortie contrainte : la consigne reste
+                    rep = client.post(url, headers=entetes, json=corps, timeout=delai())
             except (httpx.TimeoutException, httpx.TransportError) as e:
                 derniere = ErreurFournisseur(type(e).__name__, reessayable=True)
                 continue
@@ -188,10 +214,121 @@ class Apertus:
             if rep.status_code >= 400:
                 raise ErreurFournisseur(f"HTTP {rep.status_code}")               # 401, 403, 404… : inutile de réessayer
             try:
-                return str(rep.json()["choices"][0]["message"]["content"] or "")
+                return self._extraire(rep.json())
             except (ValueError, KeyError, IndexError, TypeError) as e:
                 raise ErreurFournisseur(f"réponse mal formée ({type(e).__name__})") from None
         raise derniere
+
+
+class _CompatibleOpenAI(_FournisseurHTTP):
+    """API /chat/completions (format OpenAI) ; sortie contrainte : `response_format` json_schema strict."""
+    PARAM_JETONS = "max_tokens"
+
+    def _temperature(self) -> Optional[float]:
+        return 0.0
+
+    def _requete(self, systeme: str, message: str, schema: Optional[dict]) -> tuple[str, dict, dict]:
+        corps: dict = {"model": self.modele, self.PARAM_JETONS: self.JETONS_MAX,
+                       "messages": [{"role": "system", "content": systeme}, {"role": "user", "content": message}]}
+        t = self._temperature()
+        if t is not None:
+            corps["temperature"] = 0 if t == 0 else t
+        if schema:
+            corps["response_format"] = {"type": "json_schema", "json_schema": {"name": "sortie", "schema": schema, "strict": True}}
+        return f"{self.base}/chat/completions", {"Authorization": f"Bearer {self._cle}", "Content-Type": "application/json"}, corps
+
+    def _sans_contrainte(self, corps: dict) -> Optional[dict]:
+        return {k: v for k, v in corps.items() if k != "response_format"} if "response_format" in corps else None
+
+    def _extraire(self, reponse: dict) -> str:
+        return str(reponse["choices"][0]["message"]["content"] or "")
+
+
+def _temperature_env(var: str) -> Optional[float]:
+    """0 par défaut (comme Apertus) ; « defaut » : paramètre NON envoyé (modèles qui refusent une température fixée) —
+    l'écart est alors consigné par le banc, jamais caché."""
+    v = os.environ.get(var, "0").strip().lower()
+    if v in ("defaut", "default", "omettre"):
+        return None
+    return float(v)
+
+
+class Apertus(_CompatibleOpenAI):
+    """Apertus via une API compatible OpenAI (CSCS, Public AI…). Comportement inchangé : température 0, `max_tokens` 900."""
+    nom = "apertus"
+    PREFIXE = "APERTUS"
+    VAR_BASE = "APERTUS_BASE_URL"                       # obligatoire (aucune valeur par défaut)
+
+
+class OpenAI(_CompatibleOpenAI):
+    """API OpenAI. Inactif sans OPENAI_API_KEY et OPENAI_MODEL. `max_completion_tokens` (les modèles récents refusent
+    `max_tokens`) ; température : OPENAI_TEMPERATURE (0 par défaut, « defaut » pour ne pas l'envoyer)."""
+    nom = "openai"
+    PREFIXE = "OPENAI"
+    VAR_BASE = "OPENAI_BASE_URL"
+    BASE_DEFAUT = "https://api.openai.com/v1"
+    PARAM_JETONS = "max_completion_tokens"
+
+    def _temperature(self) -> Optional[float]:
+        return _temperature_env("OPENAI_TEMPERATURE")
+
+
+class Claude(_FournisseurHTTP):
+    """API Messages d'Anthropic (le MODÈLE, pas l'agent Claude Code). Inactif sans ANTHROPIC_API_KEY et ANTHROPIC_MODEL.
+    Sortie contrainte : un outil unique imposé dont `input_schema` est le schéma de la tâche (son entrée est la sortie
+    JSON) ; refusé par le serveur → consigne seule. N'utilise PAS ANTHROPIC_BASE_URL (réservée à l'outillage de cet
+    environnement) : HACKVS_ANTHROPIC_BASE_URL pour un autre point d'accès. Température : ANTHROPIC_TEMPERATURE."""
+    nom = "claude"
+    PREFIXE = "ANTHROPIC"
+    VAR_BASE = "HACKVS_ANTHROPIC_BASE_URL"
+    BASE_DEFAUT = "https://api.anthropic.com"
+    VERSION_API = "2023-06-01"
+
+    def _requete(self, systeme: str, message: str, schema: Optional[dict]) -> tuple[str, dict, dict]:
+        corps: dict = {"model": self.modele, "max_tokens": self.JETONS_MAX, "system": systeme,
+                       "messages": [{"role": "user", "content": message}]}
+        t = _temperature_env("ANTHROPIC_TEMPERATURE")
+        if t is not None:
+            corps["temperature"] = 0 if t == 0 else t
+        if schema:
+            corps["tools"] = [{"name": "sortie", "description": "Réponse structurée de la tâche.", "input_schema": schema}]
+            corps["tool_choice"] = {"type": "tool", "name": "sortie"}
+        entetes = {"x-api-key": self._cle, "anthropic-version": self.VERSION_API, "content-type": "application/json"}
+        return f"{self.base}/v1/messages", entetes, corps
+
+    def _sans_contrainte(self, corps: dict) -> Optional[dict]:
+        return {k: v for k, v in corps.items() if k not in ("tools", "tool_choice")} if "tools" in corps else None
+
+    def _extraire(self, reponse: dict) -> str:
+        blocs = reponse["content"]
+        outil = next((b for b in blocs if b.get("type") == "tool_use"), None)
+        if outil is not None:
+            return json.dumps(outil["input"], ensure_ascii=False)
+        return "".join(str(b.get("text") or "") for b in blocs if b.get("type") == "text")
+
+
+FOURNISSEURS: dict[str, type[_FournisseurHTTP]] = {"apertus": Apertus, "openai": OpenAI, "claude": Claude}
+SANS_MODELE = ("deterministe", "aucun")
+
+
+def choisir_fournisseur() -> Optional["Fournisseur"]:
+    """LE choix du fournisseur, par l'environnement. LLM_PROVIDER absent : comportement d'origine (Apertus s'il est
+    configuré, sinon la forme déterministe). LLM_PROVIDER=apertus|openai|claude : ce fournisseur s'il est configuré,
+    sinon la forme déterministe (jamais un autre fournisseur à sa place). deterministe|aucun : aucun modèle.
+    Toute autre valeur : erreur EXPLICITE (au démarrage)."""
+    choix = (os.environ.get("LLM_PROVIDER") or "").strip().lower()
+    if not choix:
+        return Apertus() if Apertus.configure() else None
+    if choix in SANS_MODELE:
+        return None
+    if choix not in FOURNISSEURS:
+        raise ConfigurationInvalide(f"LLM_PROVIDER invalide : « {choix} » (attendu : {', '.join([*FOURNISSEURS, *SANS_MODELE])})")
+    cls = FOURNISSEURS[choix]
+    if not cls.configure():
+        _journal.warning("fournisseur %s non configuré (%s absente) : forme déterministe", choix,
+                         ", ".join(k for k in cls.variables_requises() if not os.environ.get(k)))
+        return None
+    return cls()
 
 
 class Maquette:
@@ -308,7 +445,7 @@ class Intelligence:
     @classmethod
     def depuis_environnement(cls, tax: Taxonomie, journal=None, notes_privees_autorisees: bool = False) -> "Intelligence":
         """LE seul endroit qui choisit le fournisseur. Le reste du code ne teste jamais « est-ce Apertus ? »."""
-        return cls(tax, Apertus() if Apertus.configure() else None, journal, notes_privees_autorisees)
+        return cls(tax, choisir_fournisseur(), journal, notes_privees_autorisees)
 
     def etat(self) -> dict:
         derniers = [a for a in self.appels if a.fournisseur == "apertus"]
