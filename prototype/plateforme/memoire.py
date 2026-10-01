@@ -17,7 +17,7 @@ import threading
 from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
-from typing import Any, Iterator, Optional
+from typing import Any, Callable, Iterator, Optional
 
 import networkx as nx
 from pydantic import BaseModel, ConfigDict
@@ -52,6 +52,9 @@ class Memoire:
             self._db.execute("CREATE TABLE IF NOT EXISTS evenements (seq INTEGER PRIMARY KEY AUTOINCREMENT, id TEXT UNIQUE, donnees TEXT)")
             self._db.commit()
         self._cache: list[Evt] = []      # journal APPEND-ONLY déjà désérialisé (lu une fois, puis par incrément)
+        # appelés après l'ANNULATION de la transaction la plus externe : qui tient un état dérivé du journal (en mémoire,
+        # en cache) le reconstruit — sinon il garderait des faits qui n'existent plus (F27)
+        self.sur_annulation: list[Callable[[], None]] = []
 
     def _synchroniser(self) -> list[Evt]:
         """Cache incrémental : ne désérialise que les événements nouveaux. Resynchronisé à chaque lecture par une
@@ -90,6 +93,8 @@ class Memoire:
                 if not self._profondeur:
                     self._db.rollback()
                     self._cache = []                       # le cache a pu lire des faits annulés : relecture complète
+                    for f in self.sur_annulation:
+                        f()
                 raise
             self._profondeur -= 1
             if not self._profondeur:

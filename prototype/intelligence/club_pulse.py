@@ -81,6 +81,7 @@ class ClubPulse:
         self.r = brut
         self._semis = self._empreinte_semis()
         self._profils_depart = {p.id: p for p in brut.profils}      # le monde de départ (données préparées) : base des claims
+        self._besoins_depart, self._jour_depart = list(brut.besoins), brut.aujourd_hui
         self.ia = ia or Intelligence.depuis_environnement(tax, journal=self._tracer_ia,
                                                           notes_privees_autorisees=self.reglages.notes_privees_vers_ia)
         self.ia.journal = self._tracer_ia
@@ -96,6 +97,7 @@ class ClubPulse:
                          self._membre_peut)
         self.banc.BUDGET_NOEUDS = self.reglages.budget_noeuds
         self.journal = self.banc.m
+        self.journal.sur_annulation.append(self._reconstruire_membres)   # F27 : une annulation n'a jamais d'effet en mémoire
         # REGISTRE DES CAPACITÉS : patrons écrits par des humains × claims × consentements de finalité, composés par le banc
         self.capacites = Registre(self.banc, charger_patrons(concepts=set(tax.concepts)), lambda: self.jour)
         self.vues_essai = VuesEssai(self)
@@ -145,6 +147,18 @@ class ClubPulse:
         self.passes_jure.reprendre([(e.donnees["nonce"], e.acteurs[0], e.donnees["jusqu_a"]) for e in self.journal.evenements("PASSE_EMIS")],
                                    [e.donnees["nonce"] for e in jures if "nonce" in e.donnees],
                                    [(e.acteurs[0], e.donnees["jusqu_a"]) for e in jures])
+
+    def _reconstruire_membres(self) -> None:
+        """Après une transaction ANNULÉE : profils, besoins, préférences et horloge relus du journal (le seul chemin,
+        `_appliquer`, rejoué depuis le monde de départ) ; caches et analyses oubliés. Mémoire et journal d'accord (F27)."""
+        self.r.profils = list(self._profils_depart.values())
+        self.r.besoins = list(self._besoins_depart)
+        self.r.aujourd_hui = self._jour_depart
+        self.preferences = {}
+        for e in self.journal.evenements(*ETAT_MEMBRES):
+            self._appliquer(e)
+        self.__dict__.pop("_cache_capacites", None)
+        self._scan, self._etat = None, None
 
     def _appliquer(self, e: Evt) -> None:
         """LE seul chemin qui modifie profils, besoins, préférences et horloge : en direct comme au rejeu."""
