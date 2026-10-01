@@ -10,6 +10,7 @@ permissions:
 jobs:
   qualite:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: prototype
@@ -43,6 +44,7 @@ jobs:
     # injoignable VÉRIFIÉ par scripts/mode_salle.py, aucune configuration du fournisseur de langage (IA OFF, vérifié
     # côté serveur par la fixture). Chromium ne résout de toute façon aucun domaine externe (E2E hermétiques).
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: prototype
@@ -58,6 +60,7 @@ jobs:
         run: pip install -r requirements-dev.txt -c constraints.txt
       - name: Navigateur
         run: python -m playwright install --with-deps chromium
+        timeout-minutes: 10              # un téléchargement bloqué échoue vite au lieu de geler la CI 6 h (run #157)
       - name: E2E en mode salle (réseau local seul, IA OFF)
         run: >-
           sudo -E env "PATH=$PATH" "PLAYWRIGHT_BROWSERS_PATH=$HOME/.cache/ms-playwright"
@@ -75,6 +78,7 @@ jobs:
   dependances:
     # Vulnérabilités connues des dépendances (base publique PyPA / OSV).
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: prototype
@@ -91,6 +95,7 @@ jobs:
   reproductibilite:
     # Rejoue tous les benchmarks du sprint : un chiffre publié ne peut pas diverger silencieusement du code.
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     defaults:
       run:
         working-directory: prototype
@@ -106,6 +111,7 @@ jobs:
         run: pip install -r requirements-dev.txt -c constraints.txt
       - name: Navigateur pour les tests de bout en bout
         run: python -m playwright install --with-deps chromium
+        timeout-minutes: 10              # un téléchargement bloqué échoue vite au lieu de geler la CI 6 h (run #157)
       - name: Bout en bout dans un vrai navigateur (scène, console Club Pulse, application mobile, action collective, pannes réseau, CSP)
         env:
           HACKVS_E2E_OBLIGATOIRE: "1"
