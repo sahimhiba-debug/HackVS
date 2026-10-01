@@ -45,6 +45,8 @@ ce qui est encore possible — ou qu'il est bloqué.
   encode `127.0.0.1`, qu'un téléphone prend pour lui-même (revue R-01). La console et l'Établi s'ouvrent sur le portable
   (`http://127.0.0.1:8000/…`) : la console refuse tout autre appareil (403, testé). Les téléphones restent en HTTP
   local : le mode hors ligne du service worker n'y est pas actif, rien d'autre n'en dépend (vérifié dans Chromium).
+  Point d'accès **protégé par mot de passe (WPA2)** : en HTTP, les jetons de session circulent en clair sur le réseau
+  local (`FINAL_AUDIT.md` § 3).
 - Téléphone 1 = Sophie (code affiché dans la console), téléphone 2 = Léa (voix allemande). Régie de tournage :
   `/demo/regie` (écran commun + deux téléphones côte à côte ; aucun code affiché).
 

@@ -1,3 +1,5 @@
+> **HISTORIQUE — rédigé avant le registre des capacités (28–30.09.2026).** Conservé pour la traçabilité des décisions ; ne décrit PAS le produit actuel, et ses chiffres, routes et noms de fichiers peuvent être faux aujourd'hui. État actuel : [README](/README.md) · [index de la documentation](/docs/README.md).
+
 # Recherche : Hack VS, Club des Affaires, solutions comparables, précédents
 
 Consultation : **28 septembre 2026**. Hack VS a lieu **les 3 et 4 octobre 2026**, dans 5 jours.

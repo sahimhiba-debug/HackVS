@@ -1,3 +1,5 @@
+> **HISTORIQUE — rédigé avant le registre des capacités (28–30.09.2026).** Conservé pour la traçabilité des décisions ; ne décrit PAS le produit actuel, et ses chiffres, routes et noms de fichiers peuvent être faux aujourd'hui. État actuel : [README](/README.md) · [index de la documentation](/docs/README.md).
+
 # Architecture cible : Valais Ecosystem OS
 
 **Principe** : les agents proposent, le code déterministe vérifie, la politique contrôle, l'humain décide. Tout

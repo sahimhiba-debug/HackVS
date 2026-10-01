@@ -48,12 +48,14 @@ make quality-check             # secrets, lint, types, suite complète, E2E Chro
 make mutation                  # mutation (mutmut) du registre des capacités ; jamais sur la machine de démonstration
 ```
 
-Mesuré, pas supposé : ~1 250 tests et 17 E2E hermétiques (aussi en « mode salle », réseau coupé) ; oracle en force
+Mesuré, pas supposé : ~1 270 tests et 17 E2E hermétiques (aussi en « mode salle », réseau coupé) ; oracle en force
 brute contre le compositeur ; mutation **sur `intelligence/capacites.py` seulement** (campagne locale du 01.10) :
 1 229 / 1 327 mutants tués, 98 survivants tous classés ([liste](docs/audit/mutants_survivants.txt)).
 
 ## Documentation
 
+- **Audit final avant le gel** (architecture, sécurité, tests, performance, limites, risques) : [FINAL_AUDIT](docs/audit/FINAL_AUDIT.md) ·
+  registre des affirmations : [CLAIMS](docs/audit/CLAIMS.md) · index de la documentation (à jour / historique) : [docs/README](docs/README.md)
 - État réel, constats et corrections : [SENIOR_ENGINEERING_AUDIT](docs/audit/SENIOR_ENGINEERING_AUDIT.md) ·
   [SENIOR_ENGINEERING_FINDINGS](docs/audit/SENIOR_ENGINEERING_FINDINGS.md) · phases : [PHASE_3](docs/audit/PHASE_3.md)
 - Démonstration : [DEMO_SCRIPT](docs/audit/club-pulse-pivot/DEMO_SCRIPT.md) · [TODO-DEMO](TODO-DEMO.md)

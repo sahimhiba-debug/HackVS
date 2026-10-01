@@ -1,3 +1,5 @@
+> **HISTORIQUE — rédigé avant le registre des capacités (28–30.09.2026).** Conservé pour la traçabilité des décisions ; ne décrit PAS le produit actuel, et ses chiffres, routes et noms de fichiers peuvent être faux aujourd'hui. État actuel : [README](/README.md) · [index de la documentation](/docs/README.md).
+
 # Décisions : problème, proposition de valeur, choix et compromis
 
 Format de chaque décision : **problème → choix → pourquoi → compromis → pour la défendre devant le jury.**

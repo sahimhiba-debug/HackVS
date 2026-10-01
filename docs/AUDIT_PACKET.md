@@ -1,3 +1,5 @@
+> **HISTORIQUE — rédigé avant le registre des capacités (28–30.09.2026).** Conservé pour la traçabilité des décisions ; ne décrit PAS le produit actuel, et ses chiffres, routes et noms de fichiers peuvent être faux aujourd'hui. État actuel : [README](/README.md) · [index de la documentation](/docs/README.md).
+
 # Dossier d'audit : lots 2 à 4 (28.09.2026)
 
 Destinataire : auditeur externe (ChatGPT), via Hiba. **Aucun retour d'audit sur ce lot n'a été reçu.** Le lot 2 s'appuie sur un

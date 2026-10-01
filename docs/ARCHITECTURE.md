@@ -1,3 +1,5 @@
+> **PARTIELLEMENT PÉRIMÉ (constat F02).** Écrit au pivot du 29.09 vers le banc d'essai ; le registre des capacités (`intelligence/capacites.py`), la frontière IA en rôles (EXTRACT / NORMALIZE / NARRATE) et le journal durable sont venus ensuite. Lecture à jour : [index de la documentation](/docs/README.md).
+
 # Architecture — Club Pulse
 
 > **Pivot du 2026-09-29.** Le parcours visible est désormais le **banc d'essai partagé** : `intelligence/essai.py`

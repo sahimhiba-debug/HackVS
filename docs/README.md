@@ -1,0 +1,49 @@
+# Documentation — ce qui est à jour, ce qui est historique
+
+Chaque fichier Markdown de `docs/` est classé ci-dessous ; `prototype/tests/test_docs_classees.py` refuse un fichier non
+classé, ou un fichier historique sans sa bannière. Un document **à jour** décrit le produit au commit courant ; un document
+**daté** est un compte rendu exact à sa date (ses chiffres ne bougent plus) ; un document **historique** décrit un produit
+qui n'existe plus.
+
+## À jour
+
+| Fichier | Contenu |
+|---|---|
+| [/README.md](/README.md) | ce qu'est Club Pulse, comment le lancer et le vérifier, ce qui est réel / synthétique / simulé / non démontré |
+| [audit/FINAL_AUDIT.md](audit/FINAL_AUDIT.md) | audit final avant le gel : architecture, sécurité, API, état, tests, performance, claims, limites, risques |
+| [audit/CLAIMS.md](audit/CLAIMS.md) | registre des affirmations : chacune prouvée (test), mesurée, démontrable à la main, ou retirée |
+| [audit/SENIOR_ENGINEERING_FINDINGS.md](audit/SENIOR_ENGINEERING_FINDINGS.md) | registre des constats F01–F40 et leur état |
+| [audit/REVUE_PUBLIQUE.md](audit/REVUE_PUBLIQUE.md) | revue publique R-01 à R-15 |
+| [audit/VAGUES_CORRECTIONS.md](audit/VAGUES_CORRECTIONS.md) | chaque correction : test rouge, changement, contre-épreuve, commit |
+| [audit/mutants_survivants.txt](audit/mutants_survivants.txt) | survivants de mutation classés équivalents (`capacites.py`) |
+| [audit/club-pulse-pivot/DEMO_SCRIPT.md](audit/club-pulse-pivot/DEMO_SCRIPT.md) | script de démonstration, secours, rituel d'avant-scène |
+| [audit/club-pulse-pivot/PREUVES.md](audit/club-pulse-pivot/PREUVES.md) | commandes exécutées et résultats (chiffres finaux figés au gel) |
+| [THREAT_MODEL.md](THREAT_MODEL.md) | modèle de menaces |
+| [design/DESIGN_SYSTEM.md](design/DESIGN_SYSTEM.md) | design system v1.0 et écarts assumés |
+| [ADR/README.md](ADR/README.md) | décisions d'architecture et leur statut relu contre le code |
+| [audit/EXTRACTION_EVAL.md](audit/EXTRACTION_EVAL.md) · [audit/probe_publicai.md](audit/probe_publicai.md) | évaluation EXTRACT (prête, non exécutée contre un vrai modèle) ; sonde du fournisseur |
+
+## Daté (exact à sa date, non mis à jour)
+
+| Fichier | Date |
+|---|---|
+| [audit/SENIOR_ENGINEERING_AUDIT.md](audit/SENIOR_ENGINEERING_AUDIT.md) | audit profond, 01.10 (commit `53e87cd`) |
+| [audit/PHASE_1.md](audit/PHASE_1.md) · [PHASE_2](audit/PHASE_2.md) · [PHASE_3](audit/PHASE_3.md) | comptes rendus de phase, 30.09 |
+| [audit/PIVOT_INSPECTION.md](audit/PIVOT_INSPECTION.md) | inspection avant le registre des capacités, 30.09 |
+| [audit/club-pulse-pivot/ACCEPTANCE_MATRIX.md](audit/club-pulse-pivot/ACCEPTANCE_MATRIX.md) · [HANDOFF_FOR_CODEX](audit/club-pulse-pivot/HANDOFF_FOR_CODEX.md) · [REVUE_JURY](audit/club-pulse-pivot/REVUE_JURY.md) · [ETAT_INITIAL](audit/club-pulse-pivot/ETAT_INITIAL.md) | tranche « action collective », 29–30.09 |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | **partiellement périmé** (constat F02) : pivot du 29.09, avant le registre des capacités |
+| ADR 0001–0008 (voir [ADR/README.md](ADR/README.md)) | 29.09 ; 0004 remplacée |
+
+## Historique (produit d'avant le pivot — bannière en tête de chaque fichier)
+
+[ANCIEN_PROTOTYPE.md](ANCIEN_PROTOTYPE.md) · [ARCHITECTURE_FIL_DU_CLUB.md](ARCHITECTURE_FIL_DU_CLUB.md) ·
+[ASSUMPTIONS.md](ASSUMPTIONS.md) · [AUDIT_PACKET.md](AUDIT_PACKET.md) · [CURRENT_STATE.md](CURRENT_STATE.md) ·
+[DECISIONS.md](DECISIONS.md) · [DEMO.md](DEMO.md) · [DEPLOIEMENT.md](DEPLOIEMENT.md) · [EVALUATION.md](EVALUATION.md) ·
+[HANDOFF.md](HANDOFF.md) · [LEARNING.md](LEARNING.md) · [LIMITATIONS.md](LIMITATIONS.md) · [LOOPS.md](LOOPS.md) ·
+[OPEN_SOURCE_RECON.md](OPEN_SOURCE_RECON.md) · [REPRISE.md](REPRISE.md) · [RESEARCH.md](RESEARCH.md) ·
+[SENIOR_CODE_REVIEW.md](SENIOR_CODE_REVIEW.md) · [STRATEGIC_RESEARCH.md](STRATEGIC_RESEARCH.md) ·
+[TARGET_ARCHITECTURE.md](TARGET_ARCHITECTURE.md) · [architecture/RECOMPOSITION.md](architecture/RECOMPOSITION.md)
+
+Le dossier `/competition/` (pitch de l'ancien produit) est en quarantaine : bannière « OBSOLÈTE — ne pas présenter » sur
+chaque fichier, vérifiée par `prototype/tests/test_quarantaine_competition.py`. Les limites ACTUELLES du produit sont
+dans `audit/FINAL_AUDIT.md` § 12, pas dans l'ancien `LIMITATIONS.md`.

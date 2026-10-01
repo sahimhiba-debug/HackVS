@@ -1,3 +1,5 @@
+> **HISTORIQUE — rédigé avant le registre des capacités (28–30.09.2026).** Conservé pour la traçabilité des décisions ; ne décrit PAS le produit actuel, et ses chiffres, routes et noms de fichiers peuvent être faux aujourd'hui. État actuel : [README](/README.md) · [index de la documentation](/docs/README.md).
+
 # Démonstration et pitch (répétition générale, lot 4)
 
 Règle d'or : **on ne montre que ce qui fonctionne, et on dit ce qui est simulé.** Personnes et entreprises fictives ; le bandeau et les badges le disent en permanence.

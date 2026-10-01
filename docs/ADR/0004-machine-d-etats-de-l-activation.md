@@ -1,5 +1,7 @@
 # ADR 0004 — Machine d'états explicite pour l'activation
 
+> **REMPLACÉE (01.10.2026)** : le module décrit (`intelligence/activation.py`) a été retiré avec l'ancien moteur. Voir [ADR/README.md](README.md).
+
 Statut : **accepté** (prototype). Date : 2026-09-29.
 
 ## Contexte
