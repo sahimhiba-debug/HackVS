@@ -143,3 +143,37 @@ def test_make_demo_lance_un_journal_fichier_et_un_secret_stable_hors_depot():
     assert "HACKVS_ESSAIS_DB=var/club_pulse.db" in recette
     assert 'HACKVS_SECRET="$$(cat var/secret_demo)"' in recette and "secrets.token_urlsafe" in recette
     assert "prototype/var/" in racine.joinpath(".gitignore").read_text(encoding="utf-8").splitlines()   # jamais committé
+
+
+def test_reinitialisation_puis_kill_9_le_monde_rendu_est_celui_d_apres_la_reinitialisation(tmp_path):
+    """R2 (contre-expertise) : un monde A vécu (quatre étapes : une action existe), la console réinitialise (monde B, une
+    étape), `kill -9`, relance : c'est B qui revient — rien de A, et l'ancien journal reste clos (aucun fait de A
+    n'est réapparu dans le fichier)."""
+    import sqlite3
+    srv, base = _demarrer(_env(tmp_path, "http://127.0.0.1:9"))
+    try:
+        _api(base, "/api/pulse/demo/aller/4", {}, CONSOLE)                       # monde A : accords réunis
+        essais_a = _api(base, "/api/pulse/console/essais", entetes=CONSOLE)["essais"]
+        assert essais_a, "le monde A doit contenir une action"
+        _api(base, "/api/pulse/demo/reinitialiser", {}, CONSOLE)
+        _api(base, "/api/pulse/demo/suivant", {}, CONSOLE)                      # monde B : une étape
+        b = {k: _api(base, f"/api/pulse/console/{k}", entetes=CONSOLE) for k in ("capacites", "essais")}
+        etape_b = _api(base, "/api/pulse/etat", entetes=CONSOLE)["etape"]
+    finally:
+        os.kill(srv.pid, signal.SIGKILL)
+        srv.wait()
+    srv, base = _demarrer(_env(tmp_path, "http://127.0.0.1:9"))
+    try:
+        assert _api(base, "/api/pulse/etat", entetes=CONSOLE)["etape"] == etape_b == 1
+        assert {k: _api(base, f"/api/pulse/console/{k}", entetes=CONSOLE) for k in b} == b
+        # les identifiants d'essai sont DÉTERMINISTES (porteur, question, position) : B recrée le même essai que A à
+        # l'étape 1. Ce qui distingue A : ses étapes 2 à 4 et l'autorisation de son action (accords réunis)
+        assert [e["etat"] for e in essais_a] == ["AUTORISE"]
+        with sqlite3.connect(tmp_path / "club_pulse.db") as db:
+            contenu = " ".join(d for (d,) in db.execute("SELECT donnees FROM evenements"))
+        assert '"vers": "AUTORISE"' not in contenu.replace('"vers":"', '"vers": "'), "un fait du monde A est revenu"
+        etapes = [int(x) for x in __import__("re").findall(r'"etape": ?(\d+)', contenu)]
+        assert etapes == [1], etapes                                             # DEMO_ETAPE : seulement celle de B
+    finally:
+        srv.kill()
+        srv.wait()
