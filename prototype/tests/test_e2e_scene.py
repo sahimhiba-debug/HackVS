@@ -77,7 +77,7 @@ def serveur(**env_en_plus: str):
             with socket.socket() as s:
                 s.settimeout(2)
                 assert s.connect_ex(("1.1.1.1", 443)) != 0, "mode salle : l'extérieur est joignable"
-            requete = urllib.request.Request(base + "/api/pulse/etat", headers={"X-Pulse-Console": "1"})
+            requete = urllib.request.Request(base + "/api/pulse/etat", headers={"X-Pulse-Console": env.get("HACKVS_CONSOLE_JETON") or "1"})
             ia = json.load(urllib.request.urlopen(requete, timeout=5))["ia"]
             assert ia["configure"] is False and ia["fournisseur"] == "deterministe", ia
         yield base

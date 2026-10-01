@@ -317,6 +317,7 @@ Tout ce qui change ce qu'un utilisateur, un opérateur ou un développeur peut o
 | Contraste, cibles 44 px, `aria-label` | couleurs littérales des planches, boutons de 36 px, champs nommés par leur placeholder | écarts aux planches écrits dans `DESIGN_SYSTEM.md` § 8 ; rien d'autre de visible | `e67b20f`, `22bddf8` |
 | Porte de mutation | verte si aucun survivant non classé n'était listé | rouge si mutmut échoue, si la campagne est vide / interrompue, ou s'il reste des mutants « no tests » / « suspicious » | `d374f75` |
 | Déconnexion | côté client seulement | **inchangé, risque connu accepté** (contre-expertise) : le jeton n'est pas révoqué côté serveur avant son expiration (12 h), sauf effacement du compte | — |
+| Jeton de console (`HACKVS_CONSOLE_JETON`, déploiement joignable du réseau) | la régie envoyait toujours « 1 » (403) ; l'Établi et la projection ouverts par les liens de la console (nouvel onglet `noopener`) restaient en 403 sans rien demander ; la console redemandait le jeton à chaque appel refusé | `web/pulse/jeton-console.js` : chaque écran d'animation demande le jeton aux onglets déjà déverrouillés (canal `BroadcastChannel` de la même origine), sinon à l'animatrice ; au plus deux demandes par chargement de page ; jamais dans l'URL ni en stockage durable ; la garde serveur est inchangée. **Sans jeton configuré (`make demo`) : rien ne change.** Vérifié dans un conteneur de l'image (29/29) | ce commit |
 
 ## Annexe B — levée des réserves R2, R3, R4 (contre-expertise des vagues 1–2)
 

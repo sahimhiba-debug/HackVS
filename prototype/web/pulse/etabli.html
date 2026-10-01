@@ -68,6 +68,7 @@
     <div id="jure"></div>
   </div>
   <script type="module">
+    import { consoleFetch } from "/static/pulse/jeton-console.js";
     const $ = (s) => document.querySelector(s);
     function h(tag, attrs = {}, ...enfants) {
       const el = document.createElement(tag);
@@ -78,7 +79,6 @@
       for (const e of enfants.flat(Infinity)) if (e !== null && e !== undefined && e !== false) el.append(e instanceof Node ? e : document.createTextNode(String(e)));
       return el;
     }
-    const jeton = () => { try { return sessionStorage.getItem("console-jeton") || "1"; } catch { return "1"; } };
     const JOURS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
     const jour = (iso) => { const d = new Date(iso + "T12:00:00"); return `${JOURS[d.getDay()]} ${iso.slice(8, 10)}.${iso.slice(5, 7)}`; };
     const COULEURS = { ACTIVE: "vert", DEGRADED: "rouge", ONE_AWAY: "ambre", CONSENTED: "bleu", PROPOSED: "bleu", EXTINCT: "" };
@@ -146,7 +146,7 @@
     }
     async function rediger(finalite) {
       try {
-        const r = await fetch(`/api/pulse/console/capacites/${encodeURIComponent(finalite)}/recit`, { method: "POST", headers: { "X-Pulse-Console": jeton() } });
+        const r = await consoleFetch(`/api/pulse/console/capacites/${encodeURIComponent(finalite)}/recit`, { method: "POST" });
         if (!r.ok) throw new Error(`serveur : ${r.status}`);
         recits[finalite] = await r.json(); rendre(derniere);
       } catch (e) { $("#fraicheur").textContent = "récit indisponible : réessayez"; $("#fraicheur").className = "puce rouge"; }
@@ -154,7 +154,7 @@
     // QR JURÉ : un passe court (15 min), à usage unique, pour le téléphone d'un personnage FICTIF absent de la scène
     $("#qr-jure").addEventListener("click", async () => {
       try {
-        const r = await fetch("/api/pulse/console/jure", { method: "POST", headers: { "X-Pulse-Console": jeton(), "Content-Type": "application/json" },
+        const r = await consoleFetch("/api/pulse/console/jure", { method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ persona: "s14", minutes: 15 }) });
         const p = await r.json();
         if (!r.ok) throw new Error(p.detail || `serveur : ${r.status}`);
@@ -167,7 +167,7 @@
     let ia = null;
     async function lireIA() {
       try {
-        const r = await fetch("/api/pulse/console/ia", { headers: { "X-Pulse-Console": jeton() } });
+        const r = await consoleFetch("/api/pulse/console/ia", {});
         ia = await r.json();
         $("#ia").textContent = !ia.actif ? "IA : éteinte — forme déterministe" : ia.configure ? `IA : allumée — modèle « ${ia.modele} »` : "IA : aucun modèle configuré — forme déterministe";
         $("#ia").className = "puce" + (ia.actif && ia.configure ? " vert" : "");
@@ -175,14 +175,14 @@
       } catch (e) { $("#ia").textContent = "IA : état inconnu"; }
     }
     $("#ia-bascule").addEventListener("click", async () => {
-      await fetch("/api/pulse/console/ia", { method: "POST", headers: { "X-Pulse-Console": jeton(), "Content-Type": "application/json" },
+      await consoleFetch("/api/pulse/console/ia", { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ actif: !(ia && ia.actif) }) });
       await lireIA();
     });
     async function decider(finalite, action) {           // la FILE de l'animation : relancer ou acquitter, puis relire
       try {
-        const r = await fetch(`/api/pulse/console/capacites/${encodeURIComponent(finalite)}/${action}`,
-          { method: "POST", headers: { "X-Pulse-Console": jeton() } });
+        const r = await consoleFetch(`/api/pulse/console/capacites/${encodeURIComponent(finalite)}/${action}`,
+          { method: "POST" });
         if (!r.ok) throw new Error(`serveur : ${r.status}`);
       } catch (e) { $("#fraicheur").textContent = "action refusée : réessayez"; $("#fraicheur").className = "puce rouge"; }
       await lire();
@@ -192,7 +192,7 @@
       if (enCours) return; enCours = true;
       const t = performance.now();
       try {
-        const r = await fetch("/api/pulse/console/capacites", { headers: { "X-Pulse-Console": jeton() } });
+        const r = await consoleFetch("/api/pulse/console/capacites", {});
         if (!r.ok) throw new Error(`serveur : ${r.status}`);
         derniere = await r.json(); rendre(derniere);
         $("#fraicheur").textContent = `lu en ${Math.round(performance.now() - t)} ms`; $("#fraicheur").className = "puce";
@@ -202,7 +202,7 @@
     }
     $("#voir-pulse").addEventListener("click", async () => {
       try {
-        const r = await fetch("/api/pulse/console/pulse?depuis=0", { headers: { "X-Pulse-Console": jeton() } });
+        const r = await consoleFetch("/api/pulse/console/pulse?depuis=0", {});
         const p = await r.json();
         const bloc = (titre, items) => h("div", {}, h("span", { class: "surtitre" }, titre),
           items.length ? h("ul", {}, items.map((x) => h("li", {}, `${x.titre} (${x.avant || "—"} → ${x.apres || "—"})`))) : h("p", { class: "note" }, "Rien."));

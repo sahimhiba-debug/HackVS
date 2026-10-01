@@ -73,6 +73,7 @@
   </header>
   <main class="page" id="page" aria-live="polite"><p class="vide">Connexion au serveur…</p></main>
   <script type="module">
+    import { consoleFetch } from "/static/pulse/jeton-console.js";
     const $ = (s, r = document) => r.querySelector(s);
     function h(tag, attrs = {}, ...enfants) {
       const el = document.createElement(tag);
@@ -83,7 +84,6 @@
       for (const e of enfants.flat(Infinity)) if (e !== null && e !== undefined && e !== false) el.append(e instanceof Node ? e : document.createTextNode(String(e)));
       return el;
     }
-    const jeton = () => { try { return sessionStorage.getItem("console-jeton") || "1"; } catch { return "1"; } };
     const min = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
     const PUCES = { "reçu": "vert", "livrable reçu": "vert", "apporté": "vert", "accepté": "bleu", "disponible": "bleu", "transmis": "ambre", "proposé": "ambre",
                     "à reconfirmer": "ambre", "ne couvre plus": "rouge", "manquant": "rouge" };
@@ -194,7 +194,7 @@
       if (enCours) return; enCours = true;
       const t = performance.now();
       try {
-        const r = await fetch("/api/pulse/console/projection", { headers: { "X-Pulse-Console": jeton() } });
+        const r = await consoleFetch("/api/pulse/console/projection", {});
         if (!r.ok) throw new Error(`serveur : ${r.status}`);
         rendre(await r.json());
         $("#fraicheur").textContent = `lu en ${Math.round(performance.now() - t)} ms`;

@@ -36,13 +36,14 @@
     <div class="meta" id="meta">ENREGISTREMENT d'une exécution réelle<br>monde de démonstration FICTIF</div>
   </div>
   <script type="module">
+    import { consoleFetch } from "/static/pulse/jeton-console.js";
     const $ = (s) => document.querySelector(s);
     const params = new URLSearchParams(location.search);
     $("#meta").textContent = "";
     for (const t of ["ENREGISTREMENT d'une exécution réelle, sans montage", "monde de démonstration FICTIF · horloge simulée",
                      `commit ${params.get("commit") || "non indiqué"}`]) { $("#meta").append(document.createTextNode(t), document.createElement("br")); }
     window.legende = (titre, texte, joue) => { $("#titre").textContent = titre; $("#texte").textContent = texte; $("#joue").hidden = !joue; };
-    const r = await fetch("/api/pulse/console/personas", { headers: { "X-Pulse-Console": "1" } });
+    const r = await consoleFetch("/api/pulse/console/personas");
     const per = Object.fromEntries((await r.json()).map((p) => [p.id, p]));
     $("#projection").src = "/projection";
     let s1 = per.n01.session;
