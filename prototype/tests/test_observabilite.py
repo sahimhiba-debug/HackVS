@@ -31,7 +31,9 @@ def test_identifiant_de_requete_renvoye_et_assaini():
 
 
 def test_en_tetes_de_securite_et_csp_par_empreintes():
-    for chemin in ("/app", "/console"):
+    # CHAQUE page HTML servie (revue publique R-05 : l'écran commun et la régie étaient servis sans CSP, alors que les
+    # empreintes de leurs scripts étaient déjà calculées)
+    for chemin in ("/app", "/console", "/etabli", "/projection", "/demo/regie"):
         h = client.get(chemin).headers
         csp = h["content-security-policy"]
         script_src = next(d for d in csp.split(";") if d.strip().startswith("script-src"))

@@ -99,7 +99,7 @@ _observabilite.configurer(_observabilite.niveau_depuis_env(os.environ))
 # ordre : la dernière ajoutée est la plus EXTÉRIEURE → l'identifiant de requête couvre aussi les refus 413
 app.add_middleware(_Protections, csp=_politique_contenu([WEB_PULSE / f for f in ("app.html", "console.html", "projection.html", "regie.html",
                                                                               "etabli.html")]),
-                   chemins_csp=("/app", "/console", "/etabli"))
+                   chemins_csp=("/app", "/console", "/etabli", "/projection", "/demo/regie"))
 app.add_middleware(_Perimetre, ancien_actif=lambda: ANCIEN_PROTOTYPE, jeton=lambda: _CONSOLE_JETON)
 app.add_middleware(_observabilite.MiddlewareRequete)
 
