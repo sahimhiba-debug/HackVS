@@ -60,6 +60,9 @@ class Memoire:
         # en cache) le reconstruit — sinon il garderait des faits qui n'existent plus (F27)
         self.sur_annulation: list[Callable[[], None]] = []
         self._ferme = False                # monde remplacé : plus aucune écriture (F28)
+        self._figee = 0                    # > 0 : lecture figée (un calcul en lecture seule relit le journal UNE fois)
+        self._sale = False                 # une écriture a eu lieu pendant la lecture figée : on relit
+        self._generation = 0               # +1 à chaque remise à zéro du cache (annulation, vidage, relecture complète)
 
     def _synchroniser(self) -> list[Evt]:
         """Cache incrémental : ne désérialise que les événements nouveaux. Resynchronisé à chaque lecture par une
@@ -70,6 +73,7 @@ class Memoire:
             for s, d in self._db.execute("SELECT seq, donnees FROM evenements WHERE seq > ? ORDER BY seq", (connu,)):
                 self._cache.append(Evt.model_validate_json(d).model_copy(update={"seq": s}))
         if len(self._cache) != nombre:                     # vidé ou modifié ailleurs : relecture complète
+            self._generation += 1
             self._cache = [Evt.model_validate_json(d).model_copy(update={"seq": s})
                            for s, d in self._db.execute("SELECT seq, donnees FROM evenements ORDER BY seq")]
         return self._cache
@@ -77,6 +81,7 @@ class Memoire:
     def ajouter(self, e: Evt) -> Evt:
         """Idempotent : le même événement (même contenu) n'est jamais compté deux fois."""
         with self._v:
+            self._sale = True
             if self._ferme:
                 raise MondeRemplace("ce monde a été remplacé : écriture refusée")
             cur = self._db.execute("INSERT OR IGNORE INTO evenements (id, donnees) VALUES (?, ?)",
@@ -100,6 +105,8 @@ class Memoire:
                 if not self._profondeur:
                     self._db.rollback()
                     self._cache = []                       # le cache a pu lire des faits annulés : relecture complète
+                    self._sale = True
+                    self._generation += 1
                     for f in self.sur_annulation:
                         f()
                 raise
@@ -107,10 +114,37 @@ class Memoire:
             if not self._profondeur:
                 self._db.commit()
 
+    def _lus(self) -> list[Evt]:
+        if self._figee and not self._sale:
+            return self._cache
+        self._sale = False
+        return self._synchroniser()
+
     def evenements(self, *types: str, jusqu_au: Optional[date] = None) -> list[Evt]:
         with self._v:
-            res = self._synchroniser()
+            res = self._lus()
             return [e for e in res if (not types or e.type in types) and (jusqu_au is None or e.le <= jusqu_au)]
+
+    @contextmanager
+    def figee(self) -> Iterator[None]:
+        """Lecture figée : pendant un calcul en lecture seule (projeter les capacités), le journal n'est resynchronisé
+        avec le fichier qu'UNE fois au lieu d'une fois par lecture (H2 : 160 000 requêtes pour une projection). Toute
+        écriture pendant le bloc — y compris d'un autre fil, puisque le verrou est tenu — force une relecture."""
+        with self._v:
+            self._sale = True                          # la première lecture du bloc se synchronise
+            self._figee += 1
+            try:
+                yield
+            finally:
+                self._figee -= 1
+
+    def version(self) -> tuple[int, int, int]:
+        """Ce qui change dès que le journal change, en temps constant : génération du cache, nombre de faits, numéro du
+        dernier. Sert de clé aux index dérivés. La génération change à chaque annulation ou vidage : SQLite peut alors
+        réutiliser un numéro de séquence pour un AUTRE fait."""
+        with self._v:
+            res = self._lus()
+            return self._generation, len(res), (res[-1].seq if res else 0)
 
     def maintenant(self, defaut: date) -> date:
         h = self.evenements("HORLOGE")
@@ -135,6 +169,8 @@ class Memoire:
             self._db.execute("DELETE FROM evenements")
             self._db.commit()
             self._cache = []
+            self._sale = True
+            self._generation += 1
 
 
 # ------------------------------------------------------------------ graphe dérivé

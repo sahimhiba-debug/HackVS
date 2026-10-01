@@ -31,7 +31,7 @@ from contextlib import contextmanager
 from datetime import date, timedelta
 from typing import Callable, Iterator, Literal, Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from plateforme.affirmations import Statut
 from plateforme.memoire import Evt, Memoire
@@ -171,6 +171,7 @@ class Protocole(BaseModel):
 
 
 class OffreVolontaire(BaseModel):
+    model_config = ConfigDict(frozen=True)       # partagée par l'index des offres (H2) : jamais modifiée sur place
     id: str
     auteur: str
     nature: Nature
@@ -235,6 +236,7 @@ class Banc:
         self.recherches_tronquees = 0
         self.noeuds_max = 0                                   # plus grande recherche d'équipe depuis la création du banc
         self._hypotheses: dict[str, OffreVolontaire] = {}
+        self._index: Optional[tuple[tuple[int, int, int], dict[str, OffreVolontaire], frozenset[str]]] = None
 
     # ------------------------------------------------------------------ journal
     @contextmanager
@@ -288,21 +290,33 @@ class Banc:
     def hypothetique(self, oid: str) -> bool:
         return oid in self._hypotheses
 
+    def _index_offres(self) -> tuple[dict[str, OffreVolontaire], frozenset[str]]:
+        """La dernière version de chaque offre et les offres retirées, en UN passage sur le journal, recalculées
+        seulement quand le journal change (H2 : chaque recherche d'offre relisait tout le journal — une projection des
+        capacités coûtait 27 s avec 200 offres parasites, sous le verrou du monde)."""
+        version = self.m.version()
+        if self._index is None or self._index[0] != version:
+            dernieres: dict[str, OffreVolontaire] = {}
+            retirees: set[str] = set()
+            for e in self.m.evenements("OFFRE", "OFFRE_RETIREE"):
+                if e.type == "OFFRE":
+                    dernieres[e.donnees["offre"]["id"]] = OffreVolontaire(**e.donnees["offre"])
+                else:
+                    retirees.add(e.donnees["offre"])
+            self._index = (version, dernieres, frozenset(retirees))
+        return self._index[1], self._index[2]
+
     def offre(self, oid: str) -> OffreVolontaire:
         if oid in self._hypotheses:
             return self._hypotheses[oid]
-        evs = [e for e in self.m.evenements("OFFRE") if e.donnees["offre"]["id"] == oid]
-        if not evs:
+        o = self._index_offres()[0].get(oid)
+        if o is None:
             raise Introuvable("offre inconnue")
-        return OffreVolontaire(**evs[-1].donnees["offre"])
+        return o
 
     def offres(self, publiques: bool = False) -> list[OffreVolontaire]:
         """`publiques=True` : seulement les offres ouvertes à tout essai (pas celles déclarées pour un essai précis)."""
-        dernieres: dict[str, dict] = {}                          # un seul passage : la dernière version de chaque offre
-        for e in self.m.evenements("OFFRE"):
-            dernieres[e.donnees["offre"]["id"]] = e.donnees["offre"]
-        return [o for o in [*(OffreVolontaire(**d) for d in dernieres.values()), *self._hypotheses.values()]
-                if not (publiques and o.pour_essai)]
+        return [o for o in [*self._index_offres()[0].values(), *self._hypotheses.values()] if not (publiques and o.pour_essai)]
 
     def offre_de(self, eid: str, e: Etape) -> Optional[OffreVolontaire]:
         """L'offre qui porte ce geste : l'offre choisie, ou — sur invitation — celle que la personne a déclarée EN
@@ -315,7 +329,7 @@ class Banc:
         return None
 
     def etat_offre(self, oid: str) -> str:
-        if oid not in self._hypotheses and any(e.donnees["offre"] == oid for e in self.m.evenements("OFFRE_RETIREE")):
+        if oid not in self._hypotheses and oid in self._index_offres()[1]:
             return "retiree"
         o, j = self.offre(oid), self._jour()
         return "expiree" if o.au < j else ("a_venir" if o.du > j else "active")
@@ -698,6 +712,14 @@ class Banc:
     def solutions(self, eid: Optional[str], p: Optional[Protocole] = None, maximum: int = 3,
                   garder: Optional[dict[str, Optional[OffreVolontaire]]] = None,
                   permis: Optional[dict[str, set[str]]] = None) -> list[dict]:
+        """Voir `_solutions`. Une recherche ne fait que LIRE : le journal est lu une fois pour toute la recherche (H2 :
+        chaque couverture d'offre le relisait, des milliers de fois par recherche)."""
+        with self.m.figee():
+            return self._solutions(eid, p, maximum, garder, permis)
+
+    def _solutions(self, eid: Optional[str], p: Optional[Protocole] = None, maximum: int = 3,
+                   garder: Optional[dict[str, Optional[OffreVolontaire]]] = None,
+                   permis: Optional[dict[str, set[str]]] = None) -> list[dict]:
         """Créneaux où TOUS les gestes sont couverts, dans la fenêtre du porteur : recherche exhaustive au quart d'heure
         (bornée : fenêtre × durées × gestes × offres). Une variante plus courte n'est proposée que si le porteur a fixé
         une durée minimale acceptable — jamais en dessous. Ordre : le moins de personnes changées, la durée entière,
