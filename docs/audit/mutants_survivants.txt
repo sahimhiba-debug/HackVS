@@ -33,7 +33,7 @@ xǁPatronǁportee__mutmut_9 | return {"finalite": self.id, "version": self.versi
 xǁPatronǁprotocole__mutmut_15 | etapes = [Etape(id=e.id, nature=e.nature, geste=e.geste, duree_min=self.duree_min, concept=e.concept, minimums=e.minimums) for e in self.emplacements if e.id !=
 xǁPatronǁprotocole__mutmut_17 | etapes = [Etape(id=e.id, nature=e.nature, geste=e.geste, duree_min=self.duree_min, concept=e.concept, role=e.role[:25],
 xǁPatronǁprotocole__mutmut_8 | etapes = [Etape(id=e.id, nature=e.nature, geste=e.geste, duree_min=self.duree_min, concept=e.concept, role=None,
-xǁRegistreǁ_acquittee__mutmut_12 | if not acq or any(e.seq >= acq[-1].seq and e.type not in (self.RELANCE, self.ACQUIT) for e in evs):
+xǁRegistreǁ_acquittee__mutmut_12 | if not acq or any(e.seq >= acq[-1].seq and e.type not in self.TRACES for e in evs):
 xǁRegistreǁ_composer__mutmut_118 | sous = self.b.solutions(None, p.protocole(sans=e.id), maximum=None, garder={k: v for k, v in garder.items() if k != e.id},
 xǁRegistreǁ_composer__mutmut_123 | sous = self.b.solutions(None, p.protocole(sans=e.id), garder={k: v for k, v in garder.items() if k != e.id},
 xǁRegistreǁ_composer__mutmut_127 | sous = self.b.solutions(None, p.protocole(sans=e.id), maximum=2, garder={k: v for k, v in garder.items() if k != e.id},

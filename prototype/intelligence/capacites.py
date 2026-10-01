@@ -346,16 +346,21 @@ class Registre:
 
     # ------------------------------------------------------------------ état incertain : la file de l'animation
     RELANCE, ACQUIT = "RECHERCHE_RELANCEE", "RECHERCHE_ACQUITTEE"
+    # des TRACES : elles ne changent rien à ce que le Club peut faire (appels et propositions IA, textes rédigés, passes
+    # juré, interrupteur IA, activations de comptes, étapes de la démonstration, réponses — dont les « non » —, relances
+    # et acquittements eux-mêmes). Une réponse « oui » change le monde par l'offre et l'accord qu'elle écrit (F32).
+    TRACES = frozenset({"RECHERCHE_RELANCEE", "RECHERCHE_ACQUITTEE", "APPEL_IA", "PROPOSITION_IA", "REDACTION", "PASSE_EMIS",
+                        "PASSE_JURE", "IA_INTERRUPTEUR", "ACTIVATION", "DEMO_ETAPE", "ASK_REPONSE"})
 
     def _relance(self, finalite: str) -> Optional[int]:
         budgets = [e.donnees["budget"] for e in self.b.m.evenements(self.RELANCE) if e.donnees["finalite"] == finalite]
         return max(budgets) if budgets else None
 
     def _acquittee(self, finalite: str) -> Optional[date]:
-        """Un acquittement vaut pour l'état VU : il tombe dès qu'un autre fait est écrit (le monde a changé depuis)."""
+        """Un acquittement vaut pour l'état VU : il tombe dès qu'un fait du MONDE est écrit depuis (pas une trace)."""
         evs = self.b.m.evenements()
         acq = [e for e in evs if e.type == self.ACQUIT and e.donnees["finalite"] == finalite]
-        if not acq or any(e.seq > acq[-1].seq and e.type not in (self.RELANCE, self.ACQUIT) for e in evs):
+        if not acq or any(e.seq > acq[-1].seq and e.type not in self.TRACES for e in evs):
             return None
         return acq[-1].le
 
