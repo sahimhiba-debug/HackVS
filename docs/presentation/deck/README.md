@@ -67,7 +67,9 @@ Un projecteur ne fait pas de noir : en salle éclairée, un carton noir devient 
 
 ## Déposer le film
 
-Copier le fichier sous **`assets/film.mp4`**.
+Copier le fichier sous **`assets/film.mp4`**. Ce fichier est ignoré par git (`.gitignore`) : il ne va jamais dans le dépôt public ; on le
+copie à la main (AirDrop, clé USB). `lancer.py` sert les vidéos par plages : on peut sauter dans le film, et Safari
+peut le lire. Format sûr : MP4 H.264.
 
 - **Premier clic** sur la slide du film : lecture en plein écran.
 - **À la fin**, le dernier plan reste figé. C'est l'ancienne slide 7.

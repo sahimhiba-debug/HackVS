@@ -8,3 +8,7 @@ competition/video/_brut/
 .coverage
 htmlcov/
 mutants/
+
+# Film du pitch : fichier local (242 Mo), transféré à la main (AirDrop / clé USB), jamais dans le dépôt public
+docs/presentation/deck/assets/film.mp4
+docs/presentation/motion/film.mp4
