@@ -40,6 +40,28 @@ Machine de développement, en local : **pas** un réseau de salle.
 | `make latence-ia N=30` | tâche du produit : médiane 5329.2 ms, p95 6021.2 ms, n = 30, 0 erreur ; requête courte : médiane 425.9 ms, p95 458.4 ms — `docs/audit/latence_apertus.md` |
 | `make test` · `make e2e` | 1301 réussis · 22/22 (dont `test_e2e_ia.py`, faux Apertus HTTP local) |
 
+## Gel du 02.10.2026, 18:00 (CEST) — chiffres définitifs
+
+Mesuré sur le commit `5b386d5` (HEAD de `claude/modest-bohr-xvk53n`, identique à `origin`, aucun changement local) ;
+le tag annoté `gel-demo` est posé sur le commit qui ajoute cette section (docs seulement), après sa CI verte.
+
+| Chiffre | Valeur | Source |
+|---|---|---|
+| Tests (suite hors E2E, `make test`) | **1 359 réussis**, 0 échec | exécution locale sur `5b386d5`, 02.10 15:34 UTC (6 min 32 s) |
+| Parcours de bout en bout dans Chromium (`make e2e`) | **22/22 réussis** | exécution locale sur `5b386d5`, 02.10 15:41 UTC ; mode salle (réseau local seul, IA OFF) vert en CI, job `salle` du run #178 |
+| CI sur `5b386d5` | **verte** | run CI [#178](https://github.com/sahimhiba-debug/HackVS/actions/runs/36958464092) (qualité, salle, dépendances, reproductibilité) |
+| Mutation du cœur du registre (`intelligence/capacites.py`) | **1 229 tués / 1 327**, 98 survivants **tous classés équivalents**, 0 sans test, 0 non vérifié, 0 suspect | run Mutation [#16](https://github.com/sahimhiba-debug/HackVS/actions/runs/36984623513) sur `5b386d5`, 02.10, porte durcie (échec si un survivant n'est pas classé) |
+| Geste sur un téléphone → écran commun | **moins d'une seconde** (229–704 ms en test navigateur ; 929–944 ms en enregistrement à 3 cadres) | « Délais mesurés » ci-dessus ; machine de développement, pas un réseau de salle |
+| Écriture sans geste | **0** (aucune route de lecture n'écrit) | CLAIMS n° 28, test associé |
+| Modèle (Apertus, tâche du produit) | médiane **5,3 s**, p95 6,0 s, n = 30, 0 erreur — **mesure du 01.10, non refaite au gel** | `make latence-ia N=30` → `docs/audit/latence_apertus.md` ; CLAIMS n° 40 ; depuis l'environnement de développement, pas depuis la salle |
+| Qualité du modèle sur la tâche | **1/26** accepté et juste | CLAIMS n° 39, mesure du 01.10 |
+
+**Hors gel, hors deck (règle FINAL_AUDIT § 10).** Mutation de `essai.py` (F37, campagne locale, population d'avant
+H2) : 2 311 tués / 3 528, 1 150 survivants **non classés**, 67 sans test — consignée dans VAGUES_CORRECTIONS § 4.1,
+pas un chiffre de présentation.
+
+Après le gel : uniquement `docs/` ou correctif bloquant de démo validé par Hiba.
+
 ## Non exécuté (et pourquoi)
 - Apertus réel : aucun identifiant fourni. *(vrai au 30.09 ; depuis le 01.10, voir « Ajouts du 01.10 » ci-dessus.)*
 - Vrais téléphones sur le réseau d'une salle : remplacés par des contextes de navigateur indépendants.
