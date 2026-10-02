@@ -39,7 +39,7 @@
 | F34 | LOW | Vie privée | effacement inatteignable et non durable | FERMÉ `4ac6f81` — « Tout effacer », journalisé, rejoué |
 | F35 | INFO | Rejeu | activations de comptes hors journal | FERMÉ `4c3975e` (`ACTIVATION` journalisée) |
 | F36 | LOW | Sécurité | oracle d'existence d'un essai (403 / 404) | FERMÉ `298adab` |
-| F37 | MEDIUM | Tests | mutation limitée à `capacites.py` | MESURÉ — campagne locale sur `essai.py` (voir VAGUES_CORRECTIONS § F37) ; non bloquante en CI |
+| F37 | MEDIUM | Tests | mutation limitée à `capacites.py` | MESURÉ — campagne locale sur `essai.py` terminée le 02.10 : 3 528 mutants, 2 311 tués, 1 150 survivants NON classés, 67 sans test (population d'avant H2 ; VAGUES_CORRECTIONS § 4.1) ; non bloquante en CI ; classification après le gel |
 | F38 | LOW | Hygiène | `BUDGET_NOEUDS` muté ; garde par `assert` ; `httpx.Client` non fermé | OUVERT (après la démo) |
 | F39 | INFO | Horloges | heure murale dans un journal à dates simulées | OUVERT (documentation) |
 | F40 | INFO | Essai | un brouillon n'expire jamais | OUVERT (décision produit) |

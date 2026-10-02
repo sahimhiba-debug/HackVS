@@ -47,6 +47,23 @@ Remplie (CI #132 verte jeudi 11:00). Campagne locale dans une copie du dépôt (
 intelligence/essai.py`, sélection : tests du banc d'essai et du registre). Résultat : voir § 4.1 (écrit à la fin de la
 campagne, tel quel).
 
+### 4.1 Résultat (campagne terminée le 02.10 vers 02:55 UTC, tel quel)
+
+| Population | Tués | Survivants | Sans test | Timeout | Suspects |
+|---|---|---|---|---|---|
+| 3 528 | 2 311 | 1 150 | 67 | 0 | 0 |
+
+- **Taux** : 65,5 % de la population tuée ; 66,8 % des 3 461 mutants couverts par au moins un test.
+- **Survivants : 1 150, NON classés.** Consigne : pas de classification de masse avant le gel. Certains sont sans
+  doute équivalents, d'autres sont de vrais trous de test ; cette campagne ne permet pas de faire la part des deux.
+- **Population d'avant H2.** La mesure porte sur une copie figée de `essai.py` prise avant les commits H2 (`107c6cb`,
+  `edb0f5d`) : les index ajoutés depuis ne sont pas dans cette population.
+- **Exécution.** Campagne locale dans une copie du dépôt, jamais sur la machine de démo. Elle a été interrompue
+  plusieurs fois par des redémarrages du conteneur, puis reprise par mutmut là où elle en était, sans rien perdre.
+- **Ce que ces chiffres ne font pas.** Ils ne vont ni dans `PREUVES.md` ni dans le deck : règle au gel, FINAL_AUDIT
+  § 10. Ils mesurent le banc d'essai, pas le cœur du registre (`capacites.py`, dont les 98 survivants sont tous
+  classés).
+
 ## 5. Ce qui reste (connu, dit)
 
 F02 (architecture à réécrire — documentation), F05 (charges d'événements non typées), F06 (`Banc`), F08 (classement

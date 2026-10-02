@@ -208,7 +208,7 @@ téléchargé), **17/17 E2E** (réseau normal et mode salle), ruff et mypy propr
 | Cible | Population | Tués | Survivants | Sans test | Statut |
 |---|---|---|---|---|---|
 | `intelligence/capacites.py` | 1 327 | 1 229 (dont 0 timeout) | 98, **tous classés équivalents** (`mutants_survivants.txt`) | 0 (non vérifiés 0, suspects 0) | **confirmé par la CI avec la porte durcie** : campagne GitHub [#15](https://github.com/sahimhiba-debug/HackVS/actions/runs/36880815389) au commit `4233cef`, verte, 0 non classé (56 min) ; identique à la campagne locale du 01.10 |
-| `intelligence/essai.py` (F37) | 3 528 | partiel : 1 921 au mutant 3 025 | 1 037 au mutant 3 025, **NON classés** | 67 | locale, en cours. Mesurée sur `essai.py` **d'avant H2** (copie figée) : les index ajoutés depuis ne sont pas dans cette population. Aucune classification de masse avant le gel (consigne). Le taux de survivants (≈ 1/3) est élevé et dit tel quel |
+| `intelligence/essai.py` (F37) | 3 528 | 2 311 (0 timeout, 0 suspect) | 1 150, **NON classés** | 67 | locale, **terminée** le 02.10 (VAGUES_CORRECTIONS § 4.1). Mesurée sur `essai.py` **d'avant H2** (copie figée) : les index ajoutés depuis ne sont pas dans cette population. Aucune classification de masse avant le gel (consigne). Le taux de survivants (≈ 1/3) est élevé et dit tel quel |
 
 **Règle au gel (contre-expertise).** `PREUVES.md` et le deck ne reprennent QUE des chiffres produits par la porte durcie
 (campagne GitHub #15 et suivantes, population complète affichée). Les chiffres de `essai.py` ci-dessus restent étiquetés
