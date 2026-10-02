@@ -22,9 +22,8 @@ Tout ce qui suit est dans le dépôt (branche `claude/modest-bohr-xvk53n`), sauf
    `docs/presentation/film/`, committer, pousser (après le gel, seul `docs/` change).
 3. **Film sur le MacBook** (AirDrop + clé USB), puis passage complet du deck Wi-Fi coupé : film du début à la fin,
    dernier plan figé, « Et après ? ».
-4. **Chiffres du deck** : recopier dans `docs/presentation/deck/data/gel.json` les valeurs de PREUVES (section du
-   gel) : `1 359` · `22` · `1 229 / 1 327` · `< 1 s` · `0` ; `gel.commit` = `b1d4c66`. Puis relancer la revue
-   (`deck/revue.py`).
+4. ~~Chiffres du deck~~ — **fait le 02.10 au soir** : `deck/data/gel.json` rempli depuis PREUVES (`1 359` · `22` ·
+   `1 229 / 1 327` · `< 1 s` · `0`, commit `b1d4c66`) ; revue refaite (`deck/review/final/`, slide 16-14).
 5. **Samedi matin** : rituel DEMO_SCRIPT § 9.5, test D-PRES-1 (IA 3/3 ou éteinte), captures reprises sur la machine de
    démo (mêmes noms, `deck/assets/captures/`), test de salle jour/nuit (`04_DEMO_RUNBOOK.md` § 8, point 6).
 

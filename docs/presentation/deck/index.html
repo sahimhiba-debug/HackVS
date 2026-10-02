@@ -127,7 +127,7 @@ body { font-family: "Plus Jakarta Sans", sans-serif; color: var(--ink); -webkit-
 .preuve p { font-size: 40px; font-weight: 500; color: var(--secondary); margin-top: 12px; }
 .chiffres { position: absolute; left: var(--marge); right: var(--marge); top: 232px; }
 .chiffre { display: grid; grid-template-columns: 720px 1fr; align-items: center; height: 136px; border-top: 2px solid var(--hairline-2); }
-.chiffre b { font-family: "JetBrains Mono", monospace; font-weight: 500; font-size: 104px; letter-spacing: -0.04em; line-height: 1; display: flex; align-items: center; gap: 28px; }
+.chiffre b { font-family: "JetBrains Mono", monospace; font-weight: 500; font-size: 104px; letter-spacing: -0.04em; line-height: 1; display: flex; align-items: center; gap: 28px; white-space: nowrap; }
 .chiffre b.gel { color: var(--secondary); font-size: 72px; letter-spacing: 0; }
 .chiffre b.gel::after { content: ""; display: block; width: 180px; border-bottom: 3px dashed var(--disabled); align-self: flex-end; margin-bottom: 10px; }
 .chiffre span { font-size: 36px; font-weight: 500; color: var(--secondary); line-height: 1.25; }
@@ -429,7 +429,9 @@ function remplir(g) {
   const ch = document.getElementById("chiffres");
   ch.innerHTML = (g ? g.chiffres : [{}, {}, {}, {}, {}]).map((c, k) => {
     const v = c.valeur;
-    const val = v === null || v === undefined ? `<b class="gel">[GEL]</b>` : `<b>${esc(v)}${c.zero_verifie ? medaillon : ""}</b>`;
+    const aff = v === null || v === undefined ? "" : String(v).replace(/ /g, "\u202f");   // espaces fines insécables : une ligne
+    const long = aff.length > 7 ? ' style="font-size:84px"' : "";
+    const val = v === null || v === undefined ? `<b class="gel">[GEL]</b>` : `<b${long}>${esc(aff)}${c.zero_verifie ? medaillon : ""}</b>`;
     return `<div class="chiffre fr" data-f="${k + 1}">${val}<span>${esc(c.etiquette || "")}</span></div>`;
   }).join("");
   const t = document.getElementById("gel-titre");
