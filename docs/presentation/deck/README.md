@@ -105,12 +105,12 @@ Le chrono démarre à l'appui sur `R`. Une barre discrète, en bas de l'écran, 
 |---|---|
 | « Et après ? » (après les mains levées) | 0:35 |
 | « Il s'appelle Jean-Marc. » (carton) | 1:55 |
-| Fin du film | 4:25 |
-| Établi plein écran | 4:45 |
-| Reçu sur le téléphone (repère « Le reçu » de la slide de démo) | 6:35 |
-| Slide chiffres | 7:40 |
-| Slide IA | 8:15 |
-| Carte + reçu | 9:20 |
+| Fin du film (film de 3:21) | 5:21 |
+| Établi plein écran | 5:45 |
+| Reçu sur le téléphone (repère « Le reçu » de la slide de démo) | 8:40 |
+| Slide chiffres | 10:30 |
+| Slide IA | 11:25 |
+| Carte + reçu | 12:40 |
 
 Lecture de la barre :
 
@@ -118,6 +118,9 @@ Lecture de la barre :
 - **Rouge** : la coupe prévue s'affiche en une ligne.
 - **Retard en cours de route** : si on dépasse la cible du prochain point de plus de 15 s, la coupe s'affiche avant
   même d'y arriver.
+
+Cibles du 02.10 au soir : film final de 3:21, créneau de 15 minutes, fin visée à 13:30 avec 1:30 de marge
+(`02_STRUCTURE.md`). Si le film ne part pas (plan B), ignorer les cibles après 2:00 : tout avance de 1:40.
 
 Le mode est éteint par défaut. On ne présente jamais avec.
 

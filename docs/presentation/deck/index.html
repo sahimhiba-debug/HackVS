@@ -516,12 +516,12 @@ function secours() {
 const CP = [
   { s: "2", p: 0, lab: "Mains levées, rire → « Et après ? »", cible: 35, coupe: "Couper la deuxième relance (« gardez la main levée… »)." },
   { s: "6", p: 0, lab: "« Il s'appelle Jean-Marc. »", cible: 115, coupe: "Couper la dernière phrase de l'acte 2 (« on ne manque pas de rencontres »)." },
-  { s: "8", p: 0, lab: "Fin du film", cible: 265, coupe: "Respiration en une phrase de cinq mots." },
-  { s: "10", p: 0, lab: "Établi plein écran", cible: 285, coupe: "Aucune coupe : rattraper sur l'acte 6." },
-  { s: "11", p: 4, lab: "Reçu sur le téléphone", cible: 395, coupe: "Couper l'acte 6 au retrait seul (pas de juré)." },
-  { s: "14", p: 0, lab: "Slide chiffres", cible: 460, coupe: "Ne lire que trois chiffres sur cinq." },
-  { s: "15", p: 0, lab: "Slide IA", cible: 495, coupe: "Garder les trois lignes, couper l'exemple de l'erreur." },
-  { s: "18", p: 0, lab: "Carte + reçu", cible: 560, coupe: "La phrase finale, puis noir — rien d'autre." },
+  { s: "8", p: 0, lab: "Fin du film", cible: 321, coupe: "Respiration en une phrase de cinq mots." },
+  { s: "10", p: 0, lab: "Établi plein écran", cible: 345, coupe: "Aucune coupe : rattraper sur l'acte 6." },
+  { s: "11", p: 4, lab: "Reçu sur le téléphone", cible: 520, coupe: "Couper l'acte 6 au retrait seul (pas de juré)." },
+  { s: "14", p: 0, lab: "Slide chiffres", cible: 630, coupe: "Ne lire que trois chiffres sur cinq." },
+  { s: "15", p: 0, lab: "Slide IA", cible: 685, coupe: "Garder les trois lignes, couper l'exemple de l'erreur." },
+  { s: "18", p: 0, lab: "Carte + reçu", cible: 760, coupe: "La phrase finale, puis noir — rien d'autre." },
 ];
 let repetOn = false, t0 = null, atteints = {};
 const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, "0")}`;

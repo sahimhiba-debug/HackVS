@@ -1,6 +1,6 @@
 # 01 — Le concept : la carte de visite et le reçu
 
-> Présentation finale Club Pulse — Hack VS 2026, jury Hack VS / Club des Affaires, CERM Martigny. 10 minutes.
+> Présentation finale Club Pulse — Hack VS 2026, jury Hack VS / Club des Affaires, CERM Martigny. 15 minutes (film de 3:21 compris).
 > Livrables de mise en scène, contenu seulement (le deck visuel se fait côté design, à partir de `06_SLIDE_CONTENT.md`).
 > Aucune ligne de code produit n'est touchée par ce travail. Tout ce qui est affirmé est adossé à `docs/audit/CLAIMS.md`.
 
@@ -27,7 +27,7 @@
 Club Pulse, pas de titre. La carte est celle d'un membre fictif de la démo (par exemple « Sophie — tisanes de plantes
 alpines », cohérent avec le monde de démonstration) ; aucune carte réelle, aucun nom réel.
 
-**Conclusion (9:10).** La même carte revient, à la même place. À côté d'elle, un deuxième objet : **le reçu du produit**,
+**Conclusion (12:30).** La même carte revient, à la même place. À côté d'elle, un deuxième objet : **le reçu du produit**,
 tel que le téléphone l'affiche réellement à l'écran « Demandes du Club → Mes consentements (reçus) » :
 titre de la capacité, état `valable`, « Votre pièce : … · donné le … · jusqu'au … · référence … ». Daté, référencé,
 révocable. Même geste de la main — on tend quelque chose — mais cette fois, il engage.

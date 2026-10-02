@@ -49,13 +49,13 @@ ans. Il s'appelle Jean-Marc.
 
 ---
 
-## 3. Le film — 2:00 à 4:25
+## 3. Le film — 2:00 à 5:21
 
 [on se tait, on regarde le jury regarder]
 
 ---
 
-## Respiration — 4:25
+## Respiration — 5:21
 
 [dernier plan figé, puis « Et après ? »]
 
@@ -63,7 +63,7 @@ Jean-Marc a dit oui. … Et après ?
 
 ---
 
-## 4. La révélation — 4:40
+## 4. La révélation — 5:36
 
 [carton : « Le même geste. Dans le vrai produit. » — puis l'Établi, plein écran]
 
@@ -80,7 +80,7 @@ pourraient l'avoir. Pas un mail à deux cents personnes. Une question, aux bonne
 
 ---
 
-## 5. La démo — 5:10
+## 5. La démo — 6:20
 
 [V2 ouvre l'onglet Demandes]
 
@@ -123,7 +123,7 @@ au pressing, mais pour un minibus.
 
 ---
 
-## 6. Le retrait — 6:40
+## 6. Le retrait — 8:50
 
 **V1 —** Maintenant, la question que tout le monde se pose : et si Pauline change d'avis ?
 
@@ -143,7 +143,7 @@ Voilà pour l'essai. Maintenant, ce qui est prouvé.
 
 ---
 
-## 7. Les preuves — 7:10
+## 7. Les preuves — 9:50
 
 [carton : « Ce qui est prouvé. Rien de plus. » — puis la slide des chiffres]
 
@@ -168,7 +168,7 @@ Rien de tout ça n'est un argument de vente. C'est ce qui vous permet de croire 
 
 ---
 
-## 8. L'IA — 8:10
+## 8. L'IA — 11:20
 
 [slide : « L'IA propose. Les règles vérifient. Le membre décide. »]
 
@@ -191,7 +191,7 @@ comme juge. Prévu ensuite. Pas aujourd'hui.
 
 ---
 
-## 9. La carte et le reçu — 9:10
+## 9. La carte et le reçu — 12:30
 
 [carton : « Et après, maintenant, il se passe quelque chose. » — puis la carte, et le reçu réel à côté]
 

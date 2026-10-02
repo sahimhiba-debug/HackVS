@@ -15,6 +15,10 @@ Le lecteur est hors ligne : polices et captures sont dans le dépôt, aucun appe
 
 ## Le court métrage
 
+> **02.10 au soir** : le film final dure 3:21 et le créneau 15 minutes. Le lecteur de scène lit le vrai fichier et
+> enchaîne à sa fin, quelle que soit sa durée. La vidéo continue (MP4) garde un emplacement de 2:25 et le minutage
+> de 10 minutes : elle n'a pas été re-rendue. La référence pour samedi est le deck (`../deck/`).
+
 Poser le fichier du film à côté de `index.html`, sous le nom **`film.mp4`**. Le lecteur le joue en plein écran au bon
 moment (fin du chapitre 2, après « L'homme qui disait oui. »), puis enchaîne seul sur « Et après ? ». Un clic pendant
 le film l'arrête et passe à la suite. Sans `film.mp4`, le lecteur affiche un emplacement noir et attend le clic : on

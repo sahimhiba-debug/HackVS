@@ -1,6 +1,6 @@
 # 05 — Intégration du film « L'homme qui disait oui »
 
-Le film est **verrouillé ailleurs** : 21 plans, ≈ 2:25, fini côté production. Il n'est pas dans ce dépôt, et ce
+Le film est **verrouillé ailleurs** : ≈ 3:21 (durée du fichier final, 02.10), fini côté production. Il n'est pas dans ce dépôt, et ce
 document ne le modifie pas. Il fixe seulement sa place dans la présentation, les deux phrases qui l'encadrent, les
 vérifications techniques, et le plan B si le film n'est pas prêt samedi.
 
@@ -10,9 +10,9 @@ vérifications techniques, et le plan B si le film n'est pas prêt samedi.
 |---|---|
 | Carton d'annonce | CONTRIBUTION — « L'homme qui disait oui. » (fond noir, Plus Jakarta Sans, une phrase), affiché 2 s, puis cut au noir |
 | Début du film | **2:00** (± 10 s selon l'acte 2) |
-| Fin du film | **4:25** |
-| Respiration | 4:25–4:40 : dernier plan figé 3 s, puis slide « Et après ? » |
-| Durée totale consommée | 2:40 (carton + film + respiration) |
+| Fin du film | **5:21** |
+| Respiration | 5:21–5:36 : dernier plan figé 3 s, puis slide « Et après ? » |
+| Durée totale consommée | 3:36 (carton + film + respiration) |
 
 Le film est le seul élément de la présentation dont la durée ne se négocie pas. Tout retard pris avant 2:00 se
 rattrape **après** le film, jamais en le coupant (`02_STRUCTURE.md`, points de contrôle).
@@ -36,7 +36,7 @@ sur un silence, enchaîner immédiatement.
 
 ## 4. Ce que le montage verrouillé montre (transfert film, 01.10)
 
-Le montage final (21 plans, 2:25) montre :
+Le montage final (3:21) montre :
 
 1. **une demande qui arrive chez Jean-Marc** — insert de l'écran réel « Demandes » du produit ;
 2. **le reçu**, en insert plein cadre, 4 secondes ;
@@ -69,7 +69,7 @@ Conséquences pour le pitch :
 | Format | lisible par le lecteur de la machine sans codec à télécharger (test : ouvrir, lire 10 s, sauter à 2:00, lire la fin) |
 | Son | niveau réglé en salle, pas sur le portable ; test au fond de la salle ; si le film a des sous-titres, les activer |
 | Enchaînement | le carton CONTRIBUTION est une slide du deck ; le film est lancé à la main par V2 au cut noir (pas d'auto-play incertain) ; retour au deck sur la slide « Et après ? » |
-| Durée réelle | chronométrer le fichier final ; si ≠ 2:25 de plus de 10 s, décaler les repères de `02_STRUCTURE.md` d'autant |
+| Durée réelle | chronométrer le fichier final ; si ≠ 3:21 de plus de 10 s, décaler les repères de `02_STRUCTURE.md` d'autant |
 | Image figée | savoir mettre en pause sur le dernier plan (ou prévoir une capture du dernier plan comme slide) |
 | Cartons de fin, jour ou nuit | mêmes fond et encre que les cartons du deck, selon le mode retenu au test de salle (`04_DEMO_RUNBOOK.md` § 8, point 6) : jour = `#F2F3F5` et `#141923`, nuit = noir et blanc |
 
@@ -82,8 +82,9 @@ La présentation doit tenir sans lui. Structure de remplacement, même durée to
 | 2:00–2:10 | carton CONTRIBUTION inchangé : « L'homme qui disait oui. » |
 | 2:10–3:10 | **Jean-Marc raconté à l'oral, en trois phrases**, V1 face au jury, slide noire (voir ci-dessous) |
 | 3:10–3:25 | slide « Et après ? » (2/3) — plus tôt que prévu, et ça marche aussi |
-| 3:25–4:40 | **acte 4 étendu** : la révélation prend 1:15 au lieu de 0:30. V1 raconte l'Établi plus lentement, montre les trois pièces une à une, puis passe la main. La démo garde son minutage (5:10–7:10). |
-| — | aucun autre acte ne bouge ; on arrive à 10:00 avec 1:15 de marge, à rendre au jury (finir à 8:45, c'est permis) |
+| 3:25–4:40 | **acte 4 étendu** : la révélation prend 1:15 au lieu de 0:44. V1 raconte l'Établi plus lentement, montre les trois pièces une à une, puis passe la main. |
+| 4:40–11:50 | actes 5 à 9 inchangés dans leur durée, simplement avancés de 1:40 (démo 4:40–7:10, retrait 7:10–8:10, preuves 8:10–9:40, IA 9:40–10:50, finale 10:50–11:50) |
+| — | on finit vers 11:50, avec 3:10 de marge sur le créneau de 15 minutes, à rendre au jury : finir tôt, c'est permis |
 
 **Jean-Marc en trois phrases (plan B, V1, mot pour mot) :**
 

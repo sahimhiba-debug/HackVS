@@ -52,14 +52,14 @@ ceux de `docs/audit/club-pulse-pivot/PREUVES.md` après le tag `gel-demo` (`06_S
 
 ---
 
-## ACTE 3 — Le film (2:00–4:25)
+## ACTE 3 — Le film (2:00–5:21)
 
-Le film « L'homme qui disait oui », 2:25, son de salle. V1 ne parle pas. V2 prépare le téléphone et l'Établi
+Le film « L'homme qui disait oui », 3:21, son de salle. V1 ne parle pas. V2 prépare le téléphone et l'Établi
 (`04_DEMO_RUNBOOK.md`, § « pendant le film »).
 
 ---
 
-## RESPIRATION (4:25–4:40)
+## RESPIRATION (5:21–5:36)
 
 **Le public voit :** le dernier plan du film, figé, puis la slide « Et après ? ».
 
@@ -69,7 +69,7 @@ Le film « L'homme qui disait oui », 2:25, son de salle. V1 ne parle pas. V2 pr
 
 ---
 
-## ACTE 4 — La révélation (4:40–5:10)
+## ACTE 4 — La révélation (5:36–6:20)
 
 **Le public voit :** carton ESSAI — « Le même geste. Dans le vrai produit. » — puis l'Établi, plein écran, la carte
 « Accueillir une délégation d'acheteurs germanophones » avec son statut « il manque une pièce » et, en pointillés,
@@ -86,7 +86,7 @@ Le film « L'homme qui disait oui », 2:25, son de salle. V1 ne parle pas. V2 pr
 
 ---
 
-## ACTE 5 — La démo live (5:10–6:40)
+## ACTE 5 — La démo live (6:20–8:50)
 
 **Le public voit :** l'Établi à gauche, le téléphone (projeté ou en régie) à droite. Tout est marqué « FICTIF ».
 
@@ -143,7 +143,7 @@ Le film « L'homme qui disait oui », 2:25, son de salle. V1 ne parle pas. V2 pr
 
 ---
 
-## ACTE 6 — Le retrait anonyme, la recomposition (6:40–7:10)
+## ACTE 6 — Le retrait anonyme, la recomposition (8:50–9:50)
 
 **V1 dit :**
 
@@ -158,7 +158,7 @@ Le film « L'homme qui disait oui », 2:25, son de salle. V1 ne parle pas. V2 pr
 > L'Établi dit : « transport : ce composant n'est plus disponible ». Le rôle. Jamais la personne. Et la demande repart,
 > vers un autre membre — jamais vers elle.
 
-**Si le temps le permet (jusqu'à 7:10), et seulement si le rituel de samedi a validé le QR sur un vrai téléphone :**
+**Si le temps le permet (jusqu'à 9:50), et seulement si le rituel de samedi a validé le QR sur un vrai téléphone :**
 
 > Et ce membre, ce soir, c'est l'un de vous. [V2 montre le QR juré sur l'Établi] Un passe de quinze minutes, sans
 > compte, à usage unique. Scannez : vous jouez Markus, personnage fictif — et la demande est sur votre téléphone.
@@ -169,7 +169,7 @@ Le film « L'homme qui disait oui », 2:25, son de salle. V1 ne parle pas. V2 pr
 
 ---
 
-## ACTE 7 — Les preuves (7:10–8:10)
+## ACTE 7 — Les preuves (9:50–11:20)
 
 **Le public voit :** carton RÉSULTAT — « Ce qui est prouvé. Rien de plus. » — puis UNE slide de chiffres (slide 14).
 
@@ -193,7 +193,7 @@ Le film « L'homme qui disait oui », 2:25, son de salle. V1 ne parle pas. V2 pr
 
 ---
 
-## ACTE 8 — L'IA (8:10–9:10)
+## ACTE 8 — L'IA (11:20–12:30)
 
 **Le public voit :** une slide, trois lignes : « L'IA propose. Les règles vérifient. Le membre décide. »
 
@@ -213,7 +213,7 @@ Le film « L'homme qui disait oui », 2:25, son de salle. V1 ne parle pas. V2 pr
 
 ---
 
-## ACTE 9 — La carte et le reçu (9:10–10:00)
+## ACTE 9 — La carte et le reçu (12:30–13:30)
 
 **Le public voit :** carton REÇU — « Et après, maintenant, il se passe quelque chose. » — puis la carte de visite du
 début, et à côté, le reçu réel du téléphone.

@@ -1,4 +1,4 @@
-# 04 — Runbook de la démo live (actes 4–6, 4:40–7:10)
+# 04 — Runbook de la démo live (actes 4–6, 5:36–9:50)
 
 Ce runbook **s'adosse** à `docs/audit/club-pulse-pivot/DEMO_SCRIPT.md` (état initial § 2, secours § 8, rituel de
 samedi § 9.5) et l'étend pour la scène du registre. Il ne le remplace pas : en cas de divergence, DEMO_SCRIPT gagne
@@ -54,7 +54,7 @@ Jean-Marc, dans le produit, c'est ça : le Club peut le faire. »
 3. Sur le téléphone de Pauline : onglet **Demandes** → la carte de la demande est là, avec **Oui / Non / Pas cette fois**
    et le champ « Décrivez votre pièce avec vos mots (facultatif) ».
 4. Émettre un **QR juré** depuis l'Établi (bouton « QR juré », personnage Markus) **sans le scanner** : il servira à
-   l'acte 6 s'il reste du temps. Le passe vaut 15 minutes : l'émettre au plus tôt à 4:40, idéalement pendant le film.
+   l'acte 6 s'il reste du temps. Le passe vaut 15 minutes : l'émettre au plus tôt à 5:36, idéalement pendant le film.
 
 Données : monde fictif, personnages fictifs, marqués « FICTIF » sur chaque écran. Aucun nom réel.
 
@@ -84,7 +84,7 @@ c'est pourquoi le constat de samedi décide, pas l'espoir.
 
 Quelle que soit la décision, le scénario guidé de la régie reste sans modèle.
 
-## 4. Pendant le film (2:00–4:25) — V2, en silence
+## 4. Pendant le film (2:00–5:21) — V2, en silence
 
 - Réveiller l'écran du téléphone, vérifier l'onglet Demandes, régler la luminosité au maximum.
 - Mettre l'Établi au premier plan sur l'ordinateur ; vérifier « lu en … ms » en haut (pas « hors ligne : écran figé »).
@@ -95,16 +95,16 @@ Quelle que soit la décision, le scénario guidé de la régie reste sans modèl
 
 | # | Temps | Qui | Action exacte | Ce qui doit s'afficher | Plan B si ce n'est pas le cas |
 |---|---|---|---|---|---|
-| 1 | 4:40 | V1 | basculer le projecteur sur l'Établi | la carte « il manque une pièce », le minibus en pointillés | **Établi vide / « hors ligne »** : F5 ; sinon `make demo` dans un terminal (le monde revient, ne pas réinitialiser) ; sinon capture `etabli-1-manque.png` et dire « capture de la répétition de ce matin » |
-| 2 | 5:10 | V2 | téléphone : onglet **Demandes** | la demande « Un minibus de 12 places ou plus », trois boutons | **téléphone ne charge pas** : régie `/demo/regie` sur l'écran, cadre « Téléphone 1 » ; **toujours pas** : capture `tel-1-demande.png` |
+| 1 | 5:36 | V1 | basculer le projecteur sur l'Établi | la carte « il manque une pièce », le minibus en pointillés | **Établi vide / « hors ligne »** : F5 ; sinon `make demo` dans un terminal (le monde revient, ne pas réinitialiser) ; sinon capture `etabli-1-manque.png` et dire « capture de la répétition de ce matin » |
+| 2 | 6:20 | V2 | téléphone : onglet **Demandes** | la demande « Un minibus de 12 places ou plus », trois boutons | **téléphone ne charge pas** : régie `/demo/regie` sur l'écran, cadre « Téléphone 1 » ; **toujours pas** : capture `tel-1-demande.png` |
 | 3 | 5:25 | V2 | taper dans « Décrivez votre pièce avec vos mots » : `Mon minibus a 14 places, libre vendredi après-midi.` | le texte | — |
 | 4 | 5:35 | V2 | appuyer **« Proposer à partir de mon texte »** | **B (défaut)** : « forme déterministe, sans IA — … Remplissez le formulaire vous-même. » · **A** : « proposé par le modèle …, vérifié par le code — Vérifiez, puis répondez. », « places » pré-rempli à 14 | **« Proposition indisponible »** (réseau, en A) : V1 dit la réplique « formulaire » ; V2 saisit 14 |
 | 5 | 5:45 | V1 | la réplique qui correspond à l'écran (`03_SCRIPT_ORAL.md`, acte 5) — en B, la réplique de la parité | — | ne jamais commenter un message qui n'est pas à l'écran |
 | 6 | 6:00 | V2 | vérifier « places (au moins 12) » = 14, appuyer **Oui** | téléphone : le reçu apparaît dans « Mes consentements (reçus) » ; **Établi : « le Club peut le faire »**, bordure verte, plus de pointillés (≤ 1 s, l'Établi relit chaque seconde) — **V1 : la réplique-pont de l'anneau (D-PRES-2)** | **l'Établi ne change pas en 3 s** : F5 ; **rien** : capture `etabli-2-peut.png` ; **le téléphone refuse (429 / erreur)** : capture `tel-2-recu.png`, et dire « plafond ou réseau : voici la répétition de ce matin » |
 | 7 | 6:20 | V2 | montrer le reçu : « valable · donné le 06.10 · jusqu'au 09.10 · référence … » | la carte du reçu | — |
-| 8 | 6:40 | V2 | appuyer **« Retirer mon consentement »** | toast « Consentement retiré. Personne ne saura que c'est vous. » ; Établi : statut **« un consentement ne vaut plus »**, ligne **« transport : ce composant n'est plus disponible »** | **Établi inchangé** : F5 ; **rien** : capture `etabli-3-retrait.png` |
+| 8 | 8:50 | V2 | appuyer **« Retirer mon consentement »** | toast « Consentement retiré. Personne ne saura que c'est vous. » ; Établi : statut **« un consentement ne vaut plus »**, ligne **« transport : ce composant n'est plus disponible »** | **Établi inchangé** : F5 ; **rien** : capture `etabli-3-retrait.png` |
 | 9 | 6:55 | V2 | *(option)* montrer le QR juré sur l'Établi ; un juré scanne | sur son téléphone : bandeau « Jury : vous jouez Markus, personnage FICTIF, jusqu'à … », onglet Demandes avec la demande | **le QR n'ouvre rien / pointe vers 127.0.0.1** : ne pas insister ; V2 ouvre l'onglet Demandes sur le téléphone de secours (Markus) : la demande y est |
-| 10 | 7:10 | V1 | « Voilà pour l'essai. » | — | — |
+| 10 | 9:50 | V1 | « Voilà pour l'essai. » | — | — |
 
 Règle absolue (DEMO_SCRIPT § 9.7) : **un écart, un seul : ne pas improviser.** On dit ce que l'écran fait, ou on
 montre la capture de la répétition en le disant. On ne clique jamais « Nouvelle démonstration » pendant la séance.
@@ -143,7 +143,7 @@ Si une capture n'a pas pu être prise, l'étape correspondante n'a pas de plan B
 ## 8. Répétition (samedi matin, en plus du rituel § 9.5)
 
 1. Rituel § 9.5 complet (kill -9, reprise, vrai téléphone, vrai scan de QR).
-2. Cette scène trois fois, chronométrée de 4:40 à 7:10, avec les captures du § 6 à la première.
+2. Cette scène trois fois, chronométrée de 5:36 à 9:50, avec les captures du § 6 à la première.
 3. Trois fois avec l'IA allumée, sur la phrase exacte de l'étape 3 : remplir le tableau du § 3. A seulement si 3/3 ;
    sinon B (défaut). Puis remettre l'interrupteur dans l'état décidé et vérifier le bandeau de l'Établi.
 4. Une fois en coupant le Wi-Fi de la salle (pas le point d'accès) : rien ne doit changer, sauf l'IA en option A.
