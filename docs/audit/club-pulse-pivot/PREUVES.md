@@ -74,6 +74,19 @@ Chiffres MESURÉS seulement ; le reste est dans `docs/RAPPORT_NUIT.md`.
 | Phrases Tally (QR de la Foire, instantané du 03.10, 21 réponses) | 21 gardées (0 doublon, 0 contact, 0 vide) ; langue réelle détectée : 20 fr, 1 en (passée par la page française) — phrases hors dépôt | `make ingest-tally` (CSV en `docs/data/tally_phrases.csv`, ignoré par git) |
 | Classification des 21 phrases Tally par Apertus (`swiss-ai/Apertus-v1.5-70B`), 03.10 13:47 UTC — **Apertus seulement** (consentement) | 21 / 21 sorties acceptées par la validation, **dont 20 abstentions** ; 1 métier proposé. **Aucune exactitude mesurée** : feuille d'annotation (`metier_attendu`, `domaine`) à remplir par l'équipe | `make eval-classification FOURNISSEUR=apertus` → `prototype/eval/resultats_classification/foire-2026-qr-apertus.md` |
 
+## Mode salle — charge de 80 téléphones simulés (03.10, **serveur local**)
+
+Mesure contre un **serveur local** (uvicorn, un processus, la machine de développement de la session cloud ; pas à
+travers Internet, pas sur le VPS). Rejeu : `cd prototype && python scripts/charge_salle.py --local --n 80` ; contre le
+serveur déployé : `python scripts/charge_salle.py --url https://<domaine> --jeton <HACKVS_CONSOLE_JETON> --n 80`.
+
+| Mesure | Résultat |
+|---|---|
+| Téléphones simulés (scan, capacité + consentement, relecture, réponse, un retrait) | 80, en parallèle ; 329 requêtes en 0,67 s |
+| Erreurs | **0** |
+| p50 / p95 par route (ms) | entrer 178,9 / 200,7 · déclarer 159,9 / 208,4 · relire (moi) 115,9 / 138,9 · répondre 66,5 / 79,2 · écran 6,8 / 19,2 |
+| Cohérence finale | écran = téléphones (80 participants, capacités par métier, réponses par choix ; « < 3 » accepté seulement si le vrai nombre est 1 ou 2) ; anneau fermé ; **purge vérifiée** (0 participant après) |
+
 ## Non exécuté (et pourquoi)
 - Apertus réel : aucun identifiant fourni. *(vrai au 30.09 ; depuis le 01.10, voir « Ajouts du 01.10 » ci-dessus.)*
 - Vrais téléphones sur le réseau d'une salle : remplacés par des contextes de navigateur indépendants.

@@ -1,0 +1,40 @@
+# Déploiement de production de la démonstration Club Pulse (VPS Infomaniak, Ubuntu) — docs/DEPLOIEMENT.md.
+# UNE seule instance de l'application : le journal SQLite et l'état du mode salle sont locaux au conteneur.
+# Aucun secret ici : tout vient de .env (copie de .env.example, jamais commitée).
+services:
+  app:
+    build: .
+    env_file: .env
+    environment:
+      HACKVS_MODE: demo
+      HACKVS_ESSAIS_DB: /srv/prototype/var/club_pulse.db
+    volumes:
+      - pulse:/srv/prototype/var
+    restart: unless-stopped
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/sante', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+  caddy:
+    image: caddy:2
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pulse:
+  caddy_data:
+  caddy_config:

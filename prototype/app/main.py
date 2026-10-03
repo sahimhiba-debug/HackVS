@@ -997,6 +997,12 @@ def page_reponse():
     return FileResponse(WEB / "pulse" / "reponse.html")
 
 
+@app.get("/sante")
+def sante() -> dict:
+    """Vérification de santé (deploy.sh, healthcheck du conteneur) : le processus répond. Ne lit ni n'écrit rien."""
+    return {"ok": True}
+
+
 @app.get("/salle")
 def page_salle():
     """MODE SALLE (téléphone d'un participant) : le QR de la salle arrive dans le fragment ; aucun compte."""

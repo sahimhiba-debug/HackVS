@@ -1,36 +1,60 @@
-> **HISTORIQUE — rédigé avant le registre des capacités (28–30.09.2026).** Conservé pour la traçabilité des décisions ; ne décrit PAS le produit actuel, et ses chiffres, routes et noms de fichiers peuvent être faux aujourd'hui. État actuel : [README](/README.md) · [index de la documentation](/docs/README.md).
+# Déploiement de la démonstration sur un VPS Infomaniak (Ubuntu) — pas à pas
 
-# Déploiement (facultatif) : une URL publique pour que le jury essaie sur son téléphone
+Écrit pour la **session Claude Code locale sur l'iMac d'Hiba**, qui déploiera en SSH. Rien n'a été déployé depuis la
+session cloud (aucun accès SSH, aucun démon Docker : l'image n'y a pas été construite — la première construction se
+fera sur le VPS ; `docker compose config` a validé le fichier). L'ancien guide Cloud Run reste dans
+[DEPLOIEMENT_CLOUD_RUN.md](DEPLOIEMENT_CLOUD_RUN.md).
 
-**Rien n'a été déployé.** Publier une URL expose le prototype sur Internet : c'est une décision de Hiba.
-Données 100 % fictives, aucun secret requis en mode règles.
+## Ce qu'Hiba doit fournir (liste exacte)
 
-## Image Docker (vérifiée le 28.09.2026)
-```bash
-docker build -t fil-du-club .                       # depuis la racine du dépôt
-docker run -p 8080:8080 fil-du-club                 # http://localhost:8080 · /scene · /presentation · /club · /rejoindre
+| # | Quoi | Où ça va | Remarque |
+|---|---|---|---|
+| 1 | **Adresse IP** du VPS et **utilisateur SSH** (avec `sudo`) | session locale : `ssh <utilisateur>@<ip>` | clé SSH déjà installée sur le VPS |
+| 2 | **Nom de domaine** (ex. `pulse.<domaine>.ch`) avec un enregistrement **A** (et AAAA si IPv6) vers l'IP du VPS | `.env` : `DOMAINE`, `PUBLIC_BASE_URL=https://<domaine>` | propagé AVANT le premier `deploy.sh` (Caddy obtient le certificat au démarrage) |
+| 3 | **Ports 80 et 443 ouverts** (pare-feu Infomaniak et `ufw`) | — | HTTPS automatique par Caddy |
+| 4 | Un **secret** de 48 caractères (généré sur place) | `.env` : `HACKVS_SECRET` | `python3 -c "import secrets; print(secrets.token_urlsafe(48))"` — ne jamais le mettre dans le dépôt |
+| 5 | Un **jeton de console** (généré sur place) | `.env` : `HACKVS_CONSOLE_JETON` | à saisir une fois dans le navigateur de l'écran géant et de la télécommande |
+| 6 | Facultatif : la **clé Apertus** (API CSCS) | `.env` : `APERTUS_API_KEY` | sans clé : forme déterministe, dite à l'écran |
+| 7 | Accès en lecture au dépôt GitHub depuis le VPS (clé de déploiement ou jeton) | `git clone` | le dépôt est privé |
+
+## Commandes pour la session locale (dans l'ordre)
+
+```sh
+# 0. depuis l'iMac
+ssh <utilisateur>@<ip>
+
+# 1. une seule fois : Docker et le dépôt
+sudo apt-get update && sudo apt-get install -y docker.io docker-compose-v2 git curl
+sudo usermod -aG docker "$USER" && newgrp docker
+sudo ufw allow 80,443/tcp && sudo ufw allow 443/udp
+git clone <url-du-dépôt> club-pulse && cd club-pulse && git checkout foire-2026   # ou main après la fusion d'Hiba
+
+# 2. une seule fois : la configuration (aucun secret dans le dépôt)
+cp .env.example .env && chmod 600 .env
+nano .env           # DOMAINE, PUBLIC_BASE_URL, HACKVS_SECRET, HACKVS_CONSOLE_JETON (+ APERTUS_API_KEY facultatif)
+
+# 3. déployer (et à chaque mise à jour)
+./deploy.sh         # pull, build, redémarrage, vérification de /sante — « OK » ou les journaux en cas d'échec
+
+# 4. contrôle de charge contre le serveur déployé (même script que la mesure locale, PREUVES.md)
+cd prototype && python3 scripts/charge_salle.py --url "https://<domaine>" --jeton "<HACKVS_CONSOLE_JETON>" --n 80
+
+# 5. APRÈS LE PITCH : tout effacer du mode salle (et vérifier)
+./purge.sh          # ou ./purge.sh --tout pour effacer aussi le journal du Club
 ```
-Vérifié ici : image de 249 Mo, utilisateur non root, pages principales et QR code répondent 200.
-Deux adaptations ont été **propres à l'environnement de vérification** (non commitées) : l'image de base tirée de
-`mirror.gcr.io` (Docker Hub répondait 429) et le certificat du proxy de l'environnement ajouté pour `pip`.
-Si Docker Hub limite vos téléchargements : `docker build --build-arg BASE=mirror.gcr.io/library/python:3.11-slim -t fil-du-club .`
 
-## Cloud Run (GCP, région Zurich)
-```bash
-gcloud run deploy fil-du-club --source . --region europe-west6 \
-  --min-instances 1 --max-instances 1 --timeout 3600 --session-affinity \
-  --allow-unauthenticated --memory 512Mi
-# puis, avec l'URL obtenue :
-gcloud run services update fil-du-club --region europe-west6 --set-env-vars HACKVS_URL_PUBLIQUE=https://…run.app
-```
-Pourquoi ces options :
-- **une seule instance** (`--max-instances 1`) : SQLite et le flux temps réel sont locaux au conteneur ; deux instances verraient deux Clubs différents ;
-- **`--min-instances 1`** : pas de démarrage à froid pendant le pitch, au prix d'un coût faible mais non nul tant que le service existe ;
-- **`--timeout 3600` et `--session-affinity`** : les flux temps réel (SSE) restent ouverts ;
-- **`--allow-unauthenticated`** : rend l'URL publique (**décision de Hiba**) ; à supprimer après l'événement (`gcloud run services delete fil-du-club --region europe-west6`).
-- Données : `/tmp/fil.db`, **effacées à chaque redémarrage** (voulu pour une démo).
+## Pendant le pitch
 
-Claude en production : ajouter la clé via Secret Manager (`--set-secrets ANTHROPIC_API_KEY=…:latest`) et `HACKVS_LLM=claude`. Jamais en clair.
+- **Écran géant** : `https://<domaine>/salle/ecran` (saisir le jeton de console une fois) — QR, compteur, constellation.
+- **Télécommande** : `https://<domaine>/salle/regie` (téléphone ou portable du présentateur, même jeton).
+- **Téléphones de la salle** : ils scannent le QR ; aucun compte, aucun nom ; passe de 2 heures ; 80 au plus.
+- Tous les liens et QR partent de `PUBLIC_BASE_URL` : si le domaine change, modifier `.env` puis `./deploy.sh`.
 
-## Sans cloud : même réseau Wi-Fi
-`uvicorn app.main:app --host 0.0.0.0` puis `HACKVS_URL_PUBLIQUE=http://<ip-du-portable>:8000`. Le QR de `/rejoindre` et de la dernière diapositive pointe alors vers le portable. Dépend du Wi-Fi de la salle (souvent filtré).
+## Ce que la configuration garantit (et ses limites)
+
+- **Une seule instance** de l'application : le journal SQLite (`volume pulse`) et le mode salle (en mémoire) sont
+  locaux au conteneur. Le mode salle ne survit pas à un redémarrage — voulu : c'est une séance de cinq minutes.
+- Derrière Caddy, la console exige le jeton (`HACKVS_CONSOLE_JETON`) : sans lui, elle refuse tout.
+- Aucun secret dans le dépôt (`.env` est ignoré par git ; test `test_deploiement.py`).
+- **Non vérifié ici** : la construction de l'image sur le VPS, le certificat, la charge réelle à travers Internet —
+  à faire à l'étape 3 et 4, et à consigner dans PREUVES.md (« serveur déployé »).

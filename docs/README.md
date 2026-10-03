@@ -28,6 +28,7 @@ qui n'existe plus.
 | [ADR/README.md](ADR/README.md) | décisions d'architecture et leur statut relu contre le code |
 | [audit/EXTRACTION_EVAL.md](audit/EXTRACTION_EVAL.md) · [audit/probe_publicai.md](audit/probe_publicai.md) | évaluation EXTRACT (prête, non exécutée contre un vrai modèle) ; sonde du fournisseur |
 | [BANC_MULTI_FOURNISSEURS.md](BANC_MULTI_FOURNISSEURS.md) | banc IA Apertus / OpenAI / Claude sur les 26 mêmes cas : choix du fournisseur, variables, commandes, dry-run, rapport, limites |
+| [DEPLOIEMENT.md](DEPLOIEMENT.md) | déploiement VPS Infomaniak (Docker Compose + Caddy, HTTPS) pas à pas : ce qu'Hiba fournit, commandes, purge |
 | [DEPLOIEMENT_CLOUD_RUN.md](DEPLOIEMENT_CLOUD_RUN.md) | déploiement public Cloud Run : commandes exactes, variables, secrets, contrôles (rien n'est déployé) |
 | [audit/latence_apertus.md](audit/latence_apertus.md) | latence réelle d'Apertus (n appels, médiane, p95), mesure séparée de la démonstration |
 
@@ -46,7 +47,7 @@ qui n'existe plus.
 
 [ANCIEN_PROTOTYPE.md](ANCIEN_PROTOTYPE.md) · [ARCHITECTURE_FIL_DU_CLUB.md](ARCHITECTURE_FIL_DU_CLUB.md) ·
 [ASSUMPTIONS.md](ASSUMPTIONS.md) · [AUDIT_PACKET.md](AUDIT_PACKET.md) · [CURRENT_STATE.md](CURRENT_STATE.md) ·
-[DECISIONS.md](DECISIONS.md) · [DEMO.md](DEMO.md) · [DEPLOIEMENT.md](DEPLOIEMENT.md) · [EVALUATION.md](EVALUATION.md) ·
+[DECISIONS.md](DECISIONS.md) · [DEMO.md](DEMO.md) · [DEPLOIEMENT_ANCIEN.md](DEPLOIEMENT_ANCIEN.md) · [EVALUATION.md](EVALUATION.md) ·
 [HANDOFF.md](HANDOFF.md) · [LEARNING.md](LEARNING.md) · [LIMITATIONS.md](LIMITATIONS.md) · [LOOPS.md](LOOPS.md) ·
 [OPEN_SOURCE_RECON.md](OPEN_SOURCE_RECON.md) · [REPRISE.md](REPRISE.md) · [RESEARCH.md](RESEARCH.md) ·
 [SENIOR_CODE_REVIEW.md](SENIOR_CODE_REVIEW.md) · [STRATEGIC_RESEARCH.md](STRATEGIC_RESEARCH.md) ·
