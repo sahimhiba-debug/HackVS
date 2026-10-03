@@ -18,7 +18,10 @@ MOTIFS = {
     "clé AWS": re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
     "clé privée": re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----"),
     "variable sensible affectée": re.compile(
-        r"\b(APERTUS_API_KEY|ANTHROPIC_API_KEY|HACKVS_SECRET|HACKVS_CONSOLE_JETON|HACKVS_MCP_JETON)\s*[=:]\s*['\"]?([^\s'\"$<{]{8,})"),
+        # « = » suivi d'une valeur sur la MÊME ligne, ou « : » suivi d'une valeur entre guillemets (YAML, JSON) — jamais une
+        # valeur vide, une phrase (« JETON : derrière… ») ni une expansion shell (« ${JETON:?…} »)
+        r"\b(APERTUS_API_KEY|ANTHROPIC_API_KEY|HACKVS_SECRET|HACKVS_CONSOLE_JETON|HACKVS_MCP_JETON)"
+        r"(?:[ \t]*=[ \t]*['\"]?([^\s'\"$<{?]{8,})|[ \t]*:[ \t]*['\"]?([^\s'\"$<{?]{8,})['\"]?[ \t]*$)", re.M),
 }
 ADMIS = re.compile(r"test|exemple|example|faux|fake|dummy|xxx|votre|your|\.\.\.|changeme", re.I)
 IGNORES = (".png", ".jpg", ".jpeg", ".webm", ".mp4", ".pdf", ".ico", ".onnx", ".db", ".woff2", ".pptx")
@@ -33,7 +36,7 @@ def analyser(texte: str) -> list[tuple[str, str]]:
     trouves = []
     for nom, motif in MOTIFS.items():
         for m in motif.finditer(texte):
-            valeur = m.group(m.lastindex or 0)
+            valeur = next((g for g in reversed(m.groups()) if g), m.group(0)) if m.groups() else m.group(0)
             if not ADMIS.search(valeur):
                 trouves.append((nom, valeur[:6] + "…"))           # jamais la valeur entière, même dans ce rapport
     return trouves
