@@ -1,4 +1,6 @@
-# Sonde Public AI — ce que l'API fait vraiment
+# Sonde de l'API d'inférence (exécutée contre le CSCS, Lugano) — ce que l'API fait vraiment
+
+> Le nom du fichier date d'un premier essai vers Public AI (hôte refusé par le proxy, PHASE_3). Les mesures ci-dessous viennent de `api.inference.cscs.ch` : Apertus est servi par le **CSCS**, pas par Public AI.
 
 > Écrit par `prototype/scripts/sonde_publicai.py` : réponses BRUTES, aucune retouche. La clé n'est jamais écrite ;
 > les requêtes sont consignées sans en-tête d'autorisation. Un verdict ne vaut que pour la date, l'hôte et le modèle ci-dessous.

@@ -78,3 +78,22 @@ corrections et livraison avant 07:30. Aucun tag, aucun push sur `main` — **`ma
 |---|---|---|---|
 | 15:50 | plan | §2 Tally | — |
 | 16:15 | §2 Tally (`fad69c2`) ; PUBLIC_BASE_URL (`e19da8d`) ; mode salle (`a0d1e46`) ; rejeu Apertus 1.5 sur les 26 cas : 1/26 inchangé (`1b7902e`) ; constellation (`ff2de2c`) ; déploiement + charge 80 (`d152a55`) — suite 1 454 verte. CI : ne démarre pas (facturation), portes locales seulement | §6 feuille de route, §7 etat.yaml | — |
+
+### État des lieux — message consolidé reçu à 16:40 (remplace les consignes depuis 15:30)
+
+| § | Point | État | Où / commit |
+|---|---|---|---|
+| 1.2 | « CSCS (Lugano), pas Public AI » partout | ⬜ | à corriger dans CLAIMS, PREUVES, docs, script, Q&R |
+| 1.3 | « 1/26 » déjà sur Apertus 1.5 70B, aucune progression revendiquée | ✅ | `1b7902e`, PREUVES |
+| 1.4 | Carte : 5 essais sur la même carte avant la scène | ⬜ | à mesurer ; hors scène d'ici là |
+| 2 | Tally : CSV, ingestion, classification Apertus, feuille `metier_attendu` / `domaine` | ✅ | `fad69c2` |
+| 3 | Contexte réel sourcé dans PREUVES | ⬜ | |
+| 4A | Mode salle (QR, passes, deux gestes, télécommande, bascule, purge, PUBLIC_BASE_URL, déploiement, /sante, charge 80) | ✅ | `a0d1e46`, `e19da8d`, `d152a55` |
+| 4B | Constellation en motion design (Vogel, tokens, WAAPI, jour/nuit, aria-live, vidéo, PNG, DIRECTION.md) | 🟡 | première version statique `ff2de2c` ; motion design à faire |
+| 5 | La carte devient le profil | ✅ (hors scène) | `cfd152e` ; règle 5/5 à mesurer |
+| 6 | Présentation v2 (02, 03, 03b, 04, 06 v2, 07, deck v2, fiches v2) | ⬜ | |
+| 7 | Feuille de route révisée | 🟡 | `cb9ccb1` ; à ajouter : Mondiaux, risque nommé, conditions d'usage IA, pistes de partenaires |
+| 8 | Feuille de route vivante + note swiyu / voix / Mini | ✅ | `cb9ccb1` ; maintenir |
+| 9 | Chantiers P3 n° 1 à 16 | ⬜ | dans l'ordre, après le P1 |
+| 11 | Audit (sous-agent, branche `audit-nuit`) | ⬜ | ≤ 04:00 |
+| 12 | Livraison | ⬜ | ≤ 07:30 |

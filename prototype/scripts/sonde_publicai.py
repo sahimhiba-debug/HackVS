@@ -222,7 +222,7 @@ class Sonde:
     # ---------------------------------------------------------------- rapport
     def rapport(self) -> str:
         quand = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-        l = ["# Sonde Public AI — ce que l'API fait vraiment",
+        l = ["# Sonde de l'API d'inférence compatible OpenAI (hôte ci-dessous) — ce que l'API fait vraiment",
              "", "> Écrit par `prototype/scripts/sonde_publicai.py` : réponses BRUTES, aucune retouche. La clé n'est jamais écrite ;",
              "> les requêtes sont consignées sans en-tête d'autorisation. Un verdict ne vaut que pour la date, l'hôte et le modèle ci-dessous.",
              "", f"- Date : {quand}", f"- Hôte : `{self.base}`", f"- Clé fournie : {'oui' if self.cle else 'NON'}",

@@ -255,7 +255,8 @@ def _temperature_env(var: str) -> Optional[float]:
 
 
 class Apertus(_CompatibleOpenAI):
-    """Apertus via une API compatible OpenAI (CSCS, Public AI…). Comportement inchangé : température 0, `max_tokens` 900."""
+    """Apertus via une API compatible OpenAI — servi par le CSCS (Lugano, api.inference.cscs.ch) ; un relais
+    compatible (Public AI, hébergeur suisse) reste possible. Comportement inchangé : température 0, `max_tokens` 900."""
     nom = "apertus"
     PREFIXE = "APERTUS"
     VAR_BASE = "APERTUS_BASE_URL"                       # obligatoire (aucune valeur par défaut)

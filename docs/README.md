@@ -26,7 +26,7 @@ qui n'existe plus.
 | [THREAT_MODEL.md](THREAT_MODEL.md) | modèle de menaces |
 | [design/DESIGN_SYSTEM.md](design/DESIGN_SYSTEM.md) | design system v1.0 et écarts assumés |
 | [ADR/README.md](ADR/README.md) | décisions d'architecture et leur statut relu contre le code |
-| [audit/EXTRACTION_EVAL.md](audit/EXTRACTION_EVAL.md) · [audit/probe_publicai.md](audit/probe_publicai.md) | évaluation EXTRACT (prête, non exécutée contre un vrai modèle) ; sonde du fournisseur |
+| [audit/EXTRACTION_EVAL.md](audit/EXTRACTION_EVAL.md) · [audit/probe_publicai.md](audit/probe_publicai.md) (sonde exécutée contre le CSCS) | évaluation EXTRACT (prête, non exécutée contre un vrai modèle) ; sonde du fournisseur |
 | [BANC_MULTI_FOURNISSEURS.md](BANC_MULTI_FOURNISSEURS.md) | banc IA Apertus / OpenAI / Claude sur les 26 mêmes cas : choix du fournisseur, variables, commandes, dry-run, rapport, limites |
 | [DEPLOIEMENT.md](DEPLOIEMENT.md) | déploiement VPS Infomaniak (Docker Compose + Caddy, HTTPS) pas à pas : ce qu'Hiba fournit, commandes, purge |
 | [DEPLOIEMENT_CLOUD_RUN.md](DEPLOIEMENT_CLOUD_RUN.md) | déploiement public Cloud Run : commandes exactes, variables, secrets, contrôles (rien n'est déployé) |
