@@ -29,7 +29,6 @@ EXTENSIONS = (".mp4", ".m4v", ".mov")
 TAILLE_MIN = 1024 * 1024                 # un film de quelques minutes pèse des dizaines de Mo ; une icône iCloud, quelques Ko
 DUREE_ATTENDUE_S = 201                   # 3:21, le montage final (05_FILM_INTEGRATION.md) ; écart > 10 s : décaler les repères
 FILM_DU_DECK = "docs/presentation/deck/assets/film.mp4"
-URL_PUBLIQUE = "https://clubpulse.tailfcbc50.ts.net"
 PLAN_B = "Sans film, le deck (v1 comme v2) bascule seul sur son plan B raconté : rien à faire."
 ORDRE = ("film", "serveur", "public", "deck", "secteur", "salle")
 
