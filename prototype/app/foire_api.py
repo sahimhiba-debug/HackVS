@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
 from .urls import base_publique
-from intelligence import (annonces, assembler, associe, carte, club_cherche, distance, metiers, partenariats, piliers, recu_27560, suivi,
+from intelligence import (annonces, assembler, associe, carte, club_cherche, distance, metiers, partenariats, piliers, recu_27560, reciprocite, suivi,
                           tableau_bord)
 
 
@@ -186,6 +186,10 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     @r.post("/moi/annonces/{chiffre}/accepter/{n}")
     def accepter_annonce(chiffre: str, n: int, pid: str = Depends(membre)) -> dict:
         return au_monde(foire(lambda c: annonces.accepter(c, pid, chiffre[:12], n)))
+
+    @r.get("/moi/reciprocite")
+    def ma_reciprocite(pid: str = Depends(membre)) -> dict:
+        return au_monde(foire(lambda c: reciprocite.balance(c, pid)))
 
     @r.post("/moi/pilier")
     def declarer_pilier(x: Pilier, pid: str = Depends(membre)) -> dict:
