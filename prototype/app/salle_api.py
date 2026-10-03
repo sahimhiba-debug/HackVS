@@ -33,7 +33,9 @@ class Choix(BaseModel):
 
 
 def ajouter_routes(r: APIRouter, console: Callable, secret: Callable[[], bytes], *, limiter: Callable, nouveau_limiteur: Callable,
-                   qr: Callable[[str], str]) -> None:
+                   qr: Callable[[str], str]) -> Callable[[Request], Optional[str]]:
+    """Ajoute les routes ; renvoie l'URL courante de la salle (None si fermée) — pour le QR servi EN DIRECT à la racine
+    (/qr/salle.svg, app/main.py), qui suit l'adresse publique du moment (PUBLIC_BASE_URL : l'adresse du tunnel)."""
     etat: dict[str, Optional[Salle]] = {"salle": None}
     limite_entree = nouveau_limiteur(600, 60.0)        # 80 téléphones qui scannent en même temps, avec de la marge
     limite_passe = nouveau_limiteur(120, 60.0)         # un téléphone qui relit toutes les 2 s, plus ses gestes
@@ -68,6 +70,12 @@ def ajouter_routes(r: APIRouter, console: Callable, secret: Callable[[], bytes],
             return {}
         url = base_publique(request) + "/salle#s=" + o["jeton_salle"]
         return {"url": url, "qr": qr(url)}
+
+    def url_courante(request: Request) -> Optional[str]:
+        s = etat["salle"]
+        if not actif() or s is None or s.ouverte_le is None:
+            return None
+        return base_publique(request) + "/salle#s=" + s.ouvrir()["jeton_salle"]
 
     # ------------------------------------------------------------------ téléphones (public : seulement entrer)
     @r.post("/salle/entrer")
@@ -123,3 +131,5 @@ def ajouter_routes(r: APIRouter, console: Callable, secret: Callable[[], bytes],
     @r.post("/console/salle/purger", dependencies=[Depends(console)])
     def purger() -> dict:
         return faire(lambda s: s.purger())
+
+    return url_courante

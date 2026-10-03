@@ -63,3 +63,18 @@ def test_quatre_vingts_telephones_derriere_une_seule_ip_ne_sont_pas_bloques(c):
     for p in passes:
         assert c.post("/api/pulse/salle/repondre", headers=p, json={"choix": "oui"}).status_code in (200, 409)
     c.post("/api/pulse/console/salle/purger", headers=CONSOLE)
+
+
+def test_qr_salle_servi_en_direct_depuis_public_base_url(c, monkeypatch):
+    monkeypatch.setenv("PUBLIC_BASE_URL", "https://mac-du-pitch.exemple.ts.net")
+    c.post("/api/pulse/console/salle/purger", headers=CONSOLE)
+    ferme = c.get("/qr/salle.svg")
+    assert ferme.status_code == 200 and ferme.headers["content-type"].startswith("image/svg+xml")
+    assert "salle fermée" in ferme.text
+    c.post("/api/pulse/console/salle/ouvrir", headers=CONSOLE)
+    ouvert = c.get("/qr/salle.svg")
+    assert ouvert.status_code == 200 and ouvert.headers["content-type"].startswith("image/svg+xml")
+    assert ouvert.headers.get("cache-control") == "no-store" and "<svg" in ouvert.text and "salle fermée" not in ouvert.text
+    url = c.get("/qr/salle.txt").text
+    assert url.startswith("https://mac-du-pitch.exemple.ts.net/salle#s=s1.")
+    c.post("/api/pulse/console/salle/purger", headers=CONSOLE)

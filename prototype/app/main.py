@@ -794,6 +794,41 @@ def qr(request: Request, chemin: str = "/"):
     return Response(tampon.getvalue(), media_type="image/svg+xml")
 
 
+def _svg_qr(texte: str) -> bytes:
+    import io
+
+    import qrcode
+    import qrcode.image.svg
+    tampon = io.BytesIO()
+    qrcode.make(texte, image_factory=qrcode.image.svg.SvgPathImage, box_size=12, border=2).save(tampon)
+    return tampon.getvalue()
+
+
+_SALLE_FERMEE = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="#F2F3F5"/>'
+                 '<text x="200" y="210" font-family="sans-serif" font-size="28" text-anchor="middle" fill="#141923">salle fermée</text></svg>')
+
+
+def _lien_salle(request: Request) -> Optional[str]:
+    lien = getattr(globals().get("_PULSE"), "lien_salle", None)
+    return lien(request) if lien else None
+
+
+@app.get("/qr/salle.svg")
+def qr_salle(request: Request):
+    """QR de la salle, EN DIRECT : il pointe vers l'adresse publique du moment (PUBLIC_BASE_URL, l'adresse du tunnel) —
+    jamais figé dans le deck. Salle fermée : une image « salle fermée ». Rien d'autre que ce que l'écran géant projette."""
+    url = _lien_salle(request)
+    corps = _svg_qr(url) if url else _SALLE_FERMEE.encode()
+    return Response(corps, media_type="image/svg+xml", headers={"Cache-Control": "no-store"})
+
+
+@app.get("/qr/salle.txt")
+def qr_salle_texte(request: Request):
+    """L'adresse encodée dans le QR (pour la vérifier avant le pitch : `curl …/qr/salle.txt`)."""
+    url = _lien_salle(request)
+    return Response(url or "salle fermée", media_type="text/plain; charset=utf-8", headers={"Cache-Control": "no-store"})
+
+
 @app.get("/rejoindre", response_class=HTMLResponse)
 def rejoindre(request: Request):
     url = _url_publique(request)
@@ -926,7 +961,8 @@ if MODE == "demo":  # scène de présentation : monde ISOLÉ et déterministe (d
     from .stage import creer_routeur as _routeur_scene
     app.include_router(_routeur_scene(TAX))
     from .pulse_api import creer_routeur as _routeur_pulse
-    app.include_router(_routeur_pulse(TAX, console_jeton=_CONSOLE_JETON))
+    _PULSE = _routeur_pulse(TAX, console_jeton=_CONSOLE_JETON)
+    app.include_router(_PULSE)
 
 
 @app.get("/app")
