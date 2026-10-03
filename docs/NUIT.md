@@ -49,3 +49,5 @@ La documentation (I, J) passe avant F, G et H. Si A à E dérapent, F, G et H so
 | Heure | Fait | En cours | Abandonné |
 |---|---|---|---|
 | 14:15 | plan, branche `foire-2026` | C | — |
+| 14:20 | C (`65d507d`), E2E conscient de l'interrupteur (`e778d6e`), A + B (`ff68046`) — suite 1 401 verte, E2E 22/22 allumé, lint/types/secrets propres. **En avance d'environ 3 h sur le plan.** | D | — |
+| 14:35 | D passe découverte (`a880d01`), E « Le Club cherche » (`ee8f0d7`) — **toutes les P0 livrées** ; CI verte sur C et A+B, D et E en cours | I + J | — |
