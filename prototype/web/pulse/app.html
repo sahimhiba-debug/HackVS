@@ -453,7 +453,7 @@
         h("p", { class: "note" }, `Votre pièce : ${r.offre} (${r.piece}) · donné le ${jourDe(r.donne_le)} · jusqu'au ${jourDe(r.jusqu_au)} · référence ${r.reference}`),
         h("p", { class: "note" }, r.partage),
         r.revocable ? h("button", { class: "btn discret petit", id: `retirer-${r.finalite}`, style: "margin-top:8px",
-          onclick: agir(() => api(`/api/pulse/moi/capacites/${r.finalite}/retrait`, { corps: {} }), "Consentement retiré. Personne ne saura que c'est vous.") }, "Retirer mon consentement") : null);
+          onclick: agir(() => api(`/api/pulse/moi/capacites/${r.finalite}/retrait`, { corps: {} }), "Consentement retiré. Personne ne sera prévenu que c'est vous.") }, "Retirer mon consentement") : null);
       afficher(h("h1", { class: "grand" }, "Demandes du Club"), h("p", { class: "note", style: "margin-top:4px" }, `Aujourd'hui (date simulée) : ${jourDe(d.date)}`),
         section("Une pièce qui manque", asks.length ? asks.map(carteAsk) : vide("Aucune demande pour vous en ce moment.")),
         section("Mes consentements (reçus)", d.consentements.length ? d.consentements.map(recu) : vide("Aucun.")),

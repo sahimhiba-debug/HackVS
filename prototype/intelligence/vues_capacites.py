@@ -4,8 +4,9 @@ l'emplacement (« salle : consentement retiré »), jamais par la personne."""
 from __future__ import annotations
 
 from datetime import timedelta
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
+from .anonymat import masquer_avis
 from .capacites import Instance
 from .ia import AppelIA
 
@@ -42,7 +43,7 @@ class VuesCapacites:
                 libelle += f", même relancée (budget {_nombre(i.recherche_relancee)} nœuds)"
             if i.acquittee_le:
                 libelle += f" (acquitté par l'animation le {i.acquittee_le.strftime('%d.%m')})"
-        return {"finalite": i.finalite, "version": i.version, "titre": i.titre, "statut": i.statut,
+        carte: dict[str, Any] = {"finalite": i.finalite, "version": i.version, "titre": i.titre, "statut": i.statut,
                 "statut_libelle": libelle, "recherche_bornee": i.recherche_bornee, "recherche_relancee": i.recherche_relancee,
                 "acquittee_le": i.acquittee_le.isoformat() if i.acquittee_le else None, "distance": i.distance, "date": self.c.jour.isoformat(),
                 "jour": p.fenetre.jour.isoformat(), "fenetre": f"{p.fenetre.jour.strftime('%d.%m')} {p.fenetre.debut}–{p.fenetre.fin}",
@@ -57,6 +58,15 @@ class VuesCapacites:
                            for x in i.perdus],
                 "recomposition": {k: v for k, v in i.recomposition.items() if k != "pieces"} if i.recomposition else None,
                 "sans_solution": i.sans_solution, "hypotheses": i.hypotheses, "fictif": i.fictif}
+        if self.c.reglages.foire:                              # FOIRE 2026 · C : un rôle tenu par moins de k membres n'est pas dit
+            carte["perdus"], m1 = masquer_avis(self.c, i.finalite, carte["perdus"])
+            m2 = 0
+            if carte["sans_solution"]:
+                cause, m2 = masquer_avis(self.c, i.finalite, list(carte["sans_solution"].get("cause", [])))
+                carte["sans_solution"] = dict(carte["sans_solution"]) | {"cause": cause}
+            if carte["perdus"] or carte["sans_solution"]:
+                carte["anonymat"] = {"k": self.c.reglages.k_anonymat, "roles_masques": m1 + m2}
+        return carte
 
     def console(self) -> dict:
         """Le registre : ce que le Club PEUT faire (distance 0) et ce qu'il lui manque une pièce pour faire (distance 1) —

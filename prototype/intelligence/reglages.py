@@ -25,6 +25,10 @@ class Reglages:
     plafond_jours: int = 7             # HACKVS_PLAFOND_JOURS : aucune nouvelle demande pendant N jours après une réponse
     budget_noeuds: int = 20_000        # HACKVS_BUDGET_NOEUDS : nœuds par recherche d'équipe ; au-delà, « recherche bornée » est DIT
     budget_relance: int = 1_000_000    # HACKVS_BUDGET_RELANCE : budget d'une recherche relancée par l'animation
+    # FOIRE 2026 (nuit du 03.10) : les nouveautés (Suivi, clôture de reçu, anonymat à petite échelle, passe découverte,
+    # « le Club cherche ») derrière UN interrupteur. Défaut : allumé (HACKVS_FOIRE=0 rend le produit d'hier, à l'identique).
+    foire: bool = False
+    k_anonymat: int = 3                # HACKVS_K_ANONYMAT : sous ce nombre de membres, une catégorie n'est jamais dite
 
     @classmethod
     def depuis_env(cls, env: Optional[Mapping[str, str]] = None) -> "Reglages":
@@ -39,4 +43,5 @@ class Reglages:
                    ancien_prototype=e.get("HACKVS_ANCIEN_PROTOTYPE", "") == "1",
                    asks_montrees=int(e.get("HACKVS_ASKS_MONTREES", "1")), plafond_jours=int(e.get("HACKVS_PLAFOND_JOURS", "7")),
                    budget_noeuds=int(e.get("HACKVS_BUDGET_NOEUDS", "20000")),
-                   budget_relance=int(e.get("HACKVS_BUDGET_RELANCE", "1000000")))
+                   budget_relance=int(e.get("HACKVS_BUDGET_RELANCE", "1000000")),
+                   foire=e.get("HACKVS_FOIRE", "1") == "1", k_anonymat=max(1, int(e.get("HACKVS_K_ANONYMAT", "3"))))
