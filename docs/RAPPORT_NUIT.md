@@ -103,3 +103,94 @@ adhésion croisée ; analyse d'impact nLPD / RGPD — voir [roadmap/ROADMAP.md](
 
 Mutation : aucun chemin surveillé par les campagnes (`capacites.py`, `essai.py`, `test_capacites*.py`,
 `test_banc_finalite.py`, `mutation.yml`…) n'a été touché cette nuit ; aucun déclencheur n'a été désactivé.
+
+---
+
+# Vagues 2 et 3 (03.10, 15:47 → nuit) — message consolidé, liste du Club, pas de VPS
+
+Branche `foire-2026`. Aucun tag posé, rien poussé sur `main` (et `main` n'existe pas sur le dépôt distant : la base de
+l'audit est `3a6ef4f`, point de départ commun avec `claude/modest-bohr-xvk53n`). **CI : ne démarre plus**, refus de
+GitHub (facturation : « recent account payments have failed or your spending limit needs to be increased »). Aucun
+commit de cette nuit n'est dit « CI verte ». Les preuves sont les portes **locales**, ci-dessous.
+
+## Portes locales (commit `b25b00c` et précédents immédiats)
+
+| Porte | Résultat |
+|---|---|
+| Suite complète (`make test`, hors E2E) | **1 560 réussis**, 0 échec (sur `e2b1745` + correctifs de tests) |
+| E2E interrupteur allumé (`make e2e`) | **31 / 31** |
+| E2E interrupteur éteint (`HACKVS_FOIRE=0 make e2e`) | **31 / 31** |
+| E2E réseau coupé (`make e2e-salle`, espace réseau vide) | **31 / 31** |
+| Lint (`make lint`) · types (`make typecheck`) | propres · 0 erreur (102 fichiers) |
+| Secrets (`make secrets`) | **aucun** — la porte était rouge sur des faux positifs depuis `d152a55`, corrigée (`b25b00c`) |
+| Validateur des affirmations | « toutes les affirmations contrôlables sont vérifiées » |
+
+## Fait
+
+| Bloc | Quoi | Commits |
+|---|---|---|
+| P0 mode salle | QR multi-usage, deux gestes, écran géant, régie, bascule scriptée, purge ; **constellation en motion design** (spirale HMAC, anneau 3/4 → 4/4, halo rouge au seul instant du oui, retrait, tableau final, jour / nuit, 59–61 i/s mesurées, vidéo de 30 s en plan B) | `a0d1e46`, `730caac` |
+| Liste du Club | CSV (colonne métier seule) ; **seuil « < 3 » en entreprises distinctes** ; 25 métiers ; « Ce que votre Club pourrait assembler » **8/9** ; 145 / 173 partout ; demande finale | `74cbc6b`, `493b977`, `de2d3e4` |
+| Pas de VPS | démo sur le Mac via tunnel (Tailscale Funnel ; Cloudflare en secours) ; **console fermée aux requêtes relayées** ; QR servi en direct ; `--base-url` ; `demo-tunnel.sh` exige le jeton | `97763e7`, `ee5dea5`, `24876cb`, `5ef41c4` |
+| P1 présentation v2 | deck v2 (24 slides, chiffres recalculés par test), structure 18 min, script + à dire, runbook, contenu des slides, Q&R ; v1 intacte en plan B | `24ba47c`, `57056b5` |
+| P1 feuille de route | 30 / 45 jours, pilote au plus fort des Mondiaux, risque nommé, CSCS, pistes « à contacter » | `cb9ccb1`, suivants |
+| P3 n°1–16 | voir `docs/NUIT.md` (statut 17:55) ; n°6 **bloqué** (feuille d'annotation non remplie : aucune exactitude ne peut être mesurée honnêtement) | |
+
+## Mesures nouvelles (toutes dans PREUVES.md)
+
+- Appel d'outils natif d'Apertus 1.5 (CSCS), mêmes 26 cas : **1/26, aucun gain**, 3 sorties fausses acceptées → interrupteur éteint.
+- Pipeline d'affinage : essai réel de 10 générations, **9 gardées** par le filtre aller-retour ; **aucun entraînement lancé**.
+- Carte → profil : règle des 5/5 — carte fictive k1 **0/5**, k6 **5/5** ; la vraie carte reste à essayer au rituel.
+
+## Écarts assumés (à valider)
+
+- **Monde de démonstration non re-proportionné** sur la liste du Club (addendum, point 6) : ses 150 profils portent les
+  vérités plantées dont dépendent des dizaines de tests et les bancs mesurés. Le refaire la veille du gel mettait la démo
+  en risque. Les proportions de la liste sont utilisées là où elles comptent sans risque : « assembler », « le Club
+  cherche », pondération des données synthétiques.
+- **Film à 3:21** (verrouillé) au lieu du créneau 2:00–4:30 du brief : les actes suivants glissent d'environ 55 s, fin
+  toujours à 18:00 (estimation, pas encore chronométrée).
+- **Routage vers les membres jamais liés** : hypothèse non branchée (une demande va à une catégorie, jamais à une
+  personne choisie par le système).
+- Termes DPV de l'export 27560 choisis sans accès à la spécification (site bloqué depuis la session) : à relire.
+
+---
+
+# Pour Hiba
+
+## À fournir pour la démo (pas de VPS)
+
+| Quoi | Où |
+|---|---|
+| Le Mac du pitch, Python 3.11, le dépôt à jour (`foire-2026`, puis `main` après fusion) | `pip install -r prototype/requirements.txt` |
+| Tailscale installé et connecté ; HTTPS et Funnel autorisés pour ce Mac dans la console du tailnet | `docs/DEMO_TUNNEL.md` |
+| `cloudflared` en secours (`brew install cloudflared`) | idem |
+| Un jeton de console | `python3 -c 'import secrets; print(secrets.token_urlsafe(24))'` |
+| (Facultatif) `APERTUS_API_KEY` du CSCS dans l'environnement — jamais dans un fichier du dépôt | la démo tourne sans |
+| `film.mp4` dans `docs/presentation/deck/assets/` sur la machine de la salle | sinon plan B texte |
+
+## Commandes (session locale sur le Mac)
+
+```sh
+git fetch origin && git checkout foire-2026 && git pull
+export HACKVS_CONSOLE_JETON="<jeton>" PUBLIC_BASE_URL="https://<mac>.<tailnet>.ts.net"
+./demo-tunnel.sh                       # terminal 1 : serveur sur 127.0.0.1:8000, caffeinate
+tailscale funnel 8000                  # terminal 2 : le tunnel
+python3 docs/presentation/deck/lancer.py   # terminal 3 : deck → http://127.0.0.1:8765/v2.html (v1 : index.html)
+curl -fsS "$PUBLIC_BASE_URL/sante" && curl -fsS "$PUBLIC_BASE_URL/qr/salle.txt"
+cd prototype && python scripts/charge_salle.py --base-url "$PUBLIC_BASE_URL" --jeton "$HACKVS_CONSOLE_JETON" --n 80
+```
+
+## Liste de 08:00
+
+1. **Fusion et tag** : fusionner `foire-2026` dans `main`, poser `gel-final` (je n'ai posé aucun tag, rien poussé sur `main`).
+2. **CI** : régler la facturation GitHub (Billing & plans), relancer ; jusque-là, seules les portes locales ci-dessus font foi.
+3. **Mode salle et constellation sur de vrais téléphones**, à travers le tunnel, en 4G : scan, deux gestes, oui, retrait, bilan, purge.
+4. **Chronométrer la v2** (deck, touche `R`) : 821 mots dits + film 3:21 + scans ≈ 15–16 min estimées ; cible 18:00.
+5. **`film.mp4`** copié sur la machine de la salle ; tester la lecture dans le deck (`v2.html`, slide « film »).
+6. **Carte → profil : les 5 essais sur la VRAIE carte** :
+   `cd prototype && python -m eval.banc_carte --photo <photo> --entreprise "<nom>" --metier <id>` (rapport hors dépôt).
+   5/5 → deck avec `?carte=1` ; sinon, monde « visite » seulement, hors scène.
+7. **Relire** : la traduction allemande (bandeau « à relire ») ; les termes DPV (`docs/conformite/RECU_27560.md`) ;
+   l'écart 44 / 48 « autre » de la liste du Club (PREUVES, « Liste du Club »).
+8. **Remplir la feuille d'annotation Tally** (`prototype/var/annotation/`) : sans elle, aucune exactitude de classification.
