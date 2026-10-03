@@ -104,11 +104,12 @@ _observabilite.configurer(_observabilite.niveau_depuis_env(os.environ))
 PAGES_PULSE = ("app.html", "console.html", "projection.html", "regie.html", "etabli.html", "suivi.html", "decouverte.html",
                "reponse.html", "salle.html", "salle-ecran.html", "salle-regie.html", "feuille-de-route.html", "preflight.html",
                "compte.html", "espace.html", "secretariat.html",
-               "desinscription.html", "borne.html")
+               "desinscription.html", "borne.html", "attestation.html")
 app.add_middleware(_Protections, csp=_politique_contenu([WEB_PULSE / f for f in PAGES_PULSE]),
                    chemins_csp=("/app", "/console", "/etabli", "/suivi", "/decouverte", "/reponse", "/salle", "/salle/ecran",
                                 "/salle/regie", "/feuille-de-route", "/projection", "/demo/regie", "/preflight", "/compte",
-                                "/espace", "/secretariat", "/desinscription", "/borne"),
+                                "/espace", "/secretariat", "/desinscription", "/borne",
+                                "/attestation"),
                    # JOUR J : l'écran de la salle (et l'Établi, où mène la bascule scriptée) s'affichent DANS le deck local
                    csp_integrable=_politique_contenu([WEB_PULSE / f for f in PAGES_PULSE],
                                                      ancetres="'self' " + _origines_deck(os.environ.get("HACKVS_DECK_ORIGINES"))),
@@ -1060,6 +1061,14 @@ def page_reponse():
     if MODE != "demo":
         raise HTTPException(501, "Club Pulse est présenté en mode démo (monde fictif).")
     return FileResponse(WEB / "pulse" / "reponse.html")
+
+
+@app.get("/attestation")
+def page_attestation():
+    """ANNÉE 1 · LOT 10 : vérificateur local d'attestations (prototype, non connecté à swiyu) — si HACKVS_EID=1."""
+    if os.environ.get("HACKVS_EID") != "1":
+        raise HTTPException(404, "Not Found")
+    return FileResponse(WEB / "pulse" / "attestation.html", headers={"Cache-Control": "no-store"})
 
 
 @app.get("/borne")

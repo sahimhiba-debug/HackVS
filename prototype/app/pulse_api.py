@@ -184,6 +184,10 @@ class Adhesion(BaseModel):
     reference: str = Field(min_length=3, max_length=20)
 
 
+class AVerifier(BaseModel):
+    sd_jwt: str = Field(min_length=20, max_length=20_000)
+
+
 class Desinscription(BaseModel):
     jeton: str = Field(min_length=8, max_length=200)
 
@@ -507,6 +511,30 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
         from intelligence import clubs
         limiter(limite_ecritures, f"ecrit|{pid}")
         return au_monde(lambda c: clubs.a_distance(c, pid, x.oui))
+
+    # ANNÉE 1 · LOT 10 — prototype e-ID : reçus émis comme attestations SD-JWT VC (« prototype, non connecté à swiyu »)
+    def eid_allume() -> None:
+        if os.environ.get("HACKVS_EID") != "1":
+            raise HTTPException(404, "Not Found")
+
+    def emetteur():
+        from intelligence import attestations as at
+        return at.Emetteur(etat["demo"].club.reglages.secret)
+
+    @r.get("/moi/attestations", dependencies=[Depends(eid_allume)])
+    def mes_attestations(pid: str = Depends(membre)) -> dict:
+        from intelligence import attestations as at
+        e = emetteur()
+        return au_monde(lambda c: {"mention": at.MENTION, "emetteur": e.did,
+                                   "attestations": [{"reference": r["reference"], "sd_jwt": e.emettre(c, pid, r)}
+                                                    for r in c.capacites.recus(pid)]})
+
+    @r.post("/attestations/verifier", dependencies=[Depends(eid_allume)])
+    def verifier_attestation(x: AVerifier) -> dict:
+        """PUBLIQUE : le vérificateur LOCAL de démonstration (lecture seule, aucun état)."""
+        from intelligence import attestations as at
+        limiter(limite_acces_global, "attestations")
+        return at.verifier(x.sd_jwt)
 
     @r.get("/moi/notes")
     def notes(pid: str = Depends(membre)) -> list[dict]:

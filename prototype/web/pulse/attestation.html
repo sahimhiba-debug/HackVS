@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Club Pulse · Vérifier une attestation</title>
+  <meta name="description" content="Vérificateur local d'attestations SD-JWT VC — prototype, non connecté à swiyu.">
+  <link rel="icon" href="/static/pulse/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/pulse/pulse.css">
+  <style>
+    body { background: var(--papier); }
+    .page { max-width: 720px; margin: 0 auto; padding: 16px; display: grid; gap: 14px; }
+    .bloc { background: var(--card); border-radius: var(--r-card); padding: 14px 16px; box-shadow: var(--sh-card-light); }
+    textarea { width: 100%; font: 12px/1.4 ui-monospace, monospace; padding: 8px; border-radius: 10px; border: 1px solid var(--hairline-2, #ccd); box-sizing: border-box; }
+    dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 0; } dt { font-weight: 600; } dd { margin: 0; overflow-wrap: anywhere; }
+    .ok { color: #1f7a3a; font-weight: 700; } .ko { color: #a1301f; font-weight: 700; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <span class="marque"><span class="pouls-point" aria-hidden="true"></span>Vérifier une attestation</span>
+    <span class="puce fictif">prototype, non connecté à swiyu · construit — branche annee-1, pas dans la démo</span>
+    <section class="bloc">
+      <p>Collez une attestation (format SD-JWT VC). Le vérificateur est <b>local</b> : il ne connaît que l'émetteur de
+        démonstration de ce serveur ; il n'est relié ni au registre de base ni à l'application swiyu.</p>
+      <label for="sd">Attestation</label>
+      <textarea id="sd" rows="6" spellcheck="false"></textarea>
+      <button class="btn" id="verifier">Vérifier</button>
+    </section>
+    <section class="bloc" id="resultat" hidden aria-live="polite">
+      <p id="verdict"></p>
+      <dl id="affirmations"></dl>
+    </section>
+  </main>
+  <script type="module">
+    const $ = (s) => document.querySelector(s);
+    const NOMS = { iss: "émetteur", vct: "type", iat: "émise le", nbf: "valable dès", exp: "valable jusqu'au", finalite: "finalité",
+      titre: "titre", piece: "pièce", statut: "statut", donne_le: "accord donné le", jusqu_au: "accord valable jusqu'au", reference: "référence" };
+    const date = (k, v) => ["iat", "nbf", "exp"].includes(k) ? new Date(v * 1000).toLocaleString("fr-CH") : String(v);
+    const pre = new URLSearchParams(location.hash.slice(1)).get("a");
+    if (pre) { $("#sd").value = pre; history.replaceState(null, "", location.pathname); }
+    $("#verifier").addEventListener("click", async () => {
+      const r = await fetch("/api/pulse/attestations/verifier", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sd_jwt: $("#sd").value.trim() }) });
+      const d = await r.json().catch(() => ({}));
+      $("#resultat").hidden = false;
+      if (r.ok && d.valide) {
+        $("#verdict").className = "ok"; $("#verdict").textContent = "Attestation valide (" + d.mention + ")";
+        $("#affirmations").replaceChildren(...Object.entries(d.affirmations).flatMap(([k, v]) => { const dt = document.createElement("dt"), dd = document.createElement("dd"); dt.textContent = NOMS[k] || k; dd.textContent = date(k, v); return [dt, dd]; }));
+      } else {
+        $("#verdict").className = "ko"; $("#verdict").textContent = "Refusée : " + (d.raison || (typeof d.detail === "string" ? d.detail : "illisible"));
+        $("#affirmations").replaceChildren();
+      }
+    });
+  </script>
+</body>
+</html>

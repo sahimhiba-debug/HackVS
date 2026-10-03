@@ -79,6 +79,7 @@ def main() -> None:
     capturer_desinscription()
     capturer_multiclub()
     capturer_borne()
+    capturer_attestation()
     print("vitrine annee-1 capturée dans", DOSSIER)
 
 
@@ -163,6 +164,31 @@ def capturer_borne() -> None:
         pg.locator("#ref").wait_for()
         pg.wait_for_timeout(300)
         pg.screenshot(path=str(DOSSIER / "lot9-borne.png"), full_page=True)
+        nav.close()
+
+
+def capturer_attestation() -> None:
+    """LOT 10 : une attestation réelle (SD-JWT VC, émetteur local) vérifiée par le vérificateur local."""
+    env = {"HACKVS_EID": "1", "HACKVS_ESSAIS_DB": str(Path(tempfile.mkdtemp()) / "j.db"), "HACKVS_FOIRE": "1"}
+    with serveur(**env) as base, sync_playwright() as p:
+        console = {"X-Pulse-Console": "1", "Content-Type": "application/json"}
+        urllib.request.urlopen(urllib.request.Request(base + "/api/pulse/demo/aller/9", data=b"{}", headers=console))
+        sd = None
+        for x in json.load(urllib.request.urlopen(urllib.request.Request(base + "/api/pulse/console/personas", headers=console))):
+            if x.get("session"):
+                a = json.load(urllib.request.urlopen(urllib.request.Request(base + "/api/pulse/moi/attestations",
+                                                                            headers={"X-Pulse-Session": x["session"]})))["attestations"]
+                if a:
+                    sd = a[0]["sd_jwt"]
+                    break
+        nav = p.chromium.launch(executable_path="/opt/pw-browsers/chromium")
+        pg = nav.new_context(viewport={"width": 760, "height": 900}).new_page()
+        pg.goto(f"{base}/attestation")
+        pg.fill("#sd", sd)
+        pg.click("#verifier")
+        pg.locator("#verdict.ok").wait_for()
+        pg.wait_for_timeout(300)
+        pg.screenshot(path=str(DOSSIER / "lot10-attestation.png"), full_page=True)
         nav.close()
 
 

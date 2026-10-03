@@ -269,3 +269,9 @@
   de: Messe-Start — Standterminal, Import der Aussteller als CSV, Schnupperpässe in Losen zu 500, vom Sekretariat bestätigte Beitritte über den Pass
   en: Fair launch — stand kiosk, exhibitor CSV import, discovery passes in batches of 500, memberships from the pass confirmed by the secretariat
   tests: test_annee1_foire.py
+- id: a1-eid
+  statut: annee1
+  fr: Prototype e-ID — reçus émis comme attestations vérifiables SD-JWT VC (format du profil suisse), émetteur et vérificateur locaux ; prototype, non connecté à swiyu
+  de: E-ID-Prototyp — Belege als überprüfbare Nachweise SD-JWT VC (Format des Swiss Profile), lokaler Aussteller und Prüfer; Prototyp, nicht mit swiyu verbunden
+  en: e-ID prototype — receipts issued as SD-JWT VC verifiable credentials (Swiss profile format), local issuer and verifier; prototype, not connected to swiyu
+  tests: test_annee1_attestations.py

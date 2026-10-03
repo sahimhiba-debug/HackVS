@@ -32,7 +32,8 @@ PUBLIQUES = {("POST", "/api/pulse/acces"), ("POST", "/api/pulse/jure"), ("POST",
              ("POST", "/api/pulse/salle/entrer"),                                                 # QR de la salle : signé
              ("GET", "/api/pulse/monde"), ("GET", "/api/pulse/feuille-de-route"),                 # publics, lecture seule
              ("POST", "/api/pulse/notifications/desinscrire"),                                    # lien d'e-mail : signé
-             ("POST", "/api/pulse/borne/passe")}                                                  # jeton de borne : signé
+             ("POST", "/api/pulse/borne/passe"),                                                  # jeton de borne : signé
+             ("POST", "/api/pulse/attestations/verifier")}                                        # vérificateur local, sans état
 VALEURS = {"n": "1", "index": "0", "etape": "0"}
 
 
@@ -52,6 +53,7 @@ def monde(tmp_path, monkeypatch):
     monkeypatch.setenv("HACKVS_NOTIFICATIONS", "1")                   # ANNÉE 1 · lot 5
     monkeypatch.setenv("HACKVS_MULTICLUB", "1")                       # ANNÉE 1 · lot 8
     monkeypatch.setenv("HACKVS_FOIRE_ALLUMAGE", "1")                  # ANNÉE 1 · lot 9
+    monkeypatch.setenv("HACKVS_EID", "1")                             # ANNÉE 1 · lot 10
     routeur = creer_routeur(TAX)
     app = FastAPI()
     app.include_router(routeur)

@@ -59,6 +59,7 @@ simulée). Le Club réel compte **145 entreprises et 173 représentants** ; rien
 | Suivi du taux d'acceptation de ce que le Club comprend d'une demande (modèle Apertus ou règles en repli), décomptes seulement, dans la console du secrétariat | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_suivi_ia.py |
 | Plusieurs clubs — club partenaire (exemple fictif marqué), adhésion croisée choisie par le membre, membres à distance ; interface FR / DE / EN (à relire par un natif) | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_multiclub.py |
 | Allumage Foire — borne de stand, import des exposants en CSV, passes découverte par lots de 500, adhésions venues du passe confirmées par le secrétariat | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_foire.py |
+| Prototype e-ID — reçus émis comme attestations vérifiables SD-JWT VC (format du profil suisse), émetteur et vérificateur locaux ; prototype, non connecté à swiyu | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_attestations.py |
 <!-- etat:fin -->
 
 Page publique, trilingue, avec des liens vers les écrans du monde « visite » : `/feuille-de-route`.

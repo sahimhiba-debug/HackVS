@@ -5,6 +5,7 @@
 
 | Lot | Ce qui est construit | Preuve | Vitrine |
 |---|---|---|---|
+| 10 · Prototype e-ID | attestations SD-JWT VC des reçus, émetteur et vérificateur locaux — prototype, non connecté à swiyu | `test_annee1_attestations.py` · CLAIMS 114 | [vitrine/lot10.md](vitrine/lot10.md) |
 | 9 · Allumage Foire | borne de stand, import des exposants, lots de passes, adhésions confirmées | `test_annee1_foire.py` · CLAIMS 113 | [vitrine/lot9.md](vitrine/lot9.md) |
 | 8 · Plusieurs clubs, FR/DE/EN | club partenaire exemple fictif, adhésion croisée, membres à distance, interface anglaise | `test_annee1_multiclub.py` · CLAIMS 112 | [vitrine/lot8.md](vitrine/lot8.md) |
 | 7 · IA Apertus | suivi du taux d'acceptation (nouveau) ; appel d'outils mesuré, coach SMART, classification, pipeline d'affinage non lancé, parité : faits avant la mission | `test_annee1_suivi_ia.py` · CLAIMS 111 (et 39, 89, 91, 101) | [vitrine/lot7.md](vitrine/lot7.md) |
