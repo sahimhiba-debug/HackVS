@@ -35,10 +35,6 @@ LIBELLES = {"fr": {"o": "Oui", "n": "Non", "p": "Pas cette fois"}, "de": {"o": "
 Nombre = Union[int, str]
 
 
-def _k(n: int, k: int) -> Nombre:
-    return f"< {k}" if 0 < n < k else n
-
-
 # ------------------------------------------------------------------ zone et langue
 def declarer(c: "ClubPulse", pid: str, zone: str, langue: str) -> dict:
     if zone not in metiers.ZONES:
@@ -66,8 +62,9 @@ def zones_membres(c: "ClubPulse", debut: Optional[date], k: int) -> Union[str, d
     ps = profils(c)
     if not ps:
         return "zone non renseignée"
-    hors = sum(p["zone"] not in metiers.VALAIS for p in ps.values())
-    return {"membres": _k(hors, k), "zones_renseignees": _k(len(ps), k)}
+    from . import anonymat
+    hors = {m for m, p in ps.items() if p["zone"] not in metiers.VALAIS}
+    return {"membres": anonymat.seuil(c, hors, len(hors)), "zones_renseignees": anonymat.seuil(c, ps, len(ps))}
 
 
 # ------------------------------------------------------------------ liens signés

@@ -216,6 +216,13 @@ class Coffre:
     def identite(self, pid: str) -> Optional[Personne]:
         return self._personnes.get(pid)
 
+    def cle_entreprise(self, pid: str) -> str:
+        """L'entreprise d'un membre, pour COMPTER (seuil « < 3 » en entreprises distinctes) — jamais affichée. Sans adhésion
+        connue (invité, membre effacé), la personne compte pour une entreprise à elle seule."""
+        per = self._personnes.get(pid)
+        adh = self.adhesions.get(per.adhesion_id) if per else None
+        return adh.organisation_id if adh else f"seul:{pid}"
+
     def organisation_de(self, pid: str) -> Optional[Organisation]:
         per = self._personnes.get(pid)
         return self.orgs.get(self.adhesions[per.adhesion_id].organisation_id) if per else None
