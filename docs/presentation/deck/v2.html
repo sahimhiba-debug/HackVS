@@ -263,6 +263,8 @@ body.jour #noir { background: var(--bg); }
 .chiffre b.mot { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; }
 .plan-b-video { position: absolute; inset: 0; width: 1920px; height: 1080px; background: #000; object-fit: contain; display: none; z-index: 4; }
 .plan-b-video.on { display: block; }
+.ecran-live { position: absolute; inset: 0; width: 1920px; height: 1080px; border: 0; background: #000; display: none; z-index: 3; pointer-events: none; }
+.ecran-live.on { display: block; }
 body.jour .plan-b-video { background: var(--bg); }
 </style>
 </head>
@@ -317,9 +319,12 @@ body.jour .plan-b-video { background: var(--bg); }
 </section>
 
 <section class="slide gris" data-id="constellation" data-acte="3" data-pas="3" data-constellation="1">
-  <div class="abs etiq" style="left:var(--marge);top:96px">L'écran géant · en direct · fenêtre /salle/ecran</div>
+  <div class="abs etiq" style="left:var(--marge);top:96px">L'écran géant · en direct · intégré au deck</div>
   <ol class="reperes"><li>La demande part</li><li>Les oui ferment l'anneau</li><li>Un retrait, le Club recompose</li></ol>
-  <div class="abs corps" style="left:var(--marge);top:300px;max-width:1300px">Passer sur la fenêtre de l'écran géant (⌘-Tab).<br>Plan B (touche <span class="mono">B</span>) : la vidéo de 30 s, séance simulée, enregistrée sur le vrai écran.</div>
+  <div class="abs corps" id="ecran-absent" style="left:var(--marge);top:300px;max-width:1300px">L'écran de la salle ne répond pas (prototype arrêté ?).<br>Touche <span class="mono">B</span> : la vidéo de 30 s, séance simulée, enregistrée sur le vrai écran.</div>
+  <!-- JOUR J : l'écran de la salle EN DIRECT (APP/salle/ecran), sans ⌘-Tab. Il ne prend ni le focus ni les clics : le
+       clavier et la télécommande restent au deck. Jeton de console : transmis par la régie ouverte dans le même Chrome. -->
+  <iframe id="ecran-salle" class="ecran-live" tabindex="-1" title="L'écran de la salle, en direct" aria-hidden="true"></iframe>
   <video id="video-constellation" class="plan-b-video" src="review/constellation/nuit/seance-nuit.webm" muted playsinline preload="none"></video>
 </section>
 
@@ -464,6 +469,8 @@ let basculeMinuteur = null;
 function appliquerMode(m, annoncer) {
   document.body.classList.toggle("jour", m === "jour");
   try { sessionStorage.setItem("deck-mode", m); } catch (e) {}
+  const ec = document.getElementById("ecran-salle");           // l'écran de la salle suit le deck (J)
+  if (ec && ec.getAttribute("src")) ec.src = ec.getAttribute("src").replace(/mode=(jour|nuit)/, "mode=" + m);
   if (!annoncer) return;
   const b = document.getElementById("bascule"); b.textContent = m === "jour" ? "MODE JOUR · cartons clairs" : "MODE NUIT · cartons noirs";
   b.classList.add("on"); clearTimeout(basculeMinuteur); basculeMinuteur = setTimeout(() => b.classList.remove("on"), 2000);
@@ -511,6 +518,26 @@ function rafraichirQr() {
 }
 rafraichirQr(); setInterval(rafraichirQr, 10000);
 
+/* ── Acte 3 : l'écran de la salle EN DIRECT dans la slide « constellation » (iframe vers APP/salle/ecran ; le
+      prototype n'accepte d'être intégré que par ce deck local). Injoignable : le message, et B pour la vidéo. ─ */
+const ecranSalle = document.getElementById("ecran-salle"), ecranAbsent = document.getElementById("ecran-absent");
+let sondeSalle = null;
+async function salleJoignable() {
+  const c = new AbortController(), t = setTimeout(() => c.abort(), 1500);
+  try { await fetch(`${APP}/sante`, { mode: "no-cors", cache: "no-store", signal: c.signal }); return true; }
+  catch (e) { return false; } finally { clearTimeout(t); }
+}
+async function verifierEcran() {
+  const ok = await salleJoignable();
+  if (ok && !ecranSalle.getAttribute("src")) ecranSalle.src = `${APP}/salle/ecran?mode=${window.modeDeck()}`;
+  if (!ok) ecranSalle.removeAttribute("src");
+  ecranSalle.classList.toggle("on", ok); ecranAbsent.style.display = ok ? "none" : "";
+}
+function ecranActif(on) {                      // chargé dès l'acte 3 (« Sortez vos téléphones ») : prêt à l'arrivée
+  clearInterval(sondeSalle); sondeSalle = null;
+  if (on && !STATIQUE) { verifierEcran(); sondeSalle = setInterval(verifierEcran, 3000); }
+}
+
 /* ── Slides conditionnelles : « la carte devient le profil » n'existe que si ?carte=1 (5/5 au rituel) ─ */
 const CONDITIONS = new Set((params.get("carte") === "1") ? ["carte"] : []);
 S.filter(s => s.dataset.condition && !CONDITIONS.has(s.dataset.condition)).forEach(s => { s.remove(); S.splice(S.indexOf(s), 1); });
@@ -552,11 +579,12 @@ function montrer(n, p, depuis) {
   if (b.dataset.demo) b.querySelectorAll(".reperes li").forEach((li, k) => { li.classList.toggle("fait", k < pas); li.classList.toggle("ici", k === pas - 1); });
   document.getElementById("secours").classList.remove("on");
   const v = document.getElementById("video-constellation"); if (v && !b.dataset.constellation) { v.classList.remove("on"); v.pause(); }
+  if (a !== b || sondeSalle === null) ecranActif(b.dataset.acte === "3");
   // QR en coin : de « Sortez vos téléphones » jusqu'à la demande au Club (jamais sur noir, film, carte finale)
   const coin = document.getElementById("qr-coin"), a3 = +b.dataset.acte >= 3 && +b.dataset.acte <= 6;
-  coin.classList.toggle("on", a3 && !b.classList.contains("noir") && b.dataset.qr !== "grand");
+  coin.classList.toggle("on", a3 && !b.classList.contains("noir") && b.dataset.qr !== "grand" && !b.dataset.constellation);  // l'écran montre son QR
   // indicateur de progression (masqué sur noir, film, ouverture et finale)
-  const acte = +b.dataset.acte, cache = b.classList.contains("noir") || ["1", "18", "19", "21", "salle"].includes(ID(b));
+  const acte = +b.dataset.acte, cache = b.classList.contains("noir") || ["1", "18", "19", "21", "salle", "constellation"].includes(ID(b));
   progres.style.opacity = cache ? 0 : 1;
   progres.querySelectorAll("path").forEach((pa, k) => pa.classList.toggle("fait", k < acte));
   repetition(depuis);

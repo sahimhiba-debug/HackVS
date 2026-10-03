@@ -75,3 +75,91 @@ def test_bascule_vers_la_demo_scriptee_si_la_salle_est_vide(url_salle):
     s.inviter()
     h[0] = 61
     assert s.ecran()["bascule"] is True
+
+
+# ------------------------------------------------------------------ JOUR J : l'écran de la salle DANS le deck v2
+DECK = __import__("pathlib").Path(__file__).resolve().parents[2] / "docs" / "presentation" / "deck"
+JETON_DECK = "jeton-de-console-du-deck-fictif-0123"
+
+
+@pytest.fixture(scope="module")
+def deck_et_salle():
+    """Le deck servi comme par lancer.py (127.0.0.1, port libre) et un prototype qui n'accepte d'être intégré QUE par lui."""
+    import functools
+    import http.server
+    import socketserver
+    import threading
+
+    class Muet(http.server.SimpleHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+    srv = socketserver.ThreadingTCPServer(("127.0.0.1", 0), functools.partial(Muet, directory=str(DECK)))
+    srv.daemon_threads = True
+    port = srv.server_address[1]
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        with serveur(HACKVS_FOIRE="1", HACKVS_SALLE="1", HACKVS_CONSOLE_JETON=JETON_DECK,
+                     HACKVS_DECK_ORIGINES=f"http://127.0.0.1:{port}") as base:
+            yield f"http://127.0.0.1:{port}", base
+    finally:
+        srv.shutdown()
+
+
+def test_l_ecran_de_la_salle_vit_dans_le_deck_sans_changer_de_fenetre(deck_et_salle):
+    """Plus de ⌘-Tab : sur la slide « constellation », l'écran de la salle s'affiche en direct dans le deck. Il reçoit le
+    jeton de la console de la régie ouverte dans le même Chrome (jamais par l'URL) ; le clavier et la télécommande
+    restent au deck (l'iframe ne prend ni le focus ni les clics)."""
+    from playwright.sync_api import sync_playwright
+    deck, base = deck_et_salle
+    erreurs: list[str] = []
+    with sync_playwright() as p:
+        b = _chromium(p)
+        ctx = b.new_context(viewport={"width": 1920, "height": 1080})
+        regie = ctx.new_page()
+        regie.set_default_timeout(30_000)
+        regie.on("dialog", lambda d: d.accept(JETON_DECK))                    # la régie demande le jeton UNE fois
+        regie.goto(base + "/salle/regie")
+        regie.click("#purger")
+        regie.click("#ouvrir")
+        regie.locator("#etat:has-text('ouverte')").wait_for()
+        page = ctx.new_page()
+        page.set_default_timeout(30_000)
+        page.on("pageerror", lambda e: erreurs.append(str(e)))
+        page.on("dialog", lambda d: erreurs.append("le deck a demandé quelque chose : " + d.message) or d.dismiss())
+        page.goto(f"{deck}/v2.html?app={base}")
+        page.evaluate("window.pret")
+        page.evaluate("allerA('constellation', 0)")
+        cadre = page.locator("#ecran-salle")
+        cadre.wait_for(state="visible")
+        assert JETON_DECK not in (cadre.get_attribute("src") or "")              # jamais dans l'URL
+        ecran = page.frame_locator("#ecran-salle")
+        ecran.locator("#qr img").wait_for()                                     # la console a répondu : jeton reçu de la régie
+        ecran.locator("[data-role=monde]").wait_for()
+        assert page.evaluate("getComputedStyle(document.getElementById('ecran-salle')).pointerEvents") == "none"
+        avant = page.evaluate("location.hash")
+        page.keyboard.press("ArrowRight")                                       # le deck garde la main
+        page.wait_for_timeout(300)
+        assert page.evaluate("location.hash") != avant
+        page.evaluate("allerA('constellation', 0)")
+        page.keyboard.press("b")                                                # le plan B reste à une touche
+        assert page.locator("#video-constellation").get_attribute("class").split().count("on") == 1
+        b.close()
+    assert not erreurs, erreurs
+
+
+def test_ecran_injoignable_le_deck_le_dit_et_garde_la_video(deck_et_salle):
+    from playwright.sync_api import sync_playwright
+    deck, _ = deck_et_salle
+    with sync_playwright() as p:
+        b = _chromium(p)
+        page = b.new_page(viewport={"width": 1920, "height": 1080})
+        page.set_default_timeout(30_000)
+        page.goto(f"{deck}/v2.html?app=http://127.0.0.1:9")                     # aucun prototype
+        page.evaluate("window.pret")
+        page.evaluate("allerA('constellation', 0)")
+        page.locator("#ecran-absent").wait_for(state="visible")
+        assert "B" in page.inner_text("#ecran-absent")
+        assert page.locator("#ecran-salle").is_hidden()
+        page.keyboard.press("b")
+        assert "on" in page.locator("#video-constellation").get_attribute("class").split()
+        b.close()

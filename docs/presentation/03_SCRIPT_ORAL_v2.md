@@ -56,13 +56,13 @@ Conventions :
 ## Acte 3 — Sortez vos téléphones · 5:30–9:30 · V1 parle, V2 à la régie
 
 [slide « Sortez vos téléphones » : le QR, servi en direct par le serveur. V2 a ouvert la salle depuis la régie
-avant le pitch ; l'écran géant tourne dans une autre fenêtre.]
+avant le pitch ; l'écran géant est dans le deck, slide suivante.]
 
 > Sortez vos téléphones. Pendant cinq minutes, vous êtes le Club. Aucun nom, aucun compte : deux gestes. Vous
 > choisissez une chose que vous pourriez faire pour quelqu'un — une voiture, une salle, parler allemand — et vous
 > dites oui à l'usage qu'on en fera. Rien d'autre.
 
-[on laisse scanner ; V2 passe à l'écran géant (⌘-Tab) dès les premiers points]
+[on laisse scanner ; V1 passe à la slide « constellation » dès les premiers points : l'écran géant y est en direct]
 
 > Chaque point, c'est l'un de vous. Pas de nom, pas de visage. En dessous de trois, le Club ne compte pas : il protège.
 
