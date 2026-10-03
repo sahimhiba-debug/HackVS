@@ -104,6 +104,7 @@ demo:
 	cd $(P) && mkdir -p var && (test -s var/secret_demo || $(PY) -c "import secrets; print(secrets.token_urlsafe(48))" > var/secret_demo) \
 	  && chmod 600 var/secret_demo && HACKVS_SECRET="$$(cat var/secret_demo)" HACKVS_ESSAIS_DB=var/club_pulse.db \
 	  HACKVS_MODE=demo HACKVS_DB=:memory: HACKVS_DECISIONS_DB=:memory: HACKVS_CYCLE_DB=:memory: \
+	  HACKVS_FOIRE=$${HACKVS_FOIRE:-1} HACKVS_SALLE=$${HACKVS_SALLE:-1} \
 	  HACKVS_URL_PUBLIQUE="$(URL_PUBLIQUE)" $(PY) -m uvicorn app.main:app --host $(HOTE) --port 8000 --no-access-log
 
 quality-check: secrets lint typecheck test e2e eval

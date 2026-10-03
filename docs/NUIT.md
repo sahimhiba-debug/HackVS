@@ -77,3 +77,4 @@ corrections et livraison avant 07:30. Aucun tag, aucun push sur `main` — **`ma
 | Heure | Fait | En cours | Abandonné |
 |---|---|---|---|
 | 15:50 | plan | §2 Tally | — |
+| 16:15 | §2 Tally (`fad69c2`) ; PUBLIC_BASE_URL (`e19da8d`) ; mode salle (`a0d1e46`) ; rejeu Apertus 1.5 sur les 26 cas : 1/26 inchangé (`1b7902e`) ; constellation (`ff2de2c`) ; déploiement + charge 80 (`d152a55`) — suite 1 454 verte. CI : ne démarre pas (facturation), portes locales seulement | §6 feuille de route, §7 etat.yaml | — |
