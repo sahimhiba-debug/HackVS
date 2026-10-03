@@ -86,19 +86,25 @@ class Decouverte:
 
     # ------------------------------------------------------------------ Club (console)
     def emettre(self, origine: str, demande: Optional[str] = None) -> dict:
-        if origine not in ("stand", "demande"):
-            raise Invalide("origine : stand ou demande")
+        """« startup » (P3 n°12, PONT THE ARK — proposé, à valider avec la fondation) : la même porte, deux fois plus
+        longue (une jeune entreprise a besoin d'un trimestre de plus pour trouver sa place) ; rien d'autre ne change."""
+        if origine not in ("stand", "demande", "startup"):
+            raise Invalide("origine : stand, demande ou startup")
         if origine == "demande":
             ouvertes = {i.ask.id: i for i in self.c.projection_capacites() if i.ask is not None}
             if demande not in ouvertes:
                 raise Invalide("demande inconnue ou plus ouverte")
         nonce = secrets.token_urlsafe(9)
-        jusqu = self.c.jour + timedelta(days=self.jours)
+        jours = self.jours * 2 if origine == "startup" else self.jours
+        jusqu = self.c.jour + timedelta(days=jours)
         self.c.banc._ecrire("DECOUVERTE_EMIS", [], Statut.OBSERVE, nonce=nonce, origine=origine, demande=demande,
                             jusqu_au=jusqu.isoformat())
         jeton = f"d1.{nonce}.{self._sig('d1', nonce)}"
-        return {"jeton": jeton, "chemin": f"/decouverte#passe={jeton}", "nonce": nonce, "jusqu_au": jusqu.isoformat(),
-                "jours": self.jours, "origine": origine}
+        res = {"jeton": jeton, "chemin": f"/decouverte#passe={jeton}", "nonce": nonce, "jusqu_au": jusqu.isoformat(),
+               "jours": jours, "origine": origine}
+        if origine == "startup":
+            res["variante"] = "passe start-up · pont The Ark (proposé, à valider avec la fondation)"
+        return res
 
     def revoquer(self, nonce: str) -> dict:
         p = self.passes().get(nonce)

@@ -25,7 +25,7 @@ class Visibilite(BaseModel):
 
 
 class Emission(BaseModel):
-    origine: Literal["stand", "demande"] = "stand"
+    origine: Literal["stand", "demande", "startup"] = "stand"
     demande: Optional[str] = Field(default=None, max_length=120)
 
 
