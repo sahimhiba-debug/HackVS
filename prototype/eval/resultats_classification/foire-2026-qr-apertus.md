@@ -12,6 +12,6 @@
 
 ## Distribution des métiers proposés (sorties acceptées, hors abstention)
 
-- Construction, artisanat : 1
+- Construction, artisanat : < 3 (seuil « < 3 » : un décompte de 1 ou 2 n'est jamais publié)
 
 Part de demandes implicites ou vagues : **non mesurée** — elle exige la colonne `domaine` et le jugement humain de la feuille d'annotation ; le taux d'abstention ci-dessus n'en est qu'un indice.

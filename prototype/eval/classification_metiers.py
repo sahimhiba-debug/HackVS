@@ -130,7 +130,8 @@ def rapport(phrases: list[dict], resultats: list[dict], source: str, fournisseur
          f"| dont abstentions | {abst} ({pct(abst)}) |",
          *[f"| Sorties rejetées — {k} | {c} |" for k, c in sorted(rejets.items())], "",
          "## Distribution des métiers proposés (sorties acceptées, hors abstention)", "",
-         *([f"- {metiers.libelle(m)} : {c}" for m, c in dist.most_common()] or ["- aucune"]), "",
+         # seuil « < 3 » (audit MINEUR 18) : un décompte de 1 ou 2 n'est jamais publié
+         *([f"- {metiers.libelle(m)} : {c if c >= 3 else '< 3'}" for m, c in dist.most_common()] or ["- aucune"]), "",
          "Part de demandes implicites ou vagues : **non mesurée** — elle exige la colonne `domaine` et le jugement humain de "
          "la feuille d'annotation ; le taux d'abstention ci-dessus n'en est qu'un indice.", ""]
     return "\n".join(L)

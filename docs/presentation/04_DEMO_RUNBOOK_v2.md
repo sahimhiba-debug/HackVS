@@ -17,7 +17,7 @@ Le runbook v1 ([04_DEMO_RUNBOOK.md](04_DEMO_RUNBOOK.md)) reste le plan B complet
 
 1. Alimentation branchée ; partage 4G prêt ; `./demo-tunnel.sh` lancé (PUBLIC_BASE_URL + HACKVS_CONSOLE_JETON).
 2. Tunnel lancé (Funnel ; sinon Cloudflare) ; `curl "$PUBLIC_BASE_URL/sante"` répond.
-3. Régie → **Purger**, puis **Ouvrir la salle**. `curl http://127.0.0.1:8000/qr/salle.txt` (sur le Mac) donne l'adresse attendue.
+3. Régie → **« Réinitialiser : tout effacer »**, puis **« 1 · Ouvrir la salle (QR) »**. `curl http://127.0.0.1:8000/qr/salle.txt` (sur le Mac) donne l'adresse attendue.
 4. Deck v2 → slide « Sortez vos téléphones » : le QR s'affiche (sinon l'emplacement dit « QR servi en direct »).
 5. Scanner le QR avec 2 téléphones de l'équipe, à travers le tunnel (4G, pas le Wi-Fi du Mac).
 6. Constellation : `/salle/ecran` affiche les points ; mode jour ou nuit selon la salle (touche J).
@@ -28,10 +28,10 @@ Le runbook v1 ([04_DEMO_RUNBOOK.md](04_DEMO_RUNBOOK.md)) reste le plan B complet
 |---|---|---|---|
 | 5:30 | V1 sur la slide « Sortez vos téléphones » ; **V2 régie : « 1 bis · Sortez vos téléphones »** (la minute de bascule part de là, jamais de l'ouverture à H-30) | le QR en grand | QR absent : lire l'adresse de `/qr/salle.txt` ; ou passer à la vidéo (B) |
 | 5:50 | V2 : ⌘-Tab vers `/salle/ecran` | les points arrivent (rien sous 3 : « la constellation s'allume à trois ») | moins de 5 participants une minute après l'invitation : la bascule scriptée se lance (bandeau « démonstration scriptée dans 5 s ») |
-| 7:30 | V2 régie : **Lancer la demande** | l'anneau se dessine à 3/4, la demande sous l'anneau | rien ne bouge : recharger `/salle/ecran` |
+| 7:30 | V2 régie : **« 2 · Lancer la demande vers la salle »** | l'anneau se dessine à 3/4, la demande sous l'anneau | rien ne bouge : recharger `/salle/ecran` |
 | 7:45 | les oui arrivent | une ligne courbe par oui, halo rouge à l'instant, anneau vert « 4/4 » | pas de oui sur une pièce : le téléphone de secours de V2 répond « Oui » |
-| 8:30 | V2 régie : **Retrait (simulé)** | la ligne se rétracte, « un composant n'est plus disponible », l'anneau se rouvre puis se referme (réserve) | — |
-| 9:00 | V2 régie : **Bilan** | tableau final, compteurs, phrase « En N minutes… » | — |
+| 8:30 | V2 régie : **« 3 · Déclencher un retrait (simulé en démonstration) »** | la ligne se rétracte, « un composant n'est plus disponible », l'anneau se rouvre puis se referme (réserve) | — |
+| 9:00 | V2 régie : **« 4 · Afficher le bilan »** | tableau final, compteurs, phrase « En N minutes… » | — |
 | 9:20 | V2 : ⌘-Tab vers le deck | — | — |
 
 **Plan B global de l'acte 3** : deck, slide « constellation », touche **B** : la vidéo de 30 s (séance simulée sur
@@ -39,7 +39,7 @@ le vrai écran, `review/constellation/<mode>/seance-<mode>.webm`). On dit que c'
 
 ## 3. Après l'acte 7
 
-- Régie → **Purger** (la clé de séance tourne ; plus aucun passe ne vaut). C'est la promesse faite à la salle.
+- Régie → **« Réinitialiser : tout effacer »** (la clé de séance tourne ; plus aucun passe ne vaut). C'est la promesse faite à la salle.
 - Arrêter le tunnel (`tailscale funnel reset`, ou Ctrl-C sur cloudflared).
 
 ## 4. Captures de secours (réelles)
