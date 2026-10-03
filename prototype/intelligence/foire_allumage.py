@@ -1,0 +1,180 @@
+"""ANNÉE 1 · LOT 9 — Allumage Foire (interrupteur HACKVS_FOIRE_ALLUMAGE, éteint par défaut).
+
+- BORNE de stand : un appareil sans personne derrière, ouvert par un jeton émis par le secrétariat ; chaque visiteur prend
+  un passe découverte (QR) ; un passe à la fois (BORNE_INTERVALLE_S), BORNE_PAR_JOUR au plus.
+- IMPORT d'une liste d'EXPOSANTS (CSV : exposant ; métier ; stand) : un passe par exposant, dédoublonné ; le fichier rendu
+  (exposant ; métier ; stand ; lien) sert à les inviter — il n'est PAS gardé : le journal n'a que des décomptes.
+- Passes à GRANDE ÉCHELLE : des lots de 500 au plus.
+- MESURE des adhésions venues du passe : émis → activés → ont aidé → intention → ADHÉSION, celle-ci CONFIRMÉE par le
+  secrétariat (une intention n'est jamais une adhésion) ; « < 3 » compté en entreprises distinctes."""
+from __future__ import annotations
+
+import csv
+import hashlib
+import hmac
+import io
+import secrets
+import time
+from typing import TYPE_CHECKING, Callable, Union
+
+from plateforme.affirmations import Statut
+
+from . import club_cherche, metiers
+from .erreurs import ErreurMetier, Invalide, NonAuthentifie
+
+if TYPE_CHECKING:
+    from .club_pulse import ClubPulse
+
+LOT_MAX = 500
+BORNE_INTERVALLE_S = 3.0
+BORNE_PAR_JOUR = 500
+ORIGINES = ("stand", "demande", "startup", "exposant", "borne")
+Nombre = Union[int, str, None]
+
+
+class TropVite(ErreurMetier):
+    statut_http = 429
+
+
+def emettre_lot(c: "ClubPulse", n: int, origine: str = "stand") -> list[dict]:
+    if not 1 <= n <= LOT_MAX:
+        raise Invalide(f"de 1 à {LOT_MAX} passes par lot")
+    if origine not in ("stand", "exposant", "borne"):
+        raise Invalide("origine d'un lot : stand, exposant ou borne")
+    with c.journal.transaction():                       # un lot : tout ou rien
+        return [c.decouverte.emettre(origine) for _ in range(n)]
+
+
+# ------------------------------------------------------------------ exposants
+COLONNES_EXPOSANT = ("exposant", "entreprise", "nom", "raison sociale")
+
+
+def importer_exposants(c: "ClubPulse", texte: str, base: str) -> dict:
+    lecteur = csv.DictReader(io.StringIO(texte.lstrip("﻿")), delimiter=";" if ";" in texte.split("\n", 1)[0] else ",")
+    cols = {(x or "").strip().lower(): x for x in (lecteur.fieldnames or [])}
+    col_nom = next((cols[k] for k in COLONNES_EXPOSANT if k in cols), None)
+    col_metier = next((cols[k] for k in club_cherche.COLONNES_METIER if k in cols), None)
+    col_stand = cols.get("stand")
+    if col_nom is None:
+        raise Invalide("colonne « exposant » (ou « entreprise », « nom ») introuvable")
+    lignes, vus, doublons, sans_metier = [], set(), 0, 0
+    for ligne in lecteur:
+        nom = " ".join((ligne.get(col_nom) or "").split())
+        if not nom:
+            continue
+        cle = club_cherche.normaliser(nom)
+        if cle in vus:
+            doublons += 1
+            continue
+        vus.add(cle)
+        brut = (ligne.get(col_metier) or "") if col_metier else ""
+        mid = club_cherche._metier_csv(brut) if brut.strip() else None
+        sans_metier += mid is None
+        lignes.append((nom, mid or "", (ligne.get(col_stand) or "").strip() if col_stand else ""))
+    if len(lignes) > LOT_MAX:
+        raise Invalide(f"au plus {LOT_MAX} exposants par import")
+    passes = emettre_lot(c, len(lignes), origine="exposant") if lignes else []
+    sortie = io.StringIO()
+    w = csv.writer(sortie, delimiter=";", lineterminator="\n")
+    w.writerow(["exposant", "metier", "stand", "lien", "reference"])
+    for (nom, mid, stand), p in zip(lignes, passes, strict=True):
+        w.writerow([nom, metiers.libelle(mid) if mid else "", stand, base.rstrip("/") + p["chemin"], _ref(p["nonce"])])
+    par_metier: dict[str, int] = {}
+    for _, mid, _ in lignes:
+        par_metier[mid or "inconnu"] = par_metier.get(mid or "inconnu", 0) + 1
+    c.banc._ecrire("EXPOSANTS_IMPORTES", [], Statut.DECLARE, importes=len(lignes), doublons=doublons,
+                   sans_metier=sans_metier, par_metier=par_metier)
+    return {"importes": len(lignes), "doublons": doublons, "sans_metier": sans_metier, "csv": sortie.getvalue(),
+            "note": "fichier à télécharger maintenant : il n'est pas gardé (le Club ne garde que des décomptes)"}
+
+
+# ------------------------------------------------------------------ entonnoir et adhésions
+def _ref(nonce: str) -> str:
+    return "P-" + hashlib.sha256(nonce.encode()).hexdigest()[:8].upper()
+
+
+def intentions(c: "ClubPulse") -> list[dict]:
+    """Les passes dont l'invité a dit vouloir adhérer : une RÉFÉRENCE (celle que l'invité voit sur son passe), son métier
+    et sa région déclarés — jamais son entreprise ni son nom."""
+    faites = {e.donnees["reference"] for e in c.journal.evenements("ADHESION_CONFIRMEE")}
+    res = []
+    for p in c.decouverte.passes().values():
+        if p["intention"]:
+            d = p["declaration"] or {}
+            res.append({"reference": _ref(p["nonce"]), "origine": p["origine"], "metier": d.get("metier"), "zone": d.get("zone"),
+                        "confirmee": _ref(p["nonce"]) in faites})
+    return res
+
+
+def confirmer_adhesion(c: "ClubPulse", reference: str, par: str = "") -> dict:
+    connues = {x["reference"]: x for x in intentions(c)}
+    if reference not in connues:
+        raise Invalide("référence inconnue (seule une intention d'adhésion peut devenir une adhésion)")
+    if connues[reference]["confirmee"]:
+        raise Invalide("adhésion déjà confirmée")
+    c.banc._ecrire("ADHESION_CONFIRMEE", [], Statut.DECLARE, reference=reference, par=par[:60])
+    return {"reference": reference, "adhesion": True}
+
+
+def entonnoir(c: "ClubPulse") -> dict:
+    k = c.reglages.k_anonymat
+    faites = {e.donnees["reference"] for e in c.journal.evenements("ADHESION_CONFIRMEE")}
+
+    def ent(p: dict) -> str:
+        return (p["declaration"] or {}).get("cle_entreprise") or f"passe:{p['nonce']}"
+
+    def kk(g: list[dict]) -> Nombre:
+        return f"< {k}" if g and len({ent(p) for p in g}) < k else len(g)
+    res = {}
+    passes = list(c.decouverte.passes().values())
+    for o in ORIGINES:
+        ps = [p for p in passes if p["origine"] == o]
+        if not ps:
+            continue
+        actives = [p for p in ps if p["active_le"] is not None]
+        adh = [p for p in ps if _ref(p["nonce"]) in faites]
+        assez = len({ent(p) for p in adh}) >= k
+        res[o] = {"emis": len(ps), "actives": kk(actives), "ont_aide": kk([p for p in ps if any(r["aide"] for r in p["reponses"])]),
+                  "intentions": kk([p for p in ps if p["intention"]]), "adhesions": kk(adh),
+                  "taux_adhesion": round(100 * len(adh) / len(ps)) if adh and assez else None}
+    return {"par_origine": res, "regle": f"adhésions CONFIRMÉES par le secrétariat ; « < {k} » compté en entreprises ; "
+                                         "taux = adhésions / passes émis"}
+
+
+# ------------------------------------------------------------------ borne
+def jeton_borne(secret: bytes, nom: str) -> str:
+    nom = "".join(ch for ch in nom if ch.isalnum() or ch in "-_")[:40] or "borne"
+    return f"b1.{nom}.{hmac.new(secret, f'borne|{nom}'.encode(), hashlib.sha256).hexdigest()[:32]}"
+
+
+def verifier_borne(secret: bytes, jeton: str) -> str:
+    morceaux = (jeton or "").split(".")
+    if len(morceaux) != 3 or morceaux[0] != "b1" or not hmac.compare_digest(jeton_borne(secret, morceaux[1]), jeton):
+        raise NonAuthentifie("borne inconnue")
+    return morceaux[1]
+
+
+class Borne:
+    """Le rythme de chaque borne (en mémoire) : un visiteur à la fois, un plafond par jour."""
+
+    def __init__(self, secret: bytes, horloge: Callable[[], float] = time.time):
+        self._secret, self._h = secret, horloge
+        self._dernier: dict[str, float] = {}
+        self._jour: dict[tuple[str, str], int] = {}
+
+    def passe(self, c: "ClubPulse", jeton: str) -> dict:
+        nom = verifier_borne(self._secret, jeton)
+        maintenant = self._h()
+        if maintenant - self._dernier.get(nom, -1e9) < BORNE_INTERVALLE_S:
+            raise TropVite("un visiteur à la fois : un instant")
+        cle = (nom, c.jour.isoformat())
+        if self._jour.get(cle, 0) >= BORNE_PAR_JOUR:
+            raise TropVite("plafond du jour atteint pour cette borne")
+        self._dernier[nom] = maintenant
+        self._jour[cle] = self._jour.get(cle, 0) + 1
+        p = c.decouverte.emettre("borne")
+        return p | {"reference": _ref(p["nonce"])}
+
+
+def nouveau_nom_borne() -> str:
+    return "borne-" + secrets.token_hex(3)

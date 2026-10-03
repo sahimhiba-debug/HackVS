@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Club Pulse · Borne du stand</title>
+  <meta name="description" content="Borne du stand : un passe découverte par visiteur.">
+  <link rel="icon" href="/static/pulse/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/pulse/pulse.css">
+  <style>
+    body { background: var(--papier); }
+    .page { max-width: 720px; margin: 0 auto; padding: 24px 16px; display: grid; gap: 18px; text-align: center; }
+    h1 { font-size: clamp(26px, 5vw, 40px); margin: 8px 0; }
+    .gros { font-size: 22px; padding: 18px 28px; }
+    #qr img { width: min(80vw, 360px); height: auto; background: #fff; padding: 12px; border-radius: 16px; }
+    .ref { font-size: 20px; letter-spacing: 1px; }
+    .etat { min-height: 1.4em; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <span class="marque" style="justify-content:center"><span class="pouls-point" aria-hidden="true"></span>Club Pulse</span>
+    <span class="puce fictif">construit — branche annee-1, pas dans la démo · monde fictif</span>
+    <h1 lang="fr">Aidez un membre du Club, sans être membre.</h1>
+    <p lang="de">Helfen Sie einem Clubmitglied, ohne Mitglied zu sein.</p>
+    <p id="sans-jeton" hidden>Borne non configurée : ouvrez le lien de borne donné par le secrétariat.</p>
+    <button class="btn gros" id="prendre" hidden>Prendre mon passe découverte · Meinen Schnupperpass nehmen</button>
+    <section id="qr" hidden aria-live="polite">
+      <p>Scannez avec votre téléphone · Mit dem Handy scannen</p>
+      <img id="qr-img" alt="Code QR de votre passe découverte">
+      <p class="ref">Référence : <b id="ref"></b></p>
+      <p class="note">Gardez cette référence : elle vous sera demandée si vous adhérez. Valable jusqu'au <span id="jusqu"></span>.</p>
+    </section>
+    <p class="etat" id="etat"></p>
+  </main>
+  <script type="module">
+    const $ = (s) => document.querySelector(s);
+    const lire = () => { try { return localStorage.getItem("borne-jeton"); } catch (e) { return null; } };
+    const fragment = new URLSearchParams(location.hash.slice(1)).get("b");
+    if (fragment) { try { localStorage.setItem("borne-jeton", fragment); } catch (e) { /* sans stockage */ } history.replaceState(null, "", location.pathname); }
+    const jeton = fragment || lire();
+    let minuterie = null;
+    if (!jeton) $("#sans-jeton").hidden = false; else $("#prendre").hidden = false;
+    $("#prendre").addEventListener("click", async () => {
+      $("#prendre").disabled = true;
+      try {
+        const r = await fetch("/api/pulse/borne/passe", { method: "POST", headers: { "X-Pulse-Borne": jeton } });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(typeof d.detail === "string" ? d.detail : "refusé (" + r.status + ")");
+        $("#qr-img").src = d.qr; $("#ref").textContent = d.reference; $("#jusqu").textContent = d.jusqu_au;
+        $("#qr").hidden = false; $("#prendre").hidden = true; $("#etat").textContent = "";
+        clearTimeout(minuterie);
+        minuterie = setTimeout(() => { $("#qr").hidden = true; $("#qr-img").removeAttribute("src"); $("#prendre").hidden = false; }, 45000);
+      } catch (e) { $("#etat").textContent = e.message; }
+      finally { setTimeout(() => { $("#prendre").disabled = false; }, 3000); }
+    });
+  </script>
+</body>
+</html>

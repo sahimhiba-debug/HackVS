@@ -75,6 +75,7 @@ Règles :
 | `HACKVS_NOTIFICATIONS` | `0` | **lot 5** — `1` : notifications (relance depuis la console, désinscription `/desinscription`) |
 | `HACKVS_SMS` | (vide : simulé) | **lot 5** — `faux` : faux fournisseur SMS en mémoire (tests) ; aucun vrai fournisseur branché |
 | `HACKVS_MULTICLUB` | `0` | **lot 8** — `1` : plusieurs clubs (exemples fictifs), adhésion croisée choisie par le membre, membres à distance |
+| `HACKVS_FOIRE_ALLUMAGE` | `0` | **lot 9** — `1` : borne du stand (`/borne`), import des exposants, lots de passes, adhésions confirmées |
 | `HACKVS_ESPACE_MEMBRE` | `0` | **lot 3** — `1` : espace membre (`/espace` : pause, préférences, mes demandes, export, effacement définitif) |
 
 ## E-mail (lot 5 — sans `SMTP_HOST`, tout est simulé)

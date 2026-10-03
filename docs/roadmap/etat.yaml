@@ -263,3 +263,9 @@
   de: Mehrere Clubs — Partnerclub (als fiktives Beispiel gekennzeichnet), Doppelmitgliedschaft nach Wahl des Mitglieds, Mitglieder aus der Ferne; Oberfläche FR / DE / EN (von Muttersprachigen zu prüfen)
   en: Several clubs — partner club (marked fictitious example), cross-membership chosen by the member, remote members; FR / DE / EN interface (to be reviewed by native speakers)
   tests: test_annee1_multiclub.py
+- id: a1-foire
+  statut: annee1
+  fr: Allumage Foire — borne de stand, import des exposants en CSV, passes découverte par lots de 500, adhésions venues du passe confirmées par le secrétariat
+  de: Messe-Start — Standterminal, Import der Aussteller als CSV, Schnupperpässe in Losen zu 500, vom Sekretariat bestätigte Beitritte über den Pass
+  en: Fair launch — stand kiosk, exhibitor CSV import, discovery passes in batches of 500, memberships from the pass confirmed by the secretariat
+  tests: test_annee1_foire.py

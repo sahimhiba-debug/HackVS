@@ -78,6 +78,7 @@ def main() -> None:
     capturer_espace()
     capturer_desinscription()
     capturer_multiclub()
+    capturer_borne()
     print("vitrine annee-1 capturée dans", DOSSIER)
 
 
@@ -140,6 +141,28 @@ def capturer_multiclub() -> None:
         en.locator("[data-role=traduction]").wait_for()
         en.wait_for_timeout(300)
         en.screenshot(path=str(DOSSIER / "lot8-interface-en.png"))
+        nav.close()
+
+
+def capturer_borne() -> None:
+    """LOT 9 : la borne du stand, après qu'un visiteur a pris son passe (QR réel, monde fictif)."""
+    import hashlib
+    import hmac
+    secret = "c" * 40
+    env = {"HACKVS_FOIRE_ALLUMAGE": "1", "HACKVS_ESSAIS_DB": str(Path(tempfile.mkdtemp()) / "j.db"), "HACKVS_SECRET": secret,
+           "HACKVS_FOIRE": "1"}
+    from intelligence import foire_allumage as fa
+    from intelligence.reglages import Reglages
+    jeton = fa.jeton_borne(hmac.new(Reglages.depuis_env({"HACKVS_SECRET": secret}).secret, b"bornes|annee-1",
+                                    hashlib.sha256).digest(), "stand-vitrine")
+    with serveur(**env) as base, sync_playwright() as p:
+        nav = p.chromium.launch(executable_path="/opt/pw-browsers/chromium")
+        pg = nav.new_context(viewport={"width": 820, "height": 1000}).new_page()
+        pg.goto(f"{base}/borne#b={jeton}")
+        pg.click("#prendre")
+        pg.locator("#ref").wait_for()
+        pg.wait_for_timeout(300)
+        pg.screenshot(path=str(DOSSIER / "lot9-borne.png"), full_page=True)
         nav.close()
 
 

@@ -172,6 +172,18 @@ class ClubExemple(BaseModel):
     fictif: bool
 
 
+class LotPasses(BaseModel):
+    nombre: int = Field(ge=1, le=500)
+
+
+class ImportExposants(BaseModel):
+    csv: str = Field(min_length=5, max_length=200_000)
+
+
+class Adhesion(BaseModel):
+    reference: str = Field(min_length=3, max_length=20)
+
+
 class Desinscription(BaseModel):
     jeton: str = Field(min_length=8, max_length=200)
 
@@ -654,6 +666,63 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     def sec_declarer_club(x: ClubExemple, s: str = Depends(secretariat)) -> dict:
         from intelligence import clubs
         return au_monde(lambda c: clubs.declarer(c, x.id, x.nom, region=x.region, pays=x.pays, fictif=x.fictif))
+
+    # ------------------------------------------------------------------ ANNÉE 1 · LOT 9 : allumage Foire
+    def foire_allumee() -> None:
+        if os.environ.get("HACKVS_FOIRE_ALLUMAGE") != "1":
+            raise HTTPException(404, "Not Found")
+
+    def secret_bornes() -> bytes:
+        import hashlib
+        return hmac.new(etat["demo"].club.reglages.secret, b"bornes|annee-1", hashlib.sha256).digest()
+    bornes: dict = {}
+
+    def borne():
+        from intelligence import foire_allumage as fa
+        cle = secret_bornes()
+        if bornes.get("cle") != cle:
+            bornes["cle"], bornes["b"] = cle, fa.Borne(cle)
+        return bornes["b"]
+
+    @r.get("/secretariat/foire", dependencies=[Depends(foire_allumee)])
+    def sec_foire(s: str = Depends(secretariat)) -> dict:
+        from intelligence import foire_allumage as fa
+        return au_monde(lambda c: fa.entonnoir(c) | {"intentions": fa.intentions(c)})
+
+    @r.post("/secretariat/foire/passes", dependencies=[Depends(foire_allumee)])
+    def sec_foire_passes(x: LotPasses, request: Request, s: str = Depends(secretariat)) -> dict:
+        from intelligence import foire_allumage as fa
+        base = base_publique(request)
+        lot = au_monde(lambda c: fa.emettre_lot(c, x.nombre, origine="stand"))
+        return {"liens": [base + p["chemin"] for p in lot], "nombre": len(lot)}
+
+    @r.post("/secretariat/foire/exposants", dependencies=[Depends(foire_allumee)])
+    def sec_foire_exposants(x: ImportExposants, request: Request, s: str = Depends(secretariat)) -> dict:
+        from intelligence import foire_allumage as fa
+        base = base_publique(request)
+        return au_monde(lambda c: fa.importer_exposants(c, x.csv, base=base))
+
+    @r.post("/secretariat/foire/adhesions", dependencies=[Depends(foire_allumee)])
+    def sec_foire_adhesion(x: Adhesion, s: str = Depends(secretariat)) -> dict:
+        from intelligence import foire_allumage as fa
+        par = comptes().verifier(s)["etiquette"]
+        return au_monde(lambda c: fa.confirmer_adhesion(c, x.reference, par=par))
+
+    @r.post("/secretariat/foire/bornes", dependencies=[Depends(foire_allumee)])
+    def sec_foire_borne(request: Request, s: str = Depends(secretariat)) -> dict:
+        from intelligence import foire_allumage as fa
+        jeton = fa.jeton_borne(secret_bornes(), fa.nouveau_nom_borne())
+        return {"jeton": jeton, "lien": base_publique(request) + f"/borne#b={jeton}",
+                "note": "ouvrez ce lien UNE fois sur la borne : elle le garde ; ne le partagez pas"}
+
+    @r.post("/borne/passe", dependencies=[Depends(foire_allumee)])
+    def borne_passe(request: Request, x_pulse_borne: Optional[str] = Header(None)) -> dict:
+        """PUBLIQUE pour la borne seulement : son jeton signé (émis par le secrétariat), un visiteur à la fois."""
+        base = base_publique(request)
+        b = borne()
+        p = au_monde(lambda c: b.passe(c, x_pulse_borne or ""))
+        url = base + p["chemin"]
+        return {"url": url, "qr": qr_svg(url), "reference": p["reference"], "jusqu_au": p["jusqu_au"]}
 
     @r.get("/secretariat/acces")
     def sec_acces(s: str = Depends(secretariat)) -> list:

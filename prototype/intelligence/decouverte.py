@@ -97,8 +97,8 @@ class Decouverte:
     def emettre(self, origine: str, demande: Optional[str] = None) -> dict:
         """« startup » (P3 n°12, PONT THE ARK — proposé, à valider avec la fondation) : la même porte, deux fois plus
         longue (une jeune entreprise a besoin d'un trimestre de plus pour trouver sa place) ; rien d'autre ne change."""
-        if origine not in ("stand", "demande", "startup"):
-            raise Invalide("origine : stand, demande ou startup")
+        if origine not in ("stand", "demande", "startup", "exposant", "borne"):     # ANNÉE 1 · lot 9 : exposant, borne
+            raise Invalide("origine : stand, demande, startup, exposant ou borne")
         if origine == "demande":
             ouvertes = {i.ask.id: i for i in self.c.projection_capacites() if i.ask is not None}
             if demande not in ouvertes:
