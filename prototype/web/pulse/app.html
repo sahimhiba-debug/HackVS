@@ -69,6 +69,7 @@
   </nav>
   <div id="toasts" aria-live="assertive"></div>
   <script type="module">
+    import { activer as activerAllemand, langueVoulue } from "/static/pulse/traduction-de.js";
     const $ = (s, r = document) => r.querySelector(s);
     function h(tag, attrs = {}, ...enfants) {
       const el = document.createElement(tag);
@@ -585,6 +586,14 @@
       if (session && document.visibilityState === "visible" && !saisie && !ouvert && ["actions", "essai", "demandes"].includes(nom)) route(true);
     }, 4000);
     window.addEventListener("hashchange", () => route());
+    // P3 n°5 : interface en allemand selon la langue PRÉFÉRÉE déclarée par le membre (ou ?lang=de) — à relire
+    (async () => {
+      let declaree = null;
+      const lireJson = async (c) => { const r = await fetch(c, { headers: session ? { "X-Pulse-Session": session } : {} }); return r.ok ? r.json() : {}; };
+      try { if (session && (await lireJson("/api/pulse/moi/foire")).actif) { const x = await lireJson("/api/pulse/moi/distance"); declaree = x.profil && x.profil.langue; } }
+      catch (e) { /* sans session ou interrupteur éteint : la langue de l'adresse seulement */ }
+      if (langueVoulue(declaree) === "de") activerAllemand();
+    })();
     window.addEventListener("online", () => toast("De retour en ligne."));
     window.addEventListener("offline", () => toast("Hors ligne : les actions attendront le réseau.", "erreur"));
     if (params.get("code") && !session) location.hash = "#acces";

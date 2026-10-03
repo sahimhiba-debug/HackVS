@@ -186,3 +186,32 @@ def test_ce_que_votre_club_pourrait_assembler(url_foire):
         assert "null" not in texte and "undefined" not in texte
         b.close()
     assert erreurs == []
+
+
+def test_interface_allemande_selon_la_langue_preferee(url_foire):
+    """P3 n°5 : Pauline déclare « de » → l'interface passe en allemand (Ja / Nein / Diesmal nicht), bandeau « à relire »."""
+    from playwright.sync_api import sync_playwright
+    from tests.test_e2e_pulse import _api, _telephone
+    erreurs: list[str] = []
+    _api(url_foire, "/api/pulse/demo/reinitialiser", {})
+    codes = {x["id"]: x["code"] for x in _api(url_foire, "/api/pulse/console/personas")}
+    with sync_playwright() as p:
+        b = _chromium(p)
+        _, tel = _telephone(b, url_foire, codes["s01"], (390, 844), erreurs)
+        tel.goto(url_foire + "/app#donnees")
+        tel.locator("#dist-langue").select_option("de")
+        tel.click("#dist-enregistrer")
+        tel.locator("text=Gespeichert.").or_(tel.locator("text=Enregistré.")).first.wait_for()
+        tel.goto(url_foire + "/app#demandes")
+        tel.reload()                                                        # la langue se lit au chargement
+        tel.locator("[data-role=traduction]").wait_for()
+        assert "zu prüfen" in tel.inner_text("[data-role=traduction]") and "à relire" in tel.inner_text("[data-role=traduction]")
+        tel.locator("button:has-text('Ja')").first.wait_for()
+        texte = tel.inner_text("body")
+        assert "Diesmal nicht" in texte and "Anfragen" in texte
+        assert tel.evaluate("document.documentElement.lang") == "de"
+        tel.goto(url_foire + "/app?lang=fr#demandes")                      # l'adresse peut forcer le français
+        tel.locator("button:has-text('Oui')").first.wait_for()
+        assert tel.locator("[data-role=traduction]").count() == 0
+        b.close()
+    assert erreurs == [], erreurs
