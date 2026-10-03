@@ -225,3 +225,33 @@ cd prototype && python scripts/charge_salle.py --base-url "$PUBLIC_BASE_URL" --j
 7. **Relire** : la traduction allemande (bandeau « à relire ») ; les termes DPV (`docs/conformite/RECU_27560.md`) ;
    l'écart 44 / 48 « autre » de la liste du Club (PREUVES, « Liste du Club »).
 8. **Remplir la feuille d'annotation Tally** (`prototype/var/annotation/`) : sans elle, aucune exactitude de classification.
+
+---
+
+# Pack « deux double-clics » (03.10, soir — avant le gel)
+
+Branche `foire-2026`. Aucun tag, rien sur `main`. CI : **n'a pas tourné** (facturation) — portes locales seulement.
+
+| Quoi | Où |
+|---|---|
+| « 1 - Lancer Club Pulse », « 2 - Arrêter et effacer », « 3 - Passer en v1 » (double-clics, racine) | logique commune : `prototype/scripts/jour_j_commun.sh` ; film, jeton, check-list : `prototype/app/jour_j.py` |
+| Check-list locale `/preflight` (404 à travers le tunnel) | `app/main.py` |
+| Écran de la salle **dans** le deck v2 (iframe, intégrable seulement par le deck local) | `deck/v2.html`, `app/protections.py` |
+| Cartes d'une page (régie V2, V1), guide en cinq lignes | `docs/presentation/livrables/CARTE_*.pdf`, `COMMENT_PRESENTER.md` |
+
+**Audit par un sous-agent au contexte neuf** : 2 BLOQUANT, 8 IMPORTANT, des MINEUR — tous les BLOQUANT et IMPORTANT
+corrigés, test rouge d'abord, un commit par lot de constats : B1 (fenêtre de saisie du jeton sur le projecteur),
+B2 (certificats du Python de python.org), I1 (vert « tailnet » au lieu de « Internet »), I2 (vieux PID), I3 (iCloud
+sur Sonoma), I4 (code en zip), I5 (tunnel qui attend), I6 (« PASSER EN v1 » non exécutable → 3e double-clic et
+« RÉPARER D'ABORD »), I7 (fenêtre qui se ferme), I8 (salle déjà remplie). Restent (mineurs, dits) : jeton et secret
+visibles dans `ps` (existant, `demo-tunnel.sh`) ; jeton jamais renouvelé ; `/salle/ecran` intégrable par le deck local
+aussi hors démo ; rebinding DNS sur `/preflight.json` (même classe que `/qr/salle.svg`) ; tests sous bash 5, pas 3.2.
+
+**Non vérifiable depuis la session cloud** (à faire sur le Mac) : la sonde de l'adresse publique par DNS public (proxy
+de la session) ; le vrai Funnel ; la permission « Bureau » de macOS ; le comportement de Terminal à la fermeture.
+
+| Porte (sur `341bd91`) | Résultat |
+|---|---|
+| Suite complète | **1 612** réussis, 0 échec |
+| E2E allumé · éteint · réseau coupé | **34 / 34** · **34 / 34** · **34 / 34** |
+| Lint · types · secrets · validateur | propres · 0 erreur · aucun · « toutes vérifiées » |
