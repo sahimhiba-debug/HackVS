@@ -61,11 +61,11 @@
   tests: test_foire_bilan.py
 - id: deploiement
   statut: construit
-  fr: Prêt à déployer (VPS, HTTPS) et charge de 80 téléphones mesurée en local
-  de: Bereit zur Bereitstellung (VPS, HTTPS), Last von 80 Telefonen lokal gemessen
-  en: Ready to deploy (VPS, HTTPS), 80-phone load measured locally
+  fr: Démo servie depuis le Mac du pitch via un tunnel chiffré ; VPS prêt pour la production future ; charge de 80 téléphones mesurée en local
+  de: Demo vom Präsentations-Mac über einen verschlüsselten Tunnel ; VPS für den späteren Betrieb bereit ; Last von 80 Telefonen lokal gemessen
+  en: Demo served from the pitch Mac through an encrypted tunnel ; VPS ready for later production ; 80-phone load measured locally
   ecran: /sante
-  tests: test_deploiement.py
+  tests: test_deploiement.py, test_tunnel.py
 - id: carte
   statut: construit
   fr: La carte devient le profil — photo de sa carte, Apertus propose, le membre confirme
@@ -83,8 +83,8 @@
 - id: pilote
   statut: prevu
   fr: Pilote de 45 jours avec 50 membres volontaires parmi les 173 représentants (janvier – mi-février 2027)
-  de: 45-Tage-Pilot mit den 50 Mitgliedern (Januar – Mitte Februar 2027)
-  en: 45-day pilot with the 50 members (January – mid-February 2027)
+  de: 45-Tage-Pilot mit 50 Freiwilligen unter den 173 Vertreterinnen und Vertretern (Januar – Mitte Februar 2027)
+  en: 45-day pilot with 50 volunteers among the 173 representatives (January – mid-February 2027)
   note: critères à valider avec le Club
 - id: juriste
   statut: prevu

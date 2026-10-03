@@ -26,7 +26,7 @@ simulée). Le Club réel compte **145 entreprises et 173 représentants** ; rien
 | « Le Club cherche » et inviter un contact (FR / DE) | ✅ Construit | test_foire_club_cherche.py |
 | Membre à distance et réponse depuis l'e-mail (envoi simulé en démonstration) | ✅ Construit | test_foire_distance.py |
 | Bilan de période (make bilan), récit IA vérifié par le code | ✅ Construit | test_foire_bilan.py |
-| Prêt à déployer (VPS, HTTPS) et charge de 80 téléphones mesurée en local | ✅ Construit | test_deploiement.py |
+| Démo servie depuis le Mac du pitch via un tunnel chiffré ; VPS prêt pour la production future ; charge de 80 téléphones mesurée en local | ✅ Construit | test_deploiement.py, test_tunnel.py |
 | La carte devient le profil — photo de sa carte, Apertus propose, le membre confirme | ✅ Construit | test_carte_profil.py, test_e2e_foire.py |
 | Phrases recueillies par le QR de la Foire (21, en agrégats) | 🟢 Validé sur le terrain | 21 réponses réelles du 03.10.2026 ; 20 fr, 1 en ; classées par Apertus seulement (21 validées, 20 abstentions) — PREUVES.md |
 | Pilote de 45 jours avec 50 membres volontaires parmi les 173 représentants (janvier – mi-février 2027) | ⬜ Prévu | critères à valider avec le Club |
