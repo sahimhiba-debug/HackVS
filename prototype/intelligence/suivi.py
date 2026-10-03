@@ -17,7 +17,7 @@ from datetime import date, timedelta
 from typing import TYPE_CHECKING, Optional, Union
 
 from .erreurs import Invalide
-from .partenariats import CLUB, ETAPES, RESULTATS, recus_du_club
+from .partenariats import CLUB, ETAPES, RESULTATS, demandes_repondues, recus_du_club
 
 if TYPE_CHECKING:
     from .club_pulse import ClubPulse
@@ -51,9 +51,10 @@ def calculer(c: "ClubPulse", periode: str = "demo") -> dict:
     pas_cette_fois = [e for e in reponses if not e.donnees["oui"] and (e.acteurs[0], e.donnees["ask"]) in nuances]
     non = [e for e in reponses if not e.donnees["oui"] and (e.acteurs[0], e.donnees["ask"]) not in nuances]
     ouvertes = [i for i in c.projection_capacites() if i.ask is not None]
-    repondues = {e.donnees["ask"] for e in reponses}
-    sans_reponse = [i for i in ouvertes if i.ask and i.ask.id not in repondues]
-    adressees = len(repondues | {i.ask.id for i in ouvertes if i.ask})
+    encore = demandes_repondues(c)                  # un retrait rouvre la demande : sa réponse d'avant ne compte plus
+    sans_reponse = [i for i in ouvertes if i.ask and i.ask.id not in encore]
+    # demandes adressées : chaque réponse de la période en est une, et chaque demande encore sans réponse aussi
+    adressees = len(reponses) + len(sans_reponse)
     total_rep = len(reponses) + len(sans_reponse)
 
     # délai avant le premier oui (jours de l'horloge du monde) : de la naissance de la demande — le début du monde, ou le

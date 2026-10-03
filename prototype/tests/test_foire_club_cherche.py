@@ -94,3 +94,17 @@ def test_une_proposition_d_invite_marque_la_demande_sans_dire_qui():
     x = _cherche()
     apres = next(e for g in x["metiers"] for e in g["demandes"] if e["id"] == d["id"])
     assert apres["proposition_invite"] is True and "Annecy" not in json.dumps(x, ensure_ascii=False)
+
+
+def test_une_demande_rouverte_par_un_retrait_revient_dans_la_liste():
+    """Pauline répond oui puis retire : la demande repart (même identifiant) — elle est de nouveau sans réponse, pour
+    « le Club cherche » comme pour Suivi."""
+    per = {p["id"]: p for p in client.get("/api/pulse/console/personas", headers=CONSOLE).json()}
+    s = {"X-Pulse-Session": per[md.PAULINE]["session"]}
+    ask = client.get("/api/pulse/moi/asks", headers=s).json()[0]
+    client.post(f"/api/pulse/moi/asks/{ask['id']}/reponse", headers=s, json={"oui": True, "attributs": {"places": 14}})
+    client.post(f"/api/pulse/moi/capacites/{ask['id'].split(':', 1)[0]}/retrait", headers=s)
+    ids = [d["id"] for g in _cherche()["metiers"] for d in g["demandes"]]
+    assert ask["id"] in ids
+    suivi = client.get("/api/pulse/console/suivi", headers=CONSOLE).json()
+    assert suivi["demandes"]["sans_reponse"] >= 1 and suivi["reponses"]["sans_reponse"] >= 1

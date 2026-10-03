@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
 from . import metiers
+from .partenariats import demandes_repondues
 
 if TYPE_CHECKING:
     from .club_pulse import ClubPulse
@@ -70,7 +71,7 @@ def entreprises_par_metier(chemin: Optional[Path] = None) -> Optional[dict]:
 def calculer(c: "ClubPulse") -> dict:
     jour = c.jour
     semis = c.journal.evenements("SEMIS")[0].le
-    repondues = {e.donnees["ask"] for e in c.journal.evenements("ASK_REPONSE")}
+    repondues = demandes_repondues(c)
     # une PROPOSITION d'invité (passe découverte) : le manque est peut-être comblé — à confirmer par le Club (jamais qui)
     proposees = {e.donnees["ask"] for e in c.journal.evenements("DECOUVERTE_REPONSE") if e.donnees.get("aide")}
     groupes: dict[str, dict] = {}

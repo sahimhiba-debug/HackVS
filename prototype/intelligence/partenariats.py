@@ -54,6 +54,18 @@ def _visibles(c: "ClubPulse") -> dict[str, set[str]]:
     return vis
 
 
+def demandes_repondues(c: "ClubPulse") -> set[str]:
+    """Les demandes dont la réponse vaut ENCORE : une réponse antérieure au dernier retrait sur sa capacité ne compte
+    plus — le retrait rouvre la demande (même identifiant), qui repart vers un autre membre."""
+    dernier_retrait: dict[str, int] = {}
+    for e in c.journal.evenements("RETRAIT"):
+        f = e.donnees.get("finalite")
+        if f:
+            dernier_retrait[f] = max(dernier_retrait.get(f, -1), e.seq)
+    return {e.donnees["ask"] for e in c.journal.evenements("ASK_REPONSE")
+            if e.seq > dernier_retrait.get(e.donnees["ask"].split(":", 1)[0], -1)}
+
+
 def recus_du_club(c: "ClubPulse") -> list[dict]:
     """TOUS les reçus (un par accord), avec leur étape — pour les agrégats et la console. Le membre y figure par son
     identifiant interne seulement ; le nom n'est ajouté que par la vue nominative, sous double accord."""
