@@ -112,6 +112,10 @@ def ajouter_routes(r: APIRouter, console: Callable, secret: Callable[[], bytes],
     def ecran(request: Request) -> dict:
         return faire(lambda s: s.ecran() | lien(request, s))
 
+    @r.post("/console/salle/inviter", dependencies=[Depends(console)])
+    def inviter() -> dict:
+        return faire(lambda s: s.inviter())
+
     @r.post("/console/salle/lancer", dependencies=[Depends(console)])
     def lancer() -> dict:
         return faire(lambda s: s.lancer())

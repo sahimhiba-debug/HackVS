@@ -20,6 +20,7 @@
     <span class="puce fictif" data-role="monde">monde de démonstration</span>
     <div class="boutons">
       <button class="btn" id="ouvrir">1 · Ouvrir la salle (QR)</button>
+      <button class="btn" id="inviter" title="Sur scène, au moment de « Sortez vos téléphones » : la minute de bascule part d'ici">1 bis · « Sortez vos téléphones » (en séance)</button>
       <button class="btn" id="lancer">2 · Lancer la demande vers la salle</button>
       <button class="btn discret" id="retrait">3 · Déclencher un retrait (simulé en démonstration)</button>
       <button class="btn discret" id="bilan">4 · Afficher le bilan (Suivi de la salle)</button>
@@ -37,6 +38,7 @@
       lire();
     }
     $("#ouvrir").addEventListener("click", () => { window.open("/salle/ecran", "salle-ecran"); poster("ouvrir"); });
+    $("#inviter").addEventListener("click", () => poster("inviter"));
     $("#lancer").addEventListener("click", () => poster("lancer"));
     $("#retrait").addEventListener("click", () => poster("retrait"));
     $("#bilan").addEventListener("click", () => poster("afficher", { vue: "bilan" }));

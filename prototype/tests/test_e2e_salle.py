@@ -72,5 +72,6 @@ def test_bascule_vers_la_demo_scriptee_si_la_salle_est_vide(url_salle):
     h = [0.0]
     s = Salle(b"x" * 32, minimum=2, horloge=lambda: h[0])
     s.ouvrir()
+    s.inviter()
     h[0] = 61
     assert s.ecran()["bascule"] is True

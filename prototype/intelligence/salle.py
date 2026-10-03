@@ -68,6 +68,7 @@ class Salle:
         with self._v:
             self._cle = hmac.new(self._secret_base, b"salle|" + secrets.token_bytes(16), hashlib.sha256).digest()
             self.ouverte_le: Optional[float] = None
+            self.invitee_le: Optional[float] = None          # « Sortez vos téléphones » (régie) : la minute de bascule part d'ici
             self.participants: dict[str, dict] = {}          # nonce → {capacite, consenti_le, reponse, statut, retire}
             self.demande_le: Optional[float] = None
             self.fournisseurs: dict[str, Optional[str]] = {}  # pièce → nonce
@@ -86,6 +87,16 @@ class Salle:
                 self.ouverte_le = self._h()
                 self._noter("la salle est ouverte")
             return {"jeton_salle": "s1." + self._sig("qr", "salle"), "ouverte_le": self.ouverte_le}
+
+    def inviter(self) -> dict:
+        """AUDIT D1 : la salle s'ouvre à H-30 (vérifications) ; la minute après laquelle, faute de participants, l'écran
+        propose la démo scriptée ne part QUE de l'invitation en séance (« Sortez vos téléphones », bouton de la régie)."""
+        with self._v:
+            if self.ouverte_le is None:
+                raise Conflit("la salle n'est pas ouverte")
+            self.invitee_le = self._h()
+            self._noter("la salle est invitée à scanner")
+            return {"invitee": True}
 
     def _noter(self, texte: str) -> None:
         self.fil.append({"t": round(self._h() - (self.ouverte_le if self.ouverte_le is not None else self._h())), "texte": texte})
@@ -243,7 +254,8 @@ class Salle:
                     "fermee": self.ferme_le is not None,
                     "secondes_pour_fermer": round(self.ferme_le - self.demande_le) if self.ferme_le else None},
                 "reponses": {c: _k(rep.get(c, 0), self.k) for c in CHOIX},
-                "bascule": self.ouverte_le is not None and depuis >= 60 and n < self.minimum, "minimum": self.minimum,
+                "bascule": self.invitee_le is not None and self._h() - self.invitee_le >= 60 and n < self.minimum,
+                "invitee": self.invitee_le is not None, "minimum": self.minimum,
                 "constellation": self._constellation(),
                 "fil": list(self.fil[-12:]), "vue": self.vue, "message": EFFACEMENT, "monde": "monde de démonstration",
             }

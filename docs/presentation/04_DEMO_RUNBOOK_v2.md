@@ -26,8 +26,8 @@ Le runbook v1 ([04_DEMO_RUNBOOK.md](04_DEMO_RUNBOOK.md)) reste le plan B complet
 
 | Temps | Action exacte | Ce qu'on doit voir | Plan B |
 |---|---|---|---|
-| 5:30 | V1 sur la slide « Sortez vos téléphones » | le QR en grand | QR absent : lire l'adresse de `/qr/salle.txt` ; ou passer à la vidéo (B) |
-| 5:50 | V2 : ⌘-Tab vers `/salle/ecran` | les points arrivent (rien sous 3 : « la constellation s'allume à trois ») | moins de 5 participants après une minute : la bascule scriptée se lance (bandeau « démonstration scriptée dans 5 s ») |
+| 5:30 | V1 sur la slide « Sortez vos téléphones » ; **V2 régie : « 1 bis · Sortez vos téléphones »** (la minute de bascule part de là, jamais de l'ouverture à H-30) | le QR en grand | QR absent : lire l'adresse de `/qr/salle.txt` ; ou passer à la vidéo (B) |
+| 5:50 | V2 : ⌘-Tab vers `/salle/ecran` | les points arrivent (rien sous 3 : « la constellation s'allume à trois ») | moins de 5 participants une minute après l'invitation : la bascule scriptée se lance (bandeau « démonstration scriptée dans 5 s ») |
 | 7:30 | V2 régie : **Lancer la demande** | l'anneau se dessine à 3/4, la demande sous l'anneau | rien ne bouge : recharger `/salle/ecran` |
 | 7:45 | les oui arrivent | une ligne courbe par oui, halo rouge à l'instant, anneau vert « 4/4 » | pas de oui sur une pièce : le téléphone de secours de V2 répond « Oui » |
 | 8:30 | V2 régie : **Retrait (simulé)** | la ligne se rétracte, « un composant n'est plus disponible », l'anneau se rouvre puis se referme (réserve) | — |

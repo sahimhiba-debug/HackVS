@@ -134,7 +134,10 @@ def test_ecran_en_agregats_k3_et_bascule(s, h):
     assert e["participants"] == "< 3" and next(c for c in e["capacites"] if c["id"] == "voiture")["n"] == "< 3"
     assert e["bascule"] is False
     h.t += 61
-    assert s.ecran()["bascule"] is True                              # 1 < minimum (3) après 60 s
+    assert s.ecran()["bascule"] is False                             # pas encore invitée (audit D1) : jamais de bascule
+    s.inviter()
+    h.t += 61
+    assert s.ecran()["bascule"] is True                              # 1 < minimum (3) 60 s après l'invitation
     for _ in range(2):
         _entrer(s, "salle")
     assert s.ecran()["participants"] == 3 and s.ecran()["bascule"] is False
@@ -203,6 +206,7 @@ def test_ouverte_a_l_instant_zero_reste_ouverte():
     h = [0.0]
     s = Salle(b"x" * 32, minimum=2, horloge=lambda: h[0])
     s.ouvrir()
+    s.inviter()
     h[0] = 61
     assert s.ecran()["depuis_s"] == 61 and s.ecran()["bascule"] is True
 
