@@ -156,6 +156,34 @@ commit de cette nuit n'est dit « CI verte ». Les preuves sont les portes **loc
 
 ---
 
+# Audit (sous-agent à contexte neuf, branche `audit-nuit`, commit `db91fde`)
+
+Audité : `e2b1745` (diff depuis `3a6ef4f`). Rapport complet : [audit/AUDIT_NUIT.md](audit/AUDIT_NUIT.md). Verdict de
+l'auditeur : « ne pas geler en l'état » — **1 BLOQUANT, 8 IMPORTANT, 12 MINEUR**. Les 5 tests rouges de l'auditeur sont
+rapatriés sur `foire-2026` et désormais **verts**.
+
+| # | Gravité | Constat | Réponse | Commit |
+|---|---|---|---|---|
+| 1 | BLOQUANT | l'écran géant partait sur `/etabli` avant l'acte 3 (minute de bascule comptée depuis l'ouverture à H-30) | corrigé : la minute part de l'invitation en séance (régie « 1 bis · Sortez vos téléphones ») ; test rouge d1 vert | `6135c98` |
+| 2 | IMPORTANT | jeton de la salle public à travers le tunnel (`/qr/salle.*`) | corrigé : servi à cette machine ou avec le jeton de console seulement ; d5 vert | `37dfc23` |
+| 3 | IMPORTANT | nom d'entreprise de l'invité dans le journal ; pas de retrait possible | corrigé : nom en mémoire seule, clé HMAC au journal ; route `/decouverte/retirer` ; d2 vert | `2c644f5` |
+| 4 | IMPORTANT | seuil des invités compté en passes | corrigé : entreprises distinctes ; d3 vert | `2c644f5` |
+| 5 | IMPORTANT | chiffre d'annonce réattribué après effacement | corrigé : compté sur tout le journal ; d4 vert | `49d08ce` |
+| 6 | IMPORTANT | `make secrets` rouge (faux positifs) alors que le rapport le disait propre | corrigé avant l'arrivée du rapport ; la ligne du rapport reflète maintenant une porte réellement verte | `b25b00c` |
+| 7 | IMPORTANT | le vérificateur d'affirmations ignorait deck v2 et script v2 | corrigé : formulations interdites + nombres dits sans source | `5536d88` |
+| 8 | IMPORTANT | slide « Votre Club en chiffres » : faits non vérifiés sur des membres précis | retirés de la slide, du script et du contenu des slides | `dad7004` |
+| 9 | IMPORTANT | acte 3 : « vraie demande » écrite en dur ; retrait simulé qui retirait un vrai consentement | « demande type, écrite pour cette démonstration » ; retrait dit simulé ; il ne retire plus aucun consentement (le fournisseur repasse en réserve) | `c44195d`, `dad7004` |
+| 13, 14, 16, 17, 18 | MINEUR | libellés du runbook, `purge.sh` sans `.env`, « mois 1 à 3 », étiquette « Personnage fictif », décompte Tally de 1 | corrigés | `8d83954` |
+| 10 | MINEUR | la suite historique tourne interrupteur éteint ; 2 tests historiques échouent allumés (masquage voulu du rôle) | **non corrigé** — fichiers surveillés par les campagnes de mutation (`test_capacites*`), interdits ; à adapter après le gel | — |
+| 11 | MINEUR | en salle, k porte sur des passes (pas d'entreprise ; un téléphone peut scanner plusieurs fois) | **dit, non corrigé** : la salle est anonyme par construction (aucune entreprise demandée) ; plafond 80, purge après | — |
+| 12 | MINEUR | acte 2 peut déborder de 5 à 15 s | **dit** : à chronométrer au rituel (mode `R`) ; marge 0:40 | — |
+| 15 | MINEUR | §§ 1–8 de ce rapport (vague 1) parlent encore de « personnes » et de « cinquante » | **laissé** : section historique de la vague 1, datée ; les vagues 2 et 3 font foi | — |
+| 19 | MINEUR | monde « visite » : console ouverte sans jeton | **dit** : bac à sable fictif, conteneur à part ; non déployé (pas de VPS) — à régler avant tout déploiement | — |
+| 20 | MINEUR | en salle, la déclaration dit « révocable » mais on ne retire qu'après un oui | **à faire** après le gel (la purge efface tout après la présentation) | — |
+| 21 | MINEUR | la carte appelle le fournisseur hors du chemin `ia.repondre` (pas de quota IA par membre) | **à faire** après le gel (limite de 10 propositions / min en place) | — |
+
+---
+
 # Pour Hiba
 
 ## À fournir pour la démo (pas de VPS)
