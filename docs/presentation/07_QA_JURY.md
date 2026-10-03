@@ -141,12 +141,55 @@ Le Club compte 145 entreprises et 173 représentants (liste fournie par le Club)
 monde fictif (150 profils), et chaque écran le dit. On n'a pas voulu simuler une
 adoption. La première chose à faire après ce week-end, c'est cinq vrais membres et cinq vraies demandes.
 
+## Version 2 (03.10, nuit) — questions ajoutées
+
+**Avec 50 membres, l'anonymat tient-il vraiment ?**
+On ne promet pas l'impossible : dans un petit club, on peut parfois deviner. Ce qu'on garantit et teste : tout
+décompte venant de moins de **trois entreprises distinctes** s'affiche « < 3 » — deux représentants d'une même
+entreprise comptent une fois. Le système ne nomme jamais qui a dit non, et ne demande jamais pourquoi. Un rôle porté
+par moins de trois entreprises n'est jamais dit dans un avis de retrait.
+
+**Et les données des membres français ?**
+Le RGPD s'applique à eux. Le Club hébergerait en Suisse ; la Commission européenne a confirmé l'adéquation de la
+Suisse en janvier 2024 — à confirmer dans l'analyse d'impact, avec un juriste, au jalon « Lancer ». Consentement par
+finalité, prouvé par le reçu ; retrait = purge réelle (journal séparé des identités).
+
+**Comment suivez-vous un partenariat ?**
+Quatre étapes déclarées sur le reçu : accord, essai, résultat, ou retiré. Le Club voit des agrégats ; une ligne
+nominative n'apparaît que si les deux parties l'ont permis. On ne suit jamais les vues, les inscrits inactifs, ni
+des « matchs » proposés par une IA.
+
+**Pourquoi 45 jours ?**
+Assez pour qu'une vingtaine de demandes reçoivent leurs réponses, assez court pour décider avant le dépôt Interreg du
+12 mars 2027. Et ces 45 jours couvrent les Mondiaux de Crans-Montana : c'est le test le plus dur.
+
+**Si c'est déjà codé, pourquoi un pilote ?**
+Parce que le code n'est plus le goulot ; la validation l'est. On n'a aucun utilisateur réel. On veut savoir si des
+membres réels répondent, à quelle vitesse, et si l'entraide tient sous tension. Avec ce volume, c'est un signal, pas
+une mesure fine, et on le dira tel quel.
+
+**Pourquoi le CSCS ?**
+Apertus 1.5 est servi par le CSCS, à Lugano : un modèle suisse ouvert, servi en Suisse. On vérifie ses conditions
+d'utilisation pour un pilote au jalon « Lancer ». Si elles ne conviennent pas, un relais par Public AI ou un hébergeur
+suisse est possible. Et le produit tient sans modèle : l'interrupteur est testé.
+
+**Et si les membres sont débordés pendant les Mondiaux ?**
+C'est exactement le risque qu'on a nommé : quand tout le monde manque de tout, l'entraide tient-elle ? Une demande à
+la fois, un plafond par semaine, et « Pas cette fois » ne coûte rien. Si l'entraide ne tient pas, on le saura en
+février, avant d'investir.
+
+**Où tourne la démo ?**
+Sur notre machine, à Martigny, via un tunnel chiffré. Pas de budget d'hébergement pour la Foire ; le pilote, lui,
+serait hébergé en Suisse. (Avec Tailscale Funnel seulement : « le relais ne peut pas lire les données ». Jamais avec
+le tunnel Cloudflare de secours.)
+
 ## Réponses à ne pas donner
 
 - Ne jamais dire « sans compte » pour un membre (seulement pour le passe juré : « quinze minutes, sans compte » ; le
   passe découverte : « sans être membre »).
 - Ne jamais dire « conversion » : « intention d'adhésion ».
 - Ne jamais dire « dix secondes ».
-- Ne jamais citer un chiffre absent de la slide 14 ou de la slide 16.
+- Ne jamais citer un chiffre absent de la slide 14 ou de la slide 16 (deck v1), ou absent de `data/gel.json` (deck v2).
+- Ne jamais dire « Public AI » pour Apertus 1.5 : il est servi par le CSCS.
 - Ne jamais dire « propulsé par Apertus » : « on a sondé et mesuré Apertus ».
 - Si on ne sait pas : « On ne l'a pas mesuré ; voilà comment on le mesurerait. »
