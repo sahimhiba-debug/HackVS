@@ -6,7 +6,9 @@ Rejoue la scène « Registre » de DEMO_SCRIPT sur un serveur de démonstration 
 simulée), IA ÉTEINTE (arbitrage D-PRES-1 : aucune variable APERTUS_* transmise), dans Chromium :
 Établi « il manque une pièce » → téléphone de Pauline, Demandes → « Proposer à partir de mon texte » (forme
 déterministe) → Oui → Établi « le Club peut le faire » → reçu → retrait → « ce composant n'est plus disponible » →
-passe juré (Markus) sur un second téléphone. Ne modifie rien du produit ; n'écrit que des images."""
+passe juré (Markus) sur un second téléphone → (Foire 2026, interrupteur HACKVS_FOIRE allumé) « Le Club cherche » →
+QR du stand → téléphone d'un invité « exposant invité d'Annecy » → « à confirmer par le Club » → Suivi.
+Ne modifie rien du produit ; n'écrit que des images."""
 import json
 import os
 import sys
@@ -33,7 +35,7 @@ def api(base, chemin, corps=None):
 
 def main() -> None:
     DOSSIER.mkdir(parents=True, exist_ok=True)
-    with serveur() as base, sync_playwright() as p:
+    with serveur(HACKVS_FOIRE="1") as base, sync_playwright() as p:
         api(base, "/api/pulse/demo/reinitialiser", {})
         codes = {x["id"]: x["code"] for x in api(base, "/api/pulse/console/personas")}
         nav = p.chromium.launch(executable_path="/opt/pw-browsers/chromium")
@@ -93,6 +95,38 @@ def main() -> None:
         jure.wait_for_selector("[data-ask]")
         jure.wait_for_timeout(400)
         jure.screenshot(path=str(DOSSIER / "tel-3-jure.png"))
+
+        # FOIRE 2026 : le passe découverte et Suivi (console /suivi)
+        suivi = nav.new_context(viewport={"width": 1440, "height": 900}, device_scale_factor=2).new_page()
+        suivi.goto(base + "/suivi")
+        suivi.click("#vues >> text=Le Club cherche")
+        suivi.locator("[data-metier] [data-inviter]").first.wait_for()
+        suivi.wait_for_timeout(400)
+        suivi.screenshot(path=str(DOSSIER / "suivi-0-cherche.png"))
+        lien = api(base, "/api/pulse/console/decouverte", {"origine": "stand"})["url"].split("://", 1)[1].split("/", 1)[1]
+        invite = nav.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2).new_page()
+        invite.goto(f"{base}/{lien}")
+        invite.locator("#entreprise").wait_for()
+        invite.fill("#entreprise", "Exposant invité d'Annecy")
+        invite.select_option("#metier", "transport")
+        invite.select_option("#zone", "Haute-Savoie")
+        invite.click("#declarer")
+        invite.locator("[data-role=recu]").wait_for()
+        invite.wait_for_timeout(300)
+        invite.screenshot(path=str(DOSSIER / "tel-4-decouverte.png"))
+        invite.locator("[data-demande] >> text=Je peux aider").first.click()
+        invite.locator("[data-role=message]").wait_for()
+        suivi.click("#vues >> text=Suivi")
+        suivi.click("#vues >> text=Le Club cherche")
+        suivi.locator("[data-role=propose]").first.wait_for()
+        suivi.locator("[data-role=propose]").first.scroll_into_view_if_needed()
+        suivi.wait_for_timeout(400)
+        suivi.screenshot(path=str(DOSSIER / "suivi-2-propose.png"))
+        suivi.click("#vues >> text=Suivi")
+        suivi.locator("[data-tuile='Invités ayant contribué'] .n:has-text('< 3')").wait_for()
+        suivi.evaluate("window.scrollTo(0, 0)")
+        suivi.wait_for_timeout(400)
+        suivi.screenshot(path=str(DOSSIER / "suivi-1.png"))
         nav.close()
     for f in sorted(DOSSIER.glob("*.png")):
         print(f.name, f.stat().st_size)
