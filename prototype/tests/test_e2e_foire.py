@@ -57,5 +57,10 @@ def test_le_jure_devient_exposant_invite_d_annecy(url_foire):
         console.locator("[data-passe] >> text=intention d'adhésion").wait_for()
         console.locator("[data-tuile='Invités ayant contribué'] .n:has-text('< 3')").wait_for()
         assert "Annecy" not in console.inner_text("body") and "Exposant" not in console.inner_text("body")
+        console.click("#vues >> text=Le Club cherche")                   # E : les demandes sans réponse, par métier
+        console.locator("[data-metier] [data-inviter]").first.click()
+        console.locator("[data-role=invitation] textarea[data-langue=DE]").wait_for()
+        assert "/decouverte#passe=" in console.input_value("[data-role=invitation] textarea[data-langue=FR]")
+        assert "ohne Mitgliedschaft" in console.input_value("[data-role=invitation] textarea[data-langue=DE]")
         b.close()
     assert not erreurs, erreurs

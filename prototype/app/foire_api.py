@@ -9,7 +9,7 @@ from typing import Callable, Literal, Optional
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from intelligence import partenariats, suivi
+from intelligence import club_cherche, metiers, partenariats, suivi
 
 
 class Cloture(BaseModel):
@@ -94,7 +94,17 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
         limiter(limite_emission, "decouverte-emission")
         res = au_monde(foire(lambda c: c.decouverte.emettre(x.origine, x.demande)))
         base = os.environ.get("HACKVS_URL_PUBLIQUE") or str(request.base_url).rstrip("/")
-        return res | {"url": base + res["chemin"], "qr": qr(base + res["chemin"])}
+        res |= {"url": base + res["chemin"], "qr": qr(base + res["chemin"])}
+        if x.origine == "demande":                    # « Inviter un contact » : le texte FR / DE, prêt à envoyer (par la personne)
+            d = au_monde(lambda c: next((d | {"metier": g["metier"]} for g in club_cherche.calculer(c)["metiers"]
+                                         for d in g["demandes"] if d["id"] == x.demande), None))
+            if d is not None:
+                res["invitation"] = club_cherche.invitation(d["piece"], d["metier"], res["url"], res["jours"])
+        return res
+
+    @r.get("/console/club-cherche", dependencies=[Depends(console)])
+    def le_club_cherche() -> dict:
+        return au_monde(foire(club_cherche.calculer))
 
     @r.get("/console/decouverte", dependencies=[Depends(console)])
     def passes_decouverte() -> list[dict]:
@@ -128,5 +138,4 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
 
     @r.get("/decouverte/referentiel")
     def referentiel(session: str = Depends(invite)) -> dict:
-        from intelligence import metiers
         return {"metiers": [{"id": m["id"], "fr": m["fr"], "de": m["de"]} for m in metiers.metiers()], "zones": list(metiers.ZONES)}

@@ -35,6 +35,16 @@
     <span class="droite"><a class="btn discret petit" href="/etabli">Établi</a><span class="puce" id="fraicheur">…</span></span>
   </header>
   <div class="page">
+    <div class="onglets" role="tablist" id="vues">
+      <button class="btn discret petit" role="tab" data-vue="suivi" aria-selected="true">Suivi</button>
+      <button class="btn discret petit" role="tab" data-vue="cherche" aria-selected="false">Le Club cherche</button>
+    </div>
+    <div id="vue-cherche" hidden>
+      <h1 class="titre">Le Club cherche</h1>
+      <p class="sous">Les demandes restées sans réponse, par métier. Inviter un contact : un passe découverte lié à la demande, à transmettre soi-même.</p>
+      <div id="cherche"></div>
+    </div>
+    <div id="vue-suivi">
     <h1 class="titre">Où en sont les partenariats</h1>
     <p class="sous">Des agrégats, jamais des noms. Tout décompte de personnes sous le seuil s'affiche « &lt; 3 ». Chiffres du monde de démonstration.</p>
     <div class="onglets" role="tablist" id="periodes">
@@ -47,6 +57,7 @@
     <section class="bloc" aria-label="Passes découverte"><span class="surtitre">Passes découverte (90 jours, invités non membres)</span>
       <div class="boutons" style="display:flex;gap:8px;margin-top:8px"><button class="btn petit" id="qr-stand">QR du stand</button></div>
       <div id="qr"></div><div id="passes"></div></section>
+    </div>
   </div>
   <script type="module">
     import { consoleFetch } from "/static/pulse/jeton-console.js";
@@ -124,7 +135,43 @@
       } catch (e) { $("#qr").replaceChildren(h("p", { class: "note" }, "Passe indisponible : " + e.message)); }
       lirePasses();
     }
-    window.emettrePasse = emettre;
+    function rendreCherche(x) {
+      const m = x.marche;
+      $("#cherche").replaceChildren(
+        h("p", { class: "note", "data-role": "marche" }, m.source === "absente" ? m.note :
+          `Liste d'entreprises : ${m.lignes} lignes, ${m.metiers_presents} métiers présents, ${m.metiers_absents} absents (décomptes seulement, aucun nom).`),
+        x.metiers.length ? h("div", { class: "grille" }, x.metiers.map((g) => h("div", { class: "tuile", "data-metier": g.metier },
+          h("span", { class: "surtitre" }, `${g.libelle} · ${g.libelle_de}`), h("div", { class: "n" }, g.nombre),
+          h("p", { class: "note" }, `demande(s) sans réponse · la plus ancienne : ${g.age_max_jours} j` +
+            (g.entreprises_de_ce_metier !== undefined ? ` · ${g.entreprises_de_ce_metier} entreprise(s) de ce métier dans la liste` : "")),
+          g.demandes.map((d) => h("div", { style: "margin-top:8px" }, h("b", {}, d.piece), h("p", { class: "note" }, `${d.titre} · ${d.age_jours} j`),
+            h("button", { class: "btn petit", "data-inviter": d.id, onclick: () => inviter(d.id) }, "Inviter un contact")))))) :
+          h("p", { class: "note" }, "Aucune demande sans réponse."),
+        h("div", { id: "invitation" }));
+    }
+    async function inviter(id) {
+      try {
+        const r = await consoleFetch("/api/pulse/console/decouverte", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ origine: "demande", demande: id }) });
+        const p = await r.json();
+        if (!r.ok) throw new Error(p.detail || `serveur : ${r.status}`);
+        const zone = (lg, t) => h("div", {}, h("label", { class: "surtitre" }, lg), h("textarea", { readonly: true, rows: 4, style: "width:100%;font:inherit", "data-langue": lg }, t));
+        $("#invitation").replaceChildren(h("section", { class: "bloc", "data-role": "invitation" }, h("span", { class: "surtitre" }, "Invitation (à envoyer vous-même)"),
+          h("img", { src: p.qr, alt: "QR code du passe découverte lié à la demande", style: "width:min(60vw,220px);background:#fff;padding:8px" }),
+          zone("FR", p.invitation ? p.invitation.fr : p.url), zone("DE", p.invitation ? p.invitation.de : p.url),
+          h("p", { class: "note" }, `Passe à usage unique, ${p.jours} jours, révocable. Aucun message n'est envoyé par le système.`)));
+        $("#invitation").scrollIntoView({ behavior: "smooth" });
+      } catch (e) { $("#invitation").replaceChildren(h("p", { class: "note" }, "Invitation indisponible : " + e.message)); }
+      lirePasses();
+    }
+    async function lireCherche() {
+      try { const r = await consoleFetch("/api/pulse/console/club-cherche", {}); if (r.ok) rendreCherche(await r.json()); } catch (e) { /* écran figé */ }
+    }
+    for (const b of document.querySelectorAll("#vues button")) b.addEventListener("click", () => {
+      for (const x of document.querySelectorAll("#vues button")) x.setAttribute("aria-selected", String(x === b));
+      $("#vue-suivi").hidden = b.dataset.vue !== "suivi"; $("#vue-cherche").hidden = b.dataset.vue !== "cherche";
+      if (b.dataset.vue === "cherche") lireCherche();
+    });
     async function lirePasses() {
       try {
         const r = await consoleFetch("/api/pulse/console/decouverte", {});
