@@ -142,3 +142,27 @@ Tout le reste est inchangé, à l'octet près. Le choix est global : `J`, ou `?m
 choix slide par slide. En mode jour, l'écran `N` devient un gris neutre, parce qu'un noir en salle claire attire plus
 l'œil qu'un gris calme. Contraste AA vérifié dans les deux modes. Revue : `review/final/nuit/` et
 `review/final/jour/`.
+
+## Constellation (mode salle) — deux passes d'autocritique
+
+Revue faite sur `review/constellation/{nuit,jour}/` (PNG par moment, vidéo `seance-*.webm` de 30 s, séance simulée,
+36 téléphones simulés). Mesure : 59–61 images/s en nuit comme en jour, rendu « animé », aucune erreur JS
+(`mesures.json`, `scripts/revue_constellation.py`). La vidéo sert de plan B dans le deck v2.
+
+**Passe 1 (rythme, densité, lisibilité à 25 m, poids du rouge)**
+
+| Critère | Constat | Correction |
+|---|---|---|
+| Lisibilité à 25 m | la légende du QR (18 vw) passait sous le titre de la demande, les deux illisibles | légende ramenée à 13 vw, titre borné à 44 vw, fil borné à 21 vw |
+| Rythme | « En 1 minute(s) » : la phrase finale trébuche à voix haute | « En une minute » / « En N minutes » (test mis à jour) |
+| Densité | fil « lieu : : pièce fournie » (deux-points doublés par le masquage de rôle) | rôle déjà suffixé ; test rouge `test_fil_sans_double_ponctuation` |
+| Poids du rouge | le rouge n'apparaît que sur le halo de l'instant du Oui (480 ms), puis encre claire : conforme | — |
+
+**Passe 2 (relecture des mêmes moments après correction)**
+
+| Critère | Constat | Décision |
+|---|---|---|
+| Tableau final | à 0,28 d'opacité, l'anneau vert restait lisible à travers la phrase en mode jour | constellation à 0,16 au tableau final |
+| Densité | 36 points + 15 traits : lisible ; à 80 points, les traits se croisent davantage mais restent fins (1 px, encre à 35 %) | gardé ; à vérifier sur vrais téléphones au rituel de 08:00 |
+| Seuil « < 3 » | anneau seul, phrase « En dessous de trois, le Club protège : la constellation s'allume à trois. » — aucun point | conforme |
+| Non / Pas cette fois | jamais visualisés (seuls « fournit » et « réserve » tracent un lien) | conforme, couvert par `test_salle` |

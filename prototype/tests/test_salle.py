@@ -158,7 +158,7 @@ def test_bilan_en_cinq_minutes(h):
         s.repondre(p, "oui")
     h.t += 300
     b = s.bilan()
-    assert b["possible"] and b["phrase"].startswith("En 5 minute(s), cette salle a rendu possible")
+    assert b["possible"] and b["phrase"].startswith("En 5 minutes, cette salle a rendu possible")
 
 
 # ------------------------------------------------------------------ par HTTP
@@ -218,17 +218,34 @@ def test_la_vue_de_l_ecran_est_choisie_cote_serveur_et_purgee(s):
 
 
 def test_constellation_points_anonymes_traits_des_oui_rien_sous_trois(h):
+    """Spirale de Vogel : chaque participant reçoit une PLACE stable (sondage par HMAC de la clé de séance, sans lien
+    avec l'ordre d'arrivée ni l'identité) ; un point dit seulement « fournit » / « réserve » / rien — jamais un refus."""
     s = Salle(b"s" * 32, plafond=80, horloge=h)
     a = _entrer(s, "voiture")
     assert s.ecran()["constellation"] == []                          # sous k : aucun point
-    ps = [a, _entrer(s, "salle"), _entrer(s, "allemand"), _entrer(s, "traiteur")]
+    ps = [a, _entrer(s, "salle"), _entrer(s, "allemand"), _entrer(s, "voiture")]
     s.lancer()
     s.repondre(ps[0], "oui")
+    s.repondre(ps[3], "oui")                                         # deuxième voiture : réserve
     s.repondre(ps[1], "non")
     c = s.ecran()["constellation"]
-    assert len(c) == 4 and sum(p["oui"] for p in c) == 1
-    assert all(set(p) == {"a", "r", "oui"} and 0 <= p["a"] < 1 and 0.35 <= p["r"] <= 1 for p in c)
-    brut = json.dumps(c)
+    assert len(c) == 4 and all(set(p) == {"s", "e"} for p in c)
+    assert sorted(p["e"] for p in c) == ["", "", "fournit", "reserve"]   # le « non » ne se distingue pas d'un silence
+    assert len({p["s"] for p in c}) == 4 and all(0 <= p["s"] < 80 for p in c)
+    places = {p["s"] for p in c}
+    s.retirer(ps[0])                                                 # la réserve reprend : un trait plein, un retiré
+    c2 = s.ecran()["constellation"]
+    assert {p["s"] for p in c2} == places                            # les places ne bougent pas
+    assert sorted(p["e"] for p in c2) == ["", "", "", "fournit"]
+    brut = json.dumps(c2)
     for nonce in s.participants:
         assert nonce not in brut
-    assert [p["a"] for p in c] == sorted(p["a"] for p in c)            # trié par position : l'ordre d'arrivée ne se lit pas
+    assert [p["s"] for p in c2] == sorted(p["s"] for p in c2)          # triés par place, pas par arrivée
+
+
+def test_fil_sans_double_ponctuation(s):
+    passes = [_entrer(s, c) for c in ("voiture", "salle", "allemand")]
+    s.lancer()
+    for p in passes:
+        s.repondre(p, "oui")
+    assert s.ecran()["fil"] and all(": :" not in f["texte"] for f in s.ecran()["fil"])

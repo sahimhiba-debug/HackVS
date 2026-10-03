@@ -3,85 +3,223 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Club Pulse · Salle (écran)</title>
-  <meta name="description" content="Écran géant du mode salle : participants, capacités, anneau. Agrégats seulement. Monde de démonstration.">
+  <title>Club Pulse · La salle</title>
+  <meta name="description" content="Écran géant du mode salle : la constellation. Des points anonymes, les oui, l'anneau. Monde de démonstration.">
   <link rel="icon" href="/static/pulse/icone.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/pulse/pulse.css">
   <style>
-    body { background: var(--papier); }
-    .page { max-width: 1600px; margin: 0 auto; padding: 24px 32px; display: grid; grid-template-columns: 360px 1fr; gap: 32px; }
-    .qr img { width: 100%; background: #fff; padding: 12px; border-radius: 18px; }
-    .grand { font-size: 120px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
-    .caps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 18px; }
-    .cap { background: var(--card); border-radius: 18px; padding: 14px 18px; box-shadow: var(--sh-card-light); }
-    .cap b { font-size: 36px; font-weight: 800; display: block; }
-    .anneau { display: flex; gap: 24px; align-items: center; margin-top: 24px; background: var(--card); border-radius: 22px; padding: 22px; box-shadow: var(--sh-card); }
-    .piece { padding: 10px 16px; border-radius: 999px; border: 2px dashed var(--brand-dash); font-weight: 700; }
-    .piece.ok { border: 2px solid var(--green); background: var(--green); color: #fff; }
-    .fil { margin-top: 18px; font-size: 18px; color: var(--secondary); } .fil li { margin: 4px 0; }
-    .bandeau { margin-top: 18px; padding: 16px 20px; border-radius: 16px; background: var(--brand-tint); color: var(--brand); font-weight: 700; font-size: 22px; }
-    .bilan { margin-top: 24px; font-size: 40px; font-weight: 800; letter-spacing: -0.02em; }
-    @media (max-width: 900px) { .page { grid-template-columns: 1fr; } .grand { font-size: 72px; } }
+    /* Tokens de mouvement (UN seul easing) — docs/design/DESIGN_SYSTEM.md, DIRECTION.md (constellation) */
+    :root { --micro: 240ms; --element: 480ms; --signature: 720ms; --ease: cubic-bezier(0.22, 1, 0.36, 1);
+            --fond: #F2F3F5; --encre: #141923; --sourdine: #5B6474; --trait: rgba(20, 25, 35, .28); --piste: rgba(20, 25, 35, .10);
+            --rouge: #CD2128; --vert: #0DA254; }
+    html[data-mode="nuit"] { --fond: #0B0D12; --encre: #F2F3F5; --sourdine: #A3ABB9; --trait: rgba(242, 243, 245, .30); --piste: rgba(242, 243, 245, .12); }
+    html, body { margin: 0; height: 100%; background: var(--fond); color: var(--encre); overflow: hidden; }
+    body { font-family: "Plus Jakarta Sans", system-ui, sans-serif; transition: background var(--element) var(--ease), color var(--element) var(--ease); }
+    .scene { position: fixed; inset: 0; display: grid; place-items: center; }
+    svg#constellation { width: min(100vw, 177.78vh); height: min(56.25vw, 100vh); display: block; }
+    .haut, .compteurs, .qr, .bas, .fil, .annonce, .bilan, .bandeau { position: fixed; }
+    .haut { top: 3.2vh; left: 3vw; display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: clamp(16px, 1.4vw, 26px); letter-spacing: -0.01em; }
+    .haut .monde { font-weight: 600; font-size: .62em; color: var(--sourdine); border: 1px dashed var(--piste); border-radius: 999px; padding: 4px 12px; }
+    .compteurs { top: 3vh; right: 3vw; display: flex; gap: 3.2vw; text-align: right; }
+    .compteurs b { display: block; font-family: "JetBrains Mono", monospace; font-variant-numeric: tabular-nums; font-weight: 500;
+                   font-size: clamp(34px, 4.6vw, 92px); letter-spacing: -0.04em; line-height: 1; }
+    .compteurs span { font-size: clamp(11px, .85vw, 16px); color: var(--sourdine); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+    .qr { left: 3vw; bottom: 4vh; display: flex; align-items: flex-end; gap: 14px; }
+    .qr img { width: clamp(110px, 10vw, 190px); background: #fff; padding: 8px; border-radius: 14px; }
+    .qr p { margin: 0; font-size: clamp(11px, .9vw, 16px); color: var(--sourdine); max-width: 13vw; }
+    .bas { left: 50%; transform: translateX(-50%); bottom: 5vh; text-align: center; width: 44vw; }
+    .bas .titre { font-weight: 800; font-size: clamp(16px, 1.6vw, 30px); letter-spacing: -0.02em; opacity: 0; }
+    .bas .pieces { margin-top: 8px; font-family: "JetBrains Mono", monospace; font-size: clamp(11px, .95vw, 18px); color: var(--sourdine); letter-spacing: .08em; }
+    .annonce { left: 50%; top: 66%; transform: translateX(-50%); font-weight: 600; font-size: clamp(14px, 1.3vw, 24px); color: var(--sourdine); opacity: 0; white-space: nowrap; }
+    .fil { right: 3vw; bottom: 4vh; margin: 0; padding: 0; list-style: none; text-align: right; font-size: clamp(10px, .8vw, 14px); color: var(--sourdine); opacity: .75; max-width: 21vw; }
+    .bilan { left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; max-width: 72vw; font-weight: 800;
+             font-size: clamp(26px, 3.6vw, 66px); letter-spacing: -0.03em; line-height: 1.1; opacity: 0; pointer-events: none; }
+    .bandeau { left: 50%; top: 14vh; transform: translateX(-50%); padding: 10px 18px; border-radius: 14px; background: var(--rouge); color: #fff; font-weight: 700; display: none; }
+    .seuil { font-weight: 600; fill: var(--sourdine); font-size: 22px; }
+    .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   </style>
 </head>
 <body>
-  <div class="page">
-    <aside><span class="marque"><span class="pouls-point" aria-hidden="true"></span>Club Pulse · le Club, c'est vous</span>
-      <p class="puce fictif" data-role="monde" style="margin-top:8px">monde de démonstration</p>
-      <div class="qr" id="qr" style="margin-top:16px"></div><p class="note" id="url"></p>
-      <p class="note" data-role="efface" style="margin-top:12px">Démonstration : vos données sont effacées après la présentation.</p></aside>
-    <main><span class="surtitre">Participants</span><div class="grand" id="n" data-role="participants">0</div>
-      <svg id="constellation" data-role="constellation" viewBox="0 0 500 500" style="width:min(100%,520px);display:block;margin:12px auto 0" aria-label="Constellation de la salle : des points anonymes"></svg>
-      <div class="caps" id="caps"></div><div id="demande"></div><div id="bascule"></div><div id="bilan"></div><ul class="fil" id="fil"></ul></main>
+  <div class="scene">
+    <svg id="constellation" viewBox="0 0 1600 900" data-role="constellation" data-points="0" data-traits="0" aria-label="Constellation de la salle : des points anonymes et l'anneau de la demande">
+      <g id="monde">
+        <g id="traits"></g><g id="points"></g>
+        <g id="anneau" data-role="anneau" data-fermee="false" transform="translate(800 450)">
+          <circle id="piste" r="92" fill="none" stroke="var(--piste)" stroke-width="18"></circle>
+          <circle id="arc" r="92" fill="none" stroke="var(--encre)" stroke-width="18" stroke-linecap="round" transform="rotate(-90)"
+                  stroke-dasharray="0 1000"></circle>
+          <circle id="halo-vert" r="92" fill="none" stroke="var(--vert)" stroke-width="2" opacity="0"></circle>
+          <circle id="point-logo" r="11" fill="var(--encre)" cx="-65" cy="-65" opacity="0" style="transform-box: fill-box; transform-origin: center"></circle>
+          <text id="quart" y="10" text-anchor="middle" font-family="JetBrains Mono" font-size="30" fill="var(--sourdine)"></text>
+        </g>
+        <text id="seuil" class="seuil" x="800" y="610" text-anchor="middle" opacity="0">En dessous de trois, le Club protège : la constellation s'allume à trois.</text>
+      </g>
+    </svg>
   </div>
+  <div class="haut"><span class="pouls-point" aria-hidden="true"></span>Club Pulse · le Club, c'est vous <span class="monde" data-role="monde">monde de démonstration</span></div>
+  <div class="compteurs">
+    <div><b id="n" data-role="participants">0</b><span>participants</span></div>
+    <div><b id="oui">0</b><span>oui</span></div>
+    <div><b id="possibles">0</b><span>rendu possible</span></div>
+  </div>
+  <div class="qr" id="qr"></div>
+  <div class="bas"><div class="titre" id="titre"></div><div class="pieces" id="pieces"></div></div>
+  <div class="annonce" id="annonce"></div>
+  <div class="bandeau" id="bandeau" data-role="bascule"></div>
+  <div class="bilan" id="bilan" data-role="bilan"></div>
+  <ul class="fil" id="fil"></ul>
+  <p class="vh" id="effacement" data-role="efface">Démonstration : vos données sont effacées après la présentation.</p>
+  <div class="vh" aria-live="polite" id="annonce-vocale"></div>
   <script type="module">
     import { consoleFetch } from "/static/pulse/jeton-console.js";
     const $ = (s) => document.querySelector(s);
-    function h(tag, attrs = {}, ...enfants) {
-      const el = document.createElement(tag);
-      for (const [k, v] of Object.entries(attrs || {})) { if (v === null || v === undefined || v === false) continue; if (k === "class") el.className = v; else el.setAttribute(k, v === true ? "" : v); }
-      for (const e of enfants.flat(Infinity)) if (e !== null && e !== undefined && e !== false) el.append(e instanceof Node ? e : document.createTextNode(String(e)));
-      return el;
-    }
-    // CONSTELLATION : chaque participant est un point anonyme ; un oui trace un trait vers la demande, au centre ;
-    // l'anneau du centre se ferme quand les trois pièces sont là. Aucun nom, aucun identifiant (le serveur n'en envoie pas).
     const NS = "http://www.w3.org/2000/svg";
-    const s = (tag, attrs) => { const el = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v); return el; };
-    function dessinerConstellation(e) {
-      const svg = $("#constellation"); const R = 230, C = 250;
-      const pts = e.constellation.map((p) => ({ x: C + Math.cos(p.a * 2 * Math.PI) * p.r * R, y: C + Math.sin(p.a * 2 * Math.PI) * p.r * R, oui: p.oui }));
-      const pieces = e.demande ? e.demande.pieces : [];
-      const arcs = pieces.map((p, i) => { const a0 = (i / 3) * 2 * Math.PI - Math.PI / 2 + 0.08, a1 = ((i + 1) / 3) * 2 * Math.PI - Math.PI / 2 - 0.08;
-        return s("path", { d: `M ${C + 56 * Math.cos(a0)} ${C + 56 * Math.sin(a0)} A 56 56 0 0 1 ${C + 56 * Math.cos(a1)} ${C + 56 * Math.sin(a1)}`,
-          fill: "none", stroke: p.fournie ? "var(--green)" : "var(--hairline-2)", "stroke-width": 14, "stroke-linecap": "round" }); });
-      svg.replaceChildren(...pts.filter((p) => p.oui && e.demande).map((p) => s("line", { x1: p.x, y1: p.y, x2: C, y2: C, stroke: "var(--brand)", "stroke-width": 2, opacity: 0.55 })),
-        ...pts.map((p) => s("circle", { cx: p.x, cy: p.y, r: p.oui ? 9 : 6, fill: p.oui ? "var(--brand)" : "var(--ink)", opacity: p.oui ? 1 : 0.35 })), ...arcs);
-      svg.dataset.points = String(pts.length); svg.dataset.traits = String(pts.filter((p) => p.oui).length);
+    const el = (tag, attrs = {}) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); return e; };
+    const EASE = "cubic-bezier(0.22, 1, 0.36, 1)", MICRO = 240, ELEMENT = 480, SIGNATURE = 720;
+    const reduit = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let statique = reduit;                         // < 30 i/s mesurés : rendu statique (fondus seuls)
+    const anim = (n, kf, ms, extra = {}) => n.animate(kf, { duration: statique ? 0 : ms, easing: EASE, fill: "forwards", ...extra });
+
+    // ------------------------------------------------------------ jour / nuit (comme le deck : J, ?mode=jour|nuit)
+    const params = new URLSearchParams(location.search);
+    const mode = (m) => { document.documentElement.dataset.mode = m; try { localStorage.setItem("salle-mode", m); } catch (e) { /* sans stockage */ } };
+    mode(params.get("mode") || (() => { try { return localStorage.getItem("salle-mode"); } catch (e) { return null; } })() || "nuit");
+    addEventListener("keydown", (e) => { if (e.key === "j" || e.key === "J") mode(document.documentElement.dataset.mode === "jour" ? "nuit" : "jour"); });
+
+    // ------------------------------------------------------------ mesure : 60 i/s visés ; < 30 → statique
+    (() => { let n = 0; const t0 = performance.now(); const pas = () => { n++; if (performance.now() - t0 < 1500) requestAnimationFrame(pas);
+      else { const ips = Math.round(n * 1000 / (performance.now() - t0)); document.body.dataset.ips = String(ips); if (ips < 30) { statique = true; document.body.dataset.rendu = "statique"; } } };
+      requestAnimationFrame(pas); })();
+
+    // ------------------------------------------------------------ géométrie : spirale de Vogel (angle d'or), ellipse 16:9
+    const OR = Math.PI * (3 - Math.sqrt(5)), C = { x: 800, y: 450 };
+    let plafond = 80;
+    const place = (s) => { const t = (s + 0.5) / plafond, r = 150 + 255 * Math.sqrt(t), a = s * OR;
+      return { x: C.x + Math.cos(a) * r * 1.62, y: C.y + Math.sin(a) * r * 0.92 }; };
+    const versAnneau = (p) => { const dx = p.x - C.x, dy = p.y - C.y, d = Math.hypot(dx, dy); return { x: C.x + dx / d * 104, y: C.y + dy / d * 104 }; };
+    const courbe = (p) => { const q = versAnneau(p), mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2, nx = -(q.y - p.y) * 0.12, ny = (q.x - p.x) * 0.12;
+      return `M ${p.x.toFixed(1)} ${p.y.toFixed(1)} Q ${(mx + nx).toFixed(1)} ${(my + ny).toFixed(1)} ${q.x.toFixed(1)} ${q.y.toFixed(1)}`; };
+
+    // ------------------------------------------------------------ état affiché (diff avec le serveur)
+    const points = new Map();                        // place → { g, cercle, trait, etat }
+    let file = [], envol = null, anneauEtat = "cache", derniereAnnonce = "", vue = "salle", n0 = 0;
+    const CIRC = 2 * Math.PI * 92;
+
+    function respirer(g) {
+      if (statique) return;
+      const dur = 4000 + Math.random() * 3000, dx = (Math.random() * 6 - 3).toFixed(1), dy = (Math.random() * 6 - 3).toFixed(1);
+      g.animate([{ opacity: 1, transform: "translate(0px, 0px)" }, { opacity: 0.85, transform: `translate(${dx}px, ${dy}px)` }],
+        { duration: dur, easing: EASE, iterations: Infinity, direction: "alternate", delay: Math.random() * 1500 });
     }
-    let bascule = null;
+    function arriver(s) {                            // un point apparaît (opacité 0→1, échelle 0,6→1, 480 ms)
+      const p = place(s), g = el("g", { "data-place": s }), c = el("circle", { cx: p.x, cy: p.y, r: 6.5, fill: "var(--encre)" });
+      c.style.transformOrigin = `${p.x}px ${p.y}px`; g.append(c); $("#points").append(g);
+      anim(c, [{ opacity: 0, transform: "scale(0.6)" }, { opacity: 1, transform: "scale(1)" }], ELEMENT);
+      points.set(s, { g, cercle: c, trait: null, etat: "" }); respirer(g);
+    }
+    function tracer(s, fournit) {                    // un OUI : trait courbe (720 ms), halo rouge (480 ms), puis encre légère
+      const o = points.get(s); if (!o) return;
+      const p = place(s), t = el("path", { d: courbe(p), fill: "none", stroke: "var(--rouge)", "stroke-width": fournit ? 2.4 : 1.4, "stroke-linecap": "round" });
+      $("#traits").append(t); const L = t.getTotalLength(); t.style.strokeDasharray = `${L}`;
+      anim(t, [{ strokeDashoffset: L }, { strokeDashoffset: 0 }], SIGNATURE).finished.then(() => {
+        anim(t, [{ stroke: "#CD2128", opacity: 1 }, { stroke: "var(--trait)", opacity: fournit ? 1 : 0.55 }], ELEMENT); });
+      const halo = el("circle", { cx: p.x, cy: p.y, r: 7, fill: "none", stroke: "var(--rouge)", "stroke-width": 3 }); $("#points").append(halo);
+      anim(halo, [{ r: 7, opacity: 0.9 }, { r: 30, opacity: 0 }], ELEMENT).finished.then(() => halo.remove());
+      anim(o.cercle, [{ fill: "#CD2128" }, { fill: "var(--encre)" }], ELEMENT, { delay: statique ? 0 : MICRO });
+      o.trait = t;
+    }
+    function affermir(s) {                           // recomposition : la réserve devient la pièce — un trait plein se dessine
+      const o = points.get(s); if (!o || !o.trait) return tracer(s, true);
+      o.trait.remove(); o.trait = null; tracer(s, true);
+    }
+    function retracter(s) {                          // retrait : le trait se rétracte (480 ms), sans mettre le point en évidence
+      const o = points.get(s); if (!o || !o.trait) return; const t = o.trait, L = t.getTotalLength(); o.trait = null;
+      anim(t, [{ strokeDashoffset: 0, opacity: 1 }, { strokeDashoffset: L, opacity: 0 }], ELEMENT).finished.then(() => t.remove());
+    }
+    function anneau(etat) {                          // cache → trois-quarts (lancement) → ferme (vert) → trois-quarts (retrait)
+      if (etat === anneauEtat) return; const arc = $("#arc"), logo = $("#point-logo"), avant = anneauEtat; anneauEtat = etat;
+      $("#anneau").dataset.fermee = String(etat === "ferme");
+      if (etat === "trois-quarts") {
+        anim(arc, [{ strokeDasharray: avant === "ferme" ? `${CIRC} ${CIRC}` : `0 ${CIRC}`, stroke: avant === "ferme" ? "#0DA254" : "var(--encre)" },
+                   { strokeDasharray: `${CIRC * 0.75} ${CIRC}`, stroke: "var(--encre)" }], SIGNATURE);
+        anim(logo, [{ opacity: avant === "ferme" ? 0 : 0, transform: "translate(0px,0px)" }, { opacity: 1, transform: "translate(0px,0px)" }], SIGNATURE);
+        $("#quart").textContent = "3/4";
+      } else if (etat === "ferme") {                // le point du logo glisse dans la brèche ; l'anneau passe au vert ; halo unique
+        anim(logo, [{ transform: "scale(1)", opacity: 1 }, { transform: "scale(0.5)", opacity: 0 }], SIGNATURE);
+        anim(arc, [{ strokeDasharray: `${CIRC * 0.75} ${CIRC}`, stroke: "var(--encre)" }, { strokeDasharray: `${CIRC} ${CIRC}`, stroke: "#0DA254" }], SIGNATURE);
+        anim($("#halo-vert"), [{ r: 92, opacity: 0.8 }, { r: 150, opacity: 0 }], SIGNATURE, { delay: statique ? 0 : SIGNATURE * 0.6 });
+        $("#quart").textContent = "4/4";
+      }
+    }
+    function rouler(id, valeur) {                    // le compteur roule (chiffres tabulaires) ; « < 3 » s'affiche tel quel
+      const n = $(id), avant = Number(n.dataset.v || 0);
+      if (typeof valeur !== "number") { n.textContent = valeur; n.dataset.v = "0"; return; }
+      if (statique || avant === valeur) { n.textContent = String(valeur); n.dataset.v = String(valeur); return; }
+      const t0 = performance.now(), f = (t) => { const k = Math.min(1, (t - t0) / ELEMENT), e = 1 - Math.pow(1 - k, 3);
+        n.textContent = String(Math.round(avant + (valeur - avant) * e)); if (k < 1) requestAnimationFrame(f); else n.dataset.v = String(valeur); };
+      requestAnimationFrame(f);
+    }
+    function annoncer(texte) {                       // « un composant n'est plus disponible » (240 ms)
+      if (!texte || texte === derniereAnnonce) return; derniereAnnonce = texte; const a = $("#annonce"); a.textContent = texte;
+      anim(a, [{ opacity: 0 }, { opacity: 1 }], MICRO);
+    }
+    const lacher = () => {                           // arrivées en rafale : au plus ~12 par seconde à l'écran
+      if (!file.length) { clearInterval(envol); envol = null; return; } arriver(file.shift());
+      $("#constellation").dataset.points = String(points.size);
+    };
+
+    // ------------------------------------------------------------ lecture du serveur
     async function lire() {
-      try {
-        const r = await consoleFetch("/api/pulse/console/salle", {}); if (!r.ok) return;
-        const e = await r.json();
-        $("#qr").replaceChildren(...(e.qr ? [h("img", { src: e.qr, alt: "QR code de la salle" })] : [h("p", { class: "note" }, "Salle fermée : la télécommande l'ouvre.")]));
-        $("#url").textContent = e.url ? e.url.split("#")[0] : "";
-        $("#n").textContent = e.participants;
-        $("#caps").replaceChildren(...e.capacites.map((c) => h("div", { class: "cap", "data-capacite": c.id }, h("span", { class: "surtitre" }, c.role), h("b", {}, c.n), h("span", { class: "note" }, c.libelle))));
-        dessinerConstellation(e);
-        $("#demande").replaceChildren(...(e.demande ? [h("div", { class: "anneau", "data-role": "anneau", "data-fermee": String(e.demande.fermee) },
-          h("b", { style: "font-size:24px" }, e.demande.fermee ? "Le Club peut le faire." : "Il manque une pièce."),
-          ...e.demande.pieces.map((p) => h("span", { class: "piece" + (p.fournie ? " ok" : "") }, p.role)),
-          e.demande.secondes_pour_fermer !== null ? h("span", { class: "note" }, `fermé en ${e.demande.secondes_pour_fermer} s`) : null)] : []));
-        $("#bascule").replaceChildren(...(e.bascule ? [h("div", { class: "bandeau", "data-role": "bascule" }, `Moins de ${e.minimum} participants après une minute : on passe à la démonstration scriptée dans 5 s.`)] : []));
-        // BASCULE AUTOMATIQUE (réglable : HACKVS_SALLE_MIN ; désactivable : ?sans-bascule) vers la démo scriptée
-        if (e.bascule && !bascule && !new URLSearchParams(location.search).has("sans-bascule")) bascule = setTimeout(() => { location.href = "/etabli"; }, 5000);
-        $("#fil").replaceChildren(...e.fil.slice().reverse().map((f) => h("li", {}, `${f.t} s — ${f.texte}`)));
-        if (e.vue === "bilan") {
+      let e;
+      try { const r = await consoleFetch("/api/pulse/console/salle", {}); if (!r.ok) return; e = await r.json(); } catch (err) { return; }
+      plafond = e.plafond || 80;
+      $("#qr").replaceChildren(...(e.qr ? (() => { const i = document.createElement("img"); i.src = e.qr; i.alt = "QR code de la salle";
+        const p = document.createElement("p"); p.textContent = "Scannez : vous êtes le Club pendant cinq minutes. Aucun nom, aucun compte. Données effacées après la présentation.";
+        return [i, p]; })() : []));
+      rouler("#n", e.participants);
+      const visibles = new Map(e.constellation.map((p) => [p.s, p.e]));
+      // purge ou passage sous le seuil : tout s'efface
+      for (const [s, o] of points) if (!visibles.has(s)) { anim(o.g, [{ opacity: 1 }, { opacity: 0 }], ELEMENT).finished.then(() => o.g.remove()); if (o.trait) o.trait.remove(); points.delete(s); }
+      for (const s of visibles.keys()) if (!points.has(s) && !file.includes(s)) file.push(s);
+      if (file.length && !envol) envol = setInterval(lacher, statique ? 0 : 83);
+      if (statique) while (file.length) lacher();
+      for (const [s, etat] of visibles) {
+        const o = points.get(s); if (!o || o.etat === etat) continue;
+        if (etat === "fournit" && o.etat === "reserve") affermir(s);
+        else if (etat && !o.etat) tracer(s, etat === "fournit");
+        else if (!etat && o.etat) retracter(s);
+        o.etat = etat;
+      }
+      $("#constellation").dataset.traits = String([...points.values()].filter((o) => o.etat).length);
+      anim($("#seuil"), [{ opacity: Number($("#seuil").style.opacity || 0) }, { opacity: e.constellation.length ? 0 : 1 }], ELEMENT);
+      $("#seuil").style.opacity = e.constellation.length ? "0" : "1";
+      const d = e.demande;
+      rouler("#oui", e.reponses ? e.reponses.oui : 0);
+      rouler("#possibles", d && d.fermee ? 1 : 0);
+      if (d) {
+        if ($("#titre").textContent !== d.titre) { $("#titre").textContent = d.titre; anim($("#titre"), [{ opacity: 0 }, { opacity: 1 }], ELEMENT); }
+        $("#pieces").textContent = d.pieces.map((p) => (p.fournie ? "● " : "○ ") + p.role).join("   ");
+        anneau(d.fermee ? "ferme" : "trois-quarts");
+      }
+      const dernier = e.fil.length ? e.fil[e.fil.length - 1].texte : "";
+      if (/composant n'est plus disponible|recomposition|repart/.test(dernier)) annoncer(dernier);
+      $("#fil").replaceChildren(...e.fil.slice(-3).map((f) => { const li = document.createElement("li"); li.textContent = f.texte; return li; }));
+      $("#bandeau").style.display = e.bascule ? "block" : "none";
+      $("#bandeau").textContent = e.bascule ? `Moins de ${e.minimum} participants après une minute : démonstration scriptée dans 5 s.` : "";
+      if (e.bascule && !window.__bascule && !params.has("sans-bascule")) window.__bascule = setTimeout(() => { location.href = "/etabli"; }, 5000);
+      if (e.vue !== vue) {                           // tableau final : la constellation recule et s'atténue, la phrase apparaît
+        vue = e.vue;
+        if (vue === "bilan") {
           const b = await (await consoleFetch("/api/pulse/console/salle/bilan", {})).json();
-          $("#bilan").replaceChildren(h("p", { class: "bilan", "data-role": "bilan" }, b.phrase));
-        } else $("#bilan").replaceChildren();
-      } catch (err) { /* écran figé, jamais inventé */ }
+          $("#bilan").textContent = b.phrase;
+          anim($("#monde"), [{ transform: "scale(1)", opacity: 1 }, { transform: "scale(0.92)", opacity: 0.16 }], SIGNATURE);
+          anim($("#bilan"), [{ opacity: 0 }, { opacity: 1 }], SIGNATURE, { delay: statique ? 0 : MICRO });
+        } else { anim($("#monde"), [{ transform: "scale(0.92)", opacity: 0.16 }, { transform: "scale(1)", opacity: 1 }], ELEMENT); $("#bilan").style.opacity = "0"; $("#bilan").textContent = ""; }
+      }
+      const resume = `${e.participants} participants. ${e.reponses ? e.reponses.oui : 0} oui.` + (d && d.fermee ? " Le Club peut le faire." : "");
+      if (resume !== $("#annonce-vocale").textContent) $("#annonce-vocale").textContent = resume;
     }
+    $("#monde").style.transformOrigin = "800px 450px"; $("#monde").style.transformBox = "view-box";
     lire(); setInterval(lire, 1000);
   </script>
 </body>

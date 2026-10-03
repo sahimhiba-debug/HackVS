@@ -100,7 +100,8 @@ class Salle:
                 raise Limite(f"la salle est pleine ({self.plafond} participants)")
             nonce = secrets.token_urlsafe(9)
             exp = int(self._h()) + self.duree
-            self.participants[nonce] = {"capacite": None, "consenti_le": None, "reponse": None, "statut": None, "exp": exp}
+            self.participants[nonce] = {"capacite": None, "consenti_le": None, "reponse": None, "statut": None, "exp": exp,
+                                        "place": self._place(nonce)}
             return {"passe": f"p1.{nonce}.{exp}.{self._sig('passe', f'{nonce}|{exp}')}", "expire": exp, "role": "invité",
                     "message": EFFACEMENT}
 
@@ -158,7 +159,7 @@ class Salle:
                 piece = x["capacite"]
                 if not self.fournisseurs.get(piece):
                     self.fournisseurs[piece], x["statut"] = nonce, "fournit"
-                    self._noter(f"{self._role(piece)} : pièce fournie")
+                    self._noter(f"{self._role(piece)}pièce fournie")
                     self._fermer_si_complet()
                 else:
                     x["statut"] = "reserve"
@@ -247,26 +248,30 @@ class Salle:
                 "fil": list(self.fil[-12:]), "vue": self.vue, "message": EFFACEMENT, "monde": "monde de démonstration",
             }
 
+    def _place(self, nonce: str) -> int:
+        """Une PLACE sur la spirale de Vogel : sondage à partir d'un HMAC de la clé de séance — stable, sans lien avec
+        l'ordre d'arrivée ni l'identité (la place suivante libre en cas de collision)."""
+        prises = {y["place"] for y in self.participants.values() if "place" in y}
+        depart = int.from_bytes(hmac.new(self._cle, b"place|" + nonce.encode(), hashlib.sha256).digest()[:4], "big") % self.plafond
+        return next(((depart + i) % self.plafond for i in range(self.plafond) if (depart + i) % self.plafond not in prises), depart)
+
     def _constellation(self) -> list[dict]:
-        """CONSTELLATION (écran géant) : un point anonyme par participant ; un oui trace un trait vers la demande, au
-        centre. Position tirée d'un HMAC de la clé de séance (stable, sans lien avec l'ordre d'arrivée), triée par angle ;
-        aucun identifiant. Sous k participants : aucun point (le compteur dit déjà « < 3 »)."""
+        """CONSTELLATION (écran géant) : un point par participant, à sa place sur la spirale ; un état seulement —
+        « fournit » (son oui sert la demande), « reserve » (oui en réserve), ou rien. Un NON ou un « pas cette fois » ne
+        se distingue jamais d'un silence ; aucun identifiant. Sous k participants : aucun point."""
         if len(self.participants) < self.k:
             return []
-        pts = []
-        for n, y in self.participants.items():
-            d = hmac.new(self._cle, b"point|" + n.encode(), hashlib.sha256).digest()
-            pts.append({"a": int.from_bytes(d[:4], "big") / 2 ** 32, "r": round(0.35 + 0.65 * d[4] / 255, 3),
-                        "oui": y["reponse"] == "oui"})
-        return sorted(pts, key=lambda q: q["a"])
+        return sorted(({"s": y["place"], "e": y["statut"] if y["statut"] in ("fournit", "reserve") else ""}
+                       for y in self.participants.values()), key=lambda q: q["s"])
 
     def bilan(self) -> dict:
         """« En cinq minutes, cette salle a rendu possible… » — agrégats, k = 3."""
         e = self.ecran()
         minutes = max(1, round(e["depuis_s"] / 60)) if e["ouverte"] else 0
+        duree = "une minute" if minutes <= 1 else f"{minutes} minutes"
         possible = bool(e["demande"] and e["demande"]["fermee"])
         return {"minutes": minutes, "participants": e["participants"], "capacites": [c for c in e["capacites"] if c["n"]],
                 "reponses": e["reponses"], "possible": possible,
-                "phrase": (f"En {minutes} minute(s), cette salle a rendu possible : « {DEMANDE['titre']} »." if possible
-                           else f"En {minutes} minute(s), cette salle a déclaré ses capacités ; la demande attend encore une pièce."),
+                "phrase": (f"En {duree}, cette salle a rendu possible : « {DEMANDE['titre']} »." if possible
+                           else f"En {duree}, cette salle a déclaré ses capacités ; la demande attend encore une pièce."),
                 "message": EFFACEMENT, "monde": "monde de démonstration"}
