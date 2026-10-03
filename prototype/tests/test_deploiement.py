@@ -47,3 +47,21 @@ def test_script_de_charge_coherent_sur_un_petit_echantillon():
     r = subprocess.run([sys.executable, "scripts/charge_salle.py", "--local", "--n", "6"], cwd=RACINE / "prototype",
                        capture_output=True, text=True, timeout=180)
     assert r.returncode == 0, r.stdout[-800:] + r.stderr[-800:]
+
+
+def test_lanceur_tunnel_exige_jeton_et_https():
+    """docs/DEMO_TUNNEL.md : derrière un tunnel tout arrive de 127.0.0.1 — le lanceur refuse sans jeton de console."""
+    import os
+    import subprocess
+    script = RACINE / "demo-tunnel.sh"
+    base = {k: v for k, v in os.environ.items() if k not in ("PUBLIC_BASE_URL", "HACKVS_CONSOLE_JETON")} | {"VERIFIER_SEULEMENT": "1"}
+
+    def lancer(**env):
+        return subprocess.run(["bash", str(script)], env=base | env, capture_output=True, text=True, timeout=20)
+    assert lancer().returncode != 0
+    assert lancer(PUBLIC_BASE_URL="https://mac.exemple.ts.net").returncode != 0
+    assert lancer(PUBLIC_BASE_URL="http://mac.exemple.ts.net", HACKVS_CONSOLE_JETON="x" * 24).returncode != 0
+    assert lancer(PUBLIC_BASE_URL="https://mac.exemple.ts.net", HACKVS_CONSOLE_JETON="court").returncode != 0
+    ok = lancer(PUBLIC_BASE_URL="https://mac.exemple.ts.net", HACKVS_CONSOLE_JETON="x" * 24)
+    assert ok.returncode == 0, ok.stdout + ok.stderr
+    assert "--host 127.0.0.1" in script.read_text() and "caffeinate" in script.read_text()

@@ -1,4 +1,7 @@
-# Déploiement de la démonstration sur un VPS Infomaniak (Ubuntu) — pas à pas
+# Production future — déploiement sur un VPS Infomaniak (Ubuntu), pas à pas
+
+> **Rangé en « production future » (3 octobre).** Pas de budget d'hébergement pour la Foire : la démo publique tourne
+> sur le Mac du pitch, derrière un tunnel — voir [DEMO_TUNNEL.md](DEMO_TUNNEL.md). Ce guide reste valable pour le pilote.
 
 Écrit pour la **session Claude Code locale sur l'iMac d'Hiba**, qui déploiera en SSH. Rien n'a été déployé depuis la
 session cloud (aucun accès SSH, aucun démon Docker : l'image n'y a pas été construite — la première construction se
