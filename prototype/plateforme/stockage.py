@@ -16,6 +16,7 @@ class Stockage(Protocol):
 
     def executer(self, sql: str, params: tuple = ()) -> Any: ...
     def dernier_et_nombre(self) -> tuple[int, int]: ...
+    def signature(self) -> tuple[int, int, str]: ...
     def depuis(self, seq: int) -> Iterable[tuple[int, str]]: ...
     def inserer(self, id_: str, donnees: str) -> int: ...
     def inserer_a(self, seq: int, id_: str, donnees: str) -> None: ...
@@ -34,7 +35,9 @@ class _Sqlite:
         if chemin != ":memory:":
             Path(chemin).parent.mkdir(parents=True, exist_ok=True)
         self._db = sqlite3.connect(chemin, check_same_thread=False)
+        self._db.execute("PRAGMA secure_delete = ON")   # audit des lots 2-3, I4 : un texte purgé est écrasé sur le disque
         self._tx = False
+        self._meta = False
 
     def executer(self, sql: str, params: tuple = ()) -> Any:
         return self._db.execute(sql, params)
@@ -42,6 +45,19 @@ class _Sqlite:
     def dernier_et_nombre(self) -> tuple[int, int]:
         d, n = self._db.execute("SELECT COALESCE(MAX(seq), 0), COUNT(*) FROM evenements").fetchone()
         return int(d), int(n)
+
+    def signature(self) -> tuple[int, int, str]:
+        """(dernier seq, nombre, compteur de réécritures) en UNE requête — audit des lots 2-3, I5 : une purge faite par un
+        autre objet (ou un autre processus) sur le même journal se voit, même si elle ne change ni le dernier seq ni le
+        nombre de faits."""
+        if not self._meta:
+            self._meta = self.table_existe("journal_meta")
+        if not self._meta:
+            d, n = self.dernier_et_nombre()
+            return d, n, ""
+        r = self.executer("SELECT COALESCE(MAX(seq), 0), COUNT(*), (SELECT valeur FROM journal_meta WHERE cle = 'reecritures') "
+                          "FROM evenements").fetchone()
+        return int(r[0]), int(r[1]), r[2] or ""
 
     def depuis(self, seq: int) -> Iterable[tuple[int, str]]:
         return self._db.execute("SELECT seq, donnees FROM evenements WHERE seq > ? ORDER BY seq", (seq,)).fetchall()
@@ -92,6 +108,7 @@ class _Postgres:
         self._url = url
         self._db = psycopg.connect(url, autocommit=True)
         self._tx = False
+        self._meta = False
 
     def _x(self, sql: str, params: Optional[tuple] = None) -> Any:
         """AUDIT B2 : une connexion perdue (redémarrage, mise à jour, coupure) est rouverte HORS transaction, et la
@@ -119,6 +136,19 @@ class _Postgres:
         r = self._x("SELECT COALESCE(MAX(seq), 0), COUNT(*) FROM evenements").fetchone()
         assert r is not None
         return int(r[0]), int(r[1])
+
+    def signature(self) -> tuple[int, int, str]:
+        """(dernier seq, nombre, compteur de réécritures) en UNE requête — audit des lots 2-3, I5 : une purge faite par un
+        autre objet (ou un autre processus) sur le même journal se voit, même si elle ne change ni le dernier seq ni le
+        nombre de faits."""
+        if not self._meta:
+            self._meta = self.table_existe("journal_meta")
+        if not self._meta:
+            d, n = self.dernier_et_nombre()
+            return d, n, ""
+        r = self.executer("SELECT COALESCE(MAX(seq), 0), COUNT(*), (SELECT valeur FROM journal_meta WHERE cle = 'reecritures') "
+                          "FROM evenements").fetchone()
+        return int(r[0]), int(r[1]), r[2] or ""
 
     def depuis(self, seq: int) -> Iterable[tuple[int, str]]:
         return self._x("SELECT seq, donnees FROM evenements WHERE seq > %s ORDER BY seq", (seq,)).fetchall()

@@ -16,10 +16,12 @@
 | Export de mes données | `/moi/export` (fichier JSON) | `test_export_de_mes_donnees_et_rien_d_autre`, `test_export_telechargeable` |
 | Suppression du compte avec purge réelle | `/moi/effacer-definitivement` (confirmation exigée) | `test_purge_reelle_…`, `test_apres_purge_…`, `test_reecrire_est_tout_ou_rien` (SQLite + PostgreSQL) |
 
-**Ce que la purge fait vraiment.** L'effacement d'avant (`ClubPulse.effacer`) retirait l'identité et ajoutait des faits
-de retrait ; le passé du journal gardait les textes. La purge réécrit, en une seule transaction, chaque fait qui porte
-le membre : ses textes libres deviennent « [effacé] », les identifiants techniques restent (sans eux le journal ne se
-rejoue plus). Les faits des autres membres sont identiques à l'octet. Une trace `PURGE {faits: n}` sans contenu.
+**Ce que la purge fait vraiment** (refaite après l'audit des lots 2-3, voir [AUDIT_LOT23.md](../AUDIT_LOT23.md)). Chaque
+texte écrit par le membre, son nom, son courriel et son téléphone sont remplacés par « [effacé] » PARTOUT dans le
+journal, y compris là où ils ont été recopiés (adaptations, protocoles, accords d'autres membres). Dates, heures et
+identifiants ne sont jamais touchés. Le monde purgé est rejoué et relu dans une copie AVANT toute écriture ; puis la
+réécriture est tout ou rien, et une trace `PURGE` unique, sans contenu, est ajoutée. Sur le disque : SQLite en
+`secure_delete`, PostgreSQL `VACUUM FULL`.
 
-**Limite connue.** Les sauvegardes JSONL faites AVANT la purge contiennent encore les textes : la politique de
-rétention des sauvegardes (lot 6) doit fixer leur durée de vie.
+**Limites connues.** Un texte d'un seul mot en minuscules ressemble à un identifiant et peut rester. Les sauvegardes
+faites AVANT la purge, et le WAL de PostgreSQL, gardent les textes le temps de leur rétention (à fixer au lot 6).

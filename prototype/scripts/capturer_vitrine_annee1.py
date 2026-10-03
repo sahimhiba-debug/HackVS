@@ -36,6 +36,8 @@ def main() -> None:
     with serveur(**env) as base, sync_playwright() as p:
         admin = subprocess.run([sys.executable, "scripts/comptes.py", "amorcer", "Administration (fictive)"], capture_output=True,
                                text=True, cwd=PROTO, env={**os.environ, **env}).stdout.strip().splitlines()[-1]
+        from tests.aide_comptes import elever_http
+        elever_http(base, admin)                         # l'administration active son second facteur avant d'inviter
 
         def api(chemin: str, corps: dict, session: str) -> dict:
             req = urllib.request.Request(base + chemin, data=json.dumps(corps).encode(),
@@ -90,8 +92,8 @@ def capturer_espace() -> None:
         pg = nav.new_context(viewport=TELEPHONE).new_page()
         pg.goto(f"{base}/espace?session={session}")
         pg.locator("#b-pause").wait_for()
-        jour = pg.evaluate("fetch('/api/pulse/moi/date', {headers: {'X-Pulse-Session': new URLSearchParams(location.search)"
-                           ".get('session')}}).then(r => r.json())")
+        jour = pg.evaluate("fetch('/api/pulse/moi/date', {headers: {'X-Pulse-Session': sessionStorage"
+                           ".getItem('pulse-session')}}).then(r => r.json())")
         pg.fill("#pause-date", (date.fromisoformat(jour["date"]) + timedelta(days=14)).isoformat())
         pg.click("#pause-ok")
         pg.locator("#pause-etat:has-text('En pause')").wait_for()

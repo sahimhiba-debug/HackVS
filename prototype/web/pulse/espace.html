@@ -80,6 +80,10 @@
     const $ = (s) => document.querySelector(s);
     const lire = (k) => { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
     const session = new URLSearchParams(location.search).get("session") || lire("pulse-session");
+    if (new URLSearchParams(location.search).has("session")) {   // audit des lots 2-3, M5 : la session quitte l'adresse
+      try { sessionStorage.setItem("pulse-session", session); } catch (e) { /* sans stockage */ }
+      history.replaceState(null, "", location.pathname);
+    }
     const dire = (t) => { $("#etat").textContent = t; };
     async function api(chemin, corps) {
       const r = await fetch("/api/pulse" + chemin, { method: corps ? "POST" : "GET",

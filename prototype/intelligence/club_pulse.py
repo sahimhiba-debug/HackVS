@@ -317,8 +317,24 @@ class ClubPulse:
         return index_claims(self.journal, self._profils_depart)
 
     def sollicitable(self, pid: str) -> bool:
+        from .espace_membre import en_pause            # ANNÉE 1 · lot 3 (audit B3) : en pause, on ne reçoit plus rien
         p = self.profil(pid)
-        return pid in self.coffre.actives and p.disponible and p.accepte_introductions
+        return pid in self.coffre.actives and p.disponible and p.accepte_introductions and not en_pause(self, pid)
+
+    def _r_effectif(self):
+        """Le réseau tel que le voient la détection et l'observation : un membre EN PAUSE (ANNÉE 1 · lot 3) y est
+        indisponible. Sans pause en cours : le réseau lui-même (la démonstration ne change pas)."""
+        import dataclasses
+
+        from .espace_membre import membres_en_pause
+        pauses = membres_en_pause(self)
+        if not pauses:
+            return self.r
+        cle = (id(self.r.profils), len(self.r.profils), pauses)
+        if getattr(self, "_cache_r_effectif", (None,))[0] != cle:
+            profils = [p.model_copy(update={"disponible": False}) if p.id in pauses else p for p in self.r.profils]
+            self._cache_r_effectif = (cle, dataclasses.replace(self.r, profils=profils))
+        return self._cache_r_effectif[1]
 
     def asks_pour(self, pid: str) -> list[tuple[Instance, str]]:
         """Les demandes (Ask) qu'un membre peut recevoir : il est sollicitable, il n'est pas déjà une pièce de cette
@@ -681,8 +697,15 @@ class ClubPulse:
         if self._scan is not None and self._version_scan == version and not force:
             return self._scan
         souvenirs = memoire_club.reutilisables_par_le_club(memoire_club.souvenirs(self.banc))
-        d = Detecteur(self.r, self.tax, souvenirs=souvenirs)
+        d = Detecteur(self._r_effectif(), self.tax, souvenirs=souvenirs)
         res = d.detecter()
+        from .espace_membre import membres_en_pause      # ANNÉE 1 · lot 3 (audit B3) : une découverte qui demanderait
+        pauses = membres_en_pause(self)                  # l'accord d'un membre EN PAUSE est écartée (sans le nommer)
+        if pauses:
+            gardees = [o for o in res["opportunites"] if not set(o.consentements) & pauses]
+            if len(gardees) != len(res["opportunites"]):
+                res["ecartees"]["membre en pause"] = res["ecartees"].get("membre en pause", 0) + len(res["opportunites"]) - len(gardees)
+                res["opportunites"] = gardees
         e = d.e
         res["phases"] = [
             {"etape": "Observer le réseau", "detail": f"{len(self.r.profils)} membres, {sum(len(v) for v in e.offreurs.values())} capacités déclarées"},
@@ -710,7 +733,7 @@ class ClubPulse:
         observé ne dépend pas des essais : il n'est relu que si le réseau a changé (pas à chaque geste du banc)."""
         version = self._version()[:-1]
         if self._etat is None or self._version_etat != version:
-            self._etat, self._version_etat = observer(self.r, self.tax), version
+            self._etat, self._version_etat = observer(self._r_effectif(), self.tax), version
         par_id = self.r.par_id()
         if porteur not in par_id or candidat not in par_id:
             return "membre inconnu"

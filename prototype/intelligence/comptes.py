@@ -152,6 +152,7 @@ class Comptes:
                 raise Interdit(f"rôle inconnu : {role}")
             if role not in PEUT_INVITER.get(c["role"], set()):
                 raise Interdit("votre rôle ne permet pas cette invitation")
+            self.exiger_console(session)                # AUDIT I1 : une action d'administration exige le second facteur
             iid = secrets.token_urlsafe(9).replace(".", "_")
             expire = int(self._h()) + max(60, min(duree_s, 30 * 24 * 3600))
             jeton = f"{iid}.{expire}.{self._mac('invitation', iid, str(expire))[:32]}"
@@ -213,8 +214,11 @@ class Comptes:
             _, s, c, etat = self._session(session)
             if c["role"] != ADMIN:
                 raise Interdit("seule l'administration change un rôle")
+            self.exiger_console(session)                # AUDIT I1
             if role not in ROLES or compte not in etat["comptes"]:
                 raise Interdit("compte ou rôle inconnu")
+            if role != ADMIN:
+                self._garder_un_admin(etat, compte)
             self._ecrire("COMPTE_ROLE", [compte], compte=compte, role=role)
             self._admin(s["compte"], "attribuer_role", compte, role=role)
 
@@ -226,8 +230,17 @@ class Comptes:
                 raise Interdit("compte inconnu")
             if c["role"] != ADMIN and not (c["role"] == SECRETARIAT and cible["role"] in (MEMBRE, INVITE)):
                 raise Interdit("votre rôle ne permet pas cette révocation")
+            self.exiger_console(session)                # AUDIT I1
+            self._garder_un_admin(etat, compte)
             self._ecrire("COMPTE_REVOQUE", [compte], compte=compte)
             self._admin(s["compte"], "revoquer", compte)
+
+    @staticmethod
+    def _garder_un_admin(etat: dict, compte: str) -> None:
+        """AUDIT I1 : jamais sans administration (l'amorçage n'a lieu qu'une fois)."""
+        admins = [k for k, x in etat["comptes"].items() if x["role"] == ADMIN and not x["revoque"]]
+        if admins == [compte]:
+            raise Interdit("c'est le dernier compte d'administration : nommez-en d'abord un autre")
 
     def journal_admin(self, session: str) -> list[dict]:
         _, _, c, _ = self._session(session)
@@ -241,6 +254,7 @@ class Comptes:
         """Prépare un secret (montré UNE fois, à scanner) ; il ne vaut qu'après confirmation par un premier code."""
         with self._v:
             _, s, c, _ = self._session(session)
+            self._remplacement_permis(s, c)
             nonce = secrets.token_hex(8)
             self._ecrire("TOTP_PREPARE", [s["compte"]], compte=s["compte"], nonce=nonce)
             secret = self._secret_totp(s["compte"], nonce)
@@ -257,12 +271,21 @@ class Comptes:
     def confirmer_totp(self, session: str, code: str) -> None:
         with self._v:
             _, s, c, _ = self._session(session)
+            self._remplacement_permis(s, c)
             nonce = c.get("totp_prepare")
             p = self._code_valide(s["compte"], nonce, code, c["pas"]) if nonce else None
             if p is None:
                 raise NonAuthentifie("code incorrect")
             self._ecrire("TOTP_PAS_CONSOMME", [s["compte"]], compte=s["compte"], pas=p)
             self._ecrire("TOTP_ACTIF", [s["compte"]], compte=s["compte"], nonce=nonce)
+            if c["totp"]:
+                self._admin(s["compte"], "remplacer_totp", s["compte"])
+
+    def _remplacement_permis(self, s: dict, c: dict) -> None:
+        """AUDIT B4 : un second facteur ACTIF ne se remplace que depuis une session élevée par un code de l'ancien — la
+        seule session (volée) n'y suffit pas."""
+        if c["totp"] and s["elevee_jusqu_a"] <= self._h():
+            raise Interdit("double authentification déjà active : entrez d'abord un code de votre application actuelle")
 
     def elever(self, session: str, code: str) -> None:
         with self._v:

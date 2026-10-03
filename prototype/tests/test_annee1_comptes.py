@@ -33,7 +33,17 @@ def ctx():
     m = Memoire()
     c = cp.Comptes(m, SECRET, horloge=lambda: t[0])
     admin = c.amorcer_administration("Administration du Club")   # le tout premier compte, une seule fois
+    elever(c, t, admin)                                           # audit I1 : administrer exige le second facteur
     return c, m, t, admin
+
+
+def elever(c, t, session):
+    """Second facteur activé puis session élevée par un code (exigé pour toute action d'administration)."""
+    prep = c.preparer_totp(session)
+    c.confirmer_totp(session, totp(prep["secret"], t[0]))
+    t[0] += 30
+    c.elever(session, totp(prep["secret"], t[0]))
+    return prep["secret"]
 
 
 def test_le_vecteur_de_la_rfc_6238_est_respecte():
@@ -109,6 +119,7 @@ def test_roles_et_permissions(ctx):
         c.attribuer_role(sec, c.verifier(mem)["compte"], cp.SECRETARIAT)   # ni ne change un rôle
     c.attribuer_role(admin, c.verifier(mem)["compte"], cp.SECRETARIAT)
     assert c.verifier(mem)["role"] == cp.SECRETARIAT
+    elever(c, t, sec)                                                    # inviter : second facteur exigé (audit I1)
     invite = c.accepter(c.inviter(sec, role=cp.INVITE, etiquette="exposant invité", duree_s=60)["jeton"], appareil="Tél")
     assert c.verifier(invite)["role"] == cp.INVITE
 
@@ -174,6 +185,7 @@ def test_tout_survit_a_un_redemarrage(tmp_path):
     f = str(tmp_path / "j.db")
     c = cp.Comptes(Memoire(f), SECRET, horloge=lambda: t[0])
     admin = c.amorcer_administration("Administration")
+    elever(c, t, admin)
     s = c.accepter(c.inviter(admin, role=cp.MEMBRE, etiquette="m", duree_s=60)["jeton"], appareil="A")
     s2 = c.nouvelle_session(s, appareil="B")
     c.deconnecter(s2)

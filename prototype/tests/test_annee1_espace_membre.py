@@ -99,7 +99,8 @@ def test_purge_reelle_plus_aucun_texte_du_membre_dans_le_journal(demo):
     assert not any(phrase in e.model_dump_json() for e in c.journal.evenements())
     restants = [e.model_dump_json() for e in c.journal.evenements() if md.PAULINE not in e.acteurs and e.type != "PURGE"]
     assert set(textes_autres_avant) <= set(restants)                      # les autres membres : intacts
-    assert c.journal.evenements("PURGE")[-1].donnees == {"faits": bilan["faits_purges"]}   # la purge est un fait, sans contenu
+    trace = c.journal.evenements("PURGE")[-1].donnees                 # la purge est un fait, sans contenu
+    assert set(trace) == {"faits", "trace"} and trace["faits"] >= 1 and len(trace["trace"]) == 12   # « trace » : aléa unique
 
 
 def test_apres_purge_le_club_redemarre_et_le_membre_n_existe_plus(demo):

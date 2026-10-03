@@ -63,11 +63,15 @@ class Memoire:
         self._figee = 0                    # > 0 : lecture figée (un calcul en lecture seule relit le journal UNE fois)
         self._sale = False                 # une écriture a eu lieu pendant la lecture figée : on relit
         self._generation = 0               # +1 à chaque remise à zéro du cache (annulation, vidage, relecture complète)
+        self._reecritures = ""             # compteur de réécritures (purges) lu dans la base avec la signature du journal
 
     def _synchroniser(self) -> list[Evt]:
         """Cache incrémental : ne désérialise que les événements nouveaux. Resynchronisé à chaque lecture par une
         requête légère (dernier seq, nombre) : reste exact si un autre objet écrit dans le même fichier ou le vide."""
-        dernier, nombre = self._db.dernier_et_nombre()
+        dernier, nombre, reecritures = self._db.signature()
+        if reecritures != self._reecritures:              # réécrit (purge) par un autre objet : relecture complète
+            self._reecritures, self._cache = reecritures, []
+            self._generation += 1
         connu = self._cache[-1].seq if self._cache else 0
         if dernier > connu:
             for s, d in self._db.depuis(connu):
@@ -195,6 +199,8 @@ class Memoire:
                                           (b.id, b.model_dump_json(exclude={"seq"}), a.seq))
                 if fait:
                     self._db.inserer(fait.id, fait.model_dump_json(exclude={"seq"}))
+                self._db.executer("INSERT INTO journal_meta (cle, valeur) VALUES ('reecritures', '1') ON CONFLICT (cle) DO "
+                                  "UPDATE SET valeur = CAST(CAST(journal_meta.valeur AS INTEGER) + 1 AS TEXT)")
                 self._db.valider()
             except BaseException:
                 self._db.annuler()
@@ -203,6 +209,8 @@ class Memoire:
                 self._cache = []
                 self._sale = True
                 self._generation += 1
+            if self._db.dialecte == "postgres":       # audit des lots 2-3, I4 : les anciennes versions des lignes réécrites
+                self._db.executer("VACUUM FULL evenements")   # quittent les fichiers de la table (le WAL : sa rétention)
             return modifies
 
     def charger_sauvegarde(self, lignes: list[str], verifier: Callable[[list[str]], None]) -> None:

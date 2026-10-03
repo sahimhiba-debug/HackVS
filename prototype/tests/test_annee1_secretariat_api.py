@@ -38,6 +38,9 @@ def api(monkeypatch, tmp_path):
     cl = TestClient(app)
     comptes = routeur.comptes()
     admin = comptes.amorcer_administration("Administration (fictive)")
+    prep = comptes.preparer_totp(admin)                    # audit I1 : administrer exige le second facteur
+    comptes.confirmer_totp(admin, code_totp(prep["secret"], time.time()))
+    comptes.elever(admin, code_totp(prep["secret"], time.time() + 30))
 
     def compte(role: str, totp: bool = True, elever: bool = True) -> str:
         jeton = comptes.inviter(admin, role=role, etiquette=f"{role} fictif", duree_s=600)["jeton"]
@@ -139,6 +142,8 @@ def test_la_console_dans_un_vrai_navigateur(tmp_path):
         admin = subprocess.run([sys.executable, "scripts/comptes.py", "amorcer", "Administration fictive"], capture_output=True,
                                text=True, cwd=Path(__file__).resolve().parents[1],
                                env={**os.environ, **env}).stdout.strip().splitlines()[-1]
+        from tests.aide_comptes import elever_http
+        elever_http(base, admin)
         req = urllib.request.Request(base + "/api/pulse/comptes/admin/invitations", headers={"Content-Type": "application/json",
                                      "X-Pulse-Compte": admin}, data=json.dumps({"role": "secretariat", "etiquette": "Secrétariat 1 (fictif)",
                                                                                  "duree_s": 600}).encode())

@@ -95,8 +95,9 @@ def test_la_page_espace_dans_un_vrai_navigateur(tmp_path):
             pg.on("pageerror", lambda e: erreurs.append(str(e)))
             pg.goto(f"{base}/espace?session={session}")
             pg.locator("#b-pause").wait_for()
+            assert "session" not in pg.url                                  # audit M5 : la session quitte l'adresse
             jour = pg.evaluate("fetch('/api/pulse/moi/date', {headers: {'X-Pulse-Session': "
-                               "new URLSearchParams(location.search).get('session')}}).then(r => r.json())")
+                               "sessionStorage.getItem('pulse-session')}}).then(r => r.json())")
             from datetime import date
             pg.fill("#pause-date", (date.fromisoformat(jour["date"]) + timedelta(days=14)).isoformat())
             pg.click("#pause-ok")

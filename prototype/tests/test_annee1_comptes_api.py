@@ -33,6 +33,10 @@ def api():
     t = [1_800_000_000.0]
     c = cp.Comptes(Memoire(), SECRET, horloge=lambda: t[0])
     admin = c.amorcer_administration("Administration")
+    prep = c.preparer_totp(admin)                          # audit I1 : administrer exige le second facteur
+    c.confirmer_totp(admin, totp(prep["secret"], t[0]))
+    t[0] += 30
+    c.elever(admin, totp(prep["secret"], t[0]))
     app = FastAPI()
     routeur = creer_routeur_comptes(lambda: c)
     app.include_router(routeur)
@@ -133,6 +137,8 @@ def test_de_bout_en_bout_dans_le_vrai_serveur(tmp_path):
                              cwd=Path(__file__).resolve().parents[1], env={**__import__("os").environ, "HACKVS_ESSAIS_DB": journal,
                                                                           "HACKVS_SECRET": secret}).stdout
         admin = out.strip().splitlines()[-1]
+        from tests.aide_comptes import elever_http
+        elever_http(base, admin)
 
         def appel(chemin, corps=None, session=None):
             req = urllib.request.Request(base + chemin, data=None if corps is None else json.dumps(corps).encode(),
@@ -172,6 +178,8 @@ def test_la_page_compte_dans_un_vrai_navigateur(tmp_path):
         admin = subprocess.run([sys.executable, "scripts/comptes.py", "amorcer", "Administration fictive"], capture_output=True, text=True,
                                cwd=Path(__file__).resolve().parents[1], env={**__import__("os").environ, "HACKVS_ESSAIS_DB": journal,
                                                                             "HACKVS_SECRET": secret}).stdout.strip().splitlines()[-1]
+        from tests.aide_comptes import elever_http
+        elever_http(base, admin)
         req = urllib.request.Request(base + "/api/pulse/comptes/admin/invitations", headers={"Content-Type": "application/json", "X-Pulse-Compte": admin},
                                      data=json.dumps({"role": "secretariat", "etiquette": "Secrétariat 1 (fictif)", "duree_s": 600}).encode())
         jeton = json.load(urllib.request.urlopen(req))["jeton"]
