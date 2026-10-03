@@ -26,6 +26,7 @@ from intelligence.demo import Demo
 from intelligence.erreurs import ErreurMetier, Limite
 from intelligence.politique import Spectateur
 
+from .urls import base_publique
 from .capacites_api import ajouter_routes as ajouter_routes_capacites
 from .essai_api import ajouter_routes as ajouter_routes_essai
 from .foire_api import ajouter_routes as ajouter_routes_foire
@@ -312,8 +313,7 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     @r.post("/console/jure", dependencies=[Depends(console)])
     def passe_jure(p: PassJure, request: Request) -> dict:
         res = au_monde(lambda c: c.emettre_pass_jure(p.persona, p.minutes))
-        import os
-        base = os.environ.get("HACKVS_URL_PUBLIQUE") or str(request.base_url).rstrip("/")
+        base = base_publique(request)
         return {k: v for k, v in res.items() if k != "jeton"} | {"url": base + res["chemin"], "qr": qr_svg(base + res["chemin"])}
 
     @r.post("/jure", response_model=None)

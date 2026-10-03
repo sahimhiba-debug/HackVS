@@ -3,12 +3,12 @@ cherche ». Un adaptateur mince, comme capacites_api : valider, authentifier, ap
 Interrupteur éteint : chaque route répond 404 « désactivé » — le produit d'hier, à l'identique."""
 from __future__ import annotations
 
-import os
 from typing import Callable, Literal, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from .urls import base_publique
 from intelligence import club_cherche, distance, metiers, partenariats, suivi
 
 
@@ -115,7 +115,7 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     def emettre_decouverte(x: Emission, request: Request) -> dict:
         limiter(limite_emission, "decouverte-emission")
         res = au_monde(foire(lambda c: c.decouverte.emettre(x.origine, x.demande)))
-        base = os.environ.get("HACKVS_URL_PUBLIQUE") or str(request.base_url).rstrip("/")
+        base = base_publique(request)
         res |= {"url": base + res["chemin"], "qr": qr(base + res["chemin"])}
         if x.origine == "demande":                    # « Inviter un contact » : le texte FR / DE, prêt à envoyer (par la personne)
             d = au_monde(lambda c: next((d | {"metier": g["metier"]} for g in club_cherche.calculer(c)["metiers"]
@@ -175,7 +175,7 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
 
     @r.get("/console/boite", dependencies=[Depends(console)])
     def boite_de_sortie(request: Request) -> dict:
-        base = os.environ.get("HACKVS_URL_PUBLIQUE") or str(request.base_url).rstrip("/")
+        base = base_publique(request)
         return au_monde(foire(lambda c: distance.boite(c, base)))
 
     def _limiter_lien(jeton: str) -> None:

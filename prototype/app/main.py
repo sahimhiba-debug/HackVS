@@ -25,6 +25,7 @@ from pydantic import BaseModel, Field
 
 import threading
 
+from .urls import base_publique
 from . import agenda, analyse, club, parser_llm, parser_rules, securite, semantique, soiree
 from . import observabilite as _observabilite
 from .baseline import rechercher_mots_cles
@@ -773,7 +774,7 @@ if CAPTURES.exists():
 
 
 def _url_publique(request: Request) -> str:
-    return os.environ.get("HACKVS_URL_PUBLIQUE") or str(request.base_url).rstrip("/")
+    return base_publique(request)
 
 
 @app.get("/api/qr.svg")
