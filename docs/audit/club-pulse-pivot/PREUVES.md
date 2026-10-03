@@ -70,7 +70,8 @@ Chiffres MESURÉS seulement ; le reste est dans `docs/RAPPORT_NUIT.md`.
 |---|---|---|
 | Classification des 26 cas existants dans la taxonomie des métiers, par Apertus (`swiss-ai/Apertus-v1.5-70B`, API CSCS), 03.10 13:10 UTC | 25 / 26 sorties acceptées par la validation du code, dont 8 abstentions ; 1 rejetée (métier hors taxonomie). **Aucune exactitude mesurée** (pas encore d'étiquettes humaines) | `make eval-classification FOURNISSEUR=apertus` → `prototype/eval/resultats_classification/cas-26-apertus.md` |
 | Langue détectée sur les 26 cas | 22 fr, 2 de (dont suisse allemand), 1 it, 1 en — conforme aux textes | `test_foire_tally.py::test_langues_des_26_cas_detectees_justes` |
-| Phrases Tally (QR de la Foire) | **non ingérées cette nuit** : le CSV n'est pas arrivé dans le dépôt | `make ingest-tally` (tourne avec ou sans le fichier) |
+| Phrases Tally (QR de la Foire, instantané du 03.10, 21 réponses) | 21 gardées (0 doublon, 0 contact, 0 vide) ; langue réelle détectée : 20 fr, 1 en (passée par la page française) — phrases hors dépôt | `make ingest-tally` (CSV en `docs/data/tally_phrases.csv`, ignoré par git) |
+| Classification des 21 phrases Tally par Apertus (`swiss-ai/Apertus-v1.5-70B`), 03.10 13:47 UTC — **Apertus seulement** (consentement) | 21 / 21 sorties acceptées par la validation, **dont 20 abstentions** ; 1 métier proposé. **Aucune exactitude mesurée** : feuille d'annotation (`metier_attendu`, `domaine`) à remplir par l'équipe | `make eval-classification FOURNISSEUR=apertus` → `prototype/eval/resultats_classification/foire-2026-qr-apertus.md` |
 
 ## Non exécuté (et pourquoi)
 - Apertus réel : aucun identifiant fourni. *(vrai au 30.09 ; depuis le 01.10, voir « Ajouts du 01.10 » ci-dessus.)*

@@ -53,7 +53,7 @@ des 26 cas : 25 / 26 sorties acceptées, 8 abstentions, 1 rejet ; langues des 26
 
 ## 5. Prévu ensuite (non fait, dit comme tel)
 
-Pilote avec les membres réels ; annotation humaine du jeu Tally (colonnes `metier_humain`, `domaine`) puis mesure
+Pilote avec les membres réels ; annotation humaine du jeu Tally (colonnes `metier_attendu`, `domaine`) puis mesure
 d'exactitude ; écran de demande du téléphone en allemand ; vrai envoi d'e-mails (fournisseur suisse, nLPD) ;
 adhésion croisée ; analyse d'impact nLPD / RGPD — voir [roadmap/ROADMAP.md](roadmap/ROADMAP.md).
 

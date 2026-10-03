@@ -54,3 +54,26 @@ La documentation (I, J) passe avant F, G et H. Si A à E dérapent, F, G et H so
 | 14:50 | I docs/roadmap (`f33b60a`) ; correctifs trouvés en capturant : demande rouverte (`5d9adb7`), « null » dans Suivi (`bb4bf02`) ; J présentation + deck (`e1c6576`), contrôle AA jour/nuit 0 échec | F → G → H | — |
 | 15:05 | F membre à distance (`da23a2a`) — suite verte, E2E 25/25 allumé. **CI : les jobs ne démarrent plus depuis `e1c6576` — refus de GitHub (« recent account payments have failed or your spending limit needs to be increased »), pas un échec du code ; à régler par Hiba dans Billing & plans.** Preuves locales tenues à chaque commit. | G → H | — |
 | 15:30 | G `make bilan` (`2d2d6de`), H pipeline Tally (`3ae1d9c`, phrases non arrivées), correctif interrupteur éteint (`7ca7be7`) ; livraison : 1 434 tests, E2E 25/25 allumé, éteint et réseau coupé ; [RAPPORT_NUIT.md](RAPPORT_NUIT.md). **Travail arrêté** : rien d'autre ne sera commité avant le gel. | — | — |
+
+## Vague 2 et 3 (consignes reçues à 15:47 — remplacent les précédentes)
+
+Construction jusqu'à 04:00 au plus tard, audit (90 min max, sous-agent à contexte neuf, branche `audit-nuit`), puis
+corrections et livraison avant 07:30. Aucun tag, aucun push sur `main` — **`main` n'existe pas sur le dépôt distant**
+(seules `foire-2026` et `claude/modest-bohr-xvk53n` existent) : l'audit prend pour base le point de divergence avec
+`claude/modest-bohr-xvk53n`.
+
+| Heure | Lot |
+|---|---|
+| 15:50 | §2 Tally : ingestion, classification Apertus, feuille d'annotation (`metier_attendu`, `domaine`) |
+| 16:15 | §4 P0 mode salle : QR multi-usage, accueil 2 gestes, écran géant, télécommande, bascule scriptée, purge, PUBLIC_BASE_URL |
+| 18:30 | §4.7 déploiement (compose, Caddy, .env.example, deploy.sh, purge.sh, DEPLOIEMENT.md) · §4.8 charge 80 téléphones |
+| 19:30 | §6 feuille de route révisée · §7 etat.yaml + /feuille-de-route (monde « visite ») |
+| 20:30 | §5 présentation v2 (02/03/03b/04/06 v2, 07, deck v2, fiches v2) |
+| 22:30 | §8 V6, V2, d, b, a, c, e, f, g, V3, V4, V5 — dans cet ordre, aussi loin que possible |
+| ≤ 04:00 | gel des fonctionnalités → audit → corrections → livraison |
+
+### Statut vague 2
+
+| Heure | Fait | En cours | Abandonné |
+|---|---|---|---|
+| 15:50 | plan | §2 Tally | — |

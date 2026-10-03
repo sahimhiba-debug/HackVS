@@ -106,7 +106,7 @@ def test_eval_classification_factice_sur_les_26_cas_et_feuille_d_annotation(tmp_
     assert not any(c["texte"] in rapport for c in cas)                        # agrégats seulement
     with (tmp_path / "f.csv").open(encoding="utf-8") as h:
         feuille = list(csv.DictReader(h))
-    assert len(feuille) == 26 and {"metier_humain", "domaine"} <= set(feuille[0]) and feuille[0]["domaine"] == ""
+    assert len(feuille) == 26 and {"metier_attendu", "domaine"} <= set(feuille[0]) and feuille[0]["domaine"] == ""
 
 
 def test_eval_classification_refuse_un_modele_frontiere_sur_les_phrases_de_la_foire(tmp_path):

@@ -11,7 +11,7 @@
   du banc. Imposé ici, par le code, et testé.
 - AUCUNE EXACTITUDE revendiquée sans étiquettes humaines : le rapport donne des AGRÉGATS (nombre de phrases, langues,
   distribution par métier, taux d'abstention, sorties rejetées) et une FEUILLE D'ANNOTATION pour l'équipe (colonnes
-  `metier_humain` et `domaine` = club | hors_club à remplir à la main)."""
+  `metier_attendu` et `domaine` = club | hors_club à remplir à la main)."""
 from __future__ import annotations
 
 import json

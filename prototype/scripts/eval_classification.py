@@ -8,7 +8,7 @@
   CONSENTEMENT : les phrases de la Foire ne passent QUE par Apertus (ou le factice) — refus explicite sinon.
 - Sortie contrainte (JSON, schéma), VALIDÉE par le code, abstention permise ; rapport d'AGRÉGATS (langues,
   distribution, abstention, rejets) dans `eval/resultats_classification/<source>-<fournisseur>.md` ; feuille
-  d'annotation CSV HORS DÉPÔT (`var/annotation/`) avec `metier_humain` et `domaine` (club | hors_club) à remplir.
+  d'annotation CSV HORS DÉPÔT (`var/annotation/`) avec `metier_attendu` et `domaine` (club | hors_club) à remplir.
 - Aucune exactitude revendiquée : elle se mesurera APRÈS l'annotation humaine."""
 import argparse
 import csv
@@ -74,12 +74,12 @@ def main() -> int:
     feuille.parent.mkdir(parents=True, exist_ok=True)
     with feuille.open("w", newline="", encoding="utf-8") as h:
         w = csv.writer(h)
-        w.writerow(["n", "texte", "langue_detectee", "metier_propose", "abstention", "rejet", "metier_humain", "domaine"])
+        w.writerow(["n", "texte", "langue_detectee", "metier_propose", "abstention", "rejet", "metier_attendu", "domaine"])
         for i, (p, r) in enumerate(zip(phrases, resultats, strict=True), 1):
             s = r["sortie"] or {}
             w.writerow([i, p["texte"], p["langue"], s.get("metier") or "", s.get("abstention", ""), r["rejet"] or "", "", ""])
     print(f"rapport (agrégats) : {rapport}")
-    print(f"feuille d'annotation (hors dépôt) : {feuille} — remplir metier_humain et domaine (club | hors_club)")
+    print(f"feuille d'annotation (hors dépôt) : {feuille} — remplir metier_attendu et domaine (club | hors_club)")
     return 0
 
 
