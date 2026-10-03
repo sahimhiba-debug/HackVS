@@ -11,7 +11,7 @@ export HACKVS_SEMANTIQUE ?= 0
 HOTE ?= 127.0.0.1
 URL_PUBLIQUE ?=
 
-.PHONY: setup browsers lint typecheck test e2e e2e-salle sonde-ia latence-ia banc-ia banc-ia-dry-run banc-ia-comparer eval secrets audit coverage demo quality-check mutation perf
+.PHONY: setup browsers lint typecheck test e2e e2e-salle sonde-ia latence-ia banc-ia banc-ia-dry-run banc-ia-comparer eval secrets audit coverage demo quality-check mutation perf bilan
 
 setup:
 	cd $(P) && $(PY) -m pip install -r requirements-dev.txt -c constraints.txt
@@ -32,6 +32,11 @@ E2E = tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py t
 
 test:
 	cd $(P) && $(PY) -m pytest -q $(addprefix --ignore=,$(E2E))
+
+# Bilan de période (Foire 2026 · G) : docs/bilans/bilan-<période>.md depuis le journal (HACKVS_ESSAIS_DB, sinon monde neuf)
+PERIODE ?= trimestre
+bilan:
+	cd $(P) && $(PY) scripts/bilan.py $(PERIODE) $(if $(BILAN_SCENE),--scene,)
 
 e2e:
 	cd $(P) && HACKVS_FOIRE=$${HACKVS_FOIRE:-1} HACKVS_E2E_OBLIGATOIRE=1 $(PY) -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py tests/test_e2e_capacites.py tests/test_e2e_hermetique.py tests/test_e2e_serveur.py tests/test_e2e_ia.py tests/test_e2e_foire.py
