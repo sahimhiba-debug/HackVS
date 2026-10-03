@@ -18,7 +18,8 @@ Le runbook v1 ([04_DEMO_RUNBOOK.md](04_DEMO_RUNBOOK.md)) reste le plan B complet
 ## 1. Avant le pitch (H-30 min)
 
 1. Alimentation branchée ; partage 4G prêt ; double-clic sur **« 1 - Lancer Club Pulse »** ; la check-list dit
-   **« FEU VERT v2 »** (sinon : la raison, ou passer en v1). Détail manuel : [DEMO_TUNNEL.md](../DEMO_TUNNEL.md).
+   **« FEU VERT v2 »** (« RÉPARER D'ABORD » : la raison est écrite ; « PASSER EN v1 » : double-clic sur
+   **« 3 - Passer en v1 »**, puis le runbook v1). Détail manuel : [DEMO_TUNNEL.md](../DEMO_TUNNEL.md).
 2. Régie du Mac : coller le jeton (⌘-V). Régie de V2 : la même chose sur son appareil.
 3. Régie → **« 1 · Ouvrir la salle (QR) »** (le lanceur a déjà réinitialisé la salle).
 4. Deck v2 → slide « Sortez vos téléphones » : le QR s'affiche (sinon l'emplacement dit « QR servi en direct »).

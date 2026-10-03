@@ -7,8 +7,8 @@
 1. **Poser le film sur le Bureau** du Mac — la seule vidéo du Bureau.
 2. **Double-clic sur « 1 - Lancer Club Pulse »** (dans le dossier HackVS).
 3. **Coller le jeton dans la régie** quand Chrome la montre (⌘-V : il est déjà dans le presse-papiers).
-4. **Attendre « FEU VERT v2 »** dans la fenêtre du Terminal (ou sur la page qui s'ouvre), puis présenter. Sinon : la
-   raison est écrite à côté ; si elle ne se règle pas, « PASSER EN v1 ».
+4. **Attendre « FEU VERT v2 »** (dernière ligne du Terminal, ou la page qui s'ouvre), puis présenter. « RÉPARER
+   D'ABORD » : la raison est écrite à côté. « PASSER EN v1 » : double-clic sur **« 3 - Passer en v1 »**.
 5. **Après le pitch : double-clic sur « 2 - Arrêter et effacer »** — attendre « Tout est éteint et effacé. »
 
 Sur papier : [carte de régie de V2](livrables/CARTE_REGIE_V2.pdf), [carte de V1](livrables/CARTE_V1.pdf),
@@ -32,8 +32,17 @@ Sur papier : [carte de régie de V2](livrables/CARTE_REGIE_V2.pdf), [carte de V1
   et l'anti-veille. Journaux : `~/.clubpulse/logs`.
 - **Il attend** que tout réponde, **réinitialise la salle**, ouvre Chrome sur la **régie** et sur le **deck v2**.
 - **La check-list** (dans le Terminal et sur `http://127.0.0.1:8000/preflight`, qui se met à jour seule) : film,
-  serveur local, adresse publique, deck, Mac sur secteur, salle réinitialisée. Dernière ligne : **« FEU VERT v2 »** ou
-  **« PASSER EN v1 »** avec la raison.
+  serveur local, adresse publique (vue **depuis Internet**, comme un téléphone en 4G), deck, Mac sur secteur, salle
+  réinitialisée. Dernière ligne :
+  - **« FEU VERT v2 »** : tout est vert ;
+  - **« RÉPARER D'ABORD »** : il manque quelque chose dont la v1 aurait aussi besoin (serveur, deck, secteur, salle) —
+    la raison est écrite ; la page `/preflight` repasse au vert toute seule une fois réparé ;
+  - **« PASSER EN v1 »** : seule l'adresse publique ne passe pas (le tunnel) — double-clic sur « 3 - Passer en v1 ».
+- La fenêtre du Terminal attend **Entrée** avant de se fermer.
+
+**« 3 - Passer en v1 »** : arrête le prototype du tunnel, ferme le tunnel, relance la démo v1 joignable sur le réseau
+du Mac (son partage de connexion, ou le Wi-Fi), ouvre l'Établi et le deck v1, et affiche l'adresse à ouvrir sur le
+téléphone de Pauline. La suite : [04_DEMO_RUNBOOK.md](04_DEMO_RUNBOOK.md) § 2.
 
 **« 2 - Arrêter et effacer »** : réinitialise la salle et vérifie qu'elle est vide (la promesse faite à la salle),
 ferme le tunnel, arrête tout, puis « Tout est éteint et effacé. ». Il ne touche jamais au film du Bureau.
@@ -51,7 +60,8 @@ message). L'onglet régie du Mac reste ouvert : c'est lui qui passe le jeton à 
 3. Installer **Google Chrome**.
 4. Premier double-clic : macOS demande « Terminal souhaite accéder aux fichiers de votre Bureau » → **OK** (sinon le
    film n'est pas trouvé : Réglages Système → Confidentialité et sécurité → Fichiers et dossiers → Terminal → Bureau).
-   Si macOS refuse d'ouvrir le fichier (téléchargé en zip plutôt que cloné) : clic droit → **Ouvrir**.
+   Si macOS refuse d'ouvrir le fichier (téléchargé en zip plutôt que cloné) : Réglages Système → Confidentialité et
+   sécurité → en bas, **« Ouvrir quand même »** (sur macOS 14 et avant, clic droit → Ouvrir suffit).
 5. Faire une répétition complète ([A6](#a6-répéter)) avec les deux double-clics.
 
 ---
@@ -352,6 +362,7 @@ Pas de tunnel. `make demo HOTE=0.0.0.0 URL_PUBLIQUE=http://<ip-du-Mac>:8000`, pu
 
 1. [ ] `git pull` ([A2](#a2-récupérer-le-code-sur-le-mac)) ; le film sur le Bureau ; Mac **sur secteur** ; partage 4G prêt.
 2. [ ] Double-clic sur **« 1 - Lancer Club Pulse »** ; coller le jeton dans la régie du Mac ; **« FEU VERT v2 »**.
+   Une fois aussi : **« 3 - Passer en v1 »**, pour savoir le faire (puis « 2 - Arrêter », et relancer « 1 »).
 3. [ ] V2 ouvre sa régie sur son appareil (`https://clubpulse.tailfcbc50.ts.net/salle/regie`, même jeton).
 4. [ ] Régie → « 1 · Ouvrir la salle » ; deck en plein écran (F), **mode répétition (R)**.
 5. [ ] Le QR s'affiche sur « Sortez vos téléphones ».

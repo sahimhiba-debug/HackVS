@@ -109,6 +109,9 @@ def carte_v1() -> str:
 <ul class="coeur">{coeur}</ul>
 <h2>Repères de chrono (touche R en répétition seulement)</h2>
 <table>{reperes}</table>
+<h2>Avant de monter</h2>
+<p>La check-list doit dire <b>« FEU VERT v2 »</b>. « RÉPARER D'ABORD » : la raison est écrite. « PASSER EN v1 » :
+double-clic sur <b>« 3 - Passer en v1 »</b>, puis le script v1.</p>
 <h2>Touches du deck</h2>
 <div class="touches">{touches}</div>
 <div class="cadre">Si on demande où tourne la démo : « la démo est servie depuis notre machine, à Martigny, via un tunnel

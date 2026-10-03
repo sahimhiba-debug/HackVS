@@ -37,3 +37,9 @@ def test_les_phrases_par_coeur_sont_dans_le_texte_a_dire():
 def test_les_cartes_disent_l_adresse_et_la_purge():
     assert cartes.URL_REGIE in cartes.carte_regie() and "2 - Arrêter et effacer" in cartes.carte_regie()
     assert "touche B" in cartes.carte_regie()
+
+
+def test_chaque_carte_tient_sur_une_page():
+    for nom in ("CARTE_REGIE_V2", "CARTE_V1"):
+        pdf = (PRES / "livrables" / f"{nom}.pdf").read_bytes()
+        assert len(re.findall(rb"/Type\s*/Page(?!s)", pdf)) == 1, nom
