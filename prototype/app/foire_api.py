@@ -192,8 +192,8 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
         return au_monde(foire(lambda c: piliers.declarer(c, pid, x.actif)))
 
     @r.get("/moi/escalades")
-    def mes_escalades(pid: str = Depends(membre)) -> list[dict]:
-        return au_monde(foire(lambda c: piliers.escalades(c, pid)))
+    def mes_escalades(pid: str = Depends(membre)) -> dict:
+        return au_monde(foire(lambda c: piliers.pour_membre(c, pid)))
 
     @r.get("/console/piliers", dependencies=[Depends(console)])
     def lire_piliers() -> dict:

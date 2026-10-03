@@ -36,6 +36,16 @@ def declarer(c: "ClubPulse", pid: str, actif: bool) -> dict:
 def escalades(c: "ClubPulse", pid: str) -> list[dict]:
     if pid not in actuels(c):
         raise Interdit("réservé aux membres piliers volontaires")
+    return _bloquees(c)
+
+
+def pour_membre(c: "ClubPulse", pid: str) -> dict:
+    """Pour la route : un non-pilier reçoit « pilier : non » et rien d'autre (pas d'erreur : il est bien authentifié)."""
+    p = pid in actuels(c)
+    return {"pilier": p, "escalades": _bloquees(c) if p else []}
+
+
+def _bloquees(c: "ClubPulse") -> list[dict]:
     return [{"titre": d["titre"], "piece": d["piece"], "metier": g["libelle"], "age_jours": d["age_jours"]}
             for g in club_cherche.calculer(c)["metiers"] for d in g["demandes"] if d["age_jours"] >= SEUIL_BLOQUEE]
 

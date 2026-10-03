@@ -43,9 +43,9 @@ def test_routes(monkeypatch):
     client.post("/api/pulse/demo/reinitialiser", headers=CONSOLE)
     per = {p["id"]: p for p in client.get("/api/pulse/console/personas", headers=CONSOLE).json()}
     s = {"X-Pulse-Session": per[md.MARKUS]["session"]}
-    assert client.get("/api/pulse/moi/escalades", headers=s).status_code == 403
+    assert client.get("/api/pulse/moi/escalades", headers=s).json() == {"pilier": False, "escalades": []}
     assert client.post("/api/pulse/moi/pilier", headers=s, json={"actif": True}).json() == {"pilier": True}
-    assert client.get("/api/pulse/moi/escalades", headers=s).status_code == 200
+    assert client.get("/api/pulse/moi/escalades", headers=s).json()["pilier"] is True
     agr = client.get("/api/pulse/console/piliers", headers=CONSOLE).json()
     assert agr["piliers"] == "< 3" and per[md.MARKUS]["nom"] not in json.dumps(agr, ensure_ascii=False)
     monkeypatch.setenv("HACKVS_FOIRE", "0")
