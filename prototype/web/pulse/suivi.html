@@ -42,6 +42,12 @@
       <button class="btn discret petit" role="tab" data-vue="cherche" aria-selected="false">Le Club cherche</button>
       <button class="btn discret petit" role="tab" data-vue="boite" aria-selected="false">Boîte de sortie</button>
       <button class="btn discret petit" role="tab" data-vue="assembler" aria-selected="false">Ce que votre Club pourrait assembler</button>
+      <button class="btn discret petit" role="tab" data-vue="tableau" aria-selected="false">Tableau du secrétariat</button>
+    </div>
+    <div id="vue-tableau" hidden>
+      <h1 class="titre">Tableau du secrétariat</h1>
+      <p class="sous">Ce qui demande une action cette semaine. Agrégats seulement, aucun nom. Monde de démonstration.</p>
+      <div id="tableau"></div>
     </div>
     <div id="vue-assembler" hidden>
       <h1 class="titre">Ce que votre Club pourrait assembler</h1>
@@ -203,7 +209,25 @@
       if (b.dataset.vue === "boite") lireBoite();
       $("#vue-assembler").hidden = b.dataset.vue !== "assembler";
       if (b.dataset.vue === "assembler") lireAssembler();
+      $("#vue-tableau").hidden = b.dataset.vue !== "tableau";
+      if (b.dataset.vue === "tableau") lireTableau();
     });
+    async function lireTableau() {
+      try {
+        const r = await consoleFetch("/api/pulse/console/tableau", {});
+        if (!r.ok) return;
+        const t = await r.json();
+        $("#tableau").replaceChildren(h("div", { class: "grille" },
+          tuile("Demandes bloquées", t.demandes_bloquees, `sans réponse depuis ${t.seuil_bloquee_jours} jours ou plus · ${t.demandes_sans_reponse} sans réponse en tout`),
+          tuile("Invités actifs", t.invites_actifs, "passes découverte en cours"),
+          tuile("Nouveaux liens tissés", t.nouveaux_liens, "deux entreprises, une même capacité, pour la première fois"),
+          tuile("Annonces sous chiffre", t.annonces.annonces, `intérêts : ${t.annonces.interets} · accords mutuels : ${t.annonces.accords_mutuels}`),
+          tuile("Membres associés", t.associes, "via un partenaire (exemple fictif)")),
+          h("p", { class: "note", "data-role": "metiers-manquants" }, "Métiers manquants : " +
+            (t.metiers_manquants.map((m) => `${m.metier} (${m.demandes}, depuis ${m.age_max_jours} j)`).join(" · ") || "aucun")),
+          h("p", { class: "note" }, t.regle));
+      } catch (e) { /* écran figé */ }
+    }
     async function lireAssembler() {
       try {
         const r = await consoleFetch("/api/pulse/console/club/assembler", {});

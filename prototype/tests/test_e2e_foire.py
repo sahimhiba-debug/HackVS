@@ -178,6 +178,10 @@ def test_ce_que_votre_club_pourrait_assembler(url_foire):
         console.goto(url_foire + "/suivi")
         console.click("#vues [data-vue=assembler]")
         console.locator("[data-role=assemblables]:has-text('8 sur 9')").wait_for()
+        console.click("#vues [data-vue=tableau]")
+        console.locator("[data-tuile='Demandes bloquées']").wait_for()
+        assert "Métiers manquants" in console.inner_text("[data-role=metiers-manquants]")
+        console.click("#vues [data-vue=assembler]")
         assert console.locator("[data-capacite=delegation][data-assemblable=false]").inner_text().count("manque : interprète") == 1
         assert "classification à confirmer" in console.inner_text("#assembler-source")
         assert "< 3 entreprises" in console.inner_text("[data-role=cherche-liste]")
