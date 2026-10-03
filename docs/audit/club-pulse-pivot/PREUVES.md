@@ -85,6 +85,13 @@ chemin du produit (`carte.proposer`) ; rejeu : `cd prototype && python -m eval.b
 | 1. un seul appel (image → champs), 14:22 UTC | 0/6 | 1/6 | 1/6 | 6/6 | ~1,0 s |
 | 2. deux temps (image → texte recopié, puis texte → champs sous schéma), 14:31 UTC — **retenue** | 4/6 | 5/6 | 5/6 | 6/6 | ~1,8 s |
 
+**Règle des 5/5** (même carte, cinq essais, entreprise ET métier justes ; température 0, donc des essais identiques —
+le verdict dépend de la CARTE) : carte fictive k1 (tisanes) **0/5** — métier proposé « autre » au lieu d'« agriculture » ;
+carte fictive k6 (fiduciaire) **5/5**. Rejeu : `python -m eval.banc_carte --cinq k1` (resp. `k6`) →
+`eval/resultats_carte/cinq-*.md`. **La carte n'entre sur scène que si la VRAIE carte du présentateur fait 5/5 au rituel**
+(`python -m eval.banc_carte --photo <photo> --entreprise "<nom>" --metier <id>` ; rapport hors dépôt). D'ici là :
+monde « visite » seulement.
+
 Constat : en un seul appel, le modèle mettait le nom de la PERSONNE dans « entreprise » et répondait presque toujours
 « communication » / « Vaud » ; il recopie pourtant le texte de la carte sans faute. Le membre confirme ou corrige
 toujours ; la photo n'est jamais conservée.
