@@ -1,4 +1,5 @@
-# Taxonomie des MÉTIERS (Foire 2026) — 21 métiers, libellés FR / DE.
+# Taxonomie des MÉTIERS (Foire 2026) — 25 métiers, libellés FR / DE (4 ajoutés le 3 octobre d'après la liste du Club :
+# conseil, commerce, collectivité, tourisme).
 # Sert : la déclaration d'un invité (passe découverte), « le Club cherche » (métiers présents / absents), Suivi (métiers
 # manquants), la classification des phrases Tally (scripts/eval_classification.py). `role:` relie un métier au rôle d'une
 # pièce des patrons de capacités (« public » — des acheteurs, un auditoire — n'est pas un métier : « autre »).
@@ -71,6 +72,18 @@
 - id: sante
   fr: Santé, sécurité
   de: Gesundheit, Sicherheit
+- id: conseil
+  fr: Conseil, coaching
+  de: Beratung, Coaching
+- id: commerce
+  fr: Commerce, distribution
+  de: Handel, Vertrieb
+- id: collectivite
+  fr: Collectivité, institution
+  de: Gemeinwesen, Institution
+- id: tourisme
+  fr: Tourisme, loisirs
+  de: Tourismus, Freizeit
 - id: autre
   fr: Autre
   de: Andere
