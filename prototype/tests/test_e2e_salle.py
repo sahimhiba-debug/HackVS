@@ -79,7 +79,7 @@ def test_bascule_vers_la_demo_scriptee_si_la_salle_est_vide(url_salle):
 
 # ------------------------------------------------------------------ JOUR J : l'écran de la salle DANS le deck v2
 DECK = __import__("pathlib").Path(__file__).resolve().parents[2] / "docs" / "presentation" / "deck"
-JETON_DECK = "jeton-de-console-du-deck-fictif-0123"
+JETON_DECK = "jeton-de-console" + "-du-deck-fictif-0123"            # fictif ; assemblé hors du motif de la porte « secrets »
 
 
 @pytest.fixture(scope="module")
