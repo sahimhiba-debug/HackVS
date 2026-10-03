@@ -239,3 +239,9 @@
   de: Sekretariatskonsole — Konten (einladen, sperren), zu bestätigende Branchen, im Voraus eingefrorene Pilotkriterien, Quartalsbericht (Markdown, CSV, PDF), « Der Club sucht » mit Einladungskampagne
   en: Secretariat console — accounts (invite, revoke), company trades to confirm, pilot criteria frozen in advance, quarterly report (Markdown, CSV, PDF), « The Club is looking for » linked to an invitation campaign
   tests: test_annee1_secretariat.py, test_annee1_secretariat_api.py
+- id: a1-notifications
+  statut: annee1
+  fr: Notifications — e-mail par n'importe quel serveur SMTP, SMS (interface et faux fournisseur), modèles FR/DE, suivi d'envoi sans adresse ni contenu, désinscription par lien signé ; en démo, tout simulé et étiqueté
+  de: Benachrichtigungen — E-Mail über jeden SMTP-Server, SMS (Schnittstelle und Testanbieter), Vorlagen FR/DE, Versandprotokoll ohne Adresse und Inhalt, Abmeldung per signiertem Link; in der Demo alles simuliert und gekennzeichnet
+  en: Notifications — e-mail through any SMTP server, SMS (interface and fake provider), FR/DE templates, delivery tracking without address or content, unsubscribe by signed link; in the demo, everything simulated and labelled
+  tests: test_annee1_notifications.py, test_annee1_notifications_api.py

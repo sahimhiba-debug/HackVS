@@ -76,6 +76,7 @@ def main() -> None:
         large.screenshot(path=str(DOSSIER / "lot4-console-secretariat.png"), full_page=True)
         nav.close()
     capturer_espace()
+    capturer_desinscription()
     print("vitrine annee-1 capturée dans", DOSSIER)
 
 
@@ -99,6 +100,18 @@ def capturer_espace() -> None:
         pg.locator("#pause-etat:has-text('En pause')").wait_for()
         pg.wait_for_timeout(300)
         pg.screenshot(path=str(DOSSIER / "lot3-espace-membre.png"), full_page=True)
+        nav.close()
+
+
+def capturer_desinscription() -> None:
+    """LOT 5 : la page de désinscription, telle que l'ouvre le lien d'un e-mail (avant le clic)."""
+    with serveur(HACKVS_NOTIFICATIONS="1", HACKVS_ESSAIS_DB=str(Path(tempfile.mkdtemp()) / "j.db")) as base, sync_playwright() as p:
+        nav = p.chromium.launch(executable_path="/opt/pw-browsers/chromium")
+        pg = nav.new_context(viewport=TELEPHONE).new_page()
+        pg.goto(f"{base}/desinscription#j=exemple.email.lien.fictif")
+        pg.locator("#ok").wait_for()
+        pg.wait_for_timeout(300)
+        pg.screenshot(path=str(DOSSIER / "lot5-desinscription.png"))
         nav.close()
 
 

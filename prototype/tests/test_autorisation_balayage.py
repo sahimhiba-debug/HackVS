@@ -30,7 +30,8 @@ CONSOLE = {"X-Pulse-Console": "1"}
 PUBLIQUES = {("POST", "/api/pulse/acces"), ("POST", "/api/pulse/jure"), ("POST", "/api/pulse/decouverte/activer"),
              ("POST", "/api/pulse/courriel/lire"), ("POST", "/api/pulse/courriel/repondre"),   # liens d'e-mail : signés
              ("POST", "/api/pulse/salle/entrer"),                                                 # QR de la salle : signé
-             ("GET", "/api/pulse/monde"), ("GET", "/api/pulse/feuille-de-route")}                 # publics, lecture seule
+             ("GET", "/api/pulse/monde"), ("GET", "/api/pulse/feuille-de-route"),                 # publics, lecture seule
+             ("POST", "/api/pulse/notifications/desinscrire")}                                    # lien d'e-mail : signé
 VALEURS = {"n": "1", "index": "0", "etape": "0"}
 
 
@@ -47,6 +48,7 @@ def monde(tmp_path, monkeypatch):
     monkeypatch.setenv("HACKVS_ESPACE_MEMBRE", "1")                   # ANNÉE 1 · lot 3 : l'espace membre aussi
     monkeypatch.setenv("HACKVS_COMPTES", "1")                         # ANNÉE 1 · lot 4 : la console du secrétariat aussi
     monkeypatch.setenv("HACKVS_SECRETARIAT", "1")
+    monkeypatch.setenv("HACKVS_NOTIFICATIONS", "1")                   # ANNÉE 1 · lot 5
     routeur = creer_routeur(TAX)
     app = FastAPI()
     app.include_router(routeur)

@@ -160,6 +160,10 @@ def _imprimer_pdf(html_doc: str) -> bytes:
             b.close()
 
 
+class Desinscription(BaseModel):
+    jeton: str = Field(min_length=8, max_length=200)
+
+
 class Temps(BaseModel):
     jours: int = Field(ge=1, le=60)
 
@@ -605,6 +609,33 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     @r.post("/secretariat/invitations")
     def sec_inviter(x: InvitationConsole, s: str = Depends(secretariat)) -> dict:
         return au_monde(lambda c: comptes().inviter(s, role=x.role, etiquette=x.etiquette, duree_s=x.duree_s))
+
+    # ------------------------------------------------------------------ ANNÉE 1 · LOT 5 : notifications
+    def notifications_allumees() -> None:
+        if os.environ.get("HACKVS_NOTIFICATIONS") != "1":
+            raise HTTPException(404, "Not Found")
+
+    def notifications(request: Request):
+        from intelligence import notifications as nt
+        return nt.depuis_env(etat["demo"].club, base_publique(request))
+
+    @r.get("/secretariat/notifications", dependencies=[Depends(notifications_allumees)])
+    def sec_notifications(request: Request, s: str = Depends(secretariat)) -> dict:
+        n = notifications(request)
+        return au_monde(lambda c: n.suivi())
+
+    @r.post("/secretariat/notifications/relance", dependencies=[Depends(notifications_allumees)])
+    def sec_relance(request: Request, s: str = Depends(secretariat)) -> dict:
+        from intelligence import notifications as nt
+        n = notifications(request)
+        return au_monde(lambda c: nt.relancer_demandes(n))
+
+    @r.post("/notifications/desinscrire", dependencies=[Depends(notifications_allumees)])
+    def desinscrire(x: Desinscription, request: Request) -> dict:
+        """PUBLIQUE : le lien signé de chaque message (aucune session : on se désinscrit sans se connecter)."""
+        limiter(limite_acces_global, "desinscription")
+        n = notifications(request)
+        return au_monde(lambda c: n.desinscrire(x.jeton))
 
     @r.get("/secretariat/bilan.{fmt}")
     def sec_bilan(fmt: str, s: str = Depends(secretariat)) -> Response:

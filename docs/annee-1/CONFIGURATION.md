@@ -71,7 +71,20 @@ Règles :
 | `HACKVS_SECRETARIAT` | `0` | **lot 4** — `1` (avec `HACKVS_COMPTES=1`) : console du secrétariat (`/secretariat`) — compte nominatif, double authentification et session élevée exigés |
 | `CHROMIUM` | `/opt/pw-browsers/chromium` | **lot 4** — navigateur qui imprime le bilan en PDF, si Playwright ne trouve pas le sien |
 | `HACKVS_CRITERES_PILOTE` | `docs/annee-1/pilote/criteres.json` | **lot 4** — fichier des critères du pilote (gelés par empreinte depuis la console) |
+| `HACKVS_NOTIFICATIONS` | `0` | **lot 5** — `1` : notifications (relance depuis la console, désinscription `/desinscription`) |
+| `HACKVS_SMS` | (vide : simulé) | **lot 5** — `faux` : faux fournisseur SMS en mémoire (tests) ; aucun vrai fournisseur branché |
 | `HACKVS_ESPACE_MEMBRE` | `0` | **lot 3** — `1` : espace membre (`/espace` : pause, préférences, mes demandes, export, effacement définitif) |
+
+## E-mail (lot 5 — sans `SMTP_HOST`, tout est simulé)
+
+| Variable | Défaut | Rôle |
+|---|---|---|
+| `SMTP_HOST` | (vide : simulé) | serveur SMTP |
+| `SMTP_PORT` | `587` | port |
+| `SMTP_STARTTLS` | `1` | `0` : sans STARTTLS (serveur local de test seulement) |
+| `SMTP_UTILISATEUR` | (vide) | identifiant SMTP |
+| `SMTP_MOT_DE_PASSE` | (vide) | **secret** — mot de passe SMTP |
+| `SMTP_EXPEDITEUR` | `club@exemple.invalid` | adresse d'expédition |
 
 ## Intelligence artificielle (facultative : le Club marche pareil sans)
 

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Club Pulse · Désinscription</title>
+  <meta name="description" content="Ne plus recevoir les messages du Club sur ce canal.">
+  <link rel="icon" href="/static/pulse/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/pulse/pulse.css">
+  <style>
+    body { background: var(--papier); }
+    .page { max-width: 520px; margin: 0 auto; padding: 16px; display: grid; gap: 14px; }
+    .bloc { background: var(--card); border-radius: var(--r-card); padding: 16px; box-shadow: var(--sh-card-light); }
+    .etat { min-height: 1.2em; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <span class="marque"><span class="pouls-point" aria-hidden="true"></span>Club Pulse</span>
+    <section class="bloc">
+      <h1 style="font-size:20px;margin:0 0 8px">Ne plus recevoir ces messages</h1>
+      <p lang="fr">Un clic suffit : le Club n'utilisera plus ce canal (e-mail ou SMS) pour vous écrire.</p>
+      <p lang="de">Ein Klick genügt: Der Club verwendet diesen Kanal (E-Mail oder SMS) nicht mehr.</p>
+      <button class="btn" id="ok">Me désinscrire · Abmelden</button>
+      <p class="etat" id="etat" aria-live="polite"></p>
+    </section>
+  </main>
+  <script type="module">
+    const $ = (s) => document.querySelector(s);
+    const jeton = new URLSearchParams(location.hash.slice(1)).get("j");
+    if (!jeton) { $("#ok").disabled = true; $("#etat").textContent = "Lien incomplet. · Unvollständiger Link."; }
+    $("#ok").addEventListener("click", async () => {
+      const r = await fetch("/api/pulse/notifications/desinscrire", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jeton }) });
+      const d = await r.json().catch(() => ({}));
+      $("#etat").textContent = r.ok ? `C'est fait : plus aucun message par ${d.canal === "sms" ? "SMS" : "e-mail"}. · Erledigt.` : "Lien invalide ou expiré. · Ungültiger Link.";
+      if (r.ok) { $("#ok").disabled = true; history.replaceState(null, "", location.pathname); }
+    });
+  </script>
+</body>
+</html>
