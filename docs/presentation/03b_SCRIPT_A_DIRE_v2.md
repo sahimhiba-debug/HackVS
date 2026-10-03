@@ -76,7 +76,7 @@ testé.
 
 ## Acte 6 — La feuille de route · 14:00–16:20 · V1
 
-[lire les chiffres de la slide, tirés de etat.yaml] Onze chantiers construits et testés, un validé sur le terrain, huit prévus. [clic] La feuille de route est vivante :
+[lire les chiffres de la slide, tirés de etat.yaml] Douze chantiers construits et testés, un validé sur le terrain, huit prévus. [clic] La feuille de route est vivante :
 scannez, vous l'avez sur votre téléphone.
 Trente jours pour lancer, quarante-cinq pour prouver. [clic] Le pilote court de début janvier à mi-février, au plus
 fort des Mondiaux de Crans-Montana. [clic] C'est voulu. Quand tout le monde manque de tout, l'entraide tient-elle ?

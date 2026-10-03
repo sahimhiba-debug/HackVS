@@ -535,11 +535,13 @@
     // FOIRE 2026 (F, B) : zone, langue, « visible par le Club » — seulement si l'interrupteur est allumé (sinon : rien)
     async function foireDistance() {
       let x;
-      try { if (!(await api("/api/pulse/moi/foire")).actif) return; x = await api("/api/pulse/moi/distance"); } catch (e) { return; }
+      let assoc = null;
+      try { if (!(await api("/api/pulse/moi/foire")).actif) return; x = await api("/api/pulse/moi/distance"); assoc = await api("/api/pulse/moi/associe"); } catch (e) { return; }
       const zone = h("select", { id: "dist-zone" }, x.zones.map((z) => h("option", { value: z, selected: x.profil && x.profil.zone === z }, z)));
       const langue = h("select", { id: "dist-langue" }, x.langues.map((l) => h("option", { value: l, selected: x.profil && x.profil.langue === l }, l === "fr" ? "français" : "Deutsch")));
       const bloc = $("#foire-distance"); if (!bloc) return;
       bloc.replaceChildren(...[sectionCarte(),
+        assoc && assoc.partenaire ? h("p", { class: "encadre", "data-role": "associe" }, `Statut : membre associé, via ${assoc.partenaire.nom}.`) : null,
         section("Où je suis, ma langue",
         h("p", { class: "note" }, "Pour recevoir les demandes par e-mail et compter les membres hors Valais (jamais nommément)."),
         zone, langue, h("button", { class: "btn discret petit", id: "dist-enregistrer", onclick: async () => {

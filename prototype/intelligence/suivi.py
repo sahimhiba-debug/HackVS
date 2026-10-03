@@ -17,7 +17,7 @@ from collections import Counter
 from datetime import date, timedelta
 from typing import TYPE_CHECKING, Optional, Union
 
-from . import anonymat, distance, liens
+from . import anonymat, associe, distance, liens
 from .erreurs import Invalide
 from .partenariats import CLUB, ETAPES, RESULTATS, demandes_repondues, recus_du_club
 
@@ -108,6 +108,7 @@ def calculer(c: "ClubPulse", periode: str = "demo") -> dict:
         "metiers_manquants": [{"metier": m, "demandes": n} for m, n in manquants.most_common()],
         "membres_actifs": anonymat.seuil(c, actifs, len(actifs)),
         "liens": liens.nouveaux(c, debut),
+        "associes": associe.agregats(c)["associes"],
         "hors_valais": distance.zones_membres(c, debut, k),
         "invites": invites.statistiques(debut, k) if invites is not None else {"actifs": 0, "ont_contribue": 0, "intentions_adhesion": 0},
         "nominatif": nominatif,

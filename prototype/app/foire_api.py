@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
 from .urls import base_publique
-from intelligence import assembler, carte, club_cherche, distance, metiers, partenariats, recu_27560, suivi
+from intelligence import assembler, associe, carte, club_cherche, distance, metiers, partenariats, recu_27560, suivi
 
 
 class Cloture(BaseModel):
@@ -63,6 +63,10 @@ class Profil(BaseModel):
 class Lien(BaseModel):
     jeton: str = Field(max_length=300)
     attributs: dict[str, int] = Field(default_factory=dict, max_length=4)
+
+
+class Associe(BaseModel):
+    membre: str = Field(min_length=1, max_length=40)
 
 
 def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: Callable, *, limiter: Callable,
@@ -150,6 +154,22 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
             raise HTTPException(404, "Export ISO/IEC TS 27560 désactivé (HACKVS_RECU_27560=0).")
         doc = au_monde(lambda c: recu_27560.export(c, pid))
         return Response(json.dumps(doc, ensure_ascii=False), media_type="application/ld+json")
+
+    @r.get("/console/associes", dependencies=[Depends(console)])
+    def lire_associes() -> dict:
+        return au_monde(foire(associe.agregats))
+
+    @r.post("/console/associes", dependencies=[Depends(console)])
+    def declarer_associe(x: Associe) -> dict:
+        return au_monde(foire(lambda c: associe.declarer(c, x.membre)))
+
+    @r.post("/console/associes/retirer", dependencies=[Depends(console)])
+    def retirer_associe(x: Associe) -> dict:
+        return au_monde(foire(lambda c: associe.retirer(c, x.membre)))
+
+    @r.get("/moi/associe")
+    def mon_statut_associe(pid: str = Depends(membre)) -> dict:
+        return au_monde(foire(lambda c: associe.statut(c, pid)))
 
     @r.get("/console/club/assembler", dependencies=[Depends(console)])
     def club_assembler() -> dict:

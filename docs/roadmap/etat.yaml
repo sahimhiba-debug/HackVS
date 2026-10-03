@@ -80,6 +80,13 @@
   en: Receipts aligned with ISO/IEC TS 27560 (JSON-LD export, DPV vocabulary) — aligned, not certified
   ecran: /api/pulse/moi/recus/27560
   tests: test_recu_27560.py
+- id: associe
+  statut: construit
+  fr: Statut « membre associé » via une organisation partenaire (exemple fictif)
+  de: Status « assoziiertes Mitglied » über eine Partnerorganisation (fiktives Beispiel)
+  en: « Associate member » status through a partner organisation (fictional example)
+  ecran: /app#donnees
+  tests: test_associe.py
 - id: tally
   statut: valide
   fr: Phrases recueillies par le QR de la Foire (21, en agrégats)
