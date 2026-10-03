@@ -87,6 +87,76 @@
   en: « Associate member » status through a partner organisation (fictional example)
   ecran: /app#donnees
   tests: test_associe.py
+- id: coach_smart
+  statut: construit
+  fr: Coach SMART d'une demande (quand ? combien ? où ?), identique IA allumée ou éteinte
+  de: SMART-Coach für eine Anfrage (wann? wie viele? wo?), mit und ohne KI gleich
+  en: SMART coach for a request (when? how many? where?), same with AI on or off
+  ecran: /app#action
+  tests: test_coach_smart.py
+- id: liens
+  statut: construit
+  fr: Suivi : nouveaux liens tissés entre entreprises
+  de: Monitoring: neu geknüpfte Verbindungen zwischen Unternehmen
+  en: Follow-up: new ties between companies
+  ecran: /suivi
+  tests: test_liens.py
+- id: allemand
+  statut: construit
+  fr: Interface du téléphone en allemand (traduction à relire)
+  de: Telefon-Oberfläche auf Deutsch (Übersetzung zu prüfen)
+  en: Phone interface in German (translation to be reviewed)
+  ecran: /app?lang=de
+  tests: test_e2e_foire.py
+- id: annonces
+  statut: construit
+  fr: Annonces sous chiffre, relayées jusqu'à l'accord mutuel
+  de: Chiffre-Inserate, vermittelt bis zur gegenseitigen Zustimmung
+  en: Blind ads relayed until mutual agreement
+  ecran: /app#donnees
+  tests: test_annonces.py
+- id: tableau
+  statut: construit
+  fr: Tableau du secrétariat (agrégats)
+  de: Übersicht des Sekretariats (Aggregate)
+  en: Secretariat dashboard (aggregates)
+  ecran: /suivi
+  tests: test_tableau_bord.py
+- id: piliers
+  statut: construit
+  fr: Escalade vers des membres piliers volontaires
+  de: Eskalation an freiwillige Stützpfeiler-Mitglieder
+  en: Escalation to volunteer pillar members
+  ecran: /app#donnees
+  tests: test_piliers.py
+- id: reciprocite
+  statut: construit
+  fr: Balance de réciprocité privée
+  de: Private Gegenseitigkeitsbilanz
+  en: Private reciprocity balance
+  ecran: /app#donnees
+  tests: test_reciprocite.py
+- id: startup
+  statut: construit
+  fr: Passe start-up — pont The Ark (proposé, à valider)
+  de: Start-up-Pass — Brücke The Ark (vorgeschlagen, zu bestätigen)
+  en: Start-up pass — The Ark bridge (proposed, to be validated)
+  ecran: /suivi
+  tests: test_passe_startup.py
+- id: conformite
+  statut: construit
+  fr: Information FR/DE et modèle de registre (à valider par un juriste)
+  de: Information FR/DE und Verzeichnisvorlage (juristisch zu prüfen)
+  en: FR/DE notice and register template (to be validated by a lawyer)
+  ecran: /confidentialite
+  tests: test_deploiement.py
+- id: affinage
+  statut: construit
+  fr: Pipeline d'affinage prêt (entraînement non lancé)
+  de: Feinabstimmungs-Pipeline bereit (Training nicht gestartet)
+  en: Fine-tuning pipeline ready (training not started)
+  ecran: /feuille-de-route
+  tests: test_finetune.py
 - id: tally
   statut: valide
   fr: Phrases recueillies par le QR de la Foire (21, en agrégats)

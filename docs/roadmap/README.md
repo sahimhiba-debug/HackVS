@@ -30,6 +30,16 @@ simulée). Le Club réel compte **145 entreprises et 173 représentants** ; rien
 | La carte devient le profil — photo de sa carte, Apertus propose, le membre confirme | ✅ Construit | test_carte_profil.py, test_e2e_foire.py |
 | Reçus alignés sur ISO/IEC TS 27560 (export JSON-LD, vocabulaire DPV) — aligné, pas certifié | ✅ Construit | test_recu_27560.py |
 | Statut « membre associé » via une organisation partenaire (exemple fictif) | ✅ Construit | test_associe.py |
+| Coach SMART d'une demande (quand ? combien ? où ?), identique IA allumée ou éteinte | ✅ Construit | test_coach_smart.py |
+| Suivi : nouveaux liens tissés entre entreprises | ✅ Construit | test_liens.py |
+| Interface du téléphone en allemand (traduction à relire) | ✅ Construit | test_e2e_foire.py |
+| Annonces sous chiffre, relayées jusqu'à l'accord mutuel | ✅ Construit | test_annonces.py |
+| Tableau du secrétariat (agrégats) | ✅ Construit | test_tableau_bord.py |
+| Escalade vers des membres piliers volontaires | ✅ Construit | test_piliers.py |
+| Balance de réciprocité privée | ✅ Construit | test_reciprocite.py |
+| Passe start-up — pont The Ark (proposé, à valider) | ✅ Construit | test_passe_startup.py |
+| Information FR/DE et modèle de registre (à valider par un juriste) | ✅ Construit | test_deploiement.py |
+| Pipeline d'affinage prêt (entraînement non lancé) | ✅ Construit | test_finetune.py |
 | Phrases recueillies par le QR de la Foire (21, en agrégats) | 🟢 Validé sur le terrain | 21 réponses réelles du 03.10.2026 ; 20 fr, 1 en ; classées par Apertus seulement (21 validées, 20 abstentions) — PREUVES.md |
 | Pilote de 45 jours avec 50 membres volontaires parmi les 173 représentants (janvier – mi-février 2027) | ⬜ Prévu | critères à valider avec le Club |
 | Analyse d'impact nLPD / RGPD avec un juriste | ⬜ Prévu | — |

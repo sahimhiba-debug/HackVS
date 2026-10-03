@@ -137,7 +137,7 @@ profil » — démonstration sur le téléphone de V2. Sinon : rien, on enchaîn
 
 [slide « Où nous en sommes »]
 
-> [lire les chiffres de la slide, tirés de etat.yaml] Douze chantiers construits et testés, un validé sur le terrain, huit prévus. [clic] La feuille de route est vivante :
+> [lire les chiffres de la slide, tirés de etat.yaml] Vingt-deux chantiers construits et testés, un validé sur le terrain, huit prévus. [clic] La feuille de route est vivante :
 > scannez, vous l'avez sur votre téléphone.
 
 [slide « 30 jours pour lancer, 45 pour prouver »]

@@ -28,7 +28,7 @@ membre, aucune phrase Tally, aucun partenaire présenté comme acquis.
 | 13b | `carte-profil` | 4 | **seulement avec `?carte=1`** | règle des 5/5 |
 | 14 | `science` | 5 | Flynn & Lake (~50 %), Reciprocity Ring (24 / 114), liens faibles (Science 2022) | PREUVES « Contexte » |
 | 15 | `preuves` | 5 | reçu ; 80 téléphones, 0 erreur, p95 ≤ 210 ms (serveur local) ; 21 phrases Tally (agrégats, Apertus seulement) ; 1 / 26 (Apertus 1.5, CSCS) + parité | gel.json v2 ← PREUVES |
-| 16 | `ou` | 6 | construit / validé / prévu (12 / 1 / 8 au 03.10) ; QR de la feuille de route en direct | gel.json v2 ← etat.yaml |
+| 16 | `ou` | 6 | construit / validé / prévu (22 / 1 / 8 au 03.10) ; QR de la feuille de route en direct | gel.json v2 ← etat.yaml |
 | 17 | `jalons` | 6 | 30 jours / 45 jours ; Mondiaux 1er – 14.02.2027 ; risque nommé ; critères « à valider avec le Club » | ROADMAP.md |
 | 18 | `suisse` | 6 | Apertus servi par le CSCS ; e-ID swiyu dès décembre 2026 (prévu) ; Haute-Savoie à contacter, puis Vallée d'Aoste, Crans-Montana 2027 — aucun acquis | ROADMAP.md, PREUVES « Contexte » |
 | 19 | `demande` | 6 | « Un pilote de 45 jours avec 50 membres volontaires parmi vos 173 représentants. » + Oui / Non / Pas cette fois | — |
