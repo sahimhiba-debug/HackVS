@@ -57,6 +57,7 @@ def test_le_jure_devient_exposant_invite_d_annecy(url_foire):
         console.locator("[data-passe] >> text=intention d'adhésion").wait_for()
         console.locator("[data-tuile='Invités ayant contribué'] .n:has-text('< 3')").wait_for()
         assert "Annecy" not in console.inner_text("body") and "Exposant" not in console.inner_text("body")
+        assert "null" not in console.inner_text("#suivi") and "undefined" not in console.inner_text("body")
         console.click("#vues >> text=Le Club cherche")                   # E : les demandes sans réponse, par métier
         console.locator("[data-role=propose]").first.wait_for()          # le manque comblé par l'invité, à confirmer
         console.locator("[data-metier] [data-inviter]").first.click()

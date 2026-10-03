@@ -78,7 +78,7 @@
     const tuile = (titre, n, sous) => h("div", { class: "tuile", "data-tuile": titre }, h("span", { class: "surtitre" }, titre), h("div", { class: "n" }, n), sous ? h("p", { class: "note" }, sous) : null);
     function rendre(s) {
       const r = s.reponses, inv = s.invites;
-      $("#suivi").replaceChildren(
+      $("#suivi").replaceChildren(...[
         h("p", { class: "note", style: "margin-top:12px" }, `Période : ${s.periode_libelle} · du ${s.du} au ${s.au} (dates du monde de démonstration, simulées)`),
         h("div", { class: "grille" },
           tuile("Demandes envoyées", s.demandes.adressees, `${s.demandes.sans_reponse} sans réponse`),
@@ -98,7 +98,7 @@
             s.metiers_manquants.length ? h("ul", {}, s.metiers_manquants.map((m) => h("li", {}, `${m.metier} : ${m.demandes} demande(s)`))) : h("p", { class: "note" }, "Aucun."))),
         s.nominatif.length ? h("section", { class: "bloc" }, h("span", { class: "surtitre" }, "Visible par le Club (les deux parties l'ont permis)"),
           h("ul", {}, s.nominatif.map((x) => h("li", {}, `${x.membre} — ${x.piece} · ${ETAPES[x.etape]}${x.resultat ? " : " + x.resultat : ""}${x.note ? " — " + x.note : ""}`)))) : null,
-        h("p", { class: "note", style: "margin-top:12px", "data-role": "regles" }, s.regles));
+        h("p", { class: "note", style: "margin-top:12px", "data-role": "regles" }, s.regles)].filter(Boolean));   // jamais « null » à l'écran
     }
     function rendreRecus(liste) {
       const ligne = (x) => {
