@@ -43,7 +43,7 @@ def test_route_preparer_donne_les_questions_ia_eteinte(monkeypatch):
     for k in ("APERTUS_API_KEY", "APERTUS_MODEL", "APERTUS_BASE_URL"):
         monkeypatch.delenv(k, raising=False)
     client.post("/api/pulse/demo/reinitialiser", headers=CONSOLE)
-    r = client.post("/api/pulse/moi/actions/preparer", headers=_session(md.PAULINE), json={"texte": "J'ai besoin d'aide pour un événement"})
+    r = client.post("/api/pulse/moi/actions/preparer", headers=_session(md.LEA), json={"texte": "J'ai besoin d'aide pour un événement"})
     assert r.status_code == 200, r.text
     assert [q["id"] for q in r.json()["smart"]] == ["quand", "combien", "ou"]
 
@@ -51,5 +51,5 @@ def test_route_preparer_donne_les_questions_ia_eteinte(monkeypatch):
 def test_interrupteur_eteint(monkeypatch):
     monkeypatch.setenv("HACKVS_COACH_SMART", "0")
     client.post("/api/pulse/demo/reinitialiser", headers=CONSOLE)
-    r = client.post("/api/pulse/moi/actions/preparer", headers=_session(md.PAULINE), json={"texte": "aide pour un événement"})
+    r = client.post("/api/pulse/moi/actions/preparer", headers=_session(md.LEA), json={"texte": "aide pour un événement"})
     assert "smart" not in r.json()

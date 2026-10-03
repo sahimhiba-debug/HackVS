@@ -32,7 +32,7 @@ def test_le_passe_decouverte_et_le_qr_jure_utilisent_public_base_url(monkeypatch
 def test_aucune_url_publique_en_dur_dans_le_serveur():
     """Aucun « https://… » de domaine propre au produit dans le code serveur (les URL d'API de fournisseurs IA exceptées)."""
     permis = ("api.openai.com", "api.anthropic.com", "apertus", "cscs", "example", "exemple", "localhost", "127.0.0.1",
-              "w3.org", "schema", "json-schema", "github.com", "swiss-ai", "publicai", "fastapi", "googleapis")
+              "w3.org", "w3id.org", "purl.org", "schema", "json-schema", "github.com", "swiss-ai", "publicai", "fastapi", "googleapis")
     for f in list((PROTO / "app").glob("*.py")) + list((PROTO / "intelligence").glob("*.py")):
         for url in re.findall(r"https?://[\w.\-]+", f.read_text(encoding="utf-8")):
             assert any(p in url for p in permis), (f.name, url)
