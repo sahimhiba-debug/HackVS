@@ -17,9 +17,19 @@ from plateforme.memoire import Memoire  # noqa: E402
 from plateforme.stockage import ouvrir  # noqa: E402
 
 
+def _journal_existant(adresse: str) -> Memoire:
+    """Audit M3 : une faute de frappe dans l'adresse créait une base VIDE et une sauvegarde « valide » de 0 fait. On
+    exige un journal qui existe, et on le lit sans le migrer."""
+    if "://" not in adresse and not Path(adresse).is_file():
+        raise ValueError(f"aucun journal à cette adresse : {adresse}")
+    if not ouvrir(adresse).table_existe("evenements"):
+        raise ValueError(f"cette base n'a pas de journal (table « evenements » absente) : {adresse}")
+    return Memoire(adresse, migrer_schema=False)
+
+
 def main(a: list[str]) -> int:
     if len(a) >= 3 and a[0] == "sauvegarder":
-        e = sauvegarde.sauvegarder(Memoire(a[1]), a[2])
+        e = sauvegarde.sauvegarder(_journal_existant(a[1]), a[2])
         print(f"sauvegardé : {e['nombre']} faits · empreinte {e['empreinte'][:16]}… → {a[2]}")
         return 0
     if len(a) >= 2 and a[0] == "verifier":
@@ -31,7 +41,10 @@ def main(a: list[str]) -> int:
         print(f"restauré : {e['nombre']} faits · empreinte vérifiée")
         return 0
     if len(a) >= 2 and a[0] == "migrer":
-        cible = int(a[2]) if len(a) > 2 and a[2].isdigit() else None
+        niveaux = [x for x in a[2:] if not x.startswith("--")]
+        if niveaux and not niveaux[0].isdigit():
+            raise ValueError(f"niveau illisible : {niveaux[0]!r} (un nombre de 0 à {migrations.DERNIERE})")
+        cible = int(niveaux[0]) if niveaux else None
         n = migrations.migrer(ouvrir(a[1]), cible, confirmer_destruction="--confirmer-destruction" in a)
         print(f"schéma au niveau {n} (dernier : {migrations.DERNIERE})")
         return 0

@@ -9,4 +9,4 @@
 | 2 · Authentification et rôles | invitation à usage unique, sessions et appareils, rôles, comptes nominatifs, TOTP pour la console, journal d'administration, CSRF, limite par session ; page `/compte` | `test_annee1_comptes.py`, `test_annee1_comptes_api.py` · CLAIMS 106 | [vitrine/lot2.md](vitrine/lot2.md) |
 | 1 · Fondations de production | journal SQLite / PostgreSQL, migrations réversibles, sauvegarde vérifiée, configuration documentée, `/sante/pret`, `/metriques`, Docker de production | `test_annee1_stockage.py`, `test_annee1_exploitation.py` · CLAIMS 104–105 | [vitrine/lot1.md](vitrine/lot1.md) |
 
-Documents : [CONFIGURATION.md](CONFIGURATION.md).
+Documents : [CONFIGURATION.md](CONFIGURATION.md) · [AUDIT_LOT1.md](AUDIT_LOT1.md) (constats de l'audit du lot 1 et suites).

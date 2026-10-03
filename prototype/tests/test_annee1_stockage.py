@@ -156,7 +156,7 @@ def test_sauvegarde_puis_restauration_meme_empreinte(url, tmp_path):
         src.ajouter(_e(i, "A" if i % 2 else "B"))
     fichier = tmp_path / "sauvegarde.jsonl"
     entete = sauvegarde.sauvegarder(src, fichier)
-    assert entete["nombre"] == 30 and entete["empreinte"] == src.empreinte()
+    assert entete["nombre"] == 30 and entete["empreinte_journal"] == src.empreinte()
     cible = Memoire(str(tmp_path / "restaure.db"))
     sauvegarde.restaurer(cible, fichier)
     assert cible.empreinte() == src.empreinte()
@@ -197,9 +197,33 @@ def test_le_serveur_complet_demarre_sur_postgres_et_se_dit_pret(url_pg):
     from tests.test_e2e_scene import serveur
     with serveur(HACKVS_ESSAIS_DB=url_pg, HACKVS_FOIRE="1") as base:
         d = json.load(urllib.request.urlopen(base + "/sante/pret", timeout=10))
-        assert d["pret"] is True and d["faits"] > 0
+        assert d["pret"] is True
+    temoin = Memoire(url_pg).ajouter(Evt(type="TEMOIN", le=J, donnees={"x": 1}, statut=Statut.OBSERVE))
+    avant = [e.model_dump_json() for e in Memoire(url_pg).evenements()]
+    assert len(avant) > 1
     with serveur(HACKVS_ESSAIS_DB=url_pg, HACKVS_FOIRE="1") as base:    # redémarrage : le journal est REPRIS
-        assert json.load(urllib.request.urlopen(base + "/sante/pret", timeout=10))["faits"] >= d["faits"]
+        assert json.load(urllib.request.urlopen(base + "/sante/pret", timeout=10))["pret"] is True
+    apres = [e.model_dump_json() for e in Memoire(url_pg).evenements()]
+    # audit I8 : un journal effacé puis réensemencé redonnait le même nombre de faits — le témoin, lui, disparaîtrait
+    assert apres[:len(avant)] == avant and temoin.id in {e.id for e in Memoire(url_pg).evenements()}
+
+
+def test_i6_la_console_n_efface_jamais_un_journal_postgresql(url_pg, monkeypatch):
+    """Audit I6 : « Nouvelle démonstration » vidait le journal (DELETE) — sur PostgreSQL, c'est la production : refusé."""
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from app.pulse_api import creer_routeur
+    from app.taxonomy import charger_taxonomie
+    monkeypatch.setenv("HACKVS_ESSAIS_DB", url_pg)
+    app = FastAPI()
+    app.include_router(creer_routeur(charger_taxonomie()))
+    cl = TestClient(app)
+    avant = [e.id for e in Memoire(url_pg).evenements()]
+    assert avant
+    for chemin in ("/api/pulse/demo/reinitialiser", "/api/pulse/demo/aller/1"):
+        assert cl.post(chemin, headers={"X-Pulse-Console": "1"}).status_code == 409, chemin
+    assert [e.id for e in Memoire(url_pg).evenements()] == avant
 
 
 def test_reecrire_garde_l_ordre_et_ajoute_la_trace(url):
@@ -239,3 +263,185 @@ def test_reecrire_refuse_dans_une_transaction(url):
     with pytest.raises(RuntimeError, match="transaction"):
         with m.transaction():
             m.reecrire(lambda e: e)
+
+
+# ------------------------------------------------------------------ audit du lot 1 : sauvegarde (B1, I1, I2, I3)
+def _journal(url, textes):
+    m = Memoire(url)
+    for t in textes:
+        m.ajouter(Evt(type="NOTE", le=J, acteurs=["a"], donnees={"texte": t}, statut=Statut.SIMULE))
+    return m
+
+
+def test_b1_un_texte_avec_separateur_unicode_reste_restaurable(url, tmp_path):
+    """U+2028, U+2029, U+0085, \\x0b, \\x1c… : `splitlines` les prenait pour des fins de ligne → sauvegarde illisible."""
+    textes = ["Relecture de contrats", "a b", "c\u0085d", "e\x0bf\x0cg\x1ch\x1di\x1ej", "fin\r\nWindows"]
+    src = _journal(url, textes)
+    f = tmp_path / "s.jsonl"
+    sauvegarde.sauvegarder(src, f)
+    _, evts = sauvegarde.lire(f)
+    assert [e.donnees["texte"] for e in evts] == textes
+    cible = Memoire(str(tmp_path / "cible.db"))
+    sauvegarde.restaurer(cible, f)
+    assert cible.empreinte() == src.empreinte()
+
+
+def test_b1_une_sauvegarde_illisible_n_est_jamais_annoncee(tmp_path, monkeypatch):
+    """La sauvegarde est relue AVANT d'être mise sous son nom : un fichier qui ne se relit pas n'est jamais « réussi »."""
+    src = _journal(":memory:", ["x", "y"])
+    f = tmp_path / "s.jsonl"
+    monkeypatch.setattr(sauvegarde, "lire", lambda *_: (_ for _ in ()).throw(sauvegarde.SauvegardeInvalide("simulé")))
+    with pytest.raises(sauvegarde.SauvegardeInvalide):
+        sauvegarde.sauvegarder(src, f)
+    assert not f.exists() and not list(tmp_path.glob("*.part"))
+
+
+def test_i1_un_statut_altere_est_refuse(tmp_path):
+    """SIMULE → VERIFIE dans le fichier : l'empreinte de sauvegarde couvre la ligne entière, statut compris."""
+    src = _journal(":memory:", ["x", "y"])
+    f = tmp_path / "s.jsonl"
+    sauvegarde.sauvegarder(src, f)
+    altere = tmp_path / "a.jsonl"
+    altere.write_text(f.read_text(encoding="utf-8").replace('"SIMULE"', '"VERIFIE"', 1), encoding="utf-8")
+    with pytest.raises(sauvegarde.SauvegardeInvalide):
+        sauvegarde.lire(altere)
+
+
+def test_i2_une_ligne_en_double_est_refusee_et_la_cible_reste_vide(tmp_path):
+    src = _journal(":memory:", ["x", "y"])
+    f = tmp_path / "s.jsonl"
+    sauvegarde.sauvegarder(src, f)
+    entete, *faits = f.read_text(encoding="utf-8").split("\n")[:-1]
+    e = json.loads(entete)
+    double = faits + [faits[-1]]
+    import hashlib
+    h = hashlib.sha256()
+    for x in double:
+        h.update(x.encode() + b"\n")
+    e.update(nombre=len(double), empreinte=h.hexdigest())              # un en-tête recalculé : cohérent en apparence
+    falsifie = tmp_path / "d.jsonl"
+    falsifie.write_text("\n".join([json.dumps(e)] + double) + "\n", encoding="utf-8")
+    cible = Memoire(str(tmp_path / "c.db"))
+    with pytest.raises(sauvegarde.SauvegardeInvalide):
+        sauvegarde.restaurer(cible, falsifie)
+    assert cible.evenements() == []
+
+
+def test_i3_la_restauration_garde_les_numeros_seq(url, tmp_path):
+    """Les références des reçus (`…-{seq}`) et les positions `au(seq)` survivent à une restauration, même avec des trous."""
+    src = _journal(url, ["x"])
+    try:
+        with src.transaction():
+            src.ajouter(Evt(type="NOTE", le=J, acteurs=["a"], donnees={"texte": "annulé"}, statut=Statut.SIMULE))
+            raise RuntimeError("annuler")
+    except RuntimeError:
+        pass
+    src.ajouter(Evt(type="NOTE", le=J, acteurs=["a"], donnees={"texte": "z"}, statut=Statut.SIMULE))
+    seqs = [e.seq for e in src.evenements()]
+    f = tmp_path / "s.jsonl"
+    sauvegarde.sauvegarder(src, f)
+    cible = Memoire(str(tmp_path / "c.db"))
+    sauvegarde.restaurer(cible, f)
+    assert [e.seq for e in cible.evenements()] == seqs
+    cible.ajouter(Evt(type="NOTE", le=J, acteurs=["a"], donnees={"texte": "après"}, statut=Statut.SIMULE))
+    assert cible.evenements()[-1].seq > seqs[-1]
+
+
+# ------------------------------------------------------------------ audit du lot 1 : connexion PostgreSQL perdue (B2)
+def _couper(m: Memoire) -> None:
+    import psycopg
+    pid = m._db._db.info.backend_pid
+    with psycopg.connect(PG, autocommit=True) as c:
+        c.execute("SELECT pg_terminate_backend(%s)", (pid,))
+
+
+def test_b2_connexion_perdue_hors_transaction_le_journal_se_reconnecte(url_pg):
+    m = Memoire(url_pg)
+    m.ajouter(Evt(type="NOTE", le=J, acteurs=["a"], donnees={"texte": "avant"}, statut=Statut.SIMULE))
+    _couper(m)
+    m.ajouter(Evt(type="NOTE", le=J, acteurs=["a"], donnees={"texte": "après"}, statut=Statut.SIMULE))
+    assert [e.donnees["texte"] for e in Memoire(url_pg).evenements()] == ["avant", "après"]
+
+
+def test_b2_connexion_perdue_pendant_une_transaction_tout_est_annule_proprement(url_pg):
+    m = Memoire(url_pg)
+    m.ajouter(Evt(type="NOTE", le=J, acteurs=["a"], donnees={"texte": "avant"}, statut=Statut.SIMULE))
+    appels = []
+    m.sur_annulation.append(lambda: appels.append(1))
+    with pytest.raises(Exception):  # noqa: B017 — l'erreur du pilote, quelle qu'elle soit, doit remonter
+        with m.transaction():
+            m.ajouter(Evt(type="NOTE", le=J, acteurs=["a"], donnees={"texte": "perdu"}, statut=Statut.SIMULE))
+            _couper(m)
+            m.ajouter(Evt(type="NOTE", le=J, acteurs=["a"], donnees={"texte": "perdu 2"}, statut=Statut.SIMULE))
+    assert appels == [1]                                                  # F27 : les abonnés savent que tout est annulé
+    assert [e.donnees["texte"] for e in m.evenements()] == ["avant"]      # le cache ne garde pas le fait annulé
+    m.ajouter(Evt(type="NOTE", le=J, acteurs=["a"], donnees={"texte": "reprise"}, statut=Statut.SIMULE))
+    assert [e.donnees["texte"] for e in Memoire(url_pg).evenements()] == ["avant", "reprise"]
+
+
+# ------------------------------------------------------------------ audit du lot 1 : migrations (I4, I5)
+def test_i5_un_pas_de_migration_qui_echoue_ne_laisse_rien_a_moitie(url, monkeypatch, tmp_path):
+    """Panne au milieu d'une descente : la table n'est PAS supprimée et le niveau ne bouge pas (le DDL est dans la
+    transaction, SQLite compris)."""
+    if url == ":memory:":
+        url = str(tmp_path / "m.db")
+    b = ouvrir(url)
+    migrations.migrer(b)
+    v, nom, montee, descente, d = migrations.MIGRATIONS[1]
+    panne = {k: x + ["SELECT * FROM table_qui_n_existe_pas"] for k, x in descente.items()}
+    monkeypatch.setattr(migrations, "MIGRATIONS", [migrations.MIGRATIONS[0], (v, nom, montee, panne, d)])
+    with pytest.raises(Exception):  # noqa: B017 — l'erreur du moteur, quelle qu'elle soit
+        migrations.migrer(b, 1)
+    relu = ouvrir(url)
+    assert migrations.niveau(relu) == 2 and relu.table_existe("journal_meta")
+
+
+def test_i4_migrations_concurrentes_sur_une_base_neuve(url_pg):
+    erreurs: list[BaseException] = []
+
+    def migrer() -> None:
+        try:
+            migrations.migrer(ouvrir(url_pg))
+        except BaseException as e:  # noqa: BLE001
+            erreurs.append(e)
+    fils = [threading.Thread(target=migrer) for _ in range(6)]
+    for f in fils:
+        f.start()
+    for f in fils:
+        f.join()
+    assert not erreurs, erreurs
+    assert migrations.niveau(ouvrir(url_pg)) == migrations.DERNIERE
+
+
+# ------------------------------------------------------------------ audit du lot 1 : mineurs (M1, M2, M3)
+def test_m1_vider_dans_une_transaction_est_refuse(url):
+    """SQLite validait la moitié de la transaction, PostgreSQL l'annulait : même règle partout, refusé."""
+    m = _journal(url, ["x"])
+    with pytest.raises(RuntimeError, match="transaction"):
+        with m.transaction():
+            m.vider()
+    assert len(m.evenements()) == 1
+
+
+def test_m2_un_point_d_interrogation_ou_un_pourcent_dans_le_sql_ne_casse_rien(url):
+    b = ouvrir(url)
+    assert b.executer("SELECT '?', '50%'").fetchone() == ("?", "50%")
+
+
+def test_m3_le_script_refuse_une_adresse_fautive_et_ne_migre_pas_pour_sauvegarder(tmp_path):
+    import subprocess
+    import sys
+    from pathlib import Path
+    proto = Path(__file__).resolve().parents[1]
+
+    def lancer(*a):
+        return subprocess.run([sys.executable, "scripts/sauvegarde.py", *a], cwd=proto, capture_output=True, text=True)
+    absent = tmp_path / "club_puls.db"                                   # faute de frappe
+    r = lancer("sauvegarder", str(absent), str(tmp_path / "s.jsonl"))
+    assert r.returncode != 0 and not absent.exists() and not (tmp_path / "s.jsonl").exists()
+    vide = tmp_path / "autre.db"
+    import sqlite3
+    sqlite3.connect(vide).close()                                          # une base SQLite sans journal
+    assert lancer("sauvegarder", str(vide), str(tmp_path / "s.jsonl")).returncode != 0
+    assert not ouvrir(str(vide)).table_existe("schema_migrations")        # sauvegarder ne migre jamais
+    assert lancer("migrer", str(tmp_path / "j.db"), "1x").returncode != 0   # niveau illisible : refusé

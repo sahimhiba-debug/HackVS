@@ -294,7 +294,12 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
                 "actes": [f.__name__.split("_", 2)[-1] for f in d.ETAPES],
                 "monde": d.club.r.nom, "ia": d.club.ia.etat(), "fictif": True}
 
-    @r.post("/demo/reinitialiser", dependencies=[Depends(console)])
+    def jamais_en_production() -> None:
+        """AUDIT I6 : une nouvelle démonstration VIDE le journal. Sur PostgreSQL (la production, lot 1), refusé."""
+        if (os.environ.get("HACKVS_ESSAIS_DB") or "").startswith(("postgresql://", "postgres://")):
+            raise HTTPException(409, "Journal de production (PostgreSQL) : une nouvelle démonstration l'effacerait — refusé.")
+
+    @r.post("/demo/reinitialiser", dependencies=[Depends(console), Depends(jamais_en_production)])
     def reinitialiser() -> dict:
         with remplacement:
             remplacer(Demo(tax))
@@ -310,7 +315,7 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
                 t = d.suivant()
             return lire_etat() | {"derniere": t}
 
-    @r.post("/demo/aller/{n}", dependencies=[Depends(console)])
+    @r.post("/demo/aller/{n}", dependencies=[Depends(console), Depends(jamais_en_production)])
     def aller(n: int) -> dict:
         if not 0 <= n <= len(Demo.ETAPES):
             raise HTTPException(422, "Étape hors limites.")

@@ -31,6 +31,13 @@ Règles :
 | `HACKVS_K_ANONYMAT` | `3` | seuil « < k » du mode salle (compté en entreprises distinctes ailleurs) |
 | `HACKVS_ANCIEN_PROTOTYPE` | `0` | `1` : sert aussi l'ancien prototype (local ou jeton) |
 
+## Serveur
+
+| Variable | Défaut | Rôle |
+|---|---|---|
+| `PORT` | `8080` (image Docker) | port d'écoute du conteneur (commande `uvicorn` de l'image) |
+| `HACKVS_JOURNAL` | `INFO` | niveau des journaux structurés (JSON) ; une valeur inconnue arrête le démarrage |
+
 ## Adresses publiques
 
 | Variable | Défaut | Rôle |
@@ -71,6 +78,17 @@ Règles :
 | `APERTUS_BASE_URL` | (vide) | adresse de l'API d'Apertus (servi par le CSCS) |
 | `APERTUS_MODEL` | (vide) | modèle (ex. `swiss-ai/Apertus-v1.5-70B`) |
 | `APERTUS_API_KEY` | (vide) | **secret** — clé de l'API d'Apertus |
+| `APERTUS_DELAI_S` | `30` | délai d'un appel (secondes) |
+| `APERTUS_BUDGET_S` | `12` | budget TOTAL d'une complétion, tentatives comprises (le repli arrive avant que le téléphone abandonne) |
+| `OPENAI_API_KEY` | (vide) | **secret** — fournisseur `openai` (API compatible OpenAI) |
+| `OPENAI_MODEL` | (vide) | modèle du fournisseur `openai` |
+| `OPENAI_BASE_URL` | `https://api.openai.com/v1` | adresse du fournisseur `openai` |
+| `OPENAI_TEMPERATURE` | `0` | température (`defaut` : non envoyée) |
+| `OPENAI_DELAI_S` · `OPENAI_BUDGET_S` | `30` · `12` | délai d'un appel · budget total |
+| `ANTHROPIC_MODEL` | (vide) | modèle du fournisseur `claude` |
+| `HACKVS_ANTHROPIC_BASE_URL` | `https://api.anthropic.com` | adresse du fournisseur `claude` |
+| `ANTHROPIC_TEMPERATURE` | `0` | température (`defaut` : non envoyée) |
+| `ANTHROPIC_DELAI_S` · `ANTHROPIC_BUDGET_S` | `30` · `12` | délai d'un appel · budget total |
 | `APERTUS_APPEL_OUTILS` | `0` | appel d'outils natif (mesuré : aucun gain sur les 26 cas) |
 | `APERTUS_NOTES_PRIVEES` | `0` | `1` : les notes privées peuvent partir vers l'IA (consentement) |
 | `HACKVS_LLM` | (vide) | ancien prototype : fournisseur (`claude`…) |

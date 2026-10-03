@@ -28,6 +28,7 @@ MIGRATIONS: list[tuple[int, str, dict[str, list[str]], dict[str, list[str]], boo
      {"sqlite": ["DROP TABLE IF EXISTS journal_meta"], "postgres": ["DROP TABLE IF EXISTS journal_meta"]}, False),
 ]
 DERNIERE = MIGRATIONS[-1][0]
+VERROU_PG = 7_202_610                                  # clé du verrou consultatif PostgreSQL des migrations
 
 
 def _table(b: Stockage) -> None:
@@ -46,6 +47,16 @@ def migrer(b: Stockage, cible: Optional[int] = None, *, confirmer_destruction: b
     cible = DERNIERE if cible is None else cible
     if not 0 <= cible <= DERNIERE:
         raise ValueError(f"niveau de schéma inconnu : {cible} (0 à {DERNIERE})")
+    if b.dialecte == "postgres":                       # AUDIT I4 : un seul processus migre à la fois ; les autres
+        b.executer("SELECT pg_advisory_lock(?)", (VERROU_PG,))   # attendent, puis relisent le niveau
+        try:
+            return _migrer(b, cible, confirmer_destruction)
+        finally:
+            b.executer("SELECT pg_advisory_unlock(?)", (VERROU_PG,))
+    return _migrer(b, cible, confirmer_destruction)
+
+
+def _migrer(b: Stockage, cible: int, confirmer_destruction: bool) -> int:
     b.debut()
     try:
         _table(b)

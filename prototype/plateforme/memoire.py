@@ -45,7 +45,7 @@ class MondeRemplace(RuntimeError):
 
 
 class Memoire:
-    def __init__(self, chemin: str = ":memory:"):
+    def __init__(self, chemin: str = ":memory:", *, migrer_schema: bool = True):
         # ANNÉE 1 · LOT 1 : le moteur se choisit par l'adresse (`:memory:`, un fichier → SQLite ; `postgresql://` →
         # PostgreSQL) ; le schéma vient des migrations (un journal d'avant ce lot est adopté tel quel)
         from .migrations import migrer
@@ -53,7 +53,8 @@ class Memoire:
         self._v = threading.RLock()      # réentrant : une transaction garde le verrou pendant toutes ses écritures
         self._profondeur = 0             # > 0 : dans une transaction (les écritures attendent sa validation)
         with self._v:
-            migrer(self._db)
+            if migrer_schema:            # audit M3 : une SAUVEGARDE lit le journal tel qu'il est, sans jamais le migrer
+                migrer(self._db)
         self._cache: list[Evt] = []      # journal APPEND-ONLY déjà désérialisé (lu une fois, puis par incrément)
         # appelés après l'ANNULATION de la transaction la plus externe : qui tient un état dérivé du journal (en mémoire,
         # en cache) le reconstruit — sinon il garderait des faits qui n'existent plus (F27)
@@ -99,16 +100,27 @@ class Memoire:
             except BaseException:
                 self._profondeur -= 1
                 if not self._profondeur:
-                    self._db.annuler()
-                    self._cache = []                       # le cache a pu lire des faits annulés : relecture complète
-                    self._sale = True
-                    self._generation += 1
-                    for f in self.sur_annulation:
-                        f()
+                    self._annulee()
                 raise
             self._profondeur -= 1
             if not self._profondeur:
-                self._db.valider()
+                try:
+                    self._db.valider()
+                except BaseException:                      # AUDIT B2 : validation refusée (connexion perdue…) = annulée
+                    self._annulee()
+                    raise
+
+    def _annulee(self) -> None:
+        """Après une annulation : le cache a pu lire des faits annulés (relecture complète), et les abonnés le savent (F27)
+        — même si l'annulation elle-même échoue (connexion perdue : le serveur a déjà tout annulé)."""
+        try:
+            self._db.annuler()
+        finally:
+            self._cache = []
+            self._sale = True
+            self._generation += 1
+            for f in self.sur_annulation:
+                f()
 
     def _lus(self) -> list[Evt]:
         if self._figee and not self._sale:
@@ -193,8 +205,36 @@ class Memoire:
                 self._generation += 1
             return modifies
 
+    def charger_sauvegarde(self, lignes: list[str], verifier: Callable[[list[str]], None]) -> None:
+        """ANNÉE 1 · LOT 1 (audit I2, I3) — restauration TOUT OU RIEN dans ce journal VIDE : chaque fait à son numéro
+        d'origine (`seq`), puis `verifier` relit ce qui est écrit AVANT la validation ; la moindre erreur annule tout."""
+        with self._v:
+            if self._ferme:
+                raise MondeRemplace("ce monde a été remplacé : écriture refusée")
+            if self._profondeur:
+                raise RuntimeError("restauration refusée dans une transaction en cours")
+            self._db.debut()
+            try:
+                if self._db.dernier_et_nombre()[1]:
+                    raise ValueError("le journal cible n'est pas vide : restauration refusée (jamais de mélange)")
+                for x in lignes:
+                    e = Evt.model_validate_json(x)
+                    self._db.inserer_a(e.seq, e.id, e.model_dump_json(exclude={"seq"}))
+                verifier([Evt.model_validate_json(d).model_copy(update={"seq": s}).model_dump_json()
+                          for s, d in self._db.depuis(0)])
+                self._db.valider()
+            except BaseException:
+                self._db.annuler()
+                raise
+            finally:
+                self._cache = []
+                self._sale = True
+                self._generation += 1
+
     def vider(self) -> None:
         with self._v:
+            if self._profondeur:         # audit M1 : SQLite en validait la moitié, PostgreSQL l'annulait — refusé partout
+                raise RuntimeError("vider le journal est refusé dans une transaction en cours")
             self._db.vider()
             self._cache = []
             self._sale = True

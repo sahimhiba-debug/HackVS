@@ -1112,15 +1112,21 @@ def _journal_pour_sante():
 @app.get("/sante/pret")
 def sante_pret():
     """ANNÉE 1 · LOT 1 — DISPONIBILITÉ (répartiteur de charge, HEALTHCHECK Docker) : le journal répond et son schéma est
-    au dernier niveau. Publique : rien d'autre que « prêt », le niveau du schéma et le nombre de faits."""
+    au dernier niveau. Publique : rien d'autre que « prêt » et le niveau du schéma (audit M4 : jamais le nombre de faits).
+    Temps de réponse borné : le verrou du journal est attendu 2 s au plus (une longue transaction → 503, pas un blocage)."""
     from plateforme.migrations import DERNIERE, niveau
     try:
         j = _journal_pour_sante()
-        faits, schema = len(j.evenements()), niveau(j._db)
-    except Exception:                                   # base injoignable, schéma illisible : pas prêt, sans détail
-        return JSONResponse({"pret": False, "schema": None, "faits": None}, status_code=503)
+        if not j._v.acquire(timeout=2.0):
+            raise TimeoutError("journal occupé")
+        try:
+            schema = niveau(j._db)
+        finally:
+            j._v.release()
+    except Exception:                                   # base injoignable, schéma illisible, occupé : pas prêt, sans détail
+        return JSONResponse({"pret": False, "schema": None}, status_code=503)
     pret = schema == DERNIERE
-    return JSONResponse({"pret": pret, "schema": schema, "faits": faits}, status_code=200 if pret else 503)
+    return JSONResponse({"pret": pret, "schema": schema}, status_code=200 if pret else 503)
 
 
 @app.get("/metriques")
