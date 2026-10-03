@@ -78,6 +78,7 @@ corrections et livraison avant 07:30. Aucun tag, aucun push sur `main` — **`ma
 |---|---|---|---|
 | 15:50 | plan | §2 Tally | — |
 | 16:15 | §2 Tally (`fad69c2`) ; PUBLIC_BASE_URL (`e19da8d`) ; mode salle (`a0d1e46`) ; rejeu Apertus 1.5 sur les 26 cas : 1/26 inchangé (`1b7902e`) ; constellation (`ff2de2c`) ; déploiement + charge 80 (`d152a55`) — suite 1 454 verte. CI : ne démarre pas (facturation), portes locales seulement | §6 feuille de route, §7 etat.yaml | — |
+| 17:20 | Constellation en motion design + 2 passes d'autocritique (`730caac`) ; liste du Club : CSV (`74cbc6b`), seuil « < 3 » en **entreprises distinctes** (`493b977`), 25 métiers, « Ce que votre Club pourrait assembler » 8/9 (`de2d3e4`), 145/173 partout + roadmap Mondiaux/CSCS/pistes « à contacter » ; **pas de VPS** : tunnel (console fermée aux requêtes relayées `97763e7`, QR en direct `ee5dea5`, `--base-url`, DEMO_TUNNEL.md `5ef41c4`) ; deck v2 (`24ba47c`) + textes v2 (`57056b5`). Écart assumé : monde de démo NON re-proportionné (vérités plantées, risque démo). CI : toujours bloquée par la facturation — portes locales seulement | P3 n°1 appel d'outils Apertus | proportions du monde de démo (reporté) |
 
 ### État des lieux — message consolidé reçu à 16:40 (remplace les consignes depuis 15:30)
 
