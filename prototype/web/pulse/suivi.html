@@ -145,6 +145,7 @@
           h("p", { class: "note" }, `demande(s) sans réponse · la plus ancienne : ${g.age_max_jours} j` +
             (g.entreprises_de_ce_metier !== undefined ? ` · ${g.entreprises_de_ce_metier} entreprise(s) de ce métier dans la liste` : "")),
           g.demandes.map((d) => h("div", { style: "margin-top:8px" }, h("b", {}, d.piece), h("p", { class: "note" }, `${d.titre} · ${d.age_jours} j`),
+            d.proposition_invite ? h("p", { class: "chip vert", "data-role": "propose" }, "un invité propose son aide — à confirmer par le Club") : null,
             h("button", { class: "btn petit", "data-inviter": d.id, onclick: () => inviter(d.id) }, "Inviter un contact")))))) :
           h("p", { class: "note" }, "Aucune demande sans réponse."),
         h("div", { id: "invitation" }));

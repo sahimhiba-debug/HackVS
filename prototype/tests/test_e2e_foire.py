@@ -39,7 +39,7 @@ def test_le_jure_devient_exposant_invite_d_annecy(url_foire):
         assert "monde de démonstration" in tel.inner_text("header")
         tel.fill("#entreprise", "Exposant invité d'Annecy")
         tel.select_option("#metier", "traiteur")
-        tel.select_option("#zone", "France — Haute-Savoie")
+        tel.select_option("#zone", "Haute-Savoie")
         tel.click("#declarer")
         tel.locator("[data-role=recu]:has-text('90 jours')").wait_for()
         tel.locator("[data-demande] >> text=Je peux aider").first.click()
@@ -58,6 +58,7 @@ def test_le_jure_devient_exposant_invite_d_annecy(url_foire):
         console.locator("[data-tuile='Invités ayant contribué'] .n:has-text('< 3')").wait_for()
         assert "Annecy" not in console.inner_text("body") and "Exposant" not in console.inner_text("body")
         console.click("#vues >> text=Le Club cherche")                   # E : les demandes sans réponse, par métier
+        console.locator("[data-role=propose]").first.wait_for()          # le manque comblé par l'invité, à confirmer
         console.locator("[data-metier] [data-inviter]").first.click()
         console.locator("[data-role=invitation] textarea[data-langue=DE]").wait_for()
         assert "/decouverte#passe=" in console.input_value("[data-role=invitation] textarea[data-langue=FR]")

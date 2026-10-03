@@ -7,8 +7,7 @@ from pathlib import Path
 
 CHEMIN = Path(__file__).resolve().parent.parent / "data" / "taxonomie_metiers.yaml"
 # zones : la seule information de lieu — un canton ou un pays, jamais une adresse
-ZONES = ("Valais romand", "Haut-Valais", "Vaud", "Genève", "Fribourg", "Berne", "autre canton suisse",
-         "France — Haute-Savoie", "France — autre région", "autre pays")
+ZONES = ("Valais romand", "Haut-Valais", "Vaud", "Genève", "Haute-Savoie", "Ain", "autre")
 VALAIS = frozenset({"Valais romand", "Haut-Valais"})
 
 
@@ -41,7 +40,7 @@ def ids() -> set[str]:
 
 
 def par_role(role: str) -> str:
-    """Le métier d'un rôle de patron (transport → transport, voix → interpretation) ; à défaut, le rôle lui-même."""
+    """Le métier d'un rôle de patron (transport → transport, voix → interprete) ; à défaut, le rôle lui-même."""
     return next((m["id"] for m in metiers() if m.get("role") == role), role)
 
 

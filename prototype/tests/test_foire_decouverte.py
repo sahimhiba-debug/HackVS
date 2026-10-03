@@ -87,13 +87,13 @@ def test_declaration_recu_et_bornes(c):
     for e, m, z in (("X", "traiteur", "Vaud"), ("Exposant", "astrologie", "Vaud"), ("Exposant", "traiteur", "Lune")):
         with pytest.raises(Invalide):
             c.decouverte.declarer(inv, e, m, z)
-    r = c.decouverte.declarer(inv, "Exposant invité d'Annecy", "traiteur", "France — Haute-Savoie")["recu"]
+    r = c.decouverte.declarer(inv, "Exposant invité d'Annecy", "traiteur", "Haute-Savoie")["recu"]
     assert r["revocable"] and "90 jours" in r["finalite"] and "aucun écran du Club" in r["finalite"]
 
 
 def test_trois_demandes_au_plus(c):
     inv = c.decouverte.activer(c.decouverte.emettre("stand")["jeton"])["invite"]
-    c.decouverte.declarer(inv, "Exposant invité d'Annecy", "traiteur", "France — Haute-Savoie")
+    c.decouverte.declarer(inv, "Exposant invité d'Annecy", "traiteur", "Haute-Savoie")
     ask = _ask(c)
     c.decouverte.repondre(inv, ask, True)
     with pytest.raises(Conflit):
@@ -118,14 +118,14 @@ def test_passe_lie_a_une_demande_la_montre_d_abord(c):
 def test_une_proposition_d_invite_ne_remplit_jamais_une_capacite(c):
     avant = {i.finalite: i.statut for i in c.projection_capacites()}
     inv = c.decouverte.activer(c.decouverte.emettre("stand")["jeton"])["invite"]
-    c.decouverte.declarer(inv, "Exposant invité d'Annecy", "transport", "France — Haute-Savoie")
+    c.decouverte.declarer(inv, "Exposant invité d'Annecy", "transport", "Haute-Savoie")
     c.decouverte.repondre(inv, _ask(c), True)
     assert {i.finalite: i.statut for i in c.projection_capacites()} == avant
 
 
 def test_intention_et_statistiques_k3(c):
     inv = c.decouverte.activer(c.decouverte.emettre("stand")["jeton"])["invite"]
-    c.decouverte.declarer(inv, "Exposant invité d'Annecy", "traiteur", "France — Haute-Savoie")
+    c.decouverte.declarer(inv, "Exposant invité d'Annecy", "traiteur", "Haute-Savoie")
     c.decouverte.repondre(inv, _ask(c), True)
     r = c.decouverte.rejoindre(inv)
     assert r["simule"] == "simulé en démonstration" and r["prevu_ensuite"]
@@ -164,9 +164,9 @@ def test_parcours_du_jure_exposant_invite_d_annecy(http):
     inv = {"X-Pulse-Invite": client.post("/api/pulse/decouverte/activer", json={"jeton": p["jeton"]}).json()["invite"]}
     assert client.post("/api/pulse/decouverte/activer", json={"jeton": p["jeton"]}).status_code == 409
     ref = client.get("/api/pulse/decouverte/referentiel", headers=inv).json()
-    assert len(ref["metiers"]) >= 20 and "France — Haute-Savoie" in ref["zones"]
+    assert len(ref["metiers"]) >= 20 and "Haute-Savoie" in ref["zones"]
     assert client.post("/api/pulse/decouverte/declaration", headers=inv, json={"entreprise": "Exposant invité d'Annecy",
-                       "metier": "traiteur", "zone": "France — Haute-Savoie"}).status_code == 200
+                       "metier": "traiteur", "zone": "Haute-Savoie"}).status_code == 200
     moi = client.get("/api/pulse/decouverte/moi", headers=inv).json()
     assert moi["monde"] == "monde de démonstration" and moi["demandes"]
     ask = moi["demandes"][0]["id"]

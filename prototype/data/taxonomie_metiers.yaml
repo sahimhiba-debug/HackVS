@@ -1,76 +1,77 @@
-# Taxonomie des MÉTIERS (Foire 2026) — une vingtaine de métiers, FR / DE.
-# Sert : la déclaration d'un invité (passe découverte), les métiers présents/absents (« le Club cherche »), la
-# classification des phrases Tally (scripts/ingest_tally.py). Les rôles des patrons de capacités y figurent (role: …).
-# Format volontairement simple (lu par intelligence/metiers.py sans dépendance) : une entrée par « - id: ».
+# Taxonomie des MÉTIERS (Foire 2026) — 21 métiers, libellés FR / DE.
+# Sert : la déclaration d'un invité (passe découverte), « le Club cherche » (métiers présents / absents), Suivi (métiers
+# manquants), la classification des phrases Tally (scripts/eval_classification.py). `role:` relie un métier au rôle d'une
+# pièce des patrons de capacités (« public » — des acheteurs, un auditoire — n'est pas un métier : « autre »).
+# Format volontairement simple, lu sans dépendance par intelligence/metiers.py : une entrée par « - id: ».
 - id: transport
-  fr: Transport de personnes
-  de: Personenbeförderung
+  fr: Transport
+  de: Transport
   role: transport
-- id: lieu
-  fr: Salle, lieu d'accueil
-  de: Saal, Veranstaltungsort
+- id: salle
+  fr: Salle, espace
+  de: Saal, Raum
   role: lieu
+- id: hebergement
+  fr: Hébergement
+  de: Unterkunft
 - id: traiteur
-  fr: Traiteur, restauration
-  de: Catering, Gastronomie
+  fr: Restauration, traiteur
+  de: Gastronomie, Catering
   role: traiteur
-- id: interpretation
-  fr: Interprétation, traduction
-  de: Dolmetschen, Übersetzung
+- id: interprete
+  fr: Interprète, langues
+  de: Dolmetschen, Sprachen
   role: voix
+- id: juridique
+  fr: Juridique
+  de: Recht
+- id: comptabilite
+  fr: Comptabilité, fiscalité
+  de: Buchhaltung, Steuern
+- id: informatique
+  fr: Informatique
+  de: Informatik
+  role: expertise
+- id: communication
+  fr: Marketing, communication
+  de: Marketing, Kommunikation
+- id: impression
+  fr: Impression, signalétique
+  de: Druck, Beschilderung
+- id: evenementiel
+  fr: Événementiel
+  de: Eventorganisation
+- id: construction
+  fr: Construction, artisanat
+  de: Bau, Handwerk
+- id: agriculture
+  fr: Agriculture, viticulture
+  de: Landwirtschaft, Weinbau
 - id: logistique
-  fr: Logistique, entreposage
-  de: Logistik, Lagerung
+  fr: Logistique
+  de: Logistik
   role: logistique
+- id: rh
+  fr: RH, recrutement
+  de: Personal, Rekrutierung
+  role: recrutement
 - id: formation
   fr: Formation
   de: Weiterbildung
   role: formation
-- id: recrutement
-  fr: Recrutement, apprentissage
-  de: Rekrutierung, Lehrstellen
-  role: recrutement
-- id: expertise
-  fr: Conseil, expertise
-  de: Beratung, Fachwissen
-  role: expertise
-- id: communication
-  fr: Communication, médias
-  de: Kommunikation, Medien
-  role: public
-- id: construction
-  fr: Construction, bâtiment
-  de: Bau
+- id: finance
+  fr: Finance
+  de: Finanzen
+- id: immobilier
+  fr: Immobilier
+  de: Immobilien
 - id: energie
   fr: Énergie
   de: Energie
-- id: viticulture
-  fr: Viticulture, vins
-  de: Weinbau, Weine
-- id: agroalimentaire
-  fr: Agroalimentaire
-  de: Lebensmittelindustrie
-- id: tourisme
-  fr: Tourisme, hôtellerie
-  de: Tourismus, Hotellerie
-- id: commerce
-  fr: Commerce de détail
-  de: Detailhandel
-- id: finance
-  fr: Banque, assurance, fiduciaire
-  de: Bank, Versicherung, Treuhand
-- id: informatique
-  fr: Informatique, numérique
-  de: Informatik, Digitales
-- id: industrie
-  fr: Industrie, mécanique
-  de: Industrie, Maschinenbau
 - id: sante
-  fr: Santé, social
-  de: Gesundheit, Soziales
-- id: juridique
-  fr: Juridique
-  de: Recht
-- id: artisanat
-  fr: Artisanat
-  de: Handwerk
+  fr: Santé, sécurité
+  de: Gesundheit, Sicherheit
+- id: autre
+  fr: Autre
+  de: Andere
+  role: public

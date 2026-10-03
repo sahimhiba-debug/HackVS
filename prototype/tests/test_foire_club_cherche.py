@@ -60,7 +60,7 @@ def test_inviter_un_contact_emet_un_passe_lie_avec_textes_fr_de():
 def test_liste_d_entreprises_decomptes_seulement_jamais_de_nom(monkeypatch, tmp_path):
     f = tmp_path / "entreprises.csv"
     f.write_text("nom;metier;ville\nTransports Alpins Fictifs SA;transport;Sion\nCars du Rhône Fictifs;Transport de personnes;Martigny\n"
-                 "Hôtel Fictif;tourisme;Zermatt\nInconnue Fictive;astrologie;Brig\n", encoding="utf-8")
+                 "Hôtel Fictif;hébergement;Zermatt\nInconnue Fictive;astrologie;Brig\n", encoding="utf-8")
     monkeypatch.setenv("HACKVS_ENTREPRISES_CSV", str(f))
     x = _cherche()
     brut = json.dumps(x, ensure_ascii=False)
@@ -81,3 +81,16 @@ def test_interrupteur_eteint_404(monkeypatch):
     monkeypatch.setenv("HACKVS_FOIRE", "0")
     client.post("/api/pulse/demo/reinitialiser", headers=CONSOLE)
     assert client.get("/api/pulse/console/club-cherche", headers=CONSOLE).status_code == 404
+
+
+def test_une_proposition_d_invite_marque_la_demande_sans_dire_qui():
+    d = _cherche()["metiers"][0]["demandes"][0]
+    assert d["proposition_invite"] is False
+    p = client.post("/api/pulse/console/decouverte", headers=CONSOLE, json={"origine": "demande", "demande": d["id"]}).json()
+    inv = {"X-Pulse-Invite": client.post("/api/pulse/decouverte/activer", json={"jeton": p["jeton"]}).json()["invite"]}
+    client.post("/api/pulse/decouverte/declaration", headers=inv, json={"entreprise": "Exposant invité d'Annecy", "metier": "transport",
+                                                                       "zone": "Haute-Savoie"})
+    client.post(f"/api/pulse/decouverte/demandes/{d['id']}/reponse", headers=inv, json={"aide": True})
+    x = _cherche()
+    apres = next(e for g in x["metiers"] for e in g["demandes"] if e["id"] == d["id"])
+    assert apres["proposition_invite"] is True and "Annecy" not in json.dumps(x, ensure_ascii=False)

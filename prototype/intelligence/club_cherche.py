@@ -32,10 +32,16 @@ def _metier_csv(valeur: str) -> Optional[str]:
     v = " ".join(valeur.lower().split())
     if not v:
         return None
-    for m in metiers.metiers():
-        if v == m["id"] or v == m["fr"].lower() or v == m["de"].lower() or v in [x.strip() for x in m["fr"].lower().split(",")]:
-            return m["id"]
+    termes = {m["id"]: {m["id"], *[x.strip() for x in (m["fr"] + "," + m["de"]).lower().split(",")]} for m in metiers.metiers()}
+    for mid, t in termes.items():                                 # 1. le libellé exact
+        if v in t:
+            return mid
+    mots = set(v.replace("/", " ").replace("-", " ").split())
+    for mid, t in termes.items():                                 # 2. un terme du métier dans la valeur (« transport de personnes »)
+        if mid != "autre" and t & mots:
+            return mid
     return None
+
 
 
 def entreprises_par_metier(chemin: Optional[Path] = None) -> Optional[dict]:
@@ -65,6 +71,8 @@ def calculer(c: "ClubPulse") -> dict:
     jour = c.jour
     semis = c.journal.evenements("SEMIS")[0].le
     repondues = {e.donnees["ask"] for e in c.journal.evenements("ASK_REPONSE")}
+    # une PROPOSITION d'invité (passe découverte) : le manque est peut-être comblé — à confirmer par le Club (jamais qui)
+    proposees = {e.donnees["ask"] for e in c.journal.evenements("DECOUVERTE_REPONSE") if e.donnees.get("aide")}
     groupes: dict[str, dict] = {}
     for i in c.projection_capacites():
         if i.ask is None or i.ask.id in repondues:
@@ -76,7 +84,7 @@ def calculer(c: "ClubPulse") -> dict:
         g = groupes.setdefault(mid, {"metier": mid, "libelle": metiers.libelle(mid), "libelle_de": metiers.libelle(mid, "de"),
                                      "demandes": []})
         g["demandes"].append({"id": i.ask.id, "titre": p.titre, "piece": em.libelle, "texte": i.ask.texte,
-                              "age_jours": (jour - naissance).days})
+                              "age_jours": (jour - naissance).days, "proposition_invite": i.ask.id in proposees})
     liste = sorted(groupes.values(), key=lambda g: (-len(g["demandes"]), g["metier"]))
     for g in liste:
         g["nombre"] = len(g["demandes"])
