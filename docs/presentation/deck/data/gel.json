@@ -39,5 +39,36 @@
     "source": "Apertus · swiss-ai/Apertus-v1.5-70B · API d'inférence CSCS · mesure du 01.10",
     "reference": "CLAIMS n° 39"
   },
-  "_source": "Valeurs recopiées le 02.10 au soir depuis docs/audit/club-pulse-pivot/PREUVES.md, section « Gel du 02.10.2026, 18:00 » (mesures sur 5b386d5 ; CI #179 verte sur b1d4c66 ; Mutation #16)."
+  "_source": "Valeurs recopiées le 02.10 au soir depuis docs/audit/club-pulse-pivot/PREUVES.md, section « Gel du 02.10.2026, 18:00 » (mesures sur 5b386d5 ; CI #179 verte sur b1d4c66 ; Mutation #16).",
+  "v2": {
+    "_lire": "Chiffres du deck v2 (v2.html), recopiés depuis PREUVES.md (sections « Foire 2026 », « Mode salle — charge », « Liste du Club ») et docs/roadmap/etat.yaml. Vérifiés par tests/test_deck_v2.py.",
+    "club": {
+      "entreprises": "145",
+      "representants": "173",
+      "assemblables": "8",
+      "capacites": "9",
+      "manque": "interprète",
+      "source": "d'après la liste du Club, classification à confirmer"
+    },
+    "charge": {
+      "telephones": "80",
+      "erreurs": "0",
+      "p95": "≤ 210 ms",
+      "cible": "serveur local, une machine — pas à travers Internet"
+    },
+    "tally": {
+      "reponses": "21",
+      "legende": "phrases recueillies par le QR de la Foire — agrégats seulement, Apertus seulement"
+    },
+    "ia": {
+      "justes": "1",
+      "cas": "26",
+      "source": "Apertus 1.5 · swiss-ai/Apertus-v1.5-70B · servi par le CSCS (Lugano) · rejeu du 03.10, inchangé"
+    },
+    "etat": {
+      "construit": "10",
+      "valide": "1",
+      "prevu": "8"
+    }
+  }
 }
