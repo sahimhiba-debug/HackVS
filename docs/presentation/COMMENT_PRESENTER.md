@@ -1,11 +1,66 @@
-# Comment présenter — le guide pas à pas (MacBook Air)
+# Comment présenter — le guide (MacBook Air)
 
-Écrit le 03.10 au soir, avant le gel, pour Hiba. Rien de technique à comprendre : on suit les étapes dans l'ordre.
-Chaque commande se copie-colle telle quelle dans l'app **Terminal** (⌘-Espace, taper « Terminal », Entrée).
+Écrit le 03.10, avant le gel, pour Hiba. Le jour J, **aucune commande à taper, aucune fenêtre à jongler.**
+
+## La version simple
+
+1. **Poser le film sur le Bureau** du Mac — la seule vidéo du Bureau.
+2. **Double-clic sur « 1 - Lancer Club Pulse »** (dans le dossier HackVS).
+3. **Coller le jeton dans la régie** quand Chrome la montre (⌘-V : il est déjà dans le presse-papiers).
+4. **Attendre « FEU VERT v2 »** dans la fenêtre du Terminal (ou sur la page qui s'ouvre), puis présenter. Sinon : la
+   raison est écrite à côté ; si elle ne se règle pas, « PASSER EN v1 ».
+5. **Après le pitch : double-clic sur « 2 - Arrêter et effacer »** — attendre « Tout est éteint et effacé. »
+
+Sur papier : [carte de régie de V2](livrables/CARTE_REGIE_V2.pdf), [carte de V1](livrables/CARTE_V1.pdf),
+[script v2 par intervenant](livrables/SCRIPT_v2_IMPRIMABLE.pdf).
+
+## Ce que fait chaque double-clic
+
+**« 1 - Lancer Club Pulse »**
+
+- **Le film** : il cherche les vidéos posées directement sur le Bureau (`.mp4`, `.m4v`, `.mov`, pas dans les
+  sous-dossiers) et en copie **une seule** dans le deck (`docs/presentation/deck/assets/film.mp4`, jamais commité).
+  - Aucune vidéo → voyant rouge « FILM ABSENT DU BUREAU ».
+  - Plusieurs → voyant rouge avec la liste : il ne devine jamais.
+  - Une icône iCloud vide → voyant rouge : dans le Finder, clic droit sur le film → « Télécharger maintenant ».
+  - Un `.mov` → orange : Chrome ne le lit pas toujours (exporter en MP4 si possible).
+  - Il recopie seulement si le film a changé. Si `ffprobe` est installé, il affiche la durée et le codec.
+  - Sans film, le deck (v1 comme v2) passe tout seul sur son plan B raconté : ce n'est pas une raison de changer de
+    version.
+- **Le jeton de la console** : créé une fois, rangé hors du dépôt (`~/.clubpulse/jeton`), copié dans le presse-papiers.
+- **En arrière-plan** : le prototype, le tunnel Tailscale (`https://clubpulse.tailfcbc50.ts.net`), le serveur du deck,
+  et l'anti-veille. Journaux : `~/.clubpulse/logs`.
+- **Il attend** que tout réponde, **réinitialise la salle**, ouvre Chrome sur la **régie** et sur le **deck v2**.
+- **La check-list** (dans le Terminal et sur `http://127.0.0.1:8000/preflight`, qui se met à jour seule) : film,
+  serveur local, adresse publique, deck, Mac sur secteur, salle réinitialisée. Dernière ligne : **« FEU VERT v2 »** ou
+  **« PASSER EN v1 »** avec la raison.
+
+**« 2 - Arrêter et effacer »** : réinitialise la salle et vérifie qu'elle est vide (la promesse faite à la salle),
+ferme le tunnel, arrête tout, puis « Tout est éteint et effacé. ». Il ne touche jamais au film du Bureau.
+
+**Pendant le pitch** : l'écran géant de la salle s'affiche **dans le deck** (slide « constellation ») — personne ne
+change de fenêtre. S'il ne répond pas, la slide le dit : touche **B**, la vidéo de 30 s. V2 pilote la régie depuis
+**son** téléphone ou portable (`https://clubpulse.tailfcbc50.ts.net/salle/regie`, même jeton, envoyé par AirDrop ou
+message). L'onglet régie du Mac reste ouvert : c'est lui qui passe le jeton à l'écran du deck.
+
+## Une seule fois, avant le jour J
+
+1. Récupérer le code et créer l'environnement Python : [A2](#a2-récupérer-le-code-sur-le-mac).
+2. Installer **Tailscale** (App Store), se connecter ; dans sa console web, activer **HTTPS** et **Funnel** pour ce
+   Mac ; vérifier que le Mac s'appelle **`clubpulse`**.
+3. Installer **Google Chrome**.
+4. Premier double-clic : macOS demande « Terminal souhaite accéder aux fichiers de votre Bureau » → **OK** (sinon le
+   film n'est pas trouvé : Réglages Système → Confidentialité et sécurité → Fichiers et dossiers → Terminal → Bureau).
+   Si macOS refuse d'ouvrir le fichier (téléchargé en zip plutôt que cloné) : clic droit → **Ouvrir**.
+5. Faire une répétition complète ([A6](#a6-répéter)) avec les deux double-clics.
 
 ---
 
-## 1. Quelle version présenter
+# Annexe — la procédure détaillée (dépannage)
+
+Tout ce qui suit est ce que les deux double-clics font à votre place. À n'utiliser que si l'un d'eux échoue.
+
+## A1. Quelle version présenter
 
 | | **v1 — le plan B** (15 min) | **v2 — la nouvelle** (18 min) |
 |---|---|---|
@@ -28,7 +83,7 @@ d'aucun réseau.
 
 ---
 
-## 2. Récupérer le code sur le Mac
+## A2. Récupérer le code sur le Mac
 
 ### La toute première fois
 
@@ -63,7 +118,7 @@ pip install -r prototype/requirements.txt
 
 ---
 
-## 3. Ouvrir le deck
+## A3. Ouvrir le deck à la main
 
 ### Le film
 
@@ -133,7 +188,7 @@ Sans le film, tout le reste avance d'environ 1:40 : ignorer les cibles du chrono
 
 ---
 
-## 4. Le pitch
+## A4. Le pitch
 
 ### Les fichiers (dans `~/HackVS/docs/presentation/`)
 
@@ -142,6 +197,7 @@ Sans le film, tout le reste avance d'environ 1:40 : ignorer les cibles du chrono
 | Script v2 complet (ce qui se dit + indications de scène) | `03_SCRIPT_ORAL_v2.md` |
 | Le texte seul, à apprendre | `03b_SCRIPT_A_DIRE_v2.md` |
 | **Version imprimable** : une colonne par intervenant, chronos | `livrables/SCRIPT_v2_IMPRIMABLE.pdf` (et `.html`) |
+| Carte de régie de V2 · carte de V1 (une page chacune) | `livrables/CARTE_REGIE_V2.pdf` · `livrables/CARTE_V1.pdf` |
 | Runbook de la démo v2 (boutons exacts de la régie, plans B) | `04_DEMO_RUNBOOK_v2.md` |
 | Minutage et points de contrôle v2 | `02_STRUCTURE_v2.md` |
 | Questions du jury | `07_QA_JURY.md` |
@@ -159,7 +215,7 @@ Pour régénérer la version imprimable après une modification du script :
 |---|---|---|---|---|
 | 1 · La carte | 0:00–2:00 | 2:00 | la carte, les mains levées, « Ce matin… Cette nuit, nous l'avons construit », la statistique, « Et après ? » | — |
 | 2 · Le film | 2:00–5:30 | 3:30 | « Cette année, la Foire fait son cinéma. Nous aussi… Il s'appelle Jean-Marc. » — silence pendant le film (3:21) — « Jean-Marc a dit oui. Et après ? » | — |
-| 3 · Sortez vos téléphones | 5:30–9:30 | 4:00 | les deux gestes, « En dessous de trois… », la demande, le retrait simulé, le tableau final | régie : **1 bis** à 5:30 → ⌘-Tab vers l'écran géant → **2** à 7:30 → **3** à 8:30 → **4** à 9:00 → ⌘-Tab vers le deck à 9:20 |
+| 3 · Sortez vos téléphones | 5:30–9:30 | 4:00 | les deux gestes, « En dessous de trois… », la demande, le retrait simulé, le tableau final ; V1 passe à la slide « constellation » (l'écran géant y est en direct) | régie : **1 bis** à 5:30 → **2** à 7:30 → **3** à 8:30 → **4** à 9:00 |
 | 4 · Le côté Club | 9:30–12:15 | 2:45 | Le Club cherche / invite / suit ; 145 entreprises, 173 représentants ; 8 sur 9 ; « Votre liste dit ce que le Club pourrait faire… » | manœuvre les écrans réels si on les montre en direct |
 | 5 · La science et les preuves | 12:15–14:00 | 1:45 | la science de la demande ; les preuves ; « Une fois sur vingt-six » | — |
 | 6 · La feuille de route | 14:00–16:20 | 2:20 | où nous en sommes, 30/45 jours, la pile suisse, **la demande au Club** | — |
@@ -185,7 +241,7 @@ une phrase Tally, un nom de membre.
 
 ---
 
-## 5. Les moments en direct (v2)
+## A5. Les moments en direct, à la main (si un double-clic échoue)
 
 Il faut **trois fenêtres Terminal** (⌘-N dans Terminal pour en ouvrir une). Dans chacune :
 `cd ~/HackVS && source .venv/bin/activate`.
@@ -244,8 +300,8 @@ La première répond ; la seconde donne l'adresse du QR (une fois la salle ouver
 
 - **La télécommande (régie)** : `http://127.0.0.1:8000/salle/regie`. Elle demande le jeton **une fois** : coller le
   jeton. Ouvrir la régie **en premier**.
-- **L'écran géant** : `http://127.0.0.1:8000/salle/ecran`, dans une autre fenêtre plein écran. Dans le même Chrome,
-  il récupère le jeton tout seul auprès de la régie ; s'il le demande, coller le même.
+- **L'écran géant** : il s'affiche **dans le deck v2**, slide « constellation ». Il reçoit le jeton de la régie ouverte
+  dans le même Chrome du Mac : garder cet onglet ouvert. (À la main, pour vérifier : `http://127.0.0.1:8000/salle/ecran`.)
 
 Les boutons de la régie, dans l'ordre :
 
@@ -288,32 +344,31 @@ Pas de tunnel. `make demo HOTE=0.0.0.0 URL_PUBLIQUE=http://<ip-du-Mac>:8000`, pu
 
 ---
 
-## 6. Répéter
+## A6. Répéter
 
 ### Répétition complète (compter 45 min)
 
-1. [ ] `git pull` (§ 2), `film.mp4` en place.
-2. [ ] Mac **sur secteur** ; partage 4G prêt sur un téléphone.
-3. [ ] Terminal 1 : jeton + `./demo-tunnel.sh` ; Terminal 2 : `tailscale funnel 8000` ; les deux `curl` répondent.
-4. [ ] Chrome : régie (jeton collé) → « Réinitialiser » → « 1 · Ouvrir la salle ».
-5. [ ] Deck v2 lancé, plein écran (F), **mode répétition (R)**.
-6. [ ] Le QR s'affiche sur « Sortez vos téléphones ».
-7. [ ] **3 téléphones ou plus, en 4G (pas le Wi-Fi du Mac)** : scan, deux gestes ; les points arrivent sur
-   l'écran géant.
-8. [ ] Jouer les 18 minutes en entier, avec les boutons 1 bis → 2 → 3 → 4 et les ⌘-Tab.
-9. [ ] Le film se lance, se fige à la fin ; un téléphone affiche son reçu.
-10. [ ] Noter le chrono réel de chaque point de contrôle ; si on dépasse, appliquer la coupe affichée.
-11. [ ] Purger (`./purge.sh` → « OK : salle vide. »).
-12. [ ] Tester une fois la touche **B** sur « constellation » (vidéo de secours).
+1. [ ] `git pull` ([A2](#a2-récupérer-le-code-sur-le-mac)) ; le film sur le Bureau ; Mac **sur secteur** ; partage 4G prêt.
+2. [ ] Double-clic sur **« 1 - Lancer Club Pulse »** ; coller le jeton dans la régie du Mac ; **« FEU VERT v2 »**.
+3. [ ] V2 ouvre sa régie sur son appareil (`https://clubpulse.tailfcbc50.ts.net/salle/regie`, même jeton).
+4. [ ] Régie → « 1 · Ouvrir la salle » ; deck en plein écran (F), **mode répétition (R)**.
+5. [ ] Le QR s'affiche sur « Sortez vos téléphones ».
+6. [ ] **3 téléphones ou plus, en 4G (pas le Wi-Fi du Mac)** : scan, deux gestes ; les points arrivent sur l'écran
+   géant, **dans le deck** (slide « constellation »).
+7. [ ] Jouer les 18 minutes en entier, avec les boutons 1 bis → 2 → 3 → 4 (carte de régie).
+8. [ ] Le film se lance, se fige à la fin ; un téléphone affiche son reçu.
+9. [ ] Noter le chrono réel de chaque point de contrôle ; si on dépasse, appliquer la coupe affichée.
+10. [ ] Tester une fois la touche **B** sur « constellation » (vidéo de secours).
+11. [ ] Double-clic sur **« 2 - Arrêter et effacer »** → « Tout est éteint et effacé. »
 
 ### Avant de monter sur scène (H-30)
 
 1. [ ] Secteur branché ; notifications coupées (Concentration → Ne pas déranger) ; luminosité au maximum.
-2. [ ] Terminal 1 et 2 tournent ; `curl …/sante` répond.
-3. [ ] Régie : « Réinitialiser », puis « 1 · Ouvrir la salle » ; 2 téléphones de l'équipe ont scanné, en 4G.
-4. [ ] Écran géant ouvert dans sa fenêtre ; jour ou nuit choisi selon la salle (touche J).
+2. [ ] « 1 - Lancer Club Pulse » a dit **« FEU VERT v2 »** (la page `/preflight` le redit en direct).
+3. [ ] Régie : « 1 · Ouvrir la salle » ; 2 téléphones de l'équipe ont scanné, en 4G.
+4. [ ] Jour ou nuit choisi selon la salle (touche J du deck : l'écran géant suit).
 5. [ ] Deck v2 à la **slide 1**, plein écran, **mode répétition éteint** (pas de barre en bas).
 6. [ ] Slide du film vérifiée (pas d'étiquette « Plan B » affichée = le film est chargé).
-7. [ ] Téléphone de secours de V2 dans la poche, QR déjà scanné.
-8. [ ] Le jeton noté hors du dépôt ; la version imprimable du script sur papier.
+7. [ ] L'onglet régie du Mac est resté ouvert ; V2 a sa régie et son téléphone de secours (QR déjà scanné).
+8. [ ] Les deux cartes et le script imprimés.
 9. [ ] Respirer. « Et après ? »

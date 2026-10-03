@@ -1,0 +1,30 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Carte de régie V2</title><style>
+@page { size: A4 portrait; margin: 11mm; }
+:root { --encre: #141923; --rouge: #CD2128; --gris: #5b6270; --trait: #d9dce1; --fond: #fff; --doux: #f2f3f5; }
+* { box-sizing: border-box; }
+body { font: 11pt/1.38 -apple-system, "Helvetica Neue", Arial, sans-serif; color: var(--encre); background: var(--fond); margin: 0 16px; }
+h1 { font-size: 20pt; margin: 4px 0 2px; } h2 { font-size: 12pt; margin: 14px 0 6px; color: var(--rouge); text-transform: uppercase; letter-spacing: .04em; }
+.sous { color: var(--gris); font-size: 9.5pt; margin: 0 0 6px; }
+table { width: 100%; border-collapse: collapse; } td { vertical-align: top; padding: 6px 6px; border-bottom: 1px solid var(--trait); }
+.t { font-family: Menlo, "JetBrains Mono", monospace; font-weight: 700; color: var(--rouge); white-space: nowrap; width: 1%; }
+.bouton { display: inline-block; border: 2px solid var(--encre); border-radius: 8px; padding: 3px 8px; font-weight: 700; }
+.vu { color: var(--gris); font-size: 9.5pt; }
+.panne td:first-child { font-weight: 700; width: 38%; }
+.coeur li { font-size: 13pt; font-weight: 700; margin: 4px 0; }
+.coeur { padding-left: 20px; margin: 0; }
+.touches { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 16px; font-size: 10pt; }
+.touches b { font-family: Menlo, monospace; display: inline-block; min-width: 190px; }
+.cadre { background: var(--doux); border-radius: 10px; padding: 8px 12px; font-size: 10pt; margin-top: 8px; }
+code { font-family: Menlo, monospace; font-size: 9.5pt; overflow-wrap: anywhere; }
+</style></head><body>
+<h1>Carte de régie — V2</h1>
+<p class="sous">Club Pulse · deck v2 · tu ne parles pas : tu appuies. V1 a la télécommande du deck.</p>
+<div class="cadre">Ta régie : <code>https://clubpulse.tailfcbc50.ts.net/salle/regie</code> — colle le jeton que Hiba t'envoie (une fois). L'écran de la salle
+s'affiche <b>dans le deck</b> : personne ne change de fenêtre.</div>
+<h2>Les boutons, dans l'ordre</h2>
+<table><tr><td class='t'>H-30</td><td><span class='bouton'>1 · Ouvrir la salle (QR)</span><div class='vu'>« ouverte » dans la régie ; scanner avec ton téléphone, en 4G</div></td></tr><tr><td class='t'>5:30</td><td><span class='bouton'>1 bis · « Sortez vos téléphones » (en séance)</span><div class='vu'>quand V1 dit « Sortez vos téléphones » ; la minute de bascule part d&#x27;ici</div></td></tr><tr><td class='t'>7:30</td><td><span class='bouton'>2 · Lancer la demande vers la salle</span><div class='vu'>l&#x27;anneau se dessine à 3/4 sur l&#x27;écran du deck</div></td></tr><tr><td class='t'>8:30</td><td><span class='bouton'>3 · Déclencher un retrait (simulé en démonstration)</span><div class='vu'>une ligne se rétracte, « un composant n&#x27;est plus disponible », la réserve recompose</div></td></tr><tr><td class='t'>9:00</td><td><span class='bouton'>4 · Afficher le bilan (Suivi de la salle)</span><div class='vu'>le tableau final ; V1 conclut et avance</div></td></tr></table>
+<h2>Si un écran ne répond pas</h2>
+<table class="panne"><tr><td>L&#x27;écran du deck dit « ne répond pas », ou reste noir</td><td>Faire signe à V1 : <b>touche B</b> — la vidéo de 30 s. V1 dit : « Voici ce que vous auriez vu — une séance simulée, enregistrée hier soir. »</td></tr><tr><td>Rien ne bouge après le bouton 2</td><td>Faire signe à V1 : <b>⌘-R</b> (le deck recharge et revient sur la même slide). Toujours rien : <b>touche B</b>.</td></tr><tr><td>Moins de 5 téléphones une minute après « 1 bis »</td><td>Ne rien faire : la démonstration scriptée prend le relais seule (bandeau « démonstration scriptée dans 5 s »).</td></tr><tr><td>Aucun « oui » sur une pièce</td><td>Répondre <b>Oui</b> avec ton téléphone de secours (QR scanné avant le pitch).</td></tr><tr><td>Ta régie affiche « hors ligne » ou « refusé »</td><td>Recharger la page ; recoller le jeton si elle le demande. Toujours rien : V1 passe à la vidéo (<b>touche B</b>).</td></tr></table>
+<h2>Après le pitch</h2>
+<p>Hiba double-clique sur <b>« 2 - Arrêter et effacer »</b> : la salle est effacée (c'est promis à la salle), le tunnel
+fermé, tout s'éteint. Ne rien effacer à la main.</p></body></html>
