@@ -658,6 +658,8 @@ class ClubPulse:
                 b = relu
         self._propositions_demande[pid] = prop = {"id": f"dm-{len(self.journal.evenements()):06d}", "texte": texte.strip(), "besoin": b,
                                                    "ia": rep.appel.model_dump(include={"fournisseur", "modele", "statut", "repli", "latence_ms"})}
+        from . import suivi_ia                            # ANNÉE 1 · lot 7 : rien n'est écrit si HACKVS_SUIVI_IA est éteint
+        suivi_ia.noter_proposition(self, pid, prop)
         return {"proposition": prop["id"], "a_confirmer": "Rien n'est publié tant que vous ne confirmez pas ce qui a été compris.",
                 **self._compris(b), "ia": prop["ia"]}
 
@@ -674,6 +676,8 @@ class ClubPulse:
         if prop is None or prop["id"] != proposition:
             raise Introuvable("proposition inconnue ou déjà publiée : reformulez votre demande")
         del self._propositions_demande[pid]
+        from . import suivi_ia
+        suivi_ia.noter_acceptation(self, pid, prop)
         texte, b = prop["texte"], prop["besoin"]
         self._enregistrer("BESOIN", [pid], besoin={"id": f"bj{len(self.r.besoins):05d}", "auteur": pid, "texte": texte,
                                                    "le": self.jour.isoformat(), "besoin": b.model_dump(mode="json"), "anonyme": False,

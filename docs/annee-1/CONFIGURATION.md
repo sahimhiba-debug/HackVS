@@ -107,6 +107,7 @@ Règles :
 | `HACKVS_ANTHROPIC_BASE_URL` | `https://api.anthropic.com` | adresse du fournisseur `claude` |
 | `ANTHROPIC_TEMPERATURE` | `0` | température (`defaut` : non envoyée) |
 | `ANTHROPIC_DELAI_S` · `ANTHROPIC_BUDGET_S` | `30` · `12` | délai d'un appel · budget total |
+| `HACKVS_SUIVI_IA` | `0` | **lot 7** — `1` : suit le taux d'acceptation des compréhensions proposées (faits sans contenu) |
 | `APERTUS_APPEL_OUTILS` | `0` | appel d'outils natif (mesuré : aucun gain sur les 26 cas) |
 | `APERTUS_NOTES_PRIVEES` | `0` | `1` : les notes privées peuvent partir vers l'IA (consentement) |
 | `HACKVS_LLM` | (vide) | ancien prototype : fournisseur (`claude`…) |

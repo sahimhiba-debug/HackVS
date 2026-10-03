@@ -600,6 +600,11 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
         base = base_publique(request)
         return au_monde(lambda c: sec.lancer_campagne(c, x.metier, x.nombre, base=base))
 
+    @r.get("/secretariat/ia")
+    def sec_ia(s: str = Depends(secretariat)) -> dict:
+        from intelligence import suivi_ia
+        return au_monde(suivi_ia.taux) | {"allume": suivi_ia.allume()}
+
     @r.get("/secretariat/acces")
     def sec_acces(s: str = Depends(secretariat)) -> list:
         return au_monde(lambda c: comptes().journal_acces(s))

@@ -251,3 +251,9 @@
   de: Vertrauen und Konformität — 27560-Belege mit geprüften DPV-Begriffen, Zugriffsprotokoll der Konsole, HSTS in Produktion, Verzeichnis, Folgenabschätzung, Richtlinien FR/DE und Auftragsverarbeitungsvertrag (juristisch zu prüfen), ASVS-Checkliste Stufe 2
   en: Trust and compliance — 27560 receipts with verified DPV terms, console access log, HSTS in production, records of processing, impact assessment, FR/DE policies and processing agreement (to be reviewed by a lawyer), ASVS level 2 checklist
   tests: test_annee1_confiance.py, test_annee1_dpv.py
+- id: a1-suivi-ia
+  statut: annee1
+  fr: Suivi du taux d'acceptation de ce que le Club comprend d'une demande (modèle Apertus ou règles en repli), décomptes seulement, dans la console du secrétariat
+  de: Annahmequote dessen, was der Club aus einer Anfrage versteht (Modell Apertus oder Regeln als Rückfall), nur Zahlen, in der Sekretariatskonsole
+  en: Acceptance rate of what the Club understands from a request (Apertus model or fallback rules), counts only, in the secretariat console
+  tests: test_annee1_suivi_ia.py

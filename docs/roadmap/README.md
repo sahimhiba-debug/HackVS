@@ -56,6 +56,7 @@ simulée). Le Club réel compte **145 entreprises et 173 représentants** ; rien
 | Console du secrétariat — comptes (inviter, révoquer), métiers des entreprises à confirmer, critères du pilote gelés d'avance, bilan trimestriel (Markdown, CSV, PDF), « Le Club cherche » relié à une campagne d'invitation | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_secretariat.py, test_annee1_secretariat_api.py |
 | Notifications — e-mail par n'importe quel serveur SMTP, SMS (interface et faux fournisseur), modèles FR/DE, suivi d'envoi sans adresse ni contenu, désinscription par lien signé ; en démo, tout simulé et étiqueté | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_notifications.py, test_annee1_notifications_api.py |
 | Confiance et conformité — reçus 27560 aux termes DPV vérifiés, journal des accès à la console, HSTS en production, registre, analyse d'impact, politiques FR/DE et contrat de sous-traitance (à valider par un juriste), checklist ASVS niveau 2 | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_confiance.py, test_annee1_dpv.py |
+| Suivi du taux d'acceptation de ce que le Club comprend d'une demande (modèle Apertus ou règles en repli), décomptes seulement, dans la console du secrétariat | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_suivi_ia.py |
 <!-- etat:fin -->
 
 Page publique, trilingue, avec des liens vers les écrans du monde « visite » : `/feuille-de-route`.
