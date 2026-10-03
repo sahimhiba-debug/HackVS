@@ -42,7 +42,7 @@ def test_rien_d_interdit_dans_le_deck():
     assert "certifié" not in texte
     assert texte.count("validé sur le terrain") == 1                # le seul libellé du statut, compté depuis etat.yaml
     assert "cinquantaine" not in texte
-    assert "nouveaux liens tissés" not in texte                     # pas encore construit : ne pas l'afficher
+    assert "nouveaux liens tissés" in texte                         # construit (test_liens.py) : il peut être dit
     assert "Un pilote de 45 jours avec 50 membres volontaires parmi vos 173 représentants." in texte
     assert "La Foire crée la rencontre." in texte                   # la phrase finale, identique au v1
 

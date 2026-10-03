@@ -49,8 +49,8 @@ précise, au bon moment, à ceux qui peuvent dire oui.
 Et pour le Club, toute l'année ?
 Quand une demande reste sans réponse, le Club le voit, par métier. Il peut inviter quelqu'un qui n'est pas membre :
 un passe découverte, quatre-vingt-dix jours. Un exposant invité d'Annecy aide, sans être membre. [clic] Et le
-secrétariat suit enfin où en sont les partenariats — en agrégats ; sous trois entreprises, on écrit « moins de
-trois ».
+secrétariat suit enfin où en sont les partenariats, et les nouveaux liens tissés : deux entreprises qui font
+quelque chose ensemble pour la première fois. En agrégats ; sous trois entreprises, on écrit « moins de trois ».
 Votre Club, c'est 145 entreprises et 173 représentants. [clic] D'après votre liste, il pourrait assembler huit des
 neuf capacités qu'on lui demande le plus souvent. [clic] La pièce qui manque : l'interprète. Personne dans la liste
 ne la tient. [clic] Un de vos membres exploite déjà le train vers la France ; parmi vos membres, une haute école, une

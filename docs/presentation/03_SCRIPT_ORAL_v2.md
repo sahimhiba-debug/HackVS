@@ -10,8 +10,7 @@ Conventions :
 - **Verrouillé** : le film (3:21), les « Et après ? », la phrase finale mot pour mot (son dernier membre est le carton
   de fin du film).
 - **Interdits** : une phrase Tally individuelle ; un membre réel nommé ; un partenaire présenté comme acquis ; « validé
-  sur le terrain » sans preuve ; « Public AI » (Apertus 1.5 est servi par le **CSCS**) ; « certifié » ; « nouveaux liens
-  tissés » tant que l'écran n'existe pas.
+  sur le terrain » sans preuve ; « Public AI » (Apertus 1.5 est servi par le **CSCS**) ; « certifié ».
 
 ---
 
@@ -99,8 +98,8 @@ enregistrée sur le vrai écran. Dire : « Voici ce que vous auriez vu — une s
 
 > Quand une demande reste sans réponse, le Club le voit, par métier. Il peut inviter quelqu'un qui n'est pas membre :
 > un passe découverte, quatre-vingt-dix jours. Un exposant invité d'Annecy aide, sans être membre. [clic] Et le
-> secrétariat suit enfin où en sont les partenariats — en agrégats ; sous trois entreprises, on écrit « moins de
-> trois ».
+> secrétariat suit enfin où en sont les partenariats, et les nouveaux liens tissés : deux entreprises qui font
+> quelque chose ensemble pour la première fois. En agrégats ; sous trois entreprises, on écrit « moins de trois ».
 
 [slide « Votre Club en chiffres »]
 
@@ -186,3 +185,5 @@ profil » — démonstration sur le téléphone de V2. Sinon : rien, on enchaîn
   données » : **seulement** si on est sur Tailscale Funnel ; jamais avec le secours Cloudflare.
 - **Ne jamais dire** : « validé sur le terrain » (sauf le statut Tally, compté par etat.yaml), « nos utilisateurs »,
   « certifié », « Public AI », une phrase Tally, un nom de membre.
+- **« Nouveaux liens tissés »** : un décompte de l'écran Suivi (construit, testé). Le routage qui les favoriserait est
+  une hypothèse, non branchée : ne pas le présenter comme fait.
