@@ -36,7 +36,7 @@ test:
 # Bilan de période (Foire 2026 · G) : docs/bilans/bilan-<période>.md depuis le journal (HACKVS_ESSAIS_DB, sinon monde neuf)
 PERIODE ?= trimestre
 bilan:
-	cd $(P) && $(PY) scripts/bilan.py $(PERIODE) $(if $(BILAN_SCENE),--scene,)
+	cd $(P) && $(PY) scripts/bilan.py $(PERIODE) --csv $(if $(BILAN_SCENE),--scene,)
 
 # Pipeline Tally (Foire 2026 · H) : CSV → data/eval/phrases_foire.jsonl (hors dépôt), puis classification dans la
 # taxonomie des métiers. Les phrases de la Foire ne passent QUE par Apertus (consentement) ; sans CSV : les 26 cas.

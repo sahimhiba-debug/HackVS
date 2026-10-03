@@ -40,6 +40,7 @@ def main() -> None:
     a.add_argument("--scene", action="store_true")
     a.add_argument("--ia", action="store_true")
     a.add_argument("--sortie")
+    a.add_argument("--csv", action="store_true", help="écrit aussi le CSV (mêmes chiffres) à côté du Markdown")
     x = a.parse_args()
     reprendre = bool(os.environ.get("HACKVS_ESSAIS_DB"))
     c = Demo(charger_taxonomie(), reprendre=reprendre).club
@@ -52,6 +53,10 @@ def main() -> None:
     sortie.parent.mkdir(parents=True, exist_ok=True)
     sortie.write_text(texte, encoding="utf-8")
     print(sortie)
+    if x.csv:
+        csv_ = sortie.with_suffix(".csv")
+        csv_.write_text(bilan.csv_texte(c, x.periode), encoding="utf-8")
+        print(csv_)
 
 
 if __name__ == "__main__":

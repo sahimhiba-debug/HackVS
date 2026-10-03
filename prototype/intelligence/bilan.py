@@ -80,23 +80,43 @@ def _ligne(cle: str, v: Any) -> str:
     return f"| {cle} | {v} |"
 
 
+def mesures(s: dict) -> list[tuple[str, Any]]:
+    """Les mesures du bilan, dans l'ordre — UNE liste pour le Markdown et le CSV (mêmes chiffres que Suivi)."""
+    r = s["reponses"]
+    hv = s["hors_valais"] if isinstance(s["hors_valais"], str) else s["hors_valais"]["membres"]
+    return [("Demandes envoyées", s["demandes"]["adressees"]), ("Demandes sans réponse", s["demandes"]["sans_reponse"]),
+            ("Réponses oui", r["oui"]), ("Réponses non", r["non"]), ("Réponses « pas cette fois »", r["pas_cette_fois"]),
+            ("Délai médian avant le premier oui (jours)",
+             s["delai_premier_oui_jours"] if s["delai_premier_oui_jours"] is not None else s["delai_note"]),
+            ("Membres actifs", s["membres_actifs"]), ("Membres hors Valais", hv),
+            ("Nouveaux liens tissés", s["liens"]["nouveaux"]), ("Membres associés", s["associes"]),
+            *[(f"Partenariats — {k}", v) for k, v in s["partenariats_par_etape"].items()],
+            *[(f"Résultat déclaré — {k}", v) for k, v in s["resultats"].items()]]
+
+
+def csv_texte(c: "ClubPulse", periode: str) -> str:
+    """Le bilan en CSV pour le comité : agrégats seulement, les mêmes chiffres que le Markdown et l'écran Suivi."""
+    import csv
+    import io
+    s = suivi.calculer(c, periode)
+    f = io.StringIO()
+    w = csv.writer(f, delimiter=";")
+    w.writerow(["mesure", "valeur", "periode", "du", "au", "monde"])
+    for k, v in mesures(s):
+        w.writerow([k, v, s["periode_libelle"], s["du"], s["au"], s["monde"]])
+    return f.getvalue()
+
+
 def rediger(c: "ClubPulse", periode: str, ia: bool = False, origine: str = "") -> str:
     s = suivi.calculer(c, periode)
-    r = s["reponses"]
     recit, note = recit_ia(c, s) if ia else (None, "forme déterministe (HACKVS_BILAN_IA non allumé)")
-    hv = s["hors_valais"] if isinstance(s["hors_valais"], str) else s["hors_valais"]["membres"]
     L = [f"# Bilan — {s['periode_libelle']}", "",
          f"> **{s['monde']}** — chiffres d'un monde fictif, pas du Club réel. Période : du {s['du']} au {s['au']} "
          "(dates du monde, simulées en démonstration). Généré par `make bilan` depuis le journal" + (f" ({origine})" if origine else "")
-         + f". Mêmes règles que l'écran Suivi : agrégats seulement, tout décompte de personnes sous {s['k']} s'affiche « < {s['k']} ».",
+         + f". Mêmes règles que l'écran Suivi : agrégats seulement, tout décompte venant de moins de {s['k']} entreprises s'affiche « < {s['k']} ».",
          "", "## Récit", "", recit or recit_deterministe(s), "", f"*{note}.*", "",
          "## Chiffres (identiques à Suivi)", "", "| Mesure | Valeur |", "|---|---|",
-         _ligne("Demandes envoyées", s["demandes"]["adressees"]), _ligne("Demandes sans réponse", s["demandes"]["sans_reponse"]),
-         _ligne("Réponses oui", r["oui"]), _ligne("Réponses non", r["non"]), _ligne("Réponses « pas cette fois »", r["pas_cette_fois"]),
-         _ligne("Délai médian avant le premier oui (jours)", s["delai_premier_oui_jours"] if s["delai_premier_oui_jours"] is not None else s["delai_note"]),
-         _ligne("Membres actifs", s["membres_actifs"]), _ligne("Membres hors Valais", hv),
-         *[_ligne(f"Partenariats — {k}", v) for k, v in s["partenariats_par_etape"].items()],
-         *[_ligne(f"Résultat déclaré — {k}", v) for k, v in s["resultats"].items()],
+         *[_ligne(k, v) for k, v in mesures(s)],
          "", "## Métiers manquants", "",
          *([f"- {m['metier']} : {m['demandes']} demande(s) sans réponse" for m in s["metiers_manquants"]] or ["- aucun"]),
          "", "## Nouveaux invités (passe découverte)", "",
