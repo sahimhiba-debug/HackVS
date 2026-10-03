@@ -214,7 +214,7 @@
       } catch (e) { $("#pulse").replaceChildren(h("p", { class: "note" }, "Pulse indisponible : réessayez.")); }
     });
     // FOIRE 2026 : le lien Suivi n'apparaît que si l'interrupteur est allumé (éteint : l'Établi d'hier, à l'identique)
-    consoleFetch("/api/pulse/console/suivi", {}).then((r) => { if (r.ok) $("#lien-suivi").hidden = false; }).catch(() => {});
+    consoleFetch("/api/pulse/console/foire", {}).then((r) => r.json()).then((e) => { if (e.actif) $("#lien-suivi").hidden = false; }).catch(() => {});
     lire(); lireIA();
     setInterval(lire, 1000); setInterval(lireIA, 5000);
   </script>

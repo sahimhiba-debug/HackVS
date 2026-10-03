@@ -68,6 +68,16 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
             return f(c)
         return g
 
+    # L'ÉTAT de l'interrupteur, toujours 200 : les écrans le lisent avant d'appeler une route de la Foire — éteint, aucun
+    # 404 dans la console du navigateur (le produit d'hier, à l'identique, jusque dans ses journaux)
+    @r.get("/console/foire", dependencies=[Depends(console)])
+    def etat_foire_console() -> dict:
+        return au_monde(lambda c: {"actif": c.reglages.foire})
+
+    @r.get("/moi/foire")
+    def etat_foire_membre(pid: str = Depends(membre)) -> dict:
+        return au_monde(lambda c: {"actif": c.reglages.foire})
+
     @r.get("/console/suivi", dependencies=[Depends(console)])
     def lire_suivi(periode: str = "demo") -> dict:
         return au_monde(foire(lambda c: suivi.calculer(c, periode[:12])))

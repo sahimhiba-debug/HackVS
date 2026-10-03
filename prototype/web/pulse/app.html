@@ -486,7 +486,7 @@
     // FOIRE 2026 (F, B) : zone, langue, « visible par le Club » — seulement si l'interrupteur est allumé (sinon : rien)
     async function foireDistance() {
       let x;
-      try { x = await api("/api/pulse/moi/distance"); } catch (e) { return; }
+      try { if (!(await api("/api/pulse/moi/foire")).actif) return; x = await api("/api/pulse/moi/distance"); } catch (e) { return; }
       const zone = h("select", { id: "dist-zone" }, x.zones.map((z) => h("option", { value: z, selected: x.profil && x.profil.zone === z }, z)));
       const langue = h("select", { id: "dist-langue" }, x.langues.map((l) => h("option", { value: l, selected: x.profil && x.profil.langue === l }, l === "fr" ? "français" : "Deutsch")));
       const bloc = $("#foire-distance"); if (!bloc) return;

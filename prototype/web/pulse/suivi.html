@@ -209,9 +209,12 @@
       } catch (e) { /* la liste attend la prochaine lecture */ }
     }
     $("#qr-stand").addEventListener("click", () => emettre("stand"));
+    let actif = null;
     async function lire() {
       const t = performance.now();
       try {
+        if (actif === null) actif = (await (await consoleFetch("/api/pulse/console/foire", {})).json()).actif;
+        if (!actif) { $("#suivi").replaceChildren(h("p", { class: "note" }, "Suivi désactivé (HACKVS_FOIRE=0).")); return; }
         const [a, b] = await Promise.all([consoleFetch(`/api/pulse/console/suivi?periode=${periode}`, {}), consoleFetch("/api/pulse/console/recus", {})]);
         if (a.status === 404) { $("#suivi").replaceChildren(h("p", { class: "note" }, "Suivi désactivé (HACKVS_FOIRE=0).")); return; }
         if (!a.ok || !b.ok) throw new Error(`serveur : ${a.status}`);

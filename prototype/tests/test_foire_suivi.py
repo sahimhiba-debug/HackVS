@@ -184,3 +184,17 @@ def test_page_suivi_servie_avec_csp_et_etiquetee():
     r = client.get("/suivi")
     assert r.status_code == 200 and "monde de démonstration" in r.text
     assert "script-src" in r.headers.get("content-security-policy", "")
+
+
+def test_etat_de_l_interrupteur_toujours_200(monkeypatch):
+    """Les écrans lisent l'état avant d'appeler une route de la Foire : éteint, ni 404 ni bruit dans le navigateur."""
+    per = {p["id"]: p for p in client.get("/api/pulse/console/personas", headers=CONSOLE).json()}
+    membre = {"X-Pulse-Session": per[md.PAULINE]["session"]}
+    assert client.get("/api/pulse/console/foire", headers=CONSOLE).json() == {"actif": True}
+    assert client.get("/api/pulse/moi/foire", headers=membre).json() == {"actif": True}
+    monkeypatch.setenv("HACKVS_FOIRE", "0")
+    client.post("/api/pulse/demo/reinitialiser", headers=CONSOLE)
+    per = {p["id"]: p for p in client.get("/api/pulse/console/personas", headers=CONSOLE).json()}
+    membre = {"X-Pulse-Session": per[md.PAULINE]["session"]}
+    assert client.get("/api/pulse/console/foire", headers=CONSOLE).json() == {"actif": False}
+    assert client.get("/api/pulse/moi/foire", headers=membre).json() == {"actif": False}
