@@ -53,6 +53,7 @@ simulée). Le Club réel compte **145 entreprises et 173 représentants** ; rien
 | Exploitation — configuration documentée, disponibilité (/sante/pret), métriques, Docker de production | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_exploitation.py |
 | Comptes et rôles — invitation à usage unique, sessions et appareils, comptes nominatifs, double authentification (TOTP) pour la console, journal d'administration | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_comptes.py, test_annee1_comptes_api.py |
 | Espace membre — mode pause (vacances), préférences langue / région / canaux, mes demandes envoyées, solde privé « reçus / donnés », export de mes données, suppression du compte avec purge réelle du journal | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_espace_membre.py, test_annee1_espace_membre_api.py |
+| Console du secrétariat — comptes (inviter, révoquer), métiers des entreprises à confirmer, critères du pilote gelés d'avance, bilan trimestriel (Markdown, CSV, PDF), « Le Club cherche » relié à une campagne d'invitation | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_secretariat.py, test_annee1_secretariat_api.py |
 <!-- etat:fin -->
 
 Page publique, trilingue, avec des liens vers les écrans du monde « visite » : `/feuille-de-route`.

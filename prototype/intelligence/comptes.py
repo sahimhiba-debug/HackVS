@@ -286,6 +286,15 @@ class Comptes:
             raise Interdit("entrez le code de votre application d'authentification")
         return {"compte": s["compte"], "role": c["role"], "etiquette": c["etiquette"], "session": sid}
 
+    def lister(self, session: str) -> list[dict]:
+        """ANNÉE 1 · LOT 4 — la liste des comptes, pour la console (TOTP + session élevée exigés). Le secrétariat voit
+        les membres et les invités ; l'administration voit tout. Jamais un secret, jamais un appareil."""
+        role = self.exiger_console(session)["role"]
+        visibles = ROLES if role == ADMIN else (MEMBRE, INVITE)
+        return [{"compte": k, "role": c["role"], "etiquette": c["etiquette"], "revoque": c["revoque"],
+                 "double_auth": bool(c["totp"])}
+                for k, c in self._etat()["comptes"].items() if c["role"] in visibles or role == ADMIN]
+
     # ------------------------------------------------------------------ limite par session
     def compter_ecriture(self, session: str) -> None:
         sid = self._session(session)[0]

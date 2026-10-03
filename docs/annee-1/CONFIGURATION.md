@@ -68,6 +68,9 @@ Règles :
 | `HACKVS_SOIREE_DEBUT` | `2026-10-03T18:30` | début de la soirée (ancien prototype) |
 | `HACKVS_METRIQUES` | `0` | **lot 1** — `1` : sert `/metriques` (cette machine ou jeton de console seulement) |
 | `HACKVS_COMPTES` | `0` | **lot 2** — `1` : comptes, rôles, double authentification (`/compte`, `/api/pulse/comptes/…`) |
+| `HACKVS_SECRETARIAT` | `0` | **lot 4** — `1` (avec `HACKVS_COMPTES=1`) : console du secrétariat (`/secretariat`) — compte nominatif, double authentification et session élevée exigés |
+| `CHROMIUM` | `/opt/pw-browsers/chromium` | **lot 4** — navigateur qui imprime le bilan en PDF, si Playwright ne trouve pas le sien |
+| `HACKVS_CRITERES_PILOTE` | `docs/annee-1/pilote/criteres.json` | **lot 4** — fichier des critères du pilote (gelés par empreinte depuis la console) |
 | `HACKVS_ESPACE_MEMBRE` | `0` | **lot 3** — `1` : espace membre (`/espace` : pause, préférences, mes demandes, export, effacement définitif) |
 
 ## Intelligence artificielle (facultative : le Club marche pareil sans)

@@ -29,8 +29,25 @@ INVITATION = {
 }
 
 
+def normaliser(valeur: str) -> str:
+    return " ".join(valeur.lower().split())
+
+
+def libelles_metier(chemin: Optional[Path] = None) -> Optional[list[str]]:
+    """ANNÉE 1 · lot 4 : la colonne du MÉTIER seulement (libellés normalisés, un par ligne) ; None sans fichier."""
+    p = chemin or Path(os.environ.get("HACKVS_ENTREPRISES_CSV") or CSV_DEFAUT)
+    if not p.is_file():
+        return None
+    with p.open(encoding="utf-8-sig", newline="") as f:
+        separateur = ";" if ";" in f.readline() else ","
+        f.seek(0)
+        lecteur = csv.DictReader(f, delimiter=separateur)
+        col = next((c for c in (lecteur.fieldnames or []) if c and c.strip().lower() in COLONNES_METIER), None)
+        return [] if col is None else [normaliser(ligne.get(col) or "") for ligne in lecteur]
+
+
 def _metier_csv(valeur: str) -> Optional[str]:
-    v = " ".join(valeur.lower().split())
+    v = normaliser(valeur)
     if not v:
         return None
     termes = {m["id"]: {m["id"], *[x.strip() for x in (m["fr"] + "," + m["de"]).lower().split(",")]} for m in metiers.metiers()}
@@ -45,8 +62,9 @@ def _metier_csv(valeur: str) -> Optional[str]:
 
 
 
-def entreprises_par_metier(chemin: Optional[Path] = None) -> Optional[dict]:
-    """Décompte PAR MÉTIER des entreprises de la liste ; None si le fichier est absent. Seule la colonne du métier est lue."""
+def entreprises_par_metier(chemin: Optional[Path] = None, confirmes: Optional[dict[str, str]] = None) -> Optional[dict]:
+    """Décompte PAR MÉTIER des entreprises de la liste ; None si le fichier est absent. Seule la colonne du métier est lue.
+    `confirmes` (ANNÉE 1 · lot 4) : les libellés que le secrétariat a rattachés à un métier (libellé normalisé → métier)."""
     p = chemin or Path(os.environ.get("HACKVS_ENTREPRISES_CSV") or CSV_DEFAUT)
     if not p.is_file():
         return None
@@ -60,7 +78,8 @@ def entreprises_par_metier(chemin: Optional[Path] = None) -> Optional[dict]:
         compte, non_classees, n = Counter[str](), 0, 0
         for ligne in lecteur:
             n += 1
-            mid = _metier_csv(ligne.get(col) or "")
+            brut = ligne.get(col) or ""
+            mid = (confirmes or {}).get(normaliser(brut)) or _metier_csv(brut)
             if mid:
                 compte[mid] += 1
             else:
@@ -90,7 +109,8 @@ def calculer(c: "ClubPulse") -> dict:
     for g in liste:
         g["nombre"] = len(g["demandes"])
         g["age_max_jours"] = max(d["age_jours"] for d in g["demandes"])
-    ent = entreprises_par_metier()
+    confirmes = {e.donnees["valeur"]: e.donnees["metier"] for e in c.journal.evenements("METIER_CONFIRME")}  # lot 4
+    ent = entreprises_par_metier(confirmes=confirmes)
     if ent is not None:
         for g in liste:
             g["entreprises_de_ce_metier"] = ent["par_metier"].get(g["metier"], 0)

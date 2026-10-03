@@ -18,10 +18,11 @@ import threading
 import time
 from collections import defaultdict, deque
 from datetime import date
+from pathlib import Path
 from typing import Callable, Iterator, Literal, Optional, TypeVar
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
 
 from intelligence.club_pulse import ClubPulse
@@ -122,6 +123,41 @@ class Preferences(BaseModel):
     langue: Literal["fr", "de", "en", "it"]
     region: str = Field(default="", max_length=60)
     canaux: list[Literal["app", "email", "sms"]] = Field(min_length=1, max_length=3)
+
+
+class MetierConfirme(BaseModel):
+    valeur: str = Field(min_length=1, max_length=80)
+    metier: str = Field(min_length=1, max_length=40)
+
+
+class Campagne(BaseModel):
+    metier: str = Field(min_length=1, max_length=40)
+    nombre: int = Field(ge=1, le=50)
+
+
+class InvitationConsole(BaseModel):
+    role: Literal["membre", "invite", "secretariat", "administration"]
+    etiquette: str = Field(min_length=1, max_length=60)
+    duree_s: int = Field(default=7 * 24 * 3600, ge=60, le=30 * 24 * 3600)
+
+
+def _imprimer_pdf(html_doc: str) -> bytes:
+    """ANNÉE 1 · LOT 4 : le PDF du bilan est l'IMPRESSION de son HTML par Chromium (Playwright). Sans Playwright : 501."""
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        raise HTTPException(501, "PDF indisponible sur ce serveur (Playwright absent) : téléchargez le Markdown") from None
+    with sync_playwright() as p:
+        try:
+            b = p.chromium.launch()
+        except Exception:                                 # navigateur hors de l'emplacement par défaut
+            b = p.chromium.launch(executable_path=os.environ.get("CHROMIUM", "/opt/pw-browsers/chromium"))
+        try:
+            pg = b.new_page()
+            pg.set_content(html_doc, wait_until="load")
+            return pg.pdf(format="A4", print_background=True)
+        finally:
+            b.close()
 
 
 class Temps(BaseModel):
@@ -498,6 +534,88 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
             _comptes["club"], _comptes["c"] = club, Comptes(club.journal, cle)
         return _comptes["c"]
     r.comptes = comptes  # type: ignore[attr-defined]
+
+    # ------------------------------------------------------------------ ANNÉE 1 · LOT 4 : console du secrétariat
+    # Éteinte par défaut (HACKVS_SECRETARIAT=1, avec HACKVS_COMPTES=1). Jamais le jeton « console » de la démo : un compte
+    # NOMINATIF du secrétariat ou de l'administration, double authentification active, session élevée par un code.
+    from .comptes_api import _origine_sure
+
+    def secretariat(request: Request, x_pulse_compte: Optional[str] = Header(None)) -> str:
+        if os.environ.get("HACKVS_SECRETARIAT") != "1" or os.environ.get("HACKVS_COMPTES") != "1":
+            raise HTTPException(404, "Not Found")
+        _origine_sure(request)
+        if not x_pulse_compte:
+            raise HTTPException(401, "session de compte requise (X-Pulse-Compte)")
+        try:
+            comptes().exiger_console(x_pulse_compte)
+            if request.method != "GET":
+                comptes().compter_ecriture(x_pulse_compte)
+        except ErreurMetier as e:
+            raise traduire(e) from None
+        return x_pulse_compte
+
+    def criteres() -> Path:
+        from intelligence import secretariat as sec
+        return Path(os.environ.get("HACKVS_CRITERES_PILOTE") or sec.CRITERES_DEFAUT)
+
+    @r.get("/secretariat/metiers")
+    def sec_metiers(s: str = Depends(secretariat)) -> dict:
+        from intelligence import secretariat as sec
+        return au_monde(sec.metiers_a_verifier)
+
+    @r.post("/secretariat/metiers")
+    def sec_confirmer(x: MetierConfirme, s: str = Depends(secretariat)) -> dict:
+        from intelligence import secretariat as sec
+        par = comptes().verifier(s)["etiquette"]
+        return au_monde(lambda c: sec.confirmer_metier(c, x.valeur, x.metier, par=par))
+
+    @r.get("/secretariat/pilote")
+    def sec_pilote(s: str = Depends(secretariat)) -> dict:
+        from intelligence import secretariat as sec
+        return au_monde(lambda c: sec.tableau_pilote(c, criteres()))
+
+    @r.post("/secretariat/pilote/geler")
+    def sec_geler(s: str = Depends(secretariat)) -> dict:
+        from intelligence import secretariat as sec
+        par = comptes().verifier(s)["etiquette"]
+        return au_monde(lambda c: sec.geler_criteres(c, criteres(), par=par))
+
+    @r.get("/secretariat/campagnes")
+    def sec_campagnes(s: str = Depends(secretariat)) -> dict:
+        from intelligence import club_cherche, secretariat as sec
+        return au_monde(lambda c: {"campagnes": sec.campagnes(c), "metiers_cherches": [
+            {"metier": g["metier"], "libelle": g["libelle"], "demandes": g["nombre"], "age_max_jours": g["age_max_jours"]}
+            for g in club_cherche.calculer(c)["metiers"]]})
+
+    @r.post("/secretariat/campagnes")
+    def sec_lancer(x: Campagne, request: Request, s: str = Depends(secretariat)) -> dict:
+        from intelligence import secretariat as sec
+        base = base_publique(request)
+        return au_monde(lambda c: sec.lancer_campagne(c, x.metier, x.nombre, base=base))
+
+    @r.get("/secretariat/comptes")
+    def sec_comptes(s: str = Depends(secretariat)) -> list:
+        return au_monde(lambda c: comptes().lister(s))
+
+    @r.post("/secretariat/comptes/{compte}/revoquer")
+    def sec_revoquer(compte: str, s: str = Depends(secretariat)) -> dict:
+        au_monde(lambda c: comptes().revoquer(s, compte))
+        return {"ok": True}
+
+    @r.post("/secretariat/invitations")
+    def sec_inviter(x: InvitationConsole, s: str = Depends(secretariat)) -> dict:
+        return au_monde(lambda c: comptes().inviter(s, role=x.role, etiquette=x.etiquette, duree_s=x.duree_s))
+
+    @r.get("/secretariat/bilan.{fmt}")
+    def sec_bilan(fmt: str, s: str = Depends(secretariat)) -> Response:
+        from intelligence import secretariat as sec
+        types = {"md": "text/markdown; charset=utf-8", "csv": "text/csv; charset=utf-8", "pdf": "application/pdf"}
+        if fmt not in types:
+            raise HTTPException(404, "Not Found")
+        texte = au_monde(lambda c: sec.bilan_trimestriel(c, "html" if fmt == "pdf" else fmt))
+        corps = _imprimer_pdf(texte) if fmt == "pdf" else texte.encode("utf-8")
+        return Response(corps, media_type=types[fmt], headers={
+            "Content-Disposition": f'attachment; filename="bilan-trimestriel.{fmt}"', "Cache-Control": "no-store"})
     r.lien_salle, r.apercu_salle = ajouter_routes_salle(r, console,  # type: ignore[attr-defined]
                                                          lambda: etat["demo"].club.reglages.secret, limiter=limiter,
                                                          nouveau_limiteur=Limiteur, qr=qr_svg)

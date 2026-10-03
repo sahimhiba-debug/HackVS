@@ -233,3 +233,9 @@
   de: Mitgliederbereich — Pausenmodus (Ferien), Sprache / Region / Kanäle, meine gesendeten Anfragen, privater Saldo « erhalten / gegeben », Export meiner Daten, Kontolöschung mit echter Bereinigung des Journals
   en: Member space — pause mode (holidays), language / region / channel preferences, my sent requests, private balance « received / given », export of my data, account deletion with a real journal purge
   tests: test_annee1_espace_membre.py, test_annee1_espace_membre_api.py
+- id: a1-secretariat
+  statut: annee1
+  fr: Console du secrétariat — comptes (inviter, révoquer), métiers des entreprises à confirmer, critères du pilote gelés d'avance, bilan trimestriel (Markdown, CSV, PDF), « Le Club cherche » relié à une campagne d'invitation
+  de: Sekretariatskonsole — Konten (einladen, sperren), zu bestätigende Branchen, im Voraus eingefrorene Pilotkriterien, Quartalsbericht (Markdown, CSV, PDF), « Der Club sucht » mit Einladungskampagne
+  en: Secretariat console — accounts (invite, revoke), company trades to confirm, pilot criteria frozen in advance, quarterly report (Markdown, CSV, PDF), « The Club is looking for » linked to an invitation campaign
+  tests: test_annee1_secretariat.py, test_annee1_secretariat_api.py

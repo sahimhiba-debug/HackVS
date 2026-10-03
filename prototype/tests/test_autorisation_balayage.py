@@ -45,17 +45,32 @@ def monde(tmp_path, monkeypatch):
     monkeypatch.setenv("HACKVS_ESSAIS_DB", str(tmp_path / "journal.db"))
     monkeypatch.setenv("HACKVS_FOIRE", "1")                           # les routes de la Foire sont balayées allumées
     monkeypatch.setenv("HACKVS_ESPACE_MEMBRE", "1")                   # ANNÉE 1 · lot 3 : l'espace membre aussi
+    monkeypatch.setenv("HACKVS_COMPTES", "1")                         # ANNÉE 1 · lot 4 : la console du secrétariat aussi
+    monkeypatch.setenv("HACKVS_SECRETARIAT", "1")
     routeur = creer_routeur(TAX)
     app = FastAPI()
     app.include_router(routeur)
+    app.state.routeur = routeur
     routes = []
     for r in routeur.routes:
         assert isinstance(r, APIRoute)
         noms = {d.call.__name__ for d in r.dependant.dependencies}
-        genre = next((g for g in ("console", "membre", "invite", "participant") if g in noms), "publique")
+        genre = next((g for g in ("console", "membre", "invite", "participant", "secretariat") if g in noms), "publique")
         chemin = re.sub(r"\{(\w+)\}", lambda m: VALEURS.get(m.group(1), "x1"), r.path)
         routes += [(m, chemin, genre) for m in sorted(r.methods)]
     return app, routes
+
+
+def _secretariat_eleve(app) -> str:
+    """Un compte nominatif du secrétariat, double authentification active, session élevée (ANNÉE 1 · lots 2 et 4)."""
+    from intelligence.comptes import code_totp
+    cp = app.state.routeur.comptes()
+    admin = cp.amorcer_administration("Administration (fictive)")
+    s = cp.accepter(cp.inviter(admin, role="secretariat", etiquette="Secrétariat (fictif)", duree_s=600)["jeton"], appareil="x")
+    prep = cp.preparer_totp(s)
+    cp.confirmer_totp(s, code_totp(prep["secret"], time.time()))
+    cp.elever(s, code_totp(prep["secret"], time.time() + 30))
+    return s
 
 
 def _appel(client, methode, chemin, entetes=None):
@@ -133,8 +148,10 @@ def test_contre_epreuve_bien_authentifie_on_passe_la_garde(monde):
     client.post("/api/pulse/console/salle/purger", headers=CONSOLE)
     jeton = client.post("/api/pulse/console/salle/ouvrir", headers=CONSOLE).json()["url"].split("#s=", 1)[1]
     part = {"X-Pulse-Salle": client.post("/api/pulse/salle/entrer", json={"jeton": jeton}).json()["passe"]}
+    sec = {"X-Pulse-Compte": _secretariat_eleve(app)}
     for m, c, g in lectures:
-        statut = _appel(client, m, c, CONSOLE if g == "console" else inv if g == "invite" else part if g == "participant" else s)
+        statut = _appel(client, m, c, CONSOLE if g == "console" else inv if g == "invite" else part if g == "participant"
+                        else sec if g == "secretariat" else s)
         assert statut not in (401, 403), (m, c, statut)
 
 
@@ -260,3 +277,19 @@ def test_lire_ne_capte_rien_aucune_route_de_lecture_n_ecrit_au_journal(monde, tm
             lectures += 1
     assert lectures >= 20
     assert compter() == avant, f"{compter() - avant} fait(s) écrit(s) par une simple lecture"
+
+
+def test_chaque_route_du_secretariat_exige_un_compte_nominatif_eleve(monde):
+    """ANNÉE 1 · lot 4 : ni l'absence de session, ni le jeton « console » de la démo, ni une session de membre, ni une
+    session de compte inventée n'ouvrent une route du secrétariat."""
+    app, routes = monde
+    client = TestClient(app)
+    codes = {p["id"]: p["code"] for p in client.get("/api/pulse/console/personas", headers=CONSOLE).json()}
+    membre = client.post("/api/pulse/acces", json={"code": codes["n01"]}).json()["session"]
+    essais = {"aucune": {}, "console démo": CONSOLE, "session de membre": {"X-Pulse-Session": membre},
+              "compte inventé": {"X-Pulse-Compte": "abc.9999999999.0000"}}
+    vues = [r for r in routes if r[2] == "secretariat"]
+    assert len(vues) >= 10
+    for m, c, _ in vues:
+        for nom, entetes in essais.items():
+            assert _appel(client, m, c, entetes) in (401, 403), (m, c, nom)

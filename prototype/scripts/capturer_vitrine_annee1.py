@@ -31,7 +31,8 @@ def main() -> None:
     DOSSIER.mkdir(parents=True, exist_ok=True)
     tmp = tempfile.mkdtemp()
     journal, secret = str(Path(tmp) / "j.db"), "v" * 40
-    env = {"HACKVS_COMPTES": "1", "HACKVS_ESSAIS_DB": journal, "HACKVS_SECRET": secret, "HACKVS_FOIRE": "1"}
+    env = {"HACKVS_COMPTES": "1", "HACKVS_SECRETARIAT": "1", "HACKVS_ESSAIS_DB": journal, "HACKVS_SECRET": secret,
+           "HACKVS_FOIRE": "1"}
     with serveur(**env) as base, sync_playwright() as p:
         admin = subprocess.run([sys.executable, "scripts/comptes.py", "amorcer", "Administration (fictive)"], capture_output=True,
                                text=True, cwd=PROTO, env={**os.environ, **env}).stdout.strip().splitlines()[-1]
@@ -57,6 +58,20 @@ def main() -> None:
         pg.locator("#etat:has-text('activée')").wait_for()
         pg.wait_for_timeout(300)
         pg.screenshot(path=str(DOSSIER / "lot2-2-compte-totp.png"), full_page=True)
+        # LOT 4 : la même session, élevée par un code, ouvre la console du secrétariat
+        pg.fill("#code", code_totp(pg.inner_text("#cle"), time.time() + 30))
+        pg.click("#elever")
+        pg.locator("#qui:has-text('console ouverte')").wait_for()
+        large = nav.new_context(viewport={"width": 1100, "height": 900}).new_page()
+        large.goto(f"{base}/compte")                     # même origine : la session est dans sessionStorage de l'onglet
+        large.evaluate("s => sessionStorage.setItem('compte-session', s)", pg.evaluate("sessionStorage.getItem('compte-session')"))
+        large.goto(f"{base}/secretariat")
+        large.locator("#pilote tr").first.wait_for()
+        large.select_option("#camp-metier", index=0)
+        large.click("#camp-ok")
+        large.locator("#campagnes tr").first.wait_for()
+        large.wait_for_timeout(300)
+        large.screenshot(path=str(DOSSIER / "lot4-console-secretariat.png"), full_page=True)
         nav.close()
     capturer_espace()
     print("vitrine annee-1 capturée dans", DOSSIER)

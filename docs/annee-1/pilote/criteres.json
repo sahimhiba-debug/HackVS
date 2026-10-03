@@ -1,0 +1,37 @@
+[
+  {
+    "id": "taux_oui",
+    "libelle": "Part des demandes qui reçoivent un oui (%)",
+    "mesure": "reponses.pourcentages.oui",
+    "sens": ">=",
+    "seuil": 30
+  },
+  {
+    "id": "sans_reponse",
+    "libelle": "Part des demandes restées sans réponse (%)",
+    "mesure": "reponses.pourcentages.sans_reponse",
+    "sens": "<=",
+    "seuil": 40
+  },
+  {
+    "id": "delai_oui",
+    "libelle": "Délai médian avant le premier oui (jours)",
+    "mesure": "delai_premier_oui_jours",
+    "sens": "<=",
+    "seuil": 7
+  },
+  {
+    "id": "membres_actifs",
+    "libelle": "Membres actifs sur le trimestre",
+    "mesure": "membres_actifs",
+    "sens": ">=",
+    "seuil": 20
+  },
+  {
+    "id": "intentions",
+    "libelle": "Invités qui souhaitent adhérer",
+    "mesure": "invites.intentions_adhesion",
+    "sens": ">=",
+    "seuil": 3
+  }
+]
