@@ -438,14 +438,14 @@
             statutIA.textContent = `${p.ia.libelle}. ${Object.keys(p.attributs).length ? "Vérifiez, puis répondez." : "Remplissez le formulaire vous-même."}`;
           } catch (e) { statutIA.textContent = "Proposition indisponible : remplissez le formulaire vous-même."; }
         } }, "Proposer à partir de mon texte");
-        const repondre = (oui) => agir(() => api(`/api/pulse/moi/asks/${encodeURIComponent(a.id)}/reponse`, { corps: { oui,
+        const repondre = (oui, choix) => agir(() => api(`/api/pulse/moi/asks/${encodeURIComponent(a.id)}/reponse`, { corps: { oui, ...(choix ? { choix } : {}),
           ...(oui && mots.value.trim().length >= 3 ? { quoi: mots.value.trim() } : {}),
           attributs: Object.fromEntries(champs.map((c) => { const i = c.querySelector("input"); return [i.dataset.attribut, Number(i.value || 0)]; })) } }),
           oui ? "Merci : votre pièce est enregistrée, avec votre consentement pour cette seule capacité." : "Noté. Personne d'autre ne le saura.");
         return h("div", { class: "carte", "data-ask": a.id }, h("span", { class: "surtitre" }, a.titre), h("p", { class: "creneau", style: "font-size:19px" }, a.texte),
           h("div", { class: "champ" }, mots), proposer, statutIA,
           ...champs, h("div", { class: "actions", style: "margin-top:10px" }, h("button", { class: "btn plein", id: "ask-oui", onclick: repondre(true) }, "Oui"),
-            h("button", { class: "btn discret", onclick: repondre(false) }, "Non"), h("button", { class: "btn discret", onclick: repondre(false) }, "Pas cette fois")),
+            h("button", { class: "btn discret", onclick: repondre(false, "non") }, "Non"), h("button", { class: "btn discret", onclick: repondre(false, "pas cette fois") }, "Pas cette fois")),
           h("p", { class: "note", style: "margin-top:8px" }, "Vous pouvez refuser sans vous justifier. Oui = vous déclarez cette pièce pour ce créneau, et vous consentez à son usage pour cette capacité seulement."));
       };
       const recu = (r) => h("div", { class: "carte", "data-recu": r.finalite }, h("div", { class: "ligne" }, h("b", {}, r.titre),

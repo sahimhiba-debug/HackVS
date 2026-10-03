@@ -55,6 +55,7 @@
     <span class="puce fictif">monde fictif</span>
     <span class="droite"><span class="puce" id="ia" data-role="ia">IA…</span>
       <button class="btn discret petit" id="ia-bascule">…</button><span class="puce" id="date">date…</span><span class="puce" id="fraicheur">…</span>
+      <a class="btn discret petit" id="lien-suivi" href="/suivi" hidden>Suivi</a>
       <button class="btn discret petit" id="voir-pulse">Ce qui a changé</button>
       <button class="btn discret petit" id="qr-jure">QR juré</button></span>
   </header>
@@ -212,6 +213,8 @@
           h("div", { class: "attention" }, bloc("Fragiles", p.fragiles), bloc("À une pièce près", p.a_une_piece), h("div", {}, h("p", { class: "note" }, p.calcul)))));
       } catch (e) { $("#pulse").replaceChildren(h("p", { class: "note" }, "Pulse indisponible : réessayez.")); }
     });
+    // FOIRE 2026 : le lien Suivi n'apparaît que si l'interrupteur est allumé (éteint : l'Établi d'hier, à l'identique)
+    consoleFetch("/api/pulse/console/suivi", {}).then((r) => { if (r.ok) $("#lien-suivi").hidden = false; }).catch(() => {});
     lire(); lireIA();
     setInterval(lire, 1000); setInterval(lireIA, 5000);
   </script>

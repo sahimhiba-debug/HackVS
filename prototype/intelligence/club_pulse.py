@@ -340,7 +340,8 @@ class ClubPulse:
             res.append(inst)
         return [(i, i.ask.id) for i in choisir_asks(res, self.reglages.asks_montrees)]  # type: ignore[union-attr]
 
-    def repondre_ask(self, pid: str, ask_id: str, oui: bool, attributs: Optional[dict[str, int]] = None, quoi: Optional[str] = None) -> Instance:
+    def repondre_ask(self, pid: str, ask_id: str, oui: bool, attributs: Optional[dict[str, int]] = None, quoi: Optional[str] = None,
+                     choix: Optional[str] = None) -> Instance:
         """Relit les demandes de CE membre au moment de répondre (sous le verrou du monde) : deux réponses concurrentes à
         la même demande donnent une seule liaison — la seconde ne trouve plus la demande."""
         if ask_id not in {a for _, a in self.asks_pour(pid)}:
@@ -350,9 +351,13 @@ class ClubPulse:
         prop = next((e for e in reversed(self.journal.evenements("PROPOSITION_IA"))
                      if e.acteurs == [pid] and e.donnees["ask"] == ask_id), None)
         ia = oui and prop is not None and {k: v for k, v in (attributs or {}).items() if v} == prop.donnees["attributs"]
-        return self._retablir(lambda: self.capacites.repondre(
+        inst = self._retablir(lambda: self.capacites.repondre(
             pid, ask_id, oui, attributs, self._net(quoi) if quoi else None, {o.concept for o in self.profil(pid).offre if o.concept},
             provenance=("AI_PROPOSED_CONFIRMED", prop.donnees["trace"]) if ia and prop else ("SELF_DECLARED", None)))
+        if not oui and choix == "pas cette fois" and self.reglages.foire:
+            # FOIRE 2026 : une TRACE pour le décompte de Suivi — même effet que « non », jamais montrée à personne
+            self.banc._ecrire("REPONSE_NUANCE", [pid], Statut.OBSERVE, ask=ask_id, choix=choix)
+        return inst
 
     def consentir_capacite(self, pid: str, finalite: str) -> Instance:
         return self._retablir(lambda: self.capacites.consentir(pid, finalite))

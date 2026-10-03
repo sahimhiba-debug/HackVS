@@ -98,8 +98,8 @@ WEB_PULSE = Path(__file__).resolve().parent.parent / "web" / "pulse"
 _observabilite.configurer(_observabilite.niveau_depuis_env(os.environ))
 # ordre : la dernière ajoutée est la plus EXTÉRIEURE → l'identifiant de requête couvre aussi les refus 413
 app.add_middleware(_Protections, csp=_politique_contenu([WEB_PULSE / f for f in ("app.html", "console.html", "projection.html", "regie.html",
-                                                                              "etabli.html")]),
-                   chemins_csp=("/app", "/console", "/etabli", "/projection", "/demo/regie"))
+                                                                              "etabli.html", "suivi.html")]),
+                   chemins_csp=("/app", "/console", "/etabli", "/suivi", "/projection", "/demo/regie"))
 app.add_middleware(_Perimetre, ancien_actif=lambda: ANCIEN_PROTOTYPE, jeton=lambda: _CONSOLE_JETON)
 app.add_middleware(_observabilite.MiddlewareRequete)
 
@@ -968,6 +968,14 @@ def page_etabli():
     if MODE != "demo":
         raise HTTPException(501, "Club Pulse est présenté en mode démo (monde fictif).")
     return FileResponse(WEB / "pulse" / "etabli.html")
+
+
+@app.get("/suivi")
+def page_suivi():
+    """Club Pulse — SUIVI (Foire 2026, interrupteur HACKVS_FOIRE) : où en sont les partenariats, en agrégats. Lit la console."""
+    if MODE != "demo":
+        raise HTTPException(501, "Club Pulse est présenté en mode démo (monde fictif).")
+    return FileResponse(WEB / "pulse" / "suivi.html")
 
 
 @app.get("/demo/regie")

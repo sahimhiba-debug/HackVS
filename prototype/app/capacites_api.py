@@ -2,7 +2,7 @@
 branché sur le routeur Club Pulse (mêmes sessions, même verrou par monde, mêmes erreurs typées). Aucune règle ici."""
 from __future__ import annotations
 
-from typing import Annotated, Callable, Optional
+from typing import Annotated, Callable, Literal, Optional
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
@@ -13,6 +13,8 @@ class Reponse(BaseModel):
     attributs: dict[Annotated[str, Field(max_length=24)], Annotated[int, Field(ge=0, le=1000)]] = Field(default_factory=dict,
                                                                                                         max_length=4)
     quoi: Optional[str] = Field(default=None, min_length=3, max_length=200)
+    # FOIRE 2026 (Suivi) : « non » et « pas cette fois » ont le même effet ; seul le décompte du Club les distingue
+    choix: Optional[Literal["non", "pas cette fois"]] = None
 
 
 class Proposition(BaseModel):
@@ -58,7 +60,7 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
 
     @r.post("/moi/asks/{ask_id}/reponse")
     def repondre(ask_id: str, x: Reponse, pid: str = Depends(membre)) -> dict:
-        return au_monde(lambda c: c.vues_capacites.apres_reponse(c.repondre_ask(pid, ask_id[:120], x.oui, x.attributs, x.quoi)))
+        return au_monde(lambda c: c.vues_capacites.apres_reponse(c.repondre_ask(pid, ask_id[:120], x.oui, x.attributs, x.quoi, choix=x.choix)))
 
     @r.post("/moi/asks/{ask_id}/proposition")
     def proposer(ask_id: str, x: Proposition, pid: str = Depends(membre)) -> dict:

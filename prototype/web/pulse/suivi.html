@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Club Pulse · Suivi</title>
+  <meta name="description" content="Club Pulse — Suivi : où en sont les partenariats entre membres. Des agrégats, jamais des noms. Monde de démonstration.">
+  <link rel="icon" href="/static/pulse/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/pulse/pulse.css">
+  <style>
+    body { background: var(--papier); }
+    header.haut { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; min-height: 58px; padding: 10px 32px; border-bottom: 1px solid var(--hairline-2); background: var(--card); }
+    header.haut .droite { margin-left: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .page { max-width: 1300px; margin: 0 auto; padding: 18px 24px 40px; }
+    h1.titre { font-size: clamp(24px, 2.2vw, 34px); font-weight: 800; letter-spacing: -0.03em; }
+    .sous { color: var(--secondary); margin-top: 6px; font-size: 15px; font-weight: 500; }
+    .onglets { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+    .onglets button[aria-selected="true"] { background: var(--ink); color: var(--card); }
+    .grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 14px; margin-top: 16px; }
+    .tuile { background: var(--card); border-radius: var(--r-card); padding: 14px 18px; box-shadow: var(--sh-card-light); }
+    .tuile .n { font-size: 34px; font-weight: 800; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+    .tuile ul { margin: 6px 0 0; padding-left: 18px; font-size: 13.5px; }
+    .bloc { margin-top: 20px; background: var(--card); border-radius: var(--r-sheet); padding: 15px 22px; box-shadow: var(--sh-sheet); }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 8px; }
+    td, th { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--hairline); vertical-align: top; }
+    .cloture { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .cloture input { font: inherit; padding: 5px 8px; border: 1px solid var(--hairline); border-radius: 8px; min-width: 0; width: 180px; }
+    @media (max-width: 760px) { .page { padding: 14px 16px 30px; } header.haut { padding: 10px 16px; } table { font-size: 12.5px; } }
+  </style>
+</head>
+<body>
+  <header class="haut">
+    <span class="marque"><span class="pouls-point" aria-hidden="true"></span>Club Pulse · Suivi</span>
+    <span class="puce fictif" data-role="monde">monde de démonstration</span>
+    <span class="droite"><a class="btn discret petit" href="/etabli">Établi</a><span class="puce" id="fraicheur">…</span></span>
+  </header>
+  <div class="page">
+    <h1 class="titre">Où en sont les partenariats</h1>
+    <p class="sous">Des agrégats, jamais des noms. Tout décompte de personnes sous le seuil s'affiche « &lt; 3 ». Chiffres du monde de démonstration.</p>
+    <div class="onglets" role="tablist" id="periodes">
+      <button class="btn discret petit" role="tab" data-periode="demo" aria-selected="true">Démo</button>
+      <button class="btn discret petit" role="tab" data-periode="7j" aria-selected="false">7 jours</button>
+      <button class="btn discret petit" role="tab" data-periode="trimestre" aria-selected="false">Trimestre</button>
+    </div>
+    <div id="suivi"></div>
+    <div id="recus"></div>
+  </div>
+  <script type="module">
+    import { consoleFetch } from "/static/pulse/jeton-console.js";
+    const $ = (s) => document.querySelector(s);
+    function h(tag, attrs = {}, ...enfants) {
+      const el = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs || {})) {
+        if (v === null || v === undefined || v === false) continue;
+        if (k === "class") el.className = v; else if (k.startsWith("on")) el.addEventListener(k.slice(2), v); else el.setAttribute(k, v === true ? "" : v);
+      }
+      for (const e of enfants.flat(Infinity)) if (e !== null && e !== undefined && e !== false) el.append(e instanceof Node ? e : document.createTextNode(String(e)));
+      return el;
+    }
+    const RESULTATS = ["signé", "test sans suite", "contact établi", "abandonné"];
+    const ETAPES = { demande: "demande", accord: "accord", essai: "essai", resultat: "résultat", retire: "retiré" };
+    let periode = "demo";
+    const pct = (x) => (x === null || x === undefined ? "" : ` (${x} %)`);
+    const tuile = (titre, n, sous) => h("div", { class: "tuile", "data-tuile": titre }, h("span", { class: "surtitre" }, titre), h("div", { class: "n" }, n), sous ? h("p", { class: "note" }, sous) : null);
+    function rendre(s) {
+      const r = s.reponses, inv = s.invites;
+      $("#suivi").replaceChildren(
+        h("p", { class: "note", style: "margin-top:12px" }, `Période : ${s.periode_libelle} · du ${s.du} au ${s.au} (dates du monde de démonstration, simulées)`),
+        h("div", { class: "grille" },
+          tuile("Demandes envoyées", s.demandes.adressees, `${s.demandes.sans_reponse} sans réponse`),
+          tuile("Réponses oui", r.oui, pct(r.pourcentages.oui).trim() || null),
+          tuile("Non · pas cette fois", `${r.non} · ${r.pas_cette_fois}`, "même effet ; aucune justification demandée"),
+          tuile("Sans réponse", r.sans_reponse, pct(r.pourcentages.sans_reponse).trim() || null),
+          tuile("Délai médian avant le premier oui", s.delai_premier_oui_jours === null ? "—" : `${s.delai_premier_oui_jours} j`, s.delai_note),
+          tuile("Membres actifs", s.membres_actifs, "ont répondu ou consenti dans la période"),
+          tuile("Hors Valais", typeof s.hors_valais === "string" ? "—" : s.hors_valais.membres, typeof s.hors_valais === "string" ? s.hors_valais : null),
+          tuile("Invités ayant contribué", inv.ont_contribue, `${inv.actifs} passe(s) découverte actif(s)`)),
+        h("div", { class: "grille" },
+          h("div", { class: "tuile" }, h("span", { class: "surtitre" }, "Partenariats par étape"),
+            h("ul", {}, Object.entries(s.partenariats_par_etape).map(([k, v]) => h("li", { "data-etape": k }, `${ETAPES[k] || k} : ${v}`)))),
+          h("div", { class: "tuile" }, h("span", { class: "surtitre" }, "Résultats déclarés"),
+            h("ul", {}, Object.entries(s.resultats).map(([k, v]) => h("li", {}, `${k} : ${v}`)))),
+          h("div", { class: "tuile" }, h("span", { class: "surtitre" }, "Métiers manquants"),
+            s.metiers_manquants.length ? h("ul", {}, s.metiers_manquants.map((m) => h("li", {}, `${m.metier} : ${m.demandes} demande(s)`))) : h("p", { class: "note" }, "Aucun."))),
+        s.nominatif.length ? h("section", { class: "bloc" }, h("span", { class: "surtitre" }, "Visible par le Club (les deux parties l'ont permis)"),
+          h("ul", {}, s.nominatif.map((x) => h("li", {}, `${x.membre} — ${x.piece} · ${ETAPES[x.etape]}${x.resultat ? " : " + x.resultat : ""}${x.note ? " — " + x.note : ""}`)))) : null,
+        h("p", { class: "note", style: "margin-top:12px", "data-role": "regles" }, s.regles));
+    }
+    function rendreRecus(liste) {
+      const ligne = (x) => {
+        const note = h("input", { maxlength: 140, placeholder: "note (140 caractères)", "aria-label": "note de clôture" });
+        const ouvert = x.etape === "accord" || x.etape === "essai";
+        return h("tr", { "data-recu": x.reference }, h("td", {}, x.reference), h("td", {}, `${x.titre} — ${x.piece}`),
+          h("td", { "data-role": "etape" }, ETAPES[x.etape] + (x.resultat ? ` : ${x.resultat}` : "")),
+          h("td", {}, ouvert ? h("div", { class: "cloture" }, note, ...RESULTATS.map((res) => h("button", { class: "btn discret petit", "data-resultat": res,
+            onclick: () => cloturer(x.reference, res, note.value) }, res))) : h("span", { class: "note" }, x.etape === "retire" ? "consentement retiré" : "clôturé")));
+      };
+      $("#recus").replaceChildren(h("section", { class: "bloc", "aria-label": "Clôturer un reçu" }, h("span", { class: "surtitre" }, "Clôturer un reçu"),
+        h("p", { class: "note" }, "Le Club, demandeur, déclare le résultat d'un partenariat. Le membre n'est pas nommé ici."),
+        liste.length ? h("table", {}, h("thead", {}, h("tr", {}, h("th", {}, "Reçu"), h("th", {}, "Capacité — pièce"), h("th", {}, "Étape"), h("th", {}, "Résultat"))),
+          h("tbody", {}, liste.map(ligne))) : h("p", { class: "note" }, "Aucun reçu.")));
+    }
+    async function cloturer(ref, resultat, note) {
+      try {
+        const r = await consoleFetch(`/api/pulse/console/recus/${encodeURIComponent(ref)}/cloture`, { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ resultat, ...(note.trim() ? { note: note.trim() } : {}) }) });
+        if (!r.ok) throw new Error(`serveur : ${r.status}`);
+      } catch (e) { $("#fraicheur").textContent = "clôture refusée : " + e.message; $("#fraicheur").className = "puce rouge"; }
+      await lire();
+    }
+    async function lire() {
+      const t = performance.now();
+      try {
+        const [a, b] = await Promise.all([consoleFetch(`/api/pulse/console/suivi?periode=${periode}`, {}), consoleFetch("/api/pulse/console/recus", {})]);
+        if (a.status === 404) { $("#suivi").replaceChildren(h("p", { class: "note" }, "Suivi désactivé (HACKVS_FOIRE=0).")); return; }
+        if (!a.ok || !b.ok) throw new Error(`serveur : ${a.status}`);
+        rendre(await a.json()); rendreRecus(await b.json());
+        $("#fraicheur").textContent = `lu en ${Math.round(performance.now() - t)} ms`; $("#fraicheur").className = "puce";
+      } catch (e) { $("#fraicheur").textContent = "hors ligne : écran figé"; $("#fraicheur").className = "puce rouge"; }
+    }
+    for (const b of document.querySelectorAll("#periodes button")) b.addEventListener("click", () => {
+      periode = b.dataset.periode;
+      for (const x of document.querySelectorAll("#periodes button")) x.setAttribute("aria-selected", String(x === b));
+      lire();
+    });
+    lire(); setInterval(lire, 3000);
+  </script>
+</body>
+</html>

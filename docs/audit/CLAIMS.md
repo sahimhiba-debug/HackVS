@@ -93,3 +93,20 @@ registre : il est en quarantaine, et rien n'y doit être présenté.
 Conséquence, dite telle quelle : avec le prompt actuel, Apertus n'améliore la tâche que marginalement (+1 cas) ; la
 validation et le repli empêchent qu'une sortie inventive atteigne le membre. La démonstration de scène reste sans modèle.
 
+
+## Foire 2026 (nuit du 03 au 04.10, branche `foire-2026`, interrupteur `HACKVS_FOIRE`, allumé par défaut)
+
+Toutes les nouveautés ci-dessous sont derrière `HACKVS_FOIRE` (éteint : le produit d'hier, à l'identique — la suite
+entière tourne éteinte, le job CI `salle` et `make e2e` allumés). Les chiffres montrés viennent du **monde de
+démonstration** (150 profils fictifs, horloge simulée), étiqueté ainsi sur chaque écran qui en affiche.
+
+| # | Affirmation | Classe | Preuve |
+|---|---|---|---|
+| 41 | Rôle porté par moins de 3 membres (k = 3, `HACKVS_K_ANONYMAT`) : l'avis de retrait dit « un composant n'est plus disponible », sans le rôle ; l'écran dit qu'un rôle a été masqué, jamais lequel | A | `test_foire_anonymat.py`, E2E `test_e2e_capacites.py` (allumé : rôle absent ; éteint : comportement d'hier) |
+| 42 | Message du téléphone après retrait : « Consentement retiré. Personne ne sera prévenu que c'est vous. » — **le système ne nomme jamais et ne demande jamais pourquoi ; dans un petit club on peut parfois deviner** | A (le texte) ; la limite est dite, pas prouvable | `test_foire_anonymat.py::test_message_de_retrait_ne_promet_pas_l_impossible` |
+| 43 | Suivi : agrégats seulement ; tout décompte de personnes sous 3 s'affiche « < 3 » ; les décomptes de demandes (une pièce, un métier) sont dits tels quels | A | `test_foire_suivi.py` (`test_un_seul_oui_s_affiche_moins_de_trois`, `test_trois_oui_sont_dits…`) |
+| 44 | Aucune donnée personnelle dans la charge utile de Suivi (ni nom, ni identifiant, ni texte d'offre, ni note) | A | `test_foire_suivi.py::test_canari_aucune_donnee_personnelle_dans_la_charge_utile` |
+| 45 | Une ligne nominative n'apparaît que si les DEUX parties ont activé « visible par le Club » ; elle disparaît si l'une retire ; un membre ne peut rendre visible que son propre reçu | A | `test_foire_suivi.py::test_ligne_nominative_seulement_sous_double_accord`, `::test_un_membre_ne_rend_pas_visible…` |
+| 46 | « Non » et « Pas cette fois » ont le même effet ; seul le décompte de Suivi les distingue | A | `test_foire_suivi.py::test_pas_cette_fois_est_compte_a_part…` ; effet identique : `capacites.repondre` inchangé |
+| 47 | Clôture d'un reçu : résultat ∈ {signé, test sans suite, contact établi, abandonné}, note ≤ 140 caractères, journalisée ; machine à états explicite demande → accord → essai → résultat (retiré hors chemin), toute autre transition refusée | A | `test_foire_suivi.py::test_machine_a_etats_explicite`, `::test_cloture_refusee_deux_fois_retire_inconnu_resultat_note` |
+| 48 | Délai médian avant le premier oui : en jours de l'horloge du monde (simulée en démonstration), non affiché sous 3 oui | A (règle) ; la valeur est celle du monde fictif | `test_foire_suivi.py` |
