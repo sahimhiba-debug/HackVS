@@ -18,7 +18,10 @@ import pytest
 RACINE = Path(__file__).resolve().parents[2]
 LANCER = RACINE / "1 - Lancer Club Pulse.command"
 ARRETER = RACINE / "2 - Arrêter et effacer.command"
-pytestmark = pytest.mark.skipif(shutil.which("bash") is None, reason="bash absent")
+# macOS fournit /bin/bash 3.2 : JOUR_J_BASH=<chemin d'un bash 3.2> fait tourner TOUT le lanceur avec lui (les .command,
+# et demo-tunnel.sh, lancé par « #!/usr/bin/env bash »). Sans la variable : le bash de la machine.
+BASH = os.environ.get("JOUR_J_BASH") or shutil.which("bash") or "bash"
+pytestmark = pytest.mark.skipif(shutil.which(BASH) is None, reason="bash absent")
 
 STUBS = {
     # STUB_TS_BLOQUE=1 : comme un Funnel non autorisé, « funnel --bg » affiche une adresse à visiter et ATTEND
@@ -48,6 +51,8 @@ def _video(chemin: Path) -> Path:
 def jour_j(tmp_path):
     stubs = tmp_path / "stubs"
     stubs.mkdir()
+    if os.environ.get("JOUR_J_BASH"):
+        (stubs / "bash").symlink_to(BASH)
     for nom, corps in STUBS.items():
         (stubs / nom).write_text(corps)
         (stubs / nom).chmod(0o755)
@@ -62,7 +67,7 @@ def jour_j(tmp_path):
             "HACKVS_FOIRE": "1", "HACKVS_SEMANTIQUE": "0"}
 
     def lancer(script: Path, **en_plus: str) -> subprocess.CompletedProcess:
-        return subprocess.run(["bash", str(script)], env=env | en_plus, capture_output=True, text=True, timeout=240, cwd=tmp_path)
+        return subprocess.run([BASH, str(script)], env=env | en_plus, capture_output=True, text=True, timeout=240, cwd=tmp_path)
 
     yield {"bureau": bureau, "dossier": dossier, "deck": tmp_path / "deck" / "film.mp4", "port": port, "port_deck": port_deck,
            "lancer": lancer}

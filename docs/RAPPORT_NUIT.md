@@ -255,3 +255,18 @@ de la session) ; le vrai Funnel ; la permission « Bureau » de macOS ; le compo
 | Suite complète | **1 612** réussis, 0 échec |
 | E2E allumé · éteint · réseau coupé | **34 / 34** · **34 / 34** · **34 / 34** |
 | Lint · types · secrets · validateur | propres · 0 erreur · aucun · « toutes vérifiées » |
+
+## macOS : bash 3.2 et outils BSD (03.10, soir)
+
+- **bash 3.2** : le test de bout en bout du lanceur (`test_lanceur_jour_j.py`, 6 cas) passe sous **bash 3.2.57**,
+  compilé depuis la source d'Apple (`apple-oss-distributions/bash`, celle de `/bin/bash` sur macOS) : `JOUR_J_BASH=<chemin>`
+  fait tourner les `.command` ET `demo-tunnel.sh` avec ce bash. Image Docker impossible (démon absent), sources GNU
+  refusées par le proxy. Portage Linux : prototypes ajoutés pour `fmtcheck` (libc BSD) et deux fonctions internes — sans
+  eux, c'est le bash compilé qui plantait, pas les scripts.
+- **Portabilité** (`test_jour_j_portabilite.py`) : aucune construction bash 4+ ; aucune option GNU (`sed -i` sans
+  argument, `stat -c`, `date -d`, `readlink -f`, `grep -P`, `timeout`, `setsid`…), détecteurs eux-mêmes testés ;
+  shellcheck sans avertissement (un seul trouvé et corrigé : SC1007) ; Python du lanceur lisible en 3.9 (Python d'Apple).
+- **Commandes macOS** relues : `pbcopy` (entrée standard), `caffeinate -dimsu` (sans commande : tient jusqu'à l'arrêt),
+  `pmset -g batt` (« AC Power » / « Battery Power »), `open -a "Google Chrome" url…`, `osascript -e 'id of application …'`,
+  `ipconfig getifaddr`, `ps -o lstart= -p` : options BSD. Aucun `stat`, `date` ni `sed -i` dans les scripts.
+- **Toujours non vérifiable ici** : un vrai Mac (Terminal, permission Bureau, Tailscale Funnel, Chrome).

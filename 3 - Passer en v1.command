@@ -37,7 +37,7 @@ set -m
   chmod 600 "$VAR/secret_demo"
   HACKVS_SECRET="$(cat "$VAR/secret_demo")" HACKVS_ESSAIS_DB="$VAR/club_pulse.db" HACKVS_MODE=demo HACKVS_DB=:memory: \
     HACKVS_DECISIONS_DB=:memory: HACKVS_CYCLE_DB=:memory: HACKVS_FOIRE="${HACKVS_FOIRE:-1}" HACKVS_SALLE="${HACKVS_SALLE:-1}" \
-    HACKVS_URL_PUBLIQUE="http://$IP:$PORT" HACKVS_CONSOLE_JETON="$JETON" PUBLIC_BASE_URL= \
+    HACKVS_URL_PUBLIQUE="http://$IP:$PORT" HACKVS_CONSOLE_JETON="$JETON" PUBLIC_BASE_URL='' \
     exec nohup python3 -m uvicorn app.main:app --host 0.0.0.0 --port "$PORT" --no-access-log
 ) </dev/null >"$LOGS/prototype-v1.log" 2>&1 &
 noter prototype $!
