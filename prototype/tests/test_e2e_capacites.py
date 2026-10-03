@@ -4,6 +4,7 @@ délégation… » à une pièce près (le minibus, en pointillés, avec sa dema
 l'Établi passe à « le Club peut le faire » → le reçu est sur son téléphone → elle retire son consentement en un geste →
 l'Établi dit « ce composant n'est plus disponible », sans jamais la nommer → la demande part vers Markus, pas vers elle.
 Chaque écran affiche sa date. Sur échec, les pages sont capturées (tests/capture_e2e.py). Données FICTIVES."""
+import os
 import pytest
 
 from tests.test_e2e_pulse import _api, _sans_debordement, _telephone
@@ -66,7 +67,10 @@ def test_etabli_telephones_reponse_recu_retrait_anonyme(url):  # noqa: F811
         assert lu.value.ok                                                             # une lecture de l'Établi APRÈS le retrait…
         carte.locator("[data-role=statut]:has-text('un consentement ne vaut plus')").wait_for()   # …et l'écran l'affiche
         texte = etabli.inner_text("body")
-        assert "transport : ce composant n'est plus disponible" in texte
+        if os.environ.get("HACKVS_FOIRE") == "1":                                     # FOIRE 2026 · C : rôle porté par < 3 membres, non dit
+            assert "un composant n'est plus disponible" in texte and "transport : ce composant" not in texte
+        else:
+            assert "transport : ce composant n'est plus disponible" in texte
         for x in ("Pauline", "Darbellay", "retiré", "s'est retir", "Minibus de 14"):      # ni qui, ni l'événement
             assert x not in texte, x
 

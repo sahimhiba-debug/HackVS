@@ -64,7 +64,7 @@ jobs:
       - name: E2E en mode salle (réseau local seul, IA OFF)
         run: >-
           sudo -E env "PATH=$PATH" "PLAYWRIGHT_BROWSERS_PATH=$HOME/.cache/ms-playwright"
-          HACKVS_E2E_OBLIGATOIRE=1 HACKVS_E2E_ECHECS="$PWD/var/e2e_echecs_salle"
+          HACKVS_FOIRE=1 HACKVS_E2E_OBLIGATOIRE=1 HACKVS_E2E_ECHECS="$PWD/var/e2e_echecs_salle"
           unshare --net python scripts/mode_salle.py --
           python -m pytest -q -p no:cacheprovider tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py tests/test_e2e_capacites.py tests/test_e2e_hermetique.py tests/test_e2e_serveur.py tests/test_e2e_ia.py
       - name: Captures des pages en cas d'échec (mode salle)

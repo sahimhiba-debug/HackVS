@@ -34,11 +34,11 @@ test:
 	cd $(P) && $(PY) -m pytest -q $(addprefix --ignore=,$(E2E))
 
 e2e:
-	cd $(P) && HACKVS_E2E_OBLIGATOIRE=1 $(PY) -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py tests/test_e2e_capacites.py tests/test_e2e_hermetique.py tests/test_e2e_serveur.py tests/test_e2e_ia.py
+	cd $(P) && HACKVS_FOIRE=$${HACKVS_FOIRE:-1} HACKVS_E2E_OBLIGATOIRE=1 $(PY) -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py tests/test_e2e_capacites.py tests/test_e2e_hermetique.py tests/test_e2e_serveur.py tests/test_e2e_ia.py
 
 # Mode salle : les mêmes E2E, réseau LOCAL seul (espace réseau vide, extérieur injoignable vérifié) et IA OFF
 e2e-salle:
-	cd $(P) && sudo -E env "PATH=$$PATH" HACKVS_E2E_OBLIGATOIRE=1 unshare --net $(PY) scripts/mode_salle.py -- \
+	cd $(P) && sudo -E env "PATH=$$PATH" HACKVS_FOIRE=$${HACKVS_FOIRE:-1} HACKVS_E2E_OBLIGATOIRE=1 unshare --net $(PY) scripts/mode_salle.py -- \
 	  $(PY) -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py tests/test_e2e_capacites.py tests/test_e2e_hermetique.py tests/test_e2e_serveur.py tests/test_e2e_ia.py
 
 # Sonde du fournisseur de langage (clé en variable d'environnement APERTUS_API_KEY ; sans clé : UNKNOWN, dit)
