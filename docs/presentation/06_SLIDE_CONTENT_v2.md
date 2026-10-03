@@ -23,7 +23,7 @@ membre, aucune phrase Tally, aucun partenaire présenté comme acquis.
 | 9 | `constellation` | 3 | repères de l'écran géant ; **B** = vidéo de 30 s (séance simulée) | `review/constellation/` |
 | 10 | `cote-club` | 4 | carton « Et pour le Club, toute l'année ? » | — |
 | 11 | `cherche` | 4 | écrans réels : passe découverte (téléphone), Suivi | captures réelles |
-| 12 | `chiffres-club` | 4 | **145** entreprises, **173** représentants, **8 / 9**, la pièce qui manque (interprète), le train vers la France, haute école / fédération patronale / deux communes | gel.json v2 ← liste du Club ; faits donnés par l'équipe |
+| 12 | `chiffres-club` | 4 | **145** entreprises, **173** représentants, **8 / 9**, la pièce qui manque (interprète) | gel.json v2 ← liste du Club (audit : les faits non vérifiés sur des membres précis sont retirés) |
 | 13 | `assembler` | 4 | la grille des 9 capacités ; « Votre liste dit ce que le Club pourrait faire. Club Pulse dit ce qu'il peut faire cette semaine. » | `intelligence/assembler.py` |
 | 13b | `carte-profil` | 4 | **seulement avec `?carte=1`** | règle des 5/5 |
 | 14 | `science` | 5 | Flynn & Lake (~50 %), Reciprocity Ring (24 / 114), liens faibles (Science 2022) | PREUVES « Contexte » |

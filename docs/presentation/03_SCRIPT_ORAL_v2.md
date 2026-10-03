@@ -68,7 +68,7 @@ avant le pitch ; l'écran géant tourne dans une autre fenêtre.]
 
 [V2 lance la demande depuis la régie : « Accueillir une délégation d'acheteurs germanophones ». L'anneau s'ouvre à 3/4.]
 
-> Voilà une vraie demande du Club. Il faut une voiture, une salle, et quelqu'un qui parle allemand. Ceux d'entre vous
+> Voilà une demande type du Club, écrite pour cette démonstration. Il faut une voiture, une salle, et quelqu'un qui parle allemand. Ceux d'entre vous
 > qui ont déclaré l'une de ces trois choses viennent de la recevoir. Oui, non, ou pas cette fois.
 
 [les oui arrivent : une ligne, un halo rouge, l'anneau se ferme en vert, « 4/4 »]
@@ -77,8 +77,8 @@ avant le pitch ; l'écran géant tourne dans une autre fenêtre.]
 
 [V2 déclenche le retrait simulé depuis la régie]
 
-> Et si quelqu'un se retire ? « Un composant n'est plus disponible. » Ni nom, ni rôle. Le Club recompose avec la
-> réserve, une autre ligne se trace.
+> Et si quelqu'un se retire ? On le simule — personne d'entre vous ne perd son oui. « Un composant n'est plus
+> disponible. » Ni nom, ni rôle. Le Club recompose avec la réserve, une autre ligne se trace.
 
 [V2 affiche le tableau final]
 
@@ -105,8 +105,7 @@ enregistrée sur le vrai écran. Dire : « Voici ce que vous auriez vu — une s
 
 > Votre Club, c'est 145 entreprises et 173 représentants. [clic] D'après votre liste, il pourrait assembler huit des
 > neuf capacités qu'on lui demande le plus souvent. [clic] La pièce qui manque : l'interprète. Personne dans la liste
-> ne la tient. [clic] Un de vos membres exploite déjà le train vers la France ; parmi vos membres, une haute école, une
-> fédération patronale, deux communes.
+> ne la tient.
 
 [slide « Ce que votre Club pourrait assembler »]
 

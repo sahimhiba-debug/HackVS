@@ -34,11 +34,11 @@ Sortez vos téléphones. Pendant cinq minutes, vous êtes le Club. Aucun nom, au
 choisissez une chose que vous pourriez faire pour quelqu'un — une voiture, une salle, parler allemand — et vous
 dites oui à l'usage qu'on en fera. Rien d'autre.
 Chaque point, c'est l'un de vous. Pas de nom, pas de visage. En dessous de trois, le Club ne compte pas : il protège.
-Voilà une vraie demande du Club. Il faut une voiture, une salle, et quelqu'un qui parle allemand. Ceux d'entre vous
+Voilà une demande type du Club, écrite pour cette démonstration. Il faut une voiture, une salle, et quelqu'un qui parle allemand. Ceux d'entre vous
 qui ont déclaré l'une de ces trois choses viennent de la recevoir. Oui, non, ou pas cette fois.
 Le Club peut le faire. Personne n'a vu qui a dit non. Personne ne le verra jamais.
-Et si quelqu'un se retire ? « Un composant n'est plus disponible. » Ni nom, ni rôle. Le Club recompose avec la
-réserve, une autre ligne se trace.
+Et si quelqu'un se retire ? On le simule — personne d'entre vous ne perd son oui. « Un composant n'est plus
+disponible. » Ni nom, ni rôle. Le Club recompose avec la réserve, une autre ligne se trace.
 En quelques minutes, cette salle a rendu possible quelque chose de concret. C'est ça, Club Pulse : une demande
 précise, au bon moment, à ceux qui peuvent dire oui.
 
@@ -53,8 +53,7 @@ secrétariat suit enfin où en sont les partenariats, et les nouveaux liens tiss
 quelque chose ensemble pour la première fois. En agrégats ; sous trois entreprises, on écrit « moins de trois ».
 Votre Club, c'est 145 entreprises et 173 représentants. [clic] D'après votre liste, il pourrait assembler huit des
 neuf capacités qu'on lui demande le plus souvent. [clic] La pièce qui manque : l'interprète. Personne dans la liste
-ne la tient. [clic] Un de vos membres exploite déjà le train vers la France ; parmi vos membres, une haute école, une
-fédération patronale, deux communes.
+ne la tient.
 [clic] Votre liste dit ce que le Club pourrait faire. Club Pulse dit ce qu'il peut faire cette semaine.
 
 ---
