@@ -12,11 +12,9 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-import sqlite3
 import threading
 from contextlib import contextmanager
 from datetime import date
-from pathlib import Path
 from typing import Any, Callable, Iterator, Optional
 
 import networkx as nx
@@ -24,6 +22,7 @@ from pydantic import BaseModel, ConfigDict
 
 from .affirmations import Statut
 from .optimisation import cle
+from .stockage import ouvrir
 
 
 class Evt(BaseModel):
@@ -47,14 +46,14 @@ class MondeRemplace(RuntimeError):
 
 class Memoire:
     def __init__(self, chemin: str = ":memory:"):
-        if chemin != ":memory:":
-            Path(chemin).parent.mkdir(parents=True, exist_ok=True)
-        self._db = sqlite3.connect(chemin, check_same_thread=False)
+        # ANNÉE 1 · LOT 1 : le moteur se choisit par l'adresse (`:memory:`, un fichier → SQLite ; `postgresql://` →
+        # PostgreSQL) ; le schéma vient des migrations (un journal d'avant ce lot est adopté tel quel)
+        from .migrations import migrer
+        self._db = ouvrir(chemin)
         self._v = threading.RLock()      # réentrant : une transaction garde le verrou pendant toutes ses écritures
         self._profondeur = 0             # > 0 : dans une transaction (les écritures attendent sa validation)
         with self._v:
-            self._db.execute("CREATE TABLE IF NOT EXISTS evenements (seq INTEGER PRIMARY KEY AUTOINCREMENT, id TEXT UNIQUE, donnees TEXT)")
-            self._db.commit()
+            migrer(self._db)
         self._cache: list[Evt] = []      # journal APPEND-ONLY déjà désérialisé (lu une fois, puis par incrément)
         # appelés après l'ANNULATION de la transaction la plus externe : qui tient un état dérivé du journal (en mémoire,
         # en cache) le reconstruit — sinon il garderait des faits qui n'existent plus (F27)
@@ -67,15 +66,14 @@ class Memoire:
     def _synchroniser(self) -> list[Evt]:
         """Cache incrémental : ne désérialise que les événements nouveaux. Resynchronisé à chaque lecture par une
         requête légère (dernier seq, nombre) : reste exact si un autre objet écrit dans le même fichier ou le vide."""
-        dernier, nombre = self._db.execute("SELECT COALESCE(MAX(seq), 0), COUNT(*) FROM evenements").fetchone()
+        dernier, nombre = self._db.dernier_et_nombre()
         connu = self._cache[-1].seq if self._cache else 0
         if dernier > connu:
-            for s, d in self._db.execute("SELECT seq, donnees FROM evenements WHERE seq > ? ORDER BY seq", (connu,)):
+            for s, d in self._db.depuis(connu):
                 self._cache.append(Evt.model_validate_json(d).model_copy(update={"seq": s}))
         if len(self._cache) != nombre:                     # vidé ou modifié ailleurs : relecture complète
             self._generation += 1
-            self._cache = [Evt.model_validate_json(d).model_copy(update={"seq": s})
-                           for s, d in self._db.execute("SELECT seq, donnees FROM evenements ORDER BY seq")]
+            self._cache = [Evt.model_validate_json(d).model_copy(update={"seq": s}) for s, d in self._db.depuis(0)]
         return self._cache
 
     def ajouter(self, e: Evt) -> Evt:
@@ -84,11 +82,7 @@ class Memoire:
             self._sale = True
             if self._ferme:
                 raise MondeRemplace("ce monde a été remplacé : écriture refusée")
-            cur = self._db.execute("INSERT OR IGNORE INTO evenements (id, donnees) VALUES (?, ?)",
-                                   (e.id, e.model_dump_json(exclude={"seq"})))
-            if not self._profondeur:
-                self._db.commit()
-            seq = cur.lastrowid if cur.rowcount else self._db.execute("SELECT seq FROM evenements WHERE id = ?", (e.id,)).fetchone()[0]
+            seq = self._db.inserer(e.id, e.model_dump_json(exclude={"seq"}))   # validé seul hors transaction
         return e.model_copy(update={"seq": seq})
 
     @contextmanager
@@ -97,13 +91,15 @@ class Memoire:
         Pendant le bloc, les autres fils attendent (verrou réentrant) ; le fil courant lit ses propres écritures.
         Imbrication : seule la transaction la plus externe valide ou annule."""
         with self._v:
+            if not self._profondeur:
+                self._db.debut()
             self._profondeur += 1
             try:
                 yield
             except BaseException:
                 self._profondeur -= 1
                 if not self._profondeur:
-                    self._db.rollback()
+                    self._db.annuler()
                     self._cache = []                       # le cache a pu lire des faits annulés : relecture complète
                     self._sale = True
                     self._generation += 1
@@ -112,7 +108,7 @@ class Memoire:
                 raise
             self._profondeur -= 1
             if not self._profondeur:
-                self._db.commit()
+                self._db.valider()
 
     def _lus(self) -> list[Evt]:
         if self._figee and not self._sale:
@@ -166,8 +162,7 @@ class Memoire:
 
     def vider(self) -> None:
         with self._v:
-            self._db.execute("DELETE FROM evenements")
-            self._db.commit()
+            self._db.vider()
             self._cache = []
             self._sale = True
             self._generation += 1

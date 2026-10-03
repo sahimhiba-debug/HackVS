@@ -3,3 +3,4 @@ anthropic>=1.0        # analyse du besoin par Claude (HACKVS_LLM=claude), ancien
 onnxruntime>=1.17     # IA locale (suggestions sémantiques). Modèle : python scripts/telecharger_modele.py
 tokenizers>=0.15
 mcp>=2.2              # serveur MCP du Club (python -m app.mcp_serveur)
+psycopg[binary]>=3.1   # ANNÉE 1 · LOT 1 : journal sur PostgreSQL (HACKVS_ESSAIS_DB=postgresql://…) ; la démo n'en a pas besoin
