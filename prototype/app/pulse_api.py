@@ -30,6 +30,7 @@ from .urls import base_publique
 from .capacites_api import ajouter_routes as ajouter_routes_capacites
 from .essai_api import ajouter_routes as ajouter_routes_essai
 from .foire_api import ajouter_routes as ajouter_routes_foire
+from .salle_api import ajouter_routes as ajouter_routes_salle
 from .protections import LOCALES
 from .taxonomy import Taxonomie
 
@@ -415,6 +416,7 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
                          lambda pid: limiter(limite_ecritures, f"ecrit|{pid}"), hors_verrou)
     ajouter_routes_capacites(r, au_monde, membre, console)
     ajouter_routes_foire(r, au_monde, membre, console, limiter=limiter, nouveau_limiteur=Limiteur, qr=qr_svg)
+    ajouter_routes_salle(r, console, lambda: etat["demo"].club.reglages.secret, limiter=limiter, nouveau_limiteur=Limiteur, qr=qr_svg)
 
     @r.get("/console/personas", dependencies=[Depends(console)])
     def personas() -> list[dict]:

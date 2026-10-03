@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Club Pulse · Télécommande salle</title>
+  <meta name="description" content="Télécommande du présentateur pour le mode salle. Monde de démonstration.">
+  <link rel="icon" href="/static/pulse/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/pulse/pulse.css">
+  <style>
+    body { background: var(--papier); }
+    .page { max-width: 560px; margin: 0 auto; padding: 16px; }
+    .boutons { display: grid; gap: 12px; margin-top: 16px; }
+    .boutons .btn { min-height: 56px; font-size: 18px; }
+    .etat { margin-top: 16px; background: var(--card); border-radius: var(--r-card); padding: 14px 16px; box-shadow: var(--sh-card-light); }
+  </style>
+</head>
+<body>
+  <div class="page"><span class="marque"><span class="pouls-point" aria-hidden="true"></span>Télécommande · mode salle</span>
+    <span class="puce fictif" data-role="monde">monde de démonstration</span>
+    <div class="boutons">
+      <button class="btn" id="ouvrir">1 · Ouvrir la salle (QR)</button>
+      <button class="btn" id="lancer">2 · Lancer la demande vers la salle</button>
+      <button class="btn discret" id="retrait">3 · Déclencher un retrait (simulé en démonstration)</button>
+      <button class="btn discret" id="bilan">4 · Afficher le bilan (Suivi de la salle)</button>
+      <a class="btn discret" id="scriptee" href="/etabli" target="_blank" rel="noopener">Démo scriptée (Établi)</a>
+      <button class="btn discret" id="purger">Réinitialiser : tout effacer</button>
+    </div>
+    <div class="etat" id="etat">…</div></div>
+  <script type="module">
+    import { consoleFetch } from "/static/pulse/jeton-console.js";
+    const $ = (s) => document.querySelector(s);
+    async function poster(chemin, corps) {
+      const r = await consoleFetch("/api/pulse/console/salle/" + chemin, { method: "POST", ...(corps ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify(corps) } : {}) });
+      const j = await r.json().catch(() => ({}));
+      $("#etat").textContent = r.ok ? (j.simule || j.message || "fait") : "refusé : " + (j.detail || r.status);
+      lire();
+    }
+    $("#ouvrir").addEventListener("click", () => { window.open("/salle/ecran", "salle-ecran"); poster("ouvrir"); });
+    $("#lancer").addEventListener("click", () => poster("lancer"));
+    $("#retrait").addEventListener("click", () => poster("retrait"));
+    $("#bilan").addEventListener("click", () => poster("afficher", { vue: "bilan" }));
+    $("#purger").addEventListener("click", () => { if (window.confirm("Tout effacer (participants, capacités, réponses, reçus) ?")) poster("purger"); });
+    async function lire() {
+      try {
+        const e = await (await consoleFetch("/api/pulse/console/salle", {})).json();
+        $("#etat").dataset.participants = e.participants;
+        $("#etat").textContent = `${e.ouverte ? "ouverte depuis " + e.depuis_s + " s" : "fermée"} · participants : ${e.participants} / ${e.plafond}`
+          + (e.demande ? ` · anneau ${e.demande.fermee ? "fermé" : "ouvert"}` : "") + (e.bascule ? " · BASCULE : démo scriptée conseillée" : "");
+        $("#scriptee").classList.toggle("discret", !e.bascule);
+      } catch (err) { $("#etat").textContent = "hors ligne"; }
+    }
+    lire(); setInterval(lire, 2000);
+  </script>
+</body>
+</html>

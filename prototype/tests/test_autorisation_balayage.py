@@ -28,7 +28,8 @@ TAX = charger_taxonomie()
 SECRET = "b" * 8 + "-secret-du-balayage-d-autorisation-fictif"
 CONSOLE = {"X-Pulse-Console": "1"}
 PUBLIQUES = {("POST", "/api/pulse/acces"), ("POST", "/api/pulse/jure"), ("POST", "/api/pulse/decouverte/activer"),
-             ("POST", "/api/pulse/courriel/lire"), ("POST", "/api/pulse/courriel/repondre")}   # liens d'e-mail : signés
+             ("POST", "/api/pulse/courriel/lire"), ("POST", "/api/pulse/courriel/repondre"),   # liens d'e-mail : signés
+             ("POST", "/api/pulse/salle/entrer")}                                                 # QR de la salle : signé
 VALEURS = {"n": "1", "index": "0", "etape": "0"}
 
 
@@ -49,7 +50,7 @@ def monde(tmp_path, monkeypatch):
     for r in routeur.routes:
         assert isinstance(r, APIRoute)
         noms = {d.call.__name__ for d in r.dependant.dependencies}
-        genre = "console" if "console" in noms else "membre" if "membre" in noms else "invite" if "invite" in noms else "publique"
+        genre = next((g for g in ("console", "membre", "invite", "participant") if g in noms), "publique")
         chemin = re.sub(r"\{(\w+)\}", lambda m: VALEURS.get(m.group(1), "x1"), r.path)
         routes += [(m, chemin, genre) for m in sorted(r.methods)]
     return app, routes
@@ -127,8 +128,11 @@ def test_contre_epreuve_bien_authentifie_on_passe_la_garde(monde):
     lectures = [(m, c, g) for m, c, g in routes if m == "GET"]
     assert lectures and any(g == "invite" for _, _, g in lectures)
     inv = {"X-Pulse-Invite": _invite(client)}
+    client.post("/api/pulse/console/salle/purger", headers=CONSOLE)
+    jeton = client.post("/api/pulse/console/salle/ouvrir", headers=CONSOLE).json()["url"].split("#s=", 1)[1]
+    part = {"X-Pulse-Salle": client.post("/api/pulse/salle/entrer", json={"jeton": jeton}).json()["passe"]}
     for m, c, g in lectures:
-        statut = _appel(client, m, c, CONSOLE if g == "console" else inv if g == "invite" else s)
+        statut = _appel(client, m, c, CONSOLE if g == "console" else inv if g == "invite" else part if g == "participant" else s)
         assert statut not in (401, 403), (m, c, statut)
 
 
@@ -156,6 +160,29 @@ def test_chaque_route_invite_refuse_toute_session_non_valide(monde):
         for nom, jeton in mauvaises.items():
             entetes = {} if jeton is None else {"X-Pulse-Invite": jeton}
             assert _appel(client, m, c, entetes) == 401, (m, c, nom)
+    assert n >= 4
+
+
+def test_chaque_route_participant_refuse_tout_passe_non_valide(monde):
+    """MODE SALLE : sans passe, passe falsifié, passe d'une séance purgée, session de membre → 401 partout."""
+    app, routes = monde
+    client = TestClient(app)
+    client.post("/api/pulse/console/salle/purger", headers=CONSOLE)
+    jeton = client.post("/api/pulse/console/salle/ouvrir", headers=CONSOLE).json()["url"].split("#s=", 1)[1]
+    ancien = client.post("/api/pulse/salle/entrer", json={"jeton": jeton}).json()["passe"]
+    client.post("/api/pulse/console/salle/purger", headers=CONSOLE)
+    code = next(p["code"] for p in client.get("/api/pulse/console/personas", headers=CONSOLE).json() if p["id"] == "n01")
+    membre = client.post("/api/pulse/acces", json={"code": code}).json()["session"]
+    _, nonce, exp, _ = ancien.split(".")
+    mauvaises = {"absent": None, "mal formé": "pas-un-passe", "signature falsifiée": f"p1.{nonce}.{exp}.{'0' * 32}",
+                 "séance purgée": ancien, "session de membre": membre}
+    n = 0
+    for m, c, g in routes:
+        if g != "participant":
+            continue
+        n += 1
+        for nom, jeton in mauvaises.items():
+            assert _appel(client, m, c, {} if jeton is None else {"X-Pulse-Salle": jeton}) == 401, (m, c, nom)
     assert n >= 4
 
 

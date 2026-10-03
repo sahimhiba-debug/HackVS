@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Club Pulse · Le Club, c'est vous</title>
+  <meta name="description" content="Mode salle : pendant cinq minutes, la salle devient le Club. Monde de démonstration ; données effacées après la présentation.">
+  <link rel="icon" href="/static/pulse/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/pulse/pulse.css">
+  <style>
+    body { background: var(--papier); }
+    header.haut { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid var(--hairline-2); background: var(--card); }
+    header.haut .droite { margin-left: auto; }
+    .page { max-width: 520px; margin: 0 auto; padding: 16px 16px 40px; }
+    h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin-top: 8px; }
+    .carte { background: var(--card); border-radius: var(--r-card); padding: 14px 16px; box-shadow: var(--sh-card-light); margin-top: 14px; }
+    .choix { display: grid; gap: 10px; margin-top: 12px; }
+    .choix button[aria-pressed="true"] { outline: 3px solid var(--brand); }
+    .trois { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .efface { font-size: 12.5px; color: var(--secondary); margin-top: 18px; }
+  </style>
+</head>
+<body>
+  <header class="haut"><span class="marque"><span class="pouls-point" aria-hidden="true"></span>Club Pulse</span>
+    <span class="puce fictif" data-role="monde">monde de démonstration</span>
+    <span class="droite"><button class="btn discret petit" id="langue">Deutsch</button></span></header>
+  <div class="page"><span class="surtitre" id="sur">…</span><h1 id="titre">…</h1><div id="contenu"></div>
+    <p class="efface" data-role="efface" id="efface">Démonstration : vos données sont effacées après la présentation.</p></div>
+  <script type="module">
+    const $ = (s) => document.querySelector(s);
+    function h(tag, attrs = {}, ...enfants) {
+      const el = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs || {})) {
+        if (v === null || v === undefined || v === false) continue;
+        if (k === "class") el.className = v; else if (k.startsWith("on")) el.addEventListener(k.slice(2), v); else el.setAttribute(k, v === true ? "" : v);
+      }
+      for (const e of enfants.flat(Infinity)) if (e !== null && e !== undefined && e !== false) el.append(e instanceof Node ? e : document.createTextNode(String(e)));
+      return el;
+    }
+    const T = {
+      fr: { sur: "Le Club, c'est vous", titre: "Que pouvez-vous apporter ?", autre: "Deutsch", consens: "Je consens : ma capacité sert seulement à la demande de cette présentation.",
+        valider: "C'est mon choix", recu: "Votre reçu", attente: "Gardez cette page ouverte : une demande peut arriver.", demande: "Le Club vous demande",
+        oui: "Oui", non: "Non", pas: "Pas cette fois", merci: "Réponse enregistrée.", retirer: "Retirer mon consentement", invalide: "Ce QR ou ce passe ne vaut plus (salle fermée, pleine ou purgée).",
+        efface: "Démonstration : vos données sont effacées après la présentation." },
+      de: { sur: "Der Club sind Sie", titre: "Was können Sie beitragen?", autre: "Français", consens: "Ich willige ein: Meine Angabe dient nur der Anfrage dieser Präsentation.",
+        valider: "Das ist meine Wahl", recu: "Ihre Quittung", attente: "Lassen Sie diese Seite offen: Eine Anfrage kann kommen.", demande: "Der Club fragt Sie",
+        oui: "Ja", non: "Nein", pas: "Diesmal nicht", merci: "Antwort gespeichert.", retirer: "Einwilligung zurückziehen", invalide: "Dieser QR-Code oder Pass gilt nicht mehr (Saal geschlossen, voll oder gelöscht).",
+        efface: "Demonstration: Ihre Daten werden nach der Präsentation gelöscht." },
+    };
+    let L = "fr", passe = null, choisie = null, dernier = null, message = "";
+    const lire = (k) => { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
+    const ecrire = (k, v) => { try { v === null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch (e) { /* sans stockage */ } };
+    async function api(chemin, corps) {
+      const r = await fetch("/api/pulse" + chemin, { method: corps === undefined ? "GET" : "POST",
+        headers: { "Content-Type": "application/json", ...(passe ? { "X-Pulse-Salle": passe } : {}) }, body: corps === undefined ? undefined : JSON.stringify(corps) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw Object.assign(new Error(j.detail || `serveur : ${r.status}`), { statut: r.status });
+      return j;
+    }
+    function rendre() {
+      const t = T[L], d = dernier;
+      $("#sur").textContent = t.sur; $("#langue").textContent = t.autre; $("#efface").textContent = t.efface;
+      if (!passe || !d) { $("#titre").textContent = t.titre; $("#contenu").replaceChildren(h("p", { class: "note", "data-role": "invalide" }, t.invalide)); return; }
+      const blocs = [];
+      if (!d.declaree) {
+        $("#titre").textContent = t.titre;
+        const coche = h("input", { type: "checkbox", id: "consens" });
+        blocs.push(h("div", { class: "choix" }, d.capacites.map((c) => h("button", { class: "btn discret", "data-capacite": c.id, "aria-pressed": String(choisie === c.id),
+          onclick: () => { choisie = c.id; rendre(); } }, c[L]))),
+          h("label", { class: "carte", style: "display:flex;gap:10px;align-items:flex-start" }, coche, t.consens),
+          h("button", { class: "btn", id: "valider", style: "margin-top:12px", onclick: async () => {
+            try { await api("/salle/declarer", { capacite: choisie, consentement: coche.checked }); message = ""; await relire(); } catch (e) { message = e.message; rendre(); }
+          } }, t.valider));
+      } else {
+        $("#titre").textContent = d.demande ? t.demande : t.recu;
+        if (d.demande) blocs.push(h("section", { class: "carte", "data-role": "demande" }, h("b", {}, L === "de" ? d.demande.titre_de : d.demande.titre),
+          h("p", {}, L === "de" ? d.demande.texte_de : d.demande.texte),
+          h("div", { class: "trois" }, [["oui", t.oui, "btn"], ["non", t.non, "btn discret"], ["pas cette fois", t.pas, "btn discret"]].map(([c, lib, cls]) =>
+            h("button", { class: cls, "data-choix": c, onclick: async () => { try { await api("/salle/repondre", { choix: c }); message = t.merci; await relire(); } catch (e) { message = e.message; rendre(); } } }, lib)))));
+        else if (!d.reponse) blocs.push(h("p", { class: "note" }, t.attente));
+        blocs.push(h("section", { class: "carte", "data-role": "recu" }, h("span", { class: "surtitre" }, t.recu), h("p", {}, h("b", {}, d.recu.capacite)),
+          h("p", { class: "note" }, d.recu.finalite), h("p", { class: "note" }, `${d.recu.reference} · ${d.recu.etat} · ${d.recu.simule}`),
+          d.reponse === "oui" && d.recu.etat.startsWith("valable") ? h("button", { class: "btn discret petit", id: "retirer", onclick: async () => {
+            try { const r = await api("/salle/retirer", {}); message = r.message; await relire(); } catch (e) { message = e.message; rendre(); } } }, t.retirer) : null));
+      }
+      if (message) blocs.push(h("p", { class: "note", "data-role": "message" }, message));
+      $("#contenu").replaceChildren(...blocs);
+    }
+    async function relire() {
+      if (!passe) return rendre();
+      try { dernier = await api("/salle/moi"); } catch (e) { if (e.statut === 401) { passe = null; ecrire("salle-passe", null); } }
+      rendre();
+    }
+    $("#langue").addEventListener("click", () => { L = L === "fr" ? "de" : "fr"; document.documentElement.lang = L; rendre(); });
+    (async () => {
+      const m = location.hash.match(/s=([\w.\-]+)/);
+      passe = lire("salle-passe");
+      if (m) {
+        history.replaceState(null, "", location.pathname);
+        if (!passe) { try { passe = (await api("/salle/entrer", { jeton: m[1] })).passe; ecrire("salle-passe", passe); } catch (e) { message = e.message; } }
+      }
+      await relire();
+      setInterval(relire, 2000);
+    })();
+  </script>
+</body>
+</html>

@@ -98,9 +98,11 @@ app = FastAPI(title="Le Fil du Club (prototype exploratoire)", version="0.2.0")
 WEB_PULSE = Path(__file__).resolve().parent.parent / "web" / "pulse"
 _observabilite.configurer(_observabilite.niveau_depuis_env(os.environ))
 # ordre : la dernière ajoutée est la plus EXTÉRIEURE → l'identifiant de requête couvre aussi les refus 413
-app.add_middleware(_Protections, csp=_politique_contenu([WEB_PULSE / f for f in ("app.html", "console.html", "projection.html", "regie.html",
-                                                                              "etabli.html", "suivi.html", "decouverte.html", "reponse.html")]),
-                   chemins_csp=("/app", "/console", "/etabli", "/suivi", "/decouverte", "/reponse", "/projection", "/demo/regie"))
+PAGES_PULSE = ("app.html", "console.html", "projection.html", "regie.html", "etabli.html", "suivi.html", "decouverte.html",
+               "reponse.html", "salle.html", "salle-ecran.html", "salle-regie.html")
+app.add_middleware(_Protections, csp=_politique_contenu([WEB_PULSE / f for f in PAGES_PULSE]),
+                   chemins_csp=("/app", "/console", "/etabli", "/suivi", "/decouverte", "/reponse", "/salle", "/salle/ecran",
+                                "/salle/regie", "/projection", "/demo/regie"))
 app.add_middleware(_Perimetre, ancien_actif=lambda: ANCIEN_PROTOTYPE, jeton=lambda: _CONSOLE_JETON)
 app.add_middleware(_observabilite.MiddlewareRequete)
 
@@ -993,6 +995,24 @@ def page_reponse():
     if MODE != "demo":
         raise HTTPException(501, "Club Pulse est présenté en mode démo (monde fictif).")
     return FileResponse(WEB / "pulse" / "reponse.html")
+
+
+@app.get("/salle")
+def page_salle():
+    """MODE SALLE (téléphone d'un participant) : le QR de la salle arrive dans le fragment ; aucun compte."""
+    return FileResponse(WEB / "pulse" / "salle.html")
+
+
+@app.get("/salle/ecran")
+def page_salle_ecran():
+    """MODE SALLE : l'écran géant (lit la console : cette machine, ou le jeton de console)."""
+    return FileResponse(WEB / "pulse" / "salle-ecran.html")
+
+
+@app.get("/salle/regie")
+def page_salle_regie():
+    """MODE SALLE : la télécommande du présentateur (console)."""
+    return FileResponse(WEB / "pulse" / "salle-regie.html")
 
 
 @app.get("/demo/regie")

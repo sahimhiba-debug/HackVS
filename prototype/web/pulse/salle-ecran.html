@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Club Pulse · Salle (écran)</title>
+  <meta name="description" content="Écran géant du mode salle : participants, capacités, anneau. Agrégats seulement. Monde de démonstration.">
+  <link rel="icon" href="/static/pulse/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/pulse/pulse.css">
+  <style>
+    body { background: var(--papier); }
+    .page { max-width: 1600px; margin: 0 auto; padding: 24px 32px; display: grid; grid-template-columns: 360px 1fr; gap: 32px; }
+    .qr img { width: 100%; background: #fff; padding: 12px; border-radius: 18px; }
+    .grand { font-size: 120px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+    .caps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 18px; }
+    .cap { background: var(--card); border-radius: 18px; padding: 14px 18px; box-shadow: var(--sh-card-light); }
+    .cap b { font-size: 36px; font-weight: 800; display: block; }
+    .anneau { display: flex; gap: 24px; align-items: center; margin-top: 24px; background: var(--card); border-radius: 22px; padding: 22px; box-shadow: var(--sh-card); }
+    .piece { padding: 10px 16px; border-radius: 999px; border: 2px dashed var(--brand-dash); font-weight: 700; }
+    .piece.ok { border: 2px solid var(--green); background: var(--green); color: #fff; }
+    .fil { margin-top: 18px; font-size: 18px; color: var(--secondary); } .fil li { margin: 4px 0; }
+    .bandeau { margin-top: 18px; padding: 16px 20px; border-radius: 16px; background: var(--brand-tint); color: var(--brand); font-weight: 700; font-size: 22px; }
+    .bilan { margin-top: 24px; font-size: 40px; font-weight: 800; letter-spacing: -0.02em; }
+    @media (max-width: 900px) { .page { grid-template-columns: 1fr; } .grand { font-size: 72px; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside><span class="marque"><span class="pouls-point" aria-hidden="true"></span>Club Pulse · le Club, c'est vous</span>
+      <p class="puce fictif" data-role="monde" style="margin-top:8px">monde de démonstration</p>
+      <div class="qr" id="qr" style="margin-top:16px"></div><p class="note" id="url"></p>
+      <p class="note" data-role="efface" style="margin-top:12px">Démonstration : vos données sont effacées après la présentation.</p></aside>
+    <main><span class="surtitre">Participants</span><div class="grand" id="n" data-role="participants">0</div>
+      <div class="caps" id="caps"></div><div id="demande"></div><div id="bascule"></div><div id="bilan"></div><ul class="fil" id="fil"></ul></main>
+  </div>
+  <script type="module">
+    import { consoleFetch } from "/static/pulse/jeton-console.js";
+    const $ = (s) => document.querySelector(s);
+    function h(tag, attrs = {}, ...enfants) {
+      const el = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs || {})) { if (v === null || v === undefined || v === false) continue; if (k === "class") el.className = v; else el.setAttribute(k, v === true ? "" : v); }
+      for (const e of enfants.flat(Infinity)) if (e !== null && e !== undefined && e !== false) el.append(e instanceof Node ? e : document.createTextNode(String(e)));
+      return el;
+    }
+    let bascule = null;
+    async function lire() {
+      try {
+        const r = await consoleFetch("/api/pulse/console/salle", {}); if (!r.ok) return;
+        const e = await r.json();
+        $("#qr").replaceChildren(...(e.qr ? [h("img", { src: e.qr, alt: "QR code de la salle" })] : [h("p", { class: "note" }, "Salle fermée : la télécommande l'ouvre.")]));
+        $("#url").textContent = e.url ? e.url.split("#")[0] : "";
+        $("#n").textContent = e.participants;
+        $("#caps").replaceChildren(...e.capacites.map((c) => h("div", { class: "cap", "data-capacite": c.id }, h("span", { class: "surtitre" }, c.role), h("b", {}, c.n), h("span", { class: "note" }, c.libelle))));
+        $("#demande").replaceChildren(...(e.demande ? [h("div", { class: "anneau", "data-role": "anneau", "data-fermee": String(e.demande.fermee) },
+          h("b", { style: "font-size:24px" }, e.demande.fermee ? "Le Club peut le faire." : "Il manque une pièce."),
+          ...e.demande.pieces.map((p) => h("span", { class: "piece" + (p.fournie ? " ok" : "") }, p.role)),
+          e.demande.secondes_pour_fermer !== null ? h("span", { class: "note" }, `fermé en ${e.demande.secondes_pour_fermer} s`) : null)] : []));
+        $("#bascule").replaceChildren(...(e.bascule ? [h("div", { class: "bandeau", "data-role": "bascule" }, `Moins de ${e.minimum} participants après une minute : on passe à la démonstration scriptée dans 5 s.`)] : []));
+        // BASCULE AUTOMATIQUE (réglable : HACKVS_SALLE_MIN ; désactivable : ?sans-bascule) vers la démo scriptée
+        if (e.bascule && !bascule && !new URLSearchParams(location.search).has("sans-bascule")) bascule = setTimeout(() => { location.href = "/etabli"; }, 5000);
+        $("#fil").replaceChildren(...e.fil.slice().reverse().map((f) => h("li", {}, `${f.t} s — ${f.texte}`)));
+        if (e.vue === "bilan") {
+          const b = await (await consoleFetch("/api/pulse/console/salle/bilan", {})).json();
+          $("#bilan").replaceChildren(h("p", { class: "bilan", "data-role": "bilan" }, b.phrase));
+        } else $("#bilan").replaceChildren();
+      } catch (err) { /* écran figé, jamais inventé */ }
+    }
+    lire(); setInterval(lire, 1000);
+  </script>
+</body>
+</html>
