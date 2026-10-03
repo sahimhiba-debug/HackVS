@@ -29,7 +29,7 @@ déploiement public durable. Aucun utilisateur réel n'a utilisé le produit : o
 
 **Comment passer du prototype à la plateforme du Club ?**
 Trois chantiers, dans cet ordre : brancher l'annuaire et l'authentification du Club (aujourd'hui, des codes
-d'invitation de démonstration) ; un essai réel avec cinq membres volontaires et cinq vraies demandes ; puis l'hébergement
+d'invitation de démonstration) ; le pilote de 45 jours avec 50 membres volontaires (janvier – mi-février 2027) ; puis l'hébergement
 durable, qui est préparé (une image, une procédure Cloud Run, rien de déployé). Le cœur — règles, journal, consentement —
 ne change pas.
 
@@ -66,13 +66,14 @@ pas une promesse. Sans IA, le membre remplit trois champs lui-même.
 
 **Ce 1 sur 26, c'est mauvais, non ?**
 Oui, c'est faible, et on le dit tel quel plutôt que de l'arrondir. C'est une mesure du premier jour, avec le premier
-prompt, et elle nous donne le juge pour la suite : les mêmes 26 cas, figés. Ce qui compte pour le Club, c'est que le
-produit n'a jamais montré une proposition fausse.
+prompt, et elle nous donne le juge pour la suite : les mêmes 26 cas, figés. Ce qui compte pour le Club : chaque
+proposition passe par les règles, et c'est toujours le membre qui la confirme ou la corrige avant de dire oui.
 
 ## Données et sécurité
 
 **Où sont les données ? Qu'est-ce qui sort du serveur ?**
-Tout est sur une machine du Club — ce soir, ce portable, sans Internet. Vers le modèle ne part que le texte tapé par le
+Tout est sur notre machine — ce soir, le Mac du pitch, à Martigny ; les téléphones de la salle y arrivent par un tunnel
+chiffré (la version de secours tourne sans Internet). Vers le modèle ne part que le texte tapé par le
 membre, débarrassé des noms, courriels et téléphones connus, jamais un profil ni la base. Le journal ne contient que
 des pseudonymes ; l'écran commun ne montre que des rôles.
 
@@ -139,7 +140,7 @@ hypothèse à valider avec le Club, pas une promesse.
 **Combien de membres, combien d'utilisateurs ?**
 Le Club compte 145 entreprises et 173 représentants (liste fournie par le Club). Utilisateurs réels du prototype : zéro — tout ce que vous avez vu est un
 monde fictif (150 profils), et chaque écran le dit. On n'a pas voulu simuler une
-adoption. La première chose à faire après ce week-end, c'est cinq vrais membres et cinq vraies demandes.
+adoption. La première chose à faire après ce week-end, c'est le pilote : 45 jours, 50 membres volontaires.
 
 ## Version 2 (03.10, nuit) — questions ajoutées
 
@@ -170,8 +171,8 @@ une mesure fine, et on le dira tel quel.
 
 **Pourquoi le CSCS ?**
 Apertus 1.5 est servi par le CSCS, à Lugano : un modèle suisse ouvert, servi en Suisse. On vérifie ses conditions
-d'utilisation pour un pilote au jalon « Lancer ». Si elles ne conviennent pas, un relais par Public AI ou un hébergeur
-suisse est possible. Et le produit tient sans modèle : l'interrupteur est testé.
+d'utilisation pour un pilote au jalon « Lancer ». Si elles ne conviennent pas, un autre hébergeur suisse du même
+modèle est possible. Et le produit tient sans modèle : l'interrupteur est testé.
 
 **Et si les membres sont débordés pendant les Mondiaux ?**
 C'est exactement le risque qu'on a nommé : quand tout le monde manque de tout, l'entraide tient-elle ? Une demande à

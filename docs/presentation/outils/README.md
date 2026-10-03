@@ -7,6 +7,7 @@
 | `verif_deck.py` | vérifications du deck : navigation clavier complète, réseau coupé, 60 i/s, contraste AA, mouvement réduit, plan B du film |
 | `verif_jour.py` | vérifications du mode jour/nuit : contraste AA dans les deux modes, touche J, `?mode=`, écran neutre N |
 | `prompteur.py` | `03_SCRIPT_ORAL_v2.md` → `prompteur/prompteur.html` : prompteur local (double-clic, sans réseau), gros texte, vitesse, miroir, chrono par acte, phrases par cœur surlignées, V2 à part |
+| `qa_entrainement.py` | `qa/qa.json` → `qa/qa-entrainement.html` (entraînement, double-clic) et `qa/TOP20.pdf` (une page) |
 | `cartes.py` | les deux cartes d'une page du jour J (régie de V2, V1) → `livrables/CARTE_*.html` (+ PDF) ; chemins relatifs |
 | `script_imprimable.py` | `03_SCRIPT_ORAL_v2.md` → `livrables/SCRIPT_v2_IMPRIMABLE.html` (+ PDF si Playwright) : une colonne par intervenant, chronos ; chemins relatifs, se relance tel quel sur le Mac |
 

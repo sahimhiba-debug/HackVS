@@ -1,0 +1,136 @@
+{
+ "01-app-acces": [
+  "Continuer"
+ ],
+ "02-app-mes-actions": [
+  "◉Mes actions",
+  "⧉Agir à plusieurs",
+  "＋Proposer un essai",
+  "◈Souvenirs et accords",
+  "✦Demandes"
+ ],
+ "03-app-demandes": [
+  "Proposer à partir de mon texte",
+  "Oui",
+  "Non",
+  "Pas cette fois",
+  "◉Mes actions",
+  "⧉Agir à plusieurs",
+  "＋Proposer un essai",
+  "◈Souvenirs et accords",
+  "✦Demandes"
+ ],
+ "04-app-souvenirs": [
+  "Garder cette note",
+  "Retirer cette offre",
+  "Retirer cette offre",
+  "Publier",
+  "Se déconnecter",
+  "◉Mes actions",
+  "⧉Agir à plusieurs",
+  "＋Proposer un essai",
+  "◈Souvenirs et accords",
+  "✦Demandes"
+ ],
+ "10-etabli": [
+  "Éteindre l'IA",
+  "Suivi",
+  "Ce qui a changé",
+  "QR juré"
+ ],
+ "11-suivi": [
+  "Établi",
+  "Suivi",
+  "Le Club cherche",
+  "Boîte de sortie",
+  "Ce que votre Club pourrait assembler",
+  "Tableau du secrétariat",
+  "Démo",
+  "7 jours",
+  "Trimestre",
+  "signé",
+  "test sans suite",
+  "contact établi",
+  "abandonné",
+  "signé",
+  "test sans suite",
+  "contact établi",
+  "abandonné",
+  "QR du stand",
+  "Passe start-up (180 j)"
+ ],
+ "11-suivi-cherche": [
+  "Établi",
+  "Suivi",
+  "Le Club cherche",
+  "Boîte de sortie",
+  "Ce que votre Club pourrait assembler",
+  "Tableau du secrétariat",
+  "Inviter un contact"
+ ],
+ "11-suivi-assembler": [
+  "Établi",
+  "Suivi",
+  "Le Club cherche",
+  "Boîte de sortie",
+  "Ce que votre Club pourrait assembler",
+  "Tableau du secrétariat"
+ ],
+ "11-suivi-tableau": [
+  "Établi",
+  "Suivi",
+  "Le Club cherche",
+  "Boîte de sortie",
+  "Ce que votre Club pourrait assembler",
+  "Tableau du secrétariat"
+ ],
+ "12-console": [
+  "Nouvelle démonstration",
+  "+1 jour (simulé)",
+  "+15 jours (simulé)",
+  "+30 jours (simulé)",
+  "Ouvrir la projection",
+  "Ouvrir l'établi des capacités",
+  "1. besoin",
+  "2. proposition",
+  "3. publication",
+  "4. accords",
+  "5. perturbation",
+  "6. adaptation",
+  "7. reconfirmations",
+  "8. fiche",
+  "9. apres"
+ ],
+ "13-projection": [],
+ "14-feuille-de-route": [
+  "FR",
+  "DE",
+  "EN"
+ ],
+ "15-preflight": [],
+ "16-confidentialite": [],
+ "20-salle-regie": [
+  "1 · Ouvrir la salle (QR)",
+  "1 bis · « Sortez vos téléphones » (en séance)",
+  "2 · Lancer la demande vers la salle",
+  "3 · Déclencher un retrait (simulé en démonstration)",
+  "4 · Afficher le bilan (Suivi de la salle)",
+  "Démo scriptée (Établi)",
+  "Réinitialiser : tout effacer"
+ ],
+ "21-salle-ecran": [],
+ "22-salle-telephone": [
+  "Deutsch",
+  "J'ai une voiture",
+  "J'ai une salle de réunion",
+  "Je parle allemand",
+  "Je peux nourrir 20 personnes",
+  "Je m'y connais en informatique",
+  "J'ai du matériel (tables, sono)",
+  "C'est mon choix"
+ ],
+ "30-decouverte": [
+  "Deutsch",
+  "Déclarer et recevoir mon reçu"
+ ]
+}
