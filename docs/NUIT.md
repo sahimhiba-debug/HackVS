@@ -125,3 +125,4 @@ Filet : branche `pitch-stable` = `d2eaa30` (tête de `foire-2026` à l'ouverture
 | Heure | Fait | En cours | Abandonné |
 |---|---|---|---|
 | 22:45 | Section 1 (foire-2026, documents) : version parlée dans le script v2 + 3e « Et après ? » (`9a55ff7`) ; 18 / 15 min + trois répétitions (`9a55ff7`) ; prompteur (`606eeb0`) ; six jurys simulés, 48 questions, top 20, page d'entraînement (`0feb345`) ; visite guidée, 18 captures réelles | lot 1 (annee-1) | — |
+| 23:15 | annee-1 : lot 1 fondations (`afb26c5`, `82d0a6a`) ; lot 2 comptes, rôles, TOTP (`962eda6`) ; lot 3 espace membre, pause, export, purge réelle (`153e86d`) — tout « construit, pas dans la démo », interrupteurs éteints par défaut. Audit du lot 1 reçu : 2 BLOQUANTS (sauvegarde illisible avec U+2028 ; PostgreSQL sans reconnexion), 8 IMPORTANTS | correctifs de l'audit du lot 1 (test rouge d'abord) | — |
