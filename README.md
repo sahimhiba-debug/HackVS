@@ -48,7 +48,7 @@ make quality-check             # secrets, lint, types, suite complète, E2E Chro
 make mutation                  # mutation (mutmut) du registre des capacités ; jamais sur la machine de démonstration
 ```
 
-Mesuré, pas supposé : ~1 430 tests et 26 E2E hermétiques (aussi en « mode salle », réseau coupé) ; oracle en force
+Mesuré, pas supposé : ~1 430 tests et 27 E2E hermétiques (aussi en « mode salle », réseau coupé) ; oracle en force
 brute contre le compositeur ; mutation **sur `intelligence/capacites.py` seulement** (campagne locale du 01.10) :
 1 229 / 1 327 mutants tués, 98 survivants tous classés — confirmé en CI par la porte durcie (campagne GitHub #15) ([liste](docs/audit/mutants_survivants.txt)).
 

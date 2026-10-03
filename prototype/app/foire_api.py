@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from .urls import base_publique
-from intelligence import club_cherche, distance, metiers, partenariats, suivi
+from intelligence import carte, club_cherche, distance, metiers, partenariats, suivi
 
 
 class Cloture(BaseModel):
@@ -45,13 +45,25 @@ class Distance(BaseModel):
     langue: Literal["fr", "de"]
 
 
+class Carte(BaseModel):
+    image: str = Field(max_length=1_000_000)              # data:image/…;base64,… — jamais conservée
+
+
+class Profil(BaseModel):
+    entreprise: str = Field(min_length=2, max_length=80)
+    metier: str = Field(max_length=40)
+    zone: str = Field(max_length=40)
+    langue: Literal["fr", "de"]
+    proposition: dict[str, str] = Field(default_factory=dict, max_length=4)
+
+
 class Lien(BaseModel):
     jeton: str = Field(max_length=300)
     attributs: dict[str, int] = Field(default_factory=dict, max_length=4)
 
 
 def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: Callable, *, limiter: Callable,
-                   nouveau_limiteur: Callable, qr: Callable[[str], str]) -> None:
+                   nouveau_limiteur: Callable, qr: Callable[[str], str], hors_verrou: Optional[Callable] = None) -> None:
     # PASSE DÉCOUVERTE : jamais par adresse IP (une salle partage la même) — par CODE tenté, par SESSION d'invité, et un
     # plafond global doux ; l'émission (console) est plafonnée aussi
     limite_emission = nouveau_limiteur(30, 60.0)
@@ -191,3 +203,19 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     def repondre_courriel(x: Lien) -> dict:
         _limiter_lien(x.jeton)
         return au_monde(foire(lambda c: distance.repondre_lien(c, x.jeton, x.attributs or None)))
+
+    # ------------------------------------------------------------------ « la carte devient le profil »
+    @r.post("/moi/carte/proposer")
+    def proposer_carte(x: Carte, pid: str = Depends(membre)) -> dict:
+        """L'image est lue par Apertus (vision) puis OUBLIÉE ; rien n'est écrit avant la confirmation du membre."""
+        limiter(limite_lien, "carte|" + pid)                    # 10 propositions par minute et par membre
+        # HORS DU VERROU du monde : l'appel au modèle dure des secondes ; il ne lit que l'interrupteur IA (rien n'est écrit)
+        return (hors_verrou or au_monde)(foire(lambda c: carte.proposer(c, x.image)))
+
+    @r.get("/moi/carte/referentiel")
+    def referentiel_carte(pid: str = Depends(membre)) -> dict:
+        return au_monde(foire(lambda c: carte.referentiel()))
+
+    @r.post("/moi/carte/confirmer")
+    def confirmer_carte(x: Profil, pid: str = Depends(membre)) -> dict:
+        return au_monde(foire(lambda c: carte.confirmer(c, pid, x.entreprise, x.metier, x.zone, x.langue, x.proposition)))

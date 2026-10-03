@@ -27,6 +27,7 @@ simulée). Le Club réel compte **une cinquantaine de membres** ; rien ici n'a e
 | Membre à distance et réponse depuis l'e-mail (envoi simulé en démonstration) | ✅ Construit | test_foire_distance.py |
 | Bilan de période (make bilan), récit IA vérifié par le code | ✅ Construit | test_foire_bilan.py |
 | Prêt à déployer (VPS, HTTPS) et charge de 80 téléphones mesurée en local | ✅ Construit | test_deploiement.py |
+| La carte devient le profil — photo de sa carte, Apertus propose, le membre confirme | ✅ Construit | test_carte_profil.py, test_e2e_foire.py |
 | Phrases recueillies par le QR de la Foire (21, en agrégats) | 🟢 Validé sur le terrain | 21 réponses réelles du 03.10.2026 ; 20 fr, 1 en ; classées par Apertus seulement (21 validées, 20 abstentions) — PREUVES.md |
 | Pilote de 45 jours avec les 50 membres (janvier – mi-février 2027) | ⬜ Prévu | critères à valider avec le Club |
 | Analyse d'impact nLPD / RGPD avec un juriste | ⬜ Prévu | — |

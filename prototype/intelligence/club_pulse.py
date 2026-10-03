@@ -78,6 +78,7 @@ class ClubPulse:
         brut = md.construire(sophie_profilee=False, recherches_autres=md.BESOINS_SUIVANTS)
         self.coffre = Coffre(AdhesionsSynthetiques(brut.profils).importer(), secret=self.reglages.secret)
         self.sessions = Sessions(self.reglages.secret, self.reglages.duree_session_s)
+        self.identites_profil: dict[str, dict] = {}   # FOIRE 2026 : identité déclarée (entreprise) — HORS du journal
         self.decouverte = Decouverte(self, self.reglages.decouverte_jours)   # FOIRE 2026 · D (routes derrière HACKVS_FOIRE)
         self.passes_jure = PassesJure(self.reglages.secret)         # QR juré : court, à usage unique, par personnage fictif
         brut.profils = [self.coffre.pseudonymiser(p) for p in brut.profils]    # le moteur ne voit que des pseudonymes
@@ -494,6 +495,7 @@ class ClubPulse:
 
     def _oublier(self, pid: str) -> None:
         self.coffre.supprimer(pid)
+        self.identites_profil.pop(pid, None)            # FOIRE 2026 : l'entreprise déclarée depuis la carte
         self.notes.pop(pid, None)
         self._propositions_demande.pop(pid, None)
 

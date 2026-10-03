@@ -140,3 +140,26 @@ def test_visible_par_le_club_double_accord_depuis_le_telephone(url_foire):
         assert _api(url_foire, "/api/pulse/console/suivi")["nominatif"] == []
         b.close()
     assert not erreurs, erreurs
+
+
+def test_la_carte_devient_le_profil_formulaire_sans_ia(url_foire):
+    """Parité : IA éteinte (serveur d'E2E sans modèle), le même écran propose le formulaire ; confirmer donne un reçu."""
+    from playwright.sync_api import sync_playwright
+    from tests.test_e2e_pulse import _api, _telephone
+    erreurs: list[str] = []
+    _api(url_foire, "/api/pulse/demo/reinitialiser", {})
+    codes = {x["id"]: x["code"] for x in _api(url_foire, "/api/pulse/console/personas")}
+    with sync_playwright() as p:
+        b = _chromium(p)
+        _, tel = _telephone(b, url_foire, codes["s01"], (390, 844), erreurs)
+        tel.goto(url_foire + "/app#donnees")
+        tel.locator("#carte-photo").set_input_files(files=[{"name": "carte.png", "mimeType": "image/png",
+                                                             "buffer": __import__("base64").b64decode(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==")}])
+        tel.locator("[data-role=carte-formulaire]").wait_for()                 # IA ou non : le même formulaire, à confirmer
+        tel.fill("#carte-entreprise", "Tisanes Alpines Fictives")
+        tel.select_option("#carte-metier", "agriculture")
+        tel.click("#carte-confirmer")
+        tel.locator("[data-role=carte-recu]:has-text('pas conservée')").wait_for()
+        b.close()
+    assert not erreurs, erreurs

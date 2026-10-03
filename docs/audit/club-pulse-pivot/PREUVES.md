@@ -74,6 +74,21 @@ Chiffres MESURÉS seulement ; le reste est dans `docs/RAPPORT_NUIT.md`.
 | Phrases Tally (QR de la Foire, instantané du 03.10, 21 réponses) | 21 gardées (0 doublon, 0 contact, 0 vide) ; langue réelle détectée : 20 fr, 1 en (passée par la page française) — phrases hors dépôt | `make ingest-tally` (CSV en `docs/data/tally_phrases.csv`, ignoré par git) |
 | Classification des 21 phrases Tally par Apertus (`swiss-ai/Apertus-v1.5-70B`), 03.10 13:47 UTC — **Apertus seulement** (consentement) | 21 / 21 sorties acceptées par la validation, **dont 20 abstentions** ; 1 métier proposé. **Aucune exactitude mesurée** : feuille d'annotation (`metier_attendu`, `domaine`) à remplir par l'équipe | `make eval-classification FOURNISSEUR=apertus` → `prototype/eval/resultats_classification/foire-2026-qr-apertus.md` |
 
+## « La carte devient le profil » — Apertus 1.5 (vision), 6 cartes FICTIVES (03.10)
+
+Modèle exact `swiss-ai/Apertus-v1.5-70B`, API CSCS ; attentes fixées avant l'exécution (`prototype/eval/cas_carte.json`) ;
+chemin du produit (`carte.proposer`) ; rejeu : `cd prototype && python -m eval.banc_carte` → `eval/resultats_carte/apertus.md`.
+**6 cartes, une seule mise en page : ne démontre pas une qualité générale.**
+
+| Version du chemin | entreprise | métier | zone | langue | latence médiane |
+|---|---|---|---|---|---|
+| 1. un seul appel (image → champs), 14:22 UTC | 0/6 | 1/6 | 1/6 | 6/6 | ~1,0 s |
+| 2. deux temps (image → texte recopié, puis texte → champs sous schéma), 14:31 UTC — **retenue** | 4/6 | 5/6 | 5/6 | 6/6 | ~1,8 s |
+
+Constat : en un seul appel, le modèle mettait le nom de la PERSONNE dans « entreprise » et répondait presque toujours
+« communication » / « Vaud » ; il recopie pourtant le texte de la carte sans faute. Le membre confirme ou corrige
+toujours ; la photo n'est jamais conservée.
+
 ## Mode salle — charge de 80 téléphones simulés (03.10, **serveur local**)
 
 Mesure contre un **serveur local** (uvicorn, un processus, la machine de développement de la session cloud ; pas à

@@ -66,6 +66,13 @@
   en: Ready to deploy (VPS, HTTPS), 80-phone load measured locally
   ecran: /sante
   tests: test_deploiement.py
+- id: carte
+  statut: construit
+  fr: La carte devient le profil — photo de sa carte, Apertus propose, le membre confirme
+  de: Die Visitenkarte wird zum Profil — Foto der eigenen Karte, Apertus schlägt vor, das Mitglied bestätigt
+  en: The business card becomes the profile — photo of one's card, Apertus suggests, the member confirms
+  ecran: /app
+  tests: test_carte_profil.py, test_e2e_foire.py
 - id: tally
   statut: valide
   fr: Phrases recueillies par le QR de la Foire (21, en agrégats)

@@ -21,6 +21,8 @@ from typing import Callable, Iterable, Optional
 from .observabilite import ASGIApp, Message, Receive, Scope, Send
 
 CORPS_MAX = 64 * 1024
+# « la carte devient le profil » : la photo, RÉDUITE sur le téléphone, peut dépasser 64 Kio — une seule route, plafond 1 Mio
+CORPS_MAX_ROUTES = {"/api/pulse/moi/carte/proposer": 1024 * 1024}
 LOCALES = {"127.0.0.1", "::1", "localhost", "testclient"}      # « testclient » : client de test en processus
 # ce que le serveur de démonstration sert : Club Pulse, et rien d'autre (l'ancien prototype est derrière un drapeau)
 CLUB_PULSE_EXACTS = {"/app", "/app/", "/app/manifest.webmanifest", "/app/sw.js", "/console", "/projection", "/demo/regie", "/etabli",
@@ -61,7 +63,8 @@ class Protections:
         chemin: str = scope.get("path", "")
         entetes = dict(scope.get("headers") or [])
         longueur = entetes.get(b"content-length", b"")
-        if longueur and (not longueur.isdigit() or int(longueur) > CORPS_MAX):
+        plafond = CORPS_MAX_ROUTES.get(chemin, CORPS_MAX)
+        if longueur and (not longueur.isdigit() or int(longueur) > plafond):
             await _refuser(send, 413, TROP_GROS)
             return
         etat = {"n": 0, "refuse": False}
@@ -72,7 +75,7 @@ class Protections:
             m = await receive()
             if m["type"] == "http.request":
                 etat["n"] += len(m.get("body", b""))
-                if etat["n"] > CORPS_MAX:
+                if etat["n"] > plafond:
                     if not etat["refuse"]:
                         etat["refuse"] = True
                         await _refuser(send, 413, TROP_GROS)

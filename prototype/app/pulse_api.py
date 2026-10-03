@@ -419,7 +419,8 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     ajouter_routes_essai(r, au_monde, membre, console, lambda pid: limiter(limite_ia, f"ia|{pid}"),
                          lambda pid: limiter(limite_ecritures, f"ecrit|{pid}"), hors_verrou)
     ajouter_routes_capacites(r, au_monde, membre, console)
-    ajouter_routes_foire(r, au_monde, membre, console, limiter=limiter, nouveau_limiteur=Limiteur, qr=qr_svg)
+    ajouter_routes_foire(r, au_monde, membre, console, limiter=limiter, nouveau_limiteur=Limiteur, qr=qr_svg,
+                         hors_verrou=hors_verrou)
     ajouter_routes_visite(r, qr_svg)
     ajouter_routes_salle(r, console, lambda: etat["demo"].club.reglages.secret, limiter=limiter, nouveau_limiteur=Limiteur, qr=qr_svg)
 

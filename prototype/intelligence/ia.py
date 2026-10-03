@@ -25,7 +25,7 @@ import re
 from datetime import date, timedelta
 import time
 from pathlib import Path
-from typing import Callable, Literal, Optional, Protocol
+from typing import Any, Callable, Literal, Optional, Protocol
 
 from pydantic import BaseModel, ValidationError, model_validator
 
@@ -227,7 +227,8 @@ class _CompatibleOpenAI(_FournisseurHTTP):
     def _temperature(self) -> Optional[float]:
         return 0.0
 
-    def _requete(self, systeme: str, message: str, schema: Optional[dict]) -> tuple[str, dict, dict]:
+    def _requete(self, systeme: str, message: Any, schema: Optional[dict]) -> tuple[str, dict, dict]:
+        # `message` : un texte, ou (vision, « la carte devient le profil ») une liste de parties texte + image
         corps: dict = {"model": self.modele, self.PARAM_JETONS: self.JETONS_MAX,
                        "messages": [{"role": "system", "content": systeme}, {"role": "user", "content": message}]}
         t = self._temperature()
@@ -284,7 +285,8 @@ class Claude(_FournisseurHTTP):
     BASE_DEFAUT = "https://api.anthropic.com"
     VERSION_API = "2023-06-01"
 
-    def _requete(self, systeme: str, message: str, schema: Optional[dict]) -> tuple[str, dict, dict]:
+    def _requete(self, systeme: str, message: Any, schema: Optional[dict]) -> tuple[str, dict, dict]:
+        # `message` : un texte, ou (vision, « la carte devient le profil ») une liste de parties texte + image
         corps: dict = {"model": self.modele, "max_tokens": self.JETONS_MAX, "system": systeme,
                        "messages": [{"role": "user", "content": message}]}
         t = _temperature_env("ANTHROPIC_TEMPERATURE")

@@ -483,6 +483,52 @@
           } }, "Tout effacer")));
       foireDistance();
     }
+    // « LA CARTE DEVIENT LE PROFIL » : photo de SA carte → réduite ICI (≤ 1024 px, JPEG) → Apertus propose → le membre
+    // confirme ou corrige → reçu. La photo n'est jamais conservée ; sans IA, le même formulaire, vide.
+    function reduire(fichier) {
+      return new Promise((ok, ko) => {
+        // FileReader → data: (la CSP refuse les blob:, à raison) ; tout reste dans le navigateur jusqu'à l'envoi réduit
+        const lecteur = new FileReader(), img = new Image();
+        img.onload = () => { const k = Math.min(1, 1024 / Math.max(img.width, img.height)); const cv = document.createElement("canvas");
+          cv.width = Math.max(1, Math.round(img.width * k)); cv.height = Math.max(1, Math.round(img.height * k));
+          cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height); ok(cv.toDataURL("image/jpeg", 0.8)); };
+        img.onerror = () => ko(new Error("image illisible"));
+        lecteur.onload = () => { img.src = lecteur.result; }; lecteur.onerror = () => ko(new Error("image illisible"));
+        lecteur.readAsDataURL(fichier);
+      });
+    }
+    function formulaireCarte(r) {
+      const p = r.proposition || {}, ref = r.referentiel;
+      const ent = h("input", { id: "carte-entreprise", maxlength: 80, value: p.entreprise || "" });
+      const met = h("select", { id: "carte-metier" }, ref.metiers.map((m) => h("option", { value: m.id, selected: p.metier === m.id }, m.fr)));
+      const zon = h("select", { id: "carte-zone" }, ref.zones.map((z) => h("option", { value: z, selected: p.zone === z }, z)));
+      const lan = h("select", { id: "carte-langue" }, ref.langues.map((l) => h("option", { value: l, selected: p.langue === l }, l === "fr" ? "français" : "Deutsch")));
+      return h("div", { "data-role": "carte-formulaire" }, h("p", { class: "note", "data-role": "carte-source" }, r.note),
+        h("label", {}, "Entreprise ", ent), h("label", {}, "Métier ", met), h("label", {}, "Région ", zon), h("label", {}, "Langue ", lan),
+        h("button", { class: "btn", id: "carte-confirmer", onclick: async () => {
+          try {
+            const c = await api("/api/pulse/moi/carte/confirmer", { corps: { entreprise: ent.value, metier: met.value, zone: zon.value, langue: lan.value, proposition: p } });
+            $("#carte-zone-resultat").replaceChildren(h("div", { class: "carte", "data-role": "carte-recu" }, h("b", {}, "Votre reçu"), h("p", {}, c.recu.finalite),
+              h("p", { class: "note" }, `${c.recu.reference} · ${c.recu.provenance} · révocable`)));
+          } catch (e) { toast(e.message, "erreur"); }
+        } }, "C'est juste : confirmer"));
+    }
+    function sectionCarte() {
+      const entree = h("input", { type: "file", accept: "image/*", capture: "environment", id: "carte-photo", style: "position:absolute;width:1px;height:1px;opacity:0" });
+      entree.addEventListener("change", async () => {
+        const f = entree.files && entree.files[0]; if (!f) return;
+        $("#carte-zone-resultat").replaceChildren(h("p", { class: "note" }, "Lecture de la carte…"));
+        try { const r = await api("/api/pulse/moi/carte/proposer", { corps: { image: await reduire(f) } }); entree.value = ""; $("#carte-zone-resultat").replaceChildren(formulaireCarte(r)); }
+        catch (e) { toast(e.message, "erreur"); }
+      });
+      return section("Ma carte devient mon profil", h("p", { class: "note" }, "Photographiez VOTRE carte de visite : l'IA propose, vous confirmez ou corrigez. La photo n'est pas conservée."),
+        h("label", { class: "btn discret petit", for: "carte-photo" }, "Photographier ma carte"), entree,
+        h("button", { class: "btn discret petit", id: "carte-manuel", onclick: async () => {
+          try { const ref = await api("/api/pulse/moi/carte/referentiel");
+            $("#carte-zone-resultat").replaceChildren(formulaireCarte({ proposition: {}, note: "Remplissez le formulaire.", referentiel: ref })); }
+          catch (e) { toast(e.message, "erreur"); }
+        } }, "Sans photo : le formulaire"), h("div", { id: "carte-zone-resultat" }));
+    }
     // FOIRE 2026 (F, B) : zone, langue, « visible par le Club » — seulement si l'interrupteur est allumé (sinon : rien)
     async function foireDistance() {
       let x;
@@ -490,7 +536,8 @@
       const zone = h("select", { id: "dist-zone" }, x.zones.map((z) => h("option", { value: z, selected: x.profil && x.profil.zone === z }, z)));
       const langue = h("select", { id: "dist-langue" }, x.langues.map((l) => h("option", { value: l, selected: x.profil && x.profil.langue === l }, l === "fr" ? "français" : "Deutsch")));
       const bloc = $("#foire-distance"); if (!bloc) return;
-      bloc.replaceChildren(...[section("Où je suis, ma langue",
+      bloc.replaceChildren(...[sectionCarte(),
+        section("Où je suis, ma langue",
         h("p", { class: "note" }, "Pour recevoir les demandes par e-mail et compter les membres hors Valais (jamais nommément)."),
         zone, langue, h("button", { class: "btn discret petit", id: "dist-enregistrer", onclick: async () => {
           try { await api("/api/pulse/moi/distance", { corps: { zone: zone.value, langue: langue.value } }); toast("Enregistré."); } catch (e) { toast(e.message, "erreur"); }
