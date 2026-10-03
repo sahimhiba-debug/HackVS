@@ -215,3 +215,20 @@ def test_la_vue_de_l_ecran_est_choisie_cote_serveur_et_purgee(s):
         s.afficher("autre")
     s.purger()
     assert s.ecran()["vue"] == "salle"
+
+
+def test_constellation_points_anonymes_traits_des_oui_rien_sous_trois(h):
+    s = Salle(b"s" * 32, plafond=80, horloge=h)
+    a = _entrer(s, "voiture")
+    assert s.ecran()["constellation"] == []                          # sous k : aucun point
+    ps = [a, _entrer(s, "salle"), _entrer(s, "allemand"), _entrer(s, "traiteur")]
+    s.lancer()
+    s.repondre(ps[0], "oui")
+    s.repondre(ps[1], "non")
+    c = s.ecran()["constellation"]
+    assert len(c) == 4 and sum(p["oui"] for p in c) == 1
+    assert all(set(p) == {"a", "r", "oui"} and 0 <= p["a"] < 1 and 0.35 <= p["r"] <= 1 for p in c)
+    brut = json.dumps(c)
+    for nonce in s.participants:
+        assert nonce not in brut
+    assert [p["a"] for p in c] == sorted(p["a"] for p in c)            # trié par position : l'ordre d'arrivée ne se lit pas

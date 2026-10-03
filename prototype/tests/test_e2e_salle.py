@@ -49,6 +49,7 @@ def test_le_club_c_est_vous(url_salle):
             t.locator("[data-choix=oui]").click()
             t.locator("[data-role=message]").wait_for()
         ecran.locator("[data-role=anneau][data-fermee=true]").wait_for()
+        ecran.locator("#constellation[data-points='4'][data-traits='4']").wait_for()     # 4 points, 4 traits vers le centre
         telephones[0].locator("#retirer").click()
         telephones[0].locator("[data-role=message]:has-text('Personne ne sera prévenu')").wait_for()
         ecran.locator(".fil >> text=recomposition").wait_for()

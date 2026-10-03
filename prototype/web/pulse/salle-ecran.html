@@ -31,6 +31,7 @@
       <div class="qr" id="qr" style="margin-top:16px"></div><p class="note" id="url"></p>
       <p class="note" data-role="efface" style="margin-top:12px">Démonstration : vos données sont effacées après la présentation.</p></aside>
     <main><span class="surtitre">Participants</span><div class="grand" id="n" data-role="participants">0</div>
+      <svg id="constellation" data-role="constellation" viewBox="0 0 500 500" style="width:min(100%,520px);display:block;margin:12px auto 0" aria-label="Constellation de la salle : des points anonymes"></svg>
       <div class="caps" id="caps"></div><div id="demande"></div><div id="bascule"></div><div id="bilan"></div><ul class="fil" id="fil"></ul></main>
   </div>
   <script type="module">
@@ -42,6 +43,21 @@
       for (const e of enfants.flat(Infinity)) if (e !== null && e !== undefined && e !== false) el.append(e instanceof Node ? e : document.createTextNode(String(e)));
       return el;
     }
+    // CONSTELLATION : chaque participant est un point anonyme ; un oui trace un trait vers la demande, au centre ;
+    // l'anneau du centre se ferme quand les trois pièces sont là. Aucun nom, aucun identifiant (le serveur n'en envoie pas).
+    const NS = "http://www.w3.org/2000/svg";
+    const s = (tag, attrs) => { const el = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v); return el; };
+    function dessinerConstellation(e) {
+      const svg = $("#constellation"); const R = 230, C = 250;
+      const pts = e.constellation.map((p) => ({ x: C + Math.cos(p.a * 2 * Math.PI) * p.r * R, y: C + Math.sin(p.a * 2 * Math.PI) * p.r * R, oui: p.oui }));
+      const pieces = e.demande ? e.demande.pieces : [];
+      const arcs = pieces.map((p, i) => { const a0 = (i / 3) * 2 * Math.PI - Math.PI / 2 + 0.08, a1 = ((i + 1) / 3) * 2 * Math.PI - Math.PI / 2 - 0.08;
+        return s("path", { d: `M ${C + 56 * Math.cos(a0)} ${C + 56 * Math.sin(a0)} A 56 56 0 0 1 ${C + 56 * Math.cos(a1)} ${C + 56 * Math.sin(a1)}`,
+          fill: "none", stroke: p.fournie ? "var(--green)" : "var(--hairline-2)", "stroke-width": 14, "stroke-linecap": "round" }); });
+      svg.replaceChildren(...pts.filter((p) => p.oui && e.demande).map((p) => s("line", { x1: p.x, y1: p.y, x2: C, y2: C, stroke: "var(--brand)", "stroke-width": 2, opacity: 0.55 })),
+        ...pts.map((p) => s("circle", { cx: p.x, cy: p.y, r: p.oui ? 9 : 6, fill: p.oui ? "var(--brand)" : "var(--ink)", opacity: p.oui ? 1 : 0.35 })), ...arcs);
+      svg.dataset.points = String(pts.length); svg.dataset.traits = String(pts.filter((p) => p.oui).length);
+    }
     let bascule = null;
     async function lire() {
       try {
@@ -51,6 +67,7 @@
         $("#url").textContent = e.url ? e.url.split("#")[0] : "";
         $("#n").textContent = e.participants;
         $("#caps").replaceChildren(...e.capacites.map((c) => h("div", { class: "cap", "data-capacite": c.id }, h("span", { class: "surtitre" }, c.role), h("b", {}, c.n), h("span", { class: "note" }, c.libelle))));
+        dessinerConstellation(e);
         $("#demande").replaceChildren(...(e.demande ? [h("div", { class: "anneau", "data-role": "anneau", "data-fermee": String(e.demande.fermee) },
           h("b", { style: "font-size:24px" }, e.demande.fermee ? "Le Club peut le faire." : "Il manque une pièce."),
           ...e.demande.pieces.map((p) => h("span", { class: "piece" + (p.fournie ? " ok" : "") }, p.role)),

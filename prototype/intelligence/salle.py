@@ -243,8 +243,22 @@ class Salle:
                     "secondes_pour_fermer": round(self.ferme_le - self.demande_le) if self.ferme_le else None},
                 "reponses": {c: _k(rep.get(c, 0), self.k) for c in CHOIX},
                 "bascule": self.ouverte_le is not None and depuis >= 60 and n < self.minimum, "minimum": self.minimum,
+                "constellation": self._constellation(),
                 "fil": list(self.fil[-12:]), "vue": self.vue, "message": EFFACEMENT, "monde": "monde de démonstration",
             }
+
+    def _constellation(self) -> list[dict]:
+        """CONSTELLATION (écran géant) : un point anonyme par participant ; un oui trace un trait vers la demande, au
+        centre. Position tirée d'un HMAC de la clé de séance (stable, sans lien avec l'ordre d'arrivée), triée par angle ;
+        aucun identifiant. Sous k participants : aucun point (le compteur dit déjà « < 3 »)."""
+        if len(self.participants) < self.k:
+            return []
+        pts = []
+        for n, y in self.participants.items():
+            d = hmac.new(self._cle, b"point|" + n.encode(), hashlib.sha256).digest()
+            pts.append({"a": int.from_bytes(d[:4], "big") / 2 ** 32, "r": round(0.35 + 0.65 * d[4] / 255, 3),
+                        "oui": y["reponse"] == "oui"})
+        return sorted(pts, key=lambda q: q["a"])
 
     def bilan(self) -> dict:
         """« En cinq minutes, cette salle a rendu possible… » — agrégats, k = 3."""
