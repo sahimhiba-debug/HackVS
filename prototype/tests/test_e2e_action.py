@@ -64,6 +64,7 @@ def test_action_collective_deux_telephones_et_ecran_commun(url):  # noqa: F811
         s.click("#comprendre")
         s.wait_for_selector("#exigences .exigence >> nth=2")
         assert "Règles simples" in s.inner_text("main") or "Apertus" in s.inner_text("main")   # l'origine est dite
+        assert s.locator("[data-role=smart] [data-smart]").evaluate_all("l => l.map(x => x.dataset.smart)") == ["combien"]   # coach SMART
         s.click("button:has-text('Reprendre la suggestion')")
         _capture(s, "a1_sophie_exigences")
         s.click("#chercher")

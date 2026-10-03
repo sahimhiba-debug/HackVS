@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import threading
 from datetime import date, timedelta
 from typing import Callable, Optional, TypeVar
@@ -30,7 +31,7 @@ from plateforme.affirmations import Statut
 from plateforme.memoire import Evt, Memoire
 
 from .decouverte import Decouverte
-from . import memoire_club
+from . import coach_smart, memoire_club
 from .capacites import Claim, Instance, Registre, charger_patrons, choisir_asks, index_claims, pulse_diff
 from . import monde_demo as md
 from .acces import Sessions
@@ -870,7 +871,8 @@ class ClubPulse:
         livrables = [x["livrable"] for x in rep.sortie.get("exigences", []) if x.get("livrable")]
         critere = ("L'action a lieu au créneau convenu" + (f" et « {livrables[0]} » est remis" if livrables else "")
                    + " ; je dirai ce que j'en ai observé.")          # jamais une fiche que personne n'a demandée
-        return rep.sortie | {"texte": texte.strip(), "critere_suggere": critere,
+        smart = {} if os.environ.get("HACKVS_COACH_SMART", "1") != "1" else {"smart": coach_smart.questions(texte)}
+        return rep.sortie | smart | {"texte": texte.strip(), "critere_suggere": critere,
                              "ia": {"fournisseur": rep.appel.fournisseur, "modele": rep.appel.modele, "statut": rep.appel.statut,
                                     "repli": rep.appel.repli, "prompt": rep.appel.prompt, "trace": rep.appel.trace, "mode": rep.sortie.get("mode")}}
 

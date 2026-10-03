@@ -223,6 +223,8 @@
         : `Règles simples, aucun modèle utilisé. Mots reconnus : ${(p.reconnu || []).join(" · ") || "aucun"}.`;
       return h("div", { class: "carte", style: "margin-top:14px" }, h("p", { class: "ia" }, mode),
         p.manquant.length ? h("p", { class: "encadre" }, "À préciser : " + p.manquant.join(" · ")) : null,
+        p.smart && p.smart.length ? h("div", { class: "encadre", "data-role": "smart" }, h("b", {}, "Pour qu'on vous dise oui plus facilement :"),
+          ...p.smart.map((q) => h("p", { class: "note", "data-smart": q.id }, `${q.question} ${q.exemple}`))) : null,
         h("div", { class: "champ" }, h("label", { for: "f-question" }, "Ce que vous voulez réaliser"), question),
         section("Ce qu'il faudrait réunir (d'autres membres)", liste,
           h("div", { class: "ligne" }, Object.entries(ROLES).map(([r, lib]) => h("button", { class: "btn discret petit", style: "margin-top:8px",
