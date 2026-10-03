@@ -113,17 +113,20 @@ l'audit est `3a6ef4f`, point de départ commun avec `claude/modest-bohr-xvk53n`)
 GitHub (facturation : « recent account payments have failed or your spending limit needs to be increased »). Aucun
 commit de cette nuit n'est dit « CI verte ». Les preuves sont les portes **locales**, ci-dessous.
 
-## Portes locales (commit `b25b00c` et précédents immédiats)
+## Portes locales (commit `51d406a`, final de la nuit)
+
+CI : **n'a pas tourné** (facturation, gérée par Hiba). Aucune ligne ci-dessous n'est « CI verte » : ce sont des
+portes lancées sur cette machine.
 
 | Porte | Résultat |
 |---|---|
-| Suite complète (`make test`, hors E2E) | **1 560 réussis**, 0 échec (sur `e2b1745` + correctifs de tests) |
-| E2E interrupteur allumé (`make e2e`) | **31 / 31** |
-| E2E interrupteur éteint (`HACKVS_FOIRE=0 make e2e`) | **31 / 31** |
-| E2E réseau coupé (`make e2e-salle`, espace réseau vide) | **31 / 31** |
+| Suite complète (`make test`, hors E2E) | **1 572 réussis**, 0 échec (sur `51d406a`) |
+| E2E interrupteur allumé (`make e2e`) | **31 / 31** (sur `8d83954` ; depuis, seuls un test unitaire et des docs ont changé) |
+| E2E interrupteur éteint (`HACKVS_FOIRE=0 make e2e`) | **31 / 31** (idem, `8d83954`) |
+| E2E réseau coupé (`make e2e-salle`, espace réseau vide) | **31 / 31** (idem, `8d83954`) |
 | Lint (`make lint`) · types (`make typecheck`) | propres · 0 erreur (102 fichiers) |
-| Secrets (`make secrets`) | **aucun** — la porte était rouge sur des faux positifs depuis `d152a55`, corrigée (`b25b00c`) |
-| Validateur des affirmations | « toutes les affirmations contrôlables sont vérifiées » |
+| Secrets (`make secrets`) | **aucun** (le faux secret du test de la porte est assemblé hors du motif, `51d406a`) |
+| Validateur des affirmations (`--sans-benchmark --verifier` et passe complète) | « toutes les affirmations contrôlables sont vérifiées » |
 
 ## Fait
 
