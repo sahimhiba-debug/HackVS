@@ -49,6 +49,13 @@ Toute autre transition est refusée (`partenariats.suivante`).
 Les **vues** (qui a lu quoi), les **inscrits inactifs** (qui ne répond pas), les **« matchs »** proposés par une IA.
 Le Suivi mesure des gestes faits par des personnes, pas une activité supposée.
 
+## Nouveaux liens tissés (03.10)
+
+Deux entreprises distinctes qui portent chacune un accord sur la même capacité, pour la première fois dans la
+période. Un décompte, jamais une liste ; « < 3 » sous trois entreprises. Hypothèse (non branchée) : favoriser les
+membres jamais liés quand une demande est routée — à décider avec le Club, car aujourd'hui une demande va à une catégorie,
+jamais à une personne choisie par le système.
+
 ## Critères du pilote de 45 jours (à valider avec le Club)
 
 Fixés d'avance dans [ROADMAP.md](ROADMAP.md) et lus sur cet écran, période « trimestre » : au moins 25 demandes, au

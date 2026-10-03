@@ -25,6 +25,7 @@ def test_le_jure_devient_exposant_invite_d_annecy(url_foire):
         console.goto(url_foire + "/suivi")
         console.locator("[data-role=monde]:has-text('monde de démonstration')").wait_for()
         console.locator("[data-tuile='Demandes envoyées']").wait_for()
+        assert console.locator("[data-tuile='Nouveaux liens tissés']").count() == 1
         console.click("#qr-stand")
         console.locator("[data-role=qr-decouverte] img").wait_for()
         lien = console.locator("[data-role=qr-decouverte] a").get_attribute("href")

@@ -101,6 +101,7 @@
           tuile("Sans réponse", r.sans_reponse, pct(r.pourcentages.sans_reponse).trim() || null),
           tuile("Délai médian avant le premier oui", s.delai_premier_oui_jours === null ? "—" : `${s.delai_premier_oui_jours} j`, s.delai_note),
           tuile("Membres actifs", s.membres_actifs, "ont répondu ou consenti dans la période"),
+          s.liens ? tuile("Nouveaux liens tissés", s.liens.nouveaux, "deux entreprises, une même capacité, pour la première fois") : null,
           tuile("Hors Valais", typeof s.hors_valais === "string" ? "—" : s.hors_valais.membres, typeof s.hors_valais === "string" ? s.hors_valais : null),
           tuile("Invités ayant contribué", inv.ont_contribue, `${inv.actifs} passe(s) découverte actif(s)`)),
         h("div", { class: "grille" },
