@@ -1,4 +1,4 @@
-# 04 — Runbook de la démo live (actes 4–6, 5:36–9:50)
+# 04 — Runbook de la démo live (actes 4–6, 5:36–11:00)
 
 Ce runbook **s'adosse** à `docs/audit/club-pulse-pivot/DEMO_SCRIPT.md` (état initial § 2, secours § 8, rituel de
 samedi § 9.5) et l'étend pour la scène du registre. Il ne le remplace pas : en cas de divergence, DEMO_SCRIPT gagne
@@ -14,9 +14,15 @@ l'Établi montre une capacité à une pièce près
 → la demande est sur le téléphone d'un membre (trois boutons)
 → le membre écrit sa pièce avec ses mots → l'IA propose une structure → le code vérifie
 → Oui → l'Établi passe à « le Club peut le faire » → le reçu est sur le téléphone
-→ retrait en un geste → « transport : ce composant n'est plus disponible », sans nom
-→ la demande repart vers un autre membre (un juré, s'il a scanné le passe)
+→ retrait en un geste → « un composant n'est plus disponible », sans nom ni rôle (rôle porté par < 3 membres)
+→ la demande repart vers un autre membre
+→ FOIRE 2026 : « Le Club cherche » → « Inviter un contact » → un juré scanne, devient « exposant invité d'Annecy »,
+  propose son aide → « à confirmer par le Club » → l'écran Suivi
 ```
+
+Interrupteur : tout ce qui est « Foire 2026 » tourne avec `HACKVS_FOIRE=1` — **la valeur par défaut** (rien à régler).
+`HACKVS_FOIRE=0` rend la démo d'hier, à l'identique (rôle « transport : » dit, pas de `/suivi`). Le passe découverte
+est vérifié par `prototype/tests/test_e2e_foire.py` (vrai navigateur, aussi en mode salle).
 
 C'est le parcours vérifié par `prototype/tests/test_e2e_capacites.py::test_etabli_telephones_reponse_recu_retrait_anonyme`
 (vrai navigateur), et la seule scène du produit qui enchaîne trois boutons, reçu et retrait anonyme en 90 secondes.
@@ -53,8 +59,11 @@ Jean-Marc, dans le produit, c'est ça : le Club peut le faire. »
    - bandeau IA : « IA : allumée — modèle « … » » ou « IA : aucun modèle configuré — forme déterministe » (§ 3).
 3. Sur le téléphone de Pauline : onglet **Demandes** → la carte de la demande est là, avec **Oui / Non / Pas cette fois**
    et le champ « Décrivez votre pièce avec vos mots (facultatif) ».
-4. Émettre un **QR juré** depuis l'Établi (bouton « QR juré », personnage Markus) **sans le scanner** : il servira à
-   l'acte 6 s'il reste du temps. Le passe vaut 15 minutes : l'émettre au plus tôt à 5:36, idéalement pendant le film.
+4. Ouvrir **`/suivi`** dans un second onglet de l'ordinateur de démonstration (console : cette machine), onglet
+   **« Le Club cherche »** visible : la demande « Un minibus de 12 places ou plus » est là (elle réapparaît après le
+   retrait). **Rien à émettre d'avance** : le passe découverte est émis en direct à l'étape 9 (il vaut 90 jours de
+   l'horloge du monde ; un passe émis et non scanné ne gêne rien). Le bloc « QR juré » optionnel est **remplacé** par
+   cette étape ; le bouton reste sur l'Établi, inutilisé.
 
 Données : monde fictif, personnages fictifs, marqués « FICTIF » sur chaque écran. Aucun nom réel.
 
@@ -88,7 +97,7 @@ Quelle que soit la décision, le scénario guidé de la régie reste sans modèl
 
 - Réveiller l'écran du téléphone, vérifier l'onglet Demandes, régler la luminosité au maximum.
 - Mettre l'Établi au premier plan sur l'ordinateur ; vérifier « lu en … ms » en haut (pas « hors ligne : écran figé »).
-- Émettre le QR juré (§ 2.4) si l'acte 6 long est prévu.
+- Vérifier l'onglet `/suivi` (§ 2.4) : « lu en … ms », pas « hors ligne ».
 - Ne rien cliquer d'autre.
 
 ## 5. Les actions, une par une, avec plan B
@@ -102,9 +111,10 @@ Quelle que soit la décision, le scénario guidé de la régie reste sans modèl
 | 5 | 5:45 | V1 | la réplique qui correspond à l'écran (`03_SCRIPT_ORAL.md`, acte 5) — en B, la réplique de la parité | — | ne jamais commenter un message qui n'est pas à l'écran |
 | 6 | 6:00 | V2 | vérifier « places (au moins 12) » = 14, appuyer **Oui** | téléphone : le reçu apparaît dans « Mes consentements (reçus) » ; **Établi : « le Club peut le faire »**, bordure verte, plus de pointillés (≤ 1 s, l'Établi relit chaque seconde) — **V1 : la réplique-pont de l'anneau (D-PRES-2)** | **l'Établi ne change pas en 3 s** : F5 ; **rien** : capture `etabli-2-peut.png` ; **le téléphone refuse (429 / erreur)** : capture `tel-2-recu.png`, et dire « plafond ou réseau : voici la répétition de ce matin » |
 | 7 | 6:20 | V2 | montrer le reçu : « valable · donné le 06.10 · jusqu'au 09.10 · référence … » | la carte du reçu | — |
-| 8 | 8:50 | V2 | appuyer **« Retirer mon consentement »** | toast « Consentement retiré. Personne ne saura que c'est vous. » ; Établi : statut **« un consentement ne vaut plus »**, ligne **« transport : ce composant n'est plus disponible »** | **Établi inchangé** : F5 ; **rien** : capture `etabli-3-retrait.png` |
-| 9 | 6:55 | V2 | *(option)* montrer le QR juré sur l'Établi ; un juré scanne | sur son téléphone : bandeau « Jury : vous jouez Markus, personnage FICTIF, jusqu'à … », onglet Demandes avec la demande | **le QR n'ouvre rien / pointe vers 127.0.0.1** : ne pas insister ; V2 ouvre l'onglet Demandes sur le téléphone de secours (Markus) : la demande y est |
-| 10 | 9:50 | V1 | « Voilà pour l'essai. » | — | — |
+| 8 | 8:50 | V2 | appuyer **« Retirer mon consentement »** | toast « Consentement retiré. Personne ne sera prévenu que c'est vous. » ; Établi : statut **« un consentement ne vaut plus »**, ligne **« un composant n'est plus disponible »** (sans « transport : ») | **Établi inchangé** : F5 ; **rien** : capture `etabli-3-retrait.png` |
+| 9 | 9:10 | V2 | **PASSE DÉCOUVERTE** (seulement si validé au rituel, sinon sauter à 10) : onglet `/suivi` → **« Le Club cherche »** → **« Inviter un contact »** sur la demande du minibus ; un juré scanne le QR ; sur son téléphone : entreprise « Exposant invité d'Annecy », métier « Transport », zone « Haute-Savoie » → **« Déclarer et recevoir mon reçu »** → **« Je peux aider »** | téléphone du juré : « Votre reçu de consentement … 90 jours … révocable », puis « Proposition transmise au Club » ; console (≤ 3 s) : **« un invité propose son aide — à confirmer par le Club »** | **COUPE PRÉVUE** si retard à 8:40 (02_STRUCTURE). **Le QR n'ouvre rien / 127.0.0.1** (`HACKVS_URL_PUBLIQUE` absent) : ne pas insister, V2 ouvre le lien (bouton « ouvrir le lien » / zone FR) sur le téléphone de secours et fait la déclaration lui-même ; **toujours rien** : captures `tel-4-decouverte.png` puis `suivi-2-propose.png`. **Si l'étape casse : on la saute — la démo reste celle d'hier.** |
+| 10 | 10:40 | V2 | onglet **« Suivi »** | tuiles « demandes envoyées », « réponses oui < 3 », « invités ayant contribué < 3 », bandeau « monde de démonstration » — V1 : « Vous nous avez dit que le Club ne sait jamais où en sont les partenariats. Voilà l'écran. » | **« hors ligne » / vide** : slide **11S** (capture `suivi-1.png`) |
+| 11 | 11:00 | V1 | « Voilà pour l'essai. » | — | — |
 
 Règle absolue (DEMO_SCRIPT § 9.7) : **un écart, un seul : ne pas improviser.** On dit ce que l'écran fait, ou on
 montre la capture de la répétition en le disant. On ne clique jamais « Nouvelle démonstration » pendant la séance.
@@ -125,8 +135,12 @@ les ranger au même endroit, sous les mêmes noms (hors gel : documentation) :
 | `tel-1b-proposition.png` | téléphone, après « Proposer à partir de mon texte » (le message réel, quel qu'il soit) | étape 4 |
 | `etabli-2-peut.png` | Établi, « le Club peut le faire » | étape 6 |
 | `tel-2-recu.png` | téléphone, « Mes consentements (reçus) » | étape 7 — **c'est le reçu de la slide finale (D-PRES-3 : écran réel, référence longue, aucune maquette)** |
-| `etabli-3-retrait.png` | Établi, « transport : ce composant n'est plus disponible » | étape 8 |
-| `tel-3-jure.png` | téléphone du juré, bandeau « Jury : vous jouez Markus » | étape 9 |
+| `etabli-3-retrait.png` | Établi, « un composant n'est plus disponible » (rôle masqué, Foire 2026) | étape 8 |
+| `tel-3-jure.png` | téléphone du juré, bandeau « Jury : vous jouez Markus » | (ancien bloc QR juré, gardé pour mémoire) |
+| `suivi-0-cherche.png` | `/suivi`, « Le Club cherche », la demande du minibus | étape 9 (avant) |
+| `tel-4-decouverte.png` | téléphone de l'invité : reçu du passe découverte, demandes, « Je peux aider » | étape 9 |
+| `suivi-2-propose.png` | « Le Club cherche » : « un invité propose son aide — à confirmer par le Club » | étape 9 (après) |
+| `suivi-1.png` | l'écran Suivi | étape 10 — c'est aussi la slide 11S |
 
 Chaque capture porte la date simulée et la mention « FICTIF » à l'écran : c'est voulu, on ne les recadre pas.
 Si une capture n'a pas pu être prise, l'étape correspondante n'a pas de plan B visuel : on le dit à l'oral.

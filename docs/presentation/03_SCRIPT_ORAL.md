@@ -1,7 +1,8 @@
 # 03 — Script oral, mot à mot
 
 Pour une voix principale (V1). V2 prend le téléphone et l'Établi aux actes 5–6 ; ses répliques sont marquées **V2**.
-Langage parlé, lent : ~130 mots par minute pour ce public. Les durées sont celles de `02_STRUCTURE.md`.
+Langage parlé, lent : ~130 mots par minute pour ce public. Les durées sont celles de `02_STRUCTURE.md` (re-minuté le
+03.10 pour la Foire 2026 : acte 6 allongé de 1:10, marge ramenée à 0:20 — la coupe prévue est nommée dans 02).
 Ce qui est entre crochets est une indication de jeu, pas une parole. Les chiffres entre `[GEL]` sont à remplacer par
 ceux de `docs/audit/club-pulse-pivot/PREUVES.md` après le tag `gel-demo` (`06_SLIDE_CONTENT.md`, slide 14).
 
@@ -37,11 +38,11 @@ ceux de `docs/audit/club-pulse-pivot/PREUVES.md` après le tag `gel-demo` (`06_S
 
 **Le public voit :** carton DEMANDE — « Ce qui se passe entre deux événements. »
 
-> Après, en général, il ne se passe rien. Pas par mauvaise volonté. Parce que la Foire, c'est dix jours, deux cents
+> Après, en général, il ne se passe rien. Pas par mauvaise volonté. Parce que la Foire, c'est dix jours de
 > rencontres, et qu'entre deux événements du Club, chacun retourne à son entreprise.
 >
-> Le Club des Affaires ne manque pas de rencontres. Il en crée plus que n'importe qui dans ce canton. Ce qui manque,
-> c'est l'après : le moment où une rencontre devient quelque chose qu'on fait ensemble.
+> Le Club des Affaires, c'est une cinquantaine de membres. Ils ne manquent pas de rencontres. Ce qui manque, c'est
+> l'après : le moment où une rencontre devient quelque chose qu'on fait ensemble.
 >
 > [temps] Et quand ça arrive quand même, c'est parce que quelqu'un a dit oui. Pas « on s'appelle ». Oui.
 >
@@ -143,7 +144,7 @@ Le film « L'homme qui disait oui », 3:21, son de salle. V1 ne parle pas. V2 pr
 
 ---
 
-## ACTE 6 — Le retrait anonyme, la recomposition (8:50–9:50)
+## ACTE 6 — Le retrait anonyme, le passe découverte, Suivi (8:50–11:00)
 
 **V1 dit :**
 
@@ -151,17 +152,31 @@ Le film « L'homme qui disait oui », 3:21, son de salle. V1 ne parle pas. V2 pr
 
 **V2 :** [appuie sur « Retirer mon consentement »]
 
-> **V2 —** Je retire. [lit le message] « Consentement retiré. Personne ne saura que c'est vous. »
+> **V2 —** Je retire. [lit le message] « Consentement retiré. Personne ne sera prévenu que c'est vous. »
 
 **V1 dit :** [l'Établi]
 
-> L'Établi dit : « transport : ce composant n'est plus disponible ». Le rôle. Jamais la personne. Et la demande repart,
-> vers un autre membre — jamais vers elle.
+> L'Établi dit : « un composant n'est plus disponible ». Pas même le rôle : dans ce Club, une seule personne a un
+> minibus — dire « transport », ce serait la désigner. Sous trois personnes, le système ne dit pas le rôle. Il ne nomme
+> jamais, il ne demande jamais pourquoi. Dans un petit club, on peut parfois deviner — on ne vous promet pas le
+> contraire. Et la demande repart, vers un autre membre — jamais vers elle.
 
-**Si le temps le permet (jusqu'à 9:50), et seulement si le rituel de samedi a validé le QR sur un vrai téléphone :**
+**Passe découverte (FOIRE 2026 — remplace le bloc « QR juré » ; seulement si le rituel de 08:00 l'a validé sur un vrai
+téléphone, sinon on saute directement à Suivi — `04_DEMO_RUNBOOK.md`, étape 9) :**
 
-> Et ce membre, ce soir, c'est l'un de vous. [V2 montre le QR juré sur l'Établi] Un passe de quinze minutes, sans
-> compte, à usage unique. Scannez : vous jouez Markus, personnage fictif — et la demande est sur votre téléphone.
+> Ce minibus, le Club ne l'a pas trouvé chez ses membres. Alors il cherche dehors. [V2 ouvre « Le Club cherche », puis
+> « Inviter un contact » sur la demande du minibus] Ce QR, c'est un passe découverte : quatre-vingt-dix jours pour essayer le Club sans en être membre.
+> Une seule fois, révocable. [un juré scanne] Vous êtes maintenant exposant invité d'Annecy. Votre entreprise, votre
+> métier, votre région — et un reçu, comme Pauline. [le juré répond « Je peux aider »]
+>
+> [« Le Club cherche » se met à jour : « un invité propose son aide — à confirmer par le Club »] Le manque est comblé —
+> à confirmer par le Club, par une personne. Et votre nom d'entreprise n'apparaît nulle part sur cet écran.
+
+**Suivi (toujours joué, 20 s) :** [V2 ouvre l'onglet Suivi]
+
+> Vous nous avez dit que le Club ne sait jamais où en sont les partenariats. Voilà l'écran. Des demandes, des oui, des
+> partenariats par étape, des résultats déclarés. Jamais un nom : en dessous de trois personnes, l'écran dit « moins
+> de trois ». Et les chiffres viennent du monde de démonstration — c'est écrit en haut.
 
 **Transition V1 :**
 
@@ -169,7 +184,7 @@ Le film « L'homme qui disait oui », 3:21, son de salle. V1 ne parle pas. V2 pr
 
 ---
 
-## ACTE 7 — Les preuves (9:50–11:20)
+## ACTE 7 — Les preuves (11:00–12:30)
 
 **Le public voit :** carton RÉSULTAT — « Ce qui est prouvé. Rien de plus. » — puis UNE slide de chiffres (slide 14).
 
@@ -193,7 +208,7 @@ Le film « L'homme qui disait oui », 3:21, son de salle. V1 ne parle pas. V2 pr
 
 ---
 
-## ACTE 8 — L'IA (11:20–12:30)
+## ACTE 8 — L'IA (12:30–13:40)
 
 **Le public voit :** une slide, trois lignes : « L'IA propose. Les règles vérifient. Le membre décide. »
 
@@ -213,7 +228,7 @@ Le film « L'homme qui disait oui », 3:21, son de salle. V1 ne parle pas. V2 pr
 
 ---
 
-## ACTE 9 — La carte et le reçu (12:30–13:30)
+## ACTE 9 — La carte et le reçu (13:40–14:40)
 
 **Le public voit :** carton REÇU — « Et après, maintenant, il se passe quelque chose. » — puis la carte de visite du
 début, et à côté, le reçu réel du téléphone.
@@ -222,6 +237,8 @@ début, et à côté, le reçu réel du téléphone.
 >
 > [temps] La voilà, et à côté, ce que Pauline a dans la poche en sortant d'ici : un reçu. Daté. Référencé. Qu'elle
 > peut retirer. Même geste de la main — mais cette fois, il engage.
+>
+> Un club qui prouve sa valeur toute l'année recrute, y compris à 200 kilomètres.
 >
 > Et après ? [temps] Après, maintenant, il se passe quelque chose.
 >
@@ -255,6 +272,8 @@ change ce carton, la phrase finale change avec lui, mot pour mot.
 
 ## Ce que V1 ne dit jamais
 
-« Dix secondes ». « Sans compte » (sauf : « passe juré, quinze minutes, sans compte »). « Nos utilisateurs ».
+« Dix secondes ». « Sans compte » (sauf : « passe juré, quinze minutes, sans compte » ; le passe découverte se dit
+« sans être membre »). « Deux cents rencontres », « plus que n'importe qui dans ce canton » (retirés le 03.10 : le
+Club compte une cinquantaine de membres). « Conversion » (on dit « intention d'adhésion »). « Nos utilisateurs ».
 « Propulsé par Apertus ». « Révolutionnaire ». Un nom de technologie. Un chiffre qui n'est pas sur la slide 14.
 Une paraphrase du carton de fin du film.

@@ -1,7 +1,8 @@
 # Deck « Club Pulse » — mode d'emploi
 
 Le deck visuel de la finale (Hack VS 2026), construit à partir de `06_SLIDE_CONTENT.md` et `02_STRUCTURE.md` dans le
-design system figé. La direction artistique et les intentions slide par slide sont dans `DIRECTION.md`. Les rendus
+design system figé. Foire 2026 (03.10) : slides **11S** (Suivi, capture réelle) et **18b** (les six prochains mois),
+sept repères de démo (passe découverte, Suivi), points de contrôle re-minutés ; `data/gel.json` inchangé. La direction artistique et les intentions slide par slide sont dans `DIRECTION.md`. Les rendus
 de validation sont dans `review/final/nuit/` et `review/final/jour/`, un PNG par slide, numéroté.
 
 ## Lancer

@@ -98,6 +98,16 @@ body { font-family: "Plus Jakarta Sans", sans-serif; color: var(--ink); -webkit-
 
 /* ── Captures réelles + emplacement si le fichier manque ─────────────────── */
 .capture { display: block; }
+/* 18b · Les six prochains mois */
+.entonnoir { position: absolute; left: var(--marge); right: var(--marge); top: 200px; display: flex; align-items: stretch; gap: 28px; }
+.entonnoir i { align-self: center; }
+.entonnoir div { flex: 1; background: #fff; border-radius: 18px; box-shadow: var(--ombre-fiche); padding: 40px 36px; border: 3px solid transparent; }
+.entonnoir div.rouge-bord { border-color: var(--brand); }
+.entonnoir b { display: block; font-size: 60px; font-weight: 800; letter-spacing: -0.03em; }
+.entonnoir span { display: block; font-size: 32px; font-weight: 500; color: var(--secondary); margin-top: 12px; }
+.entonnoir i { font-style: normal; font-size: 64px; color: var(--secondary); }
+.ajouts { position: absolute; left: var(--marge); right: var(--marge); top: 620px; display: flex; flex-wrap: wrap; gap: 16px; }
+.ajouts span { font-size: 36px; font-weight: 700; padding: 16px 28px; border-radius: 999px; background: var(--hairline-2); color: var(--ink); }
 .emplacement { position: absolute; display: none; border: 3px dashed var(--brand-dash); background: var(--brand-tint-2); border-radius: 18px;
   align-items: center; justify-content: center; flex-direction: column; gap: 18px; text-align: center; }
 .emplacement b { font-family: "JetBrains Mono", monospace; font-weight: 500; font-size: 40px; color: var(--brand); }
@@ -287,12 +297,12 @@ body.jour #noir { background: var(--bg); }
 </section>
 
 <!-- 11 · Démo, fond discret -->
-<section class="slide gris" data-id="11" data-acte="5" data-pas="6" data-demo="1">
+<section class="slide gris" data-id="11" data-acte="5" data-pas="7" data-demo="1">
   <svg class="abs" style="left:var(--marge);top:120px" width="72" height="72" viewBox="0 0 24 24"><rect x=".5" y=".5" width="23" height="23" rx="7" fill="#CD2128"/>
     <circle cx="12" cy="12" r="7" fill="none" stroke="#FFF" stroke-width="2.7" stroke-linecap="round" stroke-dasharray="33 11" transform="rotate(-90 12 12)"/><circle cx="7.05" cy="7.05" r="1.8" fill="#FFF"/></svg>
   <div class="abs etiq" style="left:264px;top:142px">Essai · le vrai produit, en direct</div>
   <ol class="reperes">
-    <li>La demande</li><li>Ses mots</li><li>Oui</li><li>Le reçu</li><li>Le retrait</li><li>Le juré</li>
+    <li>La demande</li><li>Ses mots</li><li>Oui</li><li>Le reçu</li><li>Le retrait</li><li>Le passe découverte</li><li>Suivi</li>
   </ol>
 </section>
 
@@ -302,6 +312,15 @@ body.jour #noir { background: var(--bg); }
     <circle class="arc" cx="12" cy="12" r="7" fill="none" stroke="#FFF" stroke-width="2.7" stroke-linecap="round" transform="rotate(-90 12 12)"/>
     <g class="point"><circle cx="7.05" cy="7.05" r="1.8" fill="#FFF"/></g></svg>
   <div class="affiche statut">Le Club peut<br>le faire.</div>
+</section>
+
+<!-- 11S · Suivi (écran réel, Foire 2026) -->
+<section class="slide gris" data-id="11S" data-acte="6">
+  <div class="abs etiq" style="left:var(--marge);top:72px">Suivi · écran réel · monde de démonstration</div>
+  <div class="abs" style="left:var(--marge);right:var(--marge);top:136px;height:870px;overflow:hidden;border-radius:18px;box-shadow:var(--ombre-fiche);background:#fff">
+    <img class="capture" src="assets/captures/suivi-1.png" alt="Écran Suivi réel" style="width:100%;height:auto">
+    <div class="emplacement" style="inset:0"><b>suivi-1.png</b><span>Suivi — capture réelle (scripts/capturer_presentation.py)</span></div>
+  </div>
 </section>
 
 <!-- 12 · Carton RÉSULTAT -->
@@ -359,6 +378,19 @@ body.jour #noir { background: var(--bg); }
     <img class="capture" src="assets/captures/tel-2-recu.png" alt="Reçu réel sur le téléphone" data-recadrage="472px 32px 584px 32px">
     <div class="emplacement"><b>tel-2-recu.png</b><span>le reçu réel · capture de samedi</span></div>
   </div>
+</section>
+
+<!-- 18b · Les six prochains mois (Foire 2026) — prévu ensuite, pas fait -->
+<section class="slide" data-id="18b" data-acte="9" data-pas="2">
+  <div class="abs etiq" style="left:var(--marge);top:96px">Les six prochains mois · prévu ensuite</div>
+  <div class="entonnoir">
+    <div><b>Foire</b><span>un QR sur le stand</span></div><i>→</i>
+    <div><b>Passe découverte</b><span>90 jours, sans être membre</span></div><i>→</i>
+    <div class="rouge-bord"><b>Membre</b><span>y compris à 200 km</span></div>
+  </div>
+  <div class="fr" data-f="1"><div class="abs etiq" style="left:var(--marge);top:560px">Déjà dans le prototype, testé</div>
+    <div class="ajouts"><span>Suivi</span><span>Clôture de reçu</span><span>Anonymat sous 3</span><span>Passe découverte</span><span>Le Club cherche</span></div></div>
+  <div class="fr" data-f="2"><div class="abs corps" style="left:var(--marge);top:820px;color:var(--ink)">Pilote avec les membres : mois 1 à 3 · Interreg France-Suisse : dépôt avant le 12.03.2027</div></div>
 </section>
 
 <!-- 19 · Phrase finale (le dernier membre se dit, il ne s'écrit pas) -->
@@ -506,7 +538,7 @@ function precedent() {
 }
 
 /* ── Plan B de la démo : capture de secours de l'étape (touche B) ──────── */
-const SECOURS = ["tel-1-demande.png", "tel-1b-proposition.png", "etabli-2-peut.png", "tel-2-recu.png", "etabli-3-retrait.png", "tel-3-jure.png"];
+const SECOURS = ["tel-1-demande.png", "tel-1b-proposition.png", "etabli-2-peut.png", "tel-2-recu.png", "etabli-3-retrait.png", "tel-4-decouverte.png", "suivi-1.png"];
 function secours() {
   const s = S[i]; if (!s.dataset.demo) return;
   const box = document.getElementById("secours"); if (box.classList.contains("on")) return box.classList.remove("on");
@@ -520,10 +552,10 @@ const CP = [
   { s: "6", p: 0, lab: "« Il s'appelle Jean-Marc. »", cible: 115, coupe: "Couper la dernière phrase de l'acte 2 (« on ne manque pas de rencontres »)." },
   { s: "8", p: 0, lab: "Fin du film", cible: 321, coupe: "Respiration en une phrase de cinq mots." },
   { s: "10", p: 0, lab: "Établi plein écran", cible: 345, coupe: "Aucune coupe : rattraper sur l'acte 6." },
-  { s: "11", p: 4, lab: "Reçu sur le téléphone", cible: 520, coupe: "Couper l'acte 6 au retrait seul (pas de juré)." },
-  { s: "14", p: 0, lab: "Slide chiffres", cible: 630, coupe: "Ne lire que trois chiffres sur cinq." },
-  { s: "15", p: 0, lab: "Slide IA", cible: 685, coupe: "Garder les trois lignes, couper l'exemple de l'erreur." },
-  { s: "18", p: 0, lab: "Carte + reçu", cible: 760, coupe: "La phrase finale, puis noir — rien d'autre." },
+  { s: "11", p: 4, lab: "Reçu sur le téléphone", cible: 520, coupe: "COUPE PRÉVUE : sauter le passe découverte (retrait → Suivi)." },
+  { s: "14", p: 0, lab: "Slide chiffres", cible: 700, coupe: "Ne lire que trois chiffres sur cinq." },
+  { s: "15", p: 0, lab: "Slide IA", cible: 755, coupe: "Garder les trois lignes, couper l'exemple de l'erreur." },
+  { s: "18", p: 0, lab: "Carte + reçu", cible: 830, coupe: "La phrase finale, puis noir — rien d'autre." },
 ];
 let repetOn = false, t0 = null, atteints = {};
 const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, "0")}`;

@@ -165,23 +165,28 @@ T.append(temps("Acte 5", "Le reçu", "6:25 → 6:40",
 T.append(temps("Acte 6", "Le retrait", "6:40 → 7:00",
     dire("V1 — Maintenant, la question que tout le monde se pose : et si Pauline change d'avis ?",
          "[V2 appuie sur « Retirer mon consentement »]",
-         "V2 — Je retire. Et le téléphone me dit : « Personne ne saura que c'est vous. »",
-         "V1 — L'Établi dit : « transport : ce composant n'est plus disponible ». Le rôle. Jamais la personne. Pas de « c'est Pauline qui nous a lâchés » à l'apéro. Et la demande repart, vers un autre membre — jamais vers elle."),
+         "V2 — Je retire. Et le téléphone me dit : « Personne ne sera prévenu que c'est vous. »",
+         "V1 — L'Établi dit : « un composant n'est plus disponible ». Même pas « transport » : ici, une seule personne a un minibus, le dire, ce serait la montrer du doigt. Pas de « c'est Pauline qui nous a lâchés » à l'apéro. Le système ne nomme jamais, il ne demande jamais pourquoi. Dans un petit club, on peut parfois deviner — on ne vous promet pas l'impossible. Et la demande repart, vers un autre membre — jamais vers elle."),
     "<div class='rangee'>" + reel("tel-2b-retrait.png", "Téléphone : « consentement retiré » + le message en bas.", "tel petit")
     + reel("etabli-3-retrait-carte.png", "<b>/etabli</b> (zoom sur la carte) après le retrait : pastille rouge « un consentement ne vaut plus », et en bas de la carte la phrase sans nom.") + "</div>",
-    montrer("Téléphone : le bandeau noir du bas « Consentement retiré. Personne ne saura que c'est vous. »",
-            "Établi : la ligne en bas de la carte « transport : ce composant n'est plus disponible » — aucun prénom nulle part.",
+    montrer("Téléphone : le bandeau noir du bas « Consentement retiré. Personne ne sera prévenu que c'est vous. »",
+            "Établi : la ligne en bas de la carte « un composant n'est plus disponible » — ni prénom, ni rôle (porté par moins de 3 membres).",
             "Établi : « Recomposition proposée… une demande est adressée aux membres qui peuvent la fournir » = la demande repart."),
     deux=True))
-T.append(temps("Acte 6", "Le passe juré (seulement si validé samedi)", "7:00 → 7:10",
-    dire("[si le temps le permet, et si samedi a validé le QR sur un vrai téléphone :]",
-         "Et cet autre membre, ce soir, c'est l'un de vous. Un passe de quinze minutes, sans compte, utilisable une seule fois. Scannez : vous jouez Markus — personnage fictif, rassurez-vous — et la demande est sur votre téléphone.",
-         "Voilà pour l'essai. Maintenant, ce qui est prouvé.",
-         "!« sans compte » : c'est le SEUL endroit du pitch où on a le droit de le dire."),
-    "<div class='rangee'>" + reel("tel-3-jure.png", "Le téléphone du juré : bandeau « Jury : vous jouez Markus Heinzmann, personnage FICTIF » et la même demande.", "tel petit")
-    + reel("etabli-4-qr-jure-zoom.png", "<b>/etabli</b>, bouton « QR juré » (en haut à droite) : ce cadre apparaît en bas de l'Établi. L'heure « jusqu'à … » sera celle du soir même. "
-           "Le QR de cette capture vient d'un serveur de test éteint : il ne mène nulle part.") + "</div>",
+T.append(temps("Acte 6", "Le passe découverte (Foire 2026, seulement si validé au rituel)", "après le retrait, 0:50",
+    dire("[onglet /suivi → « Le Club cherche » → « Inviter un contact » sur la demande du minibus ; un juré scanne]",
+         "Ce minibus, le Club ne l'a pas trouvé chez lui. Alors il cherche dehors. Ce QR, c'est un passe découverte : trois mois pour essayer le Club sans en être membre. Scannez : vous êtes exposant invité d'Annecy. Votre entreprise, votre métier, votre région — et un reçu, comme Pauline. « Je peux aider. »",
+         "Le manque est comblé. À confirmer par le Club — par une personne, pas par une machine. Et votre nom d'entreprise n'est nulle part sur cet écran.",
+         "!COUPE PRÉVUE : en retard au reçu (8:40) ou étape non validée → on saute directement à Suivi."),
+    "<div class='rangee'>" + reel("tel-4-decouverte.png", "Le téléphone de l'invité : le reçu du passe découverte (90 jours, révocable), la demande, « Je peux aider ».", "tel petit")
+    + reel("suivi-2-propose.png", "<b>/suivi</b>, « Le Club cherche » : « un invité propose son aide — à confirmer par le Club ». Aucun nom d'entreprise.") + "</div>",
     deux=True))
+T.append(temps("Acte 6", "Suivi (toujours joué)", "20 s",
+    dire("[onglet « Suivi »]",
+         "Vous nous avez dit que le Club ne sait jamais où en sont les partenariats. Voilà l'écran. Des demandes, des oui, des étapes, des résultats. Jamais un nom : en dessous de trois personnes, l'écran dit « moins de trois ». Et ce sont les chiffres du monde de démonstration — c'est écrit en haut.",
+         "Voilà pour l'essai. Maintenant, ce qui est prouvé."),
+    reel("suivi-1.png", "<b>/suivi</b> : demandes envoyées, réponses oui « < 3 », invités ayant contribué « < 3 », bandeau « monde de démonstration ». C'est aussi la slide 11S."),
+    deux=False))
 # ---------- ACTE 7
 T.append(temps("Acte 7", "Les preuves", "7:10 → 7:40",
     dire("[carton : « Ce qui est prouvé. Rien de plus. » — puis la slide des trois preuves]",

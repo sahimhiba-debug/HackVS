@@ -96,6 +96,39 @@ une porte pour vous.
 On le relance et le monde revient tel quel : les sessions, le passe juré, l'étape de la démo — on l'a fait avec un
 `kill -9`, c'est un test. Le journal est la source de vérité ; on rejoue, on n'improvise pas.
 
+## Foire 2026 — les questions attendues (ajoutées le 03.10)
+
+**Anonymat à cinquante membres : on devine forcément qui s'est retiré ?**
+Parfois, oui — et on ne vous promettra pas le contraire. Ce que le système garantit, testé : il ne nomme jamais, il ne
+demande jamais pourquoi, et quand un rôle est porté par moins de trois membres, il ne dit même plus le rôle (« un
+composant n'est plus disponible »). Le téléphone dit « Personne ne sera prévenu que c'est vous » — pas « personne ne
+saura ». Dans un petit club, on peut parfois deviner ; on ne l'aide pas.
+
+**Les données des membres français ?**
+Le RGPD s'applique à eux en plus de la nLPD. L'hébergement en Suisse est licite (décision d'adéquation de l'UE, à
+confirmer dans l'analyse d'impact), le consentement est prouvé par le reçu, et le retrait purge l'identité : le journal
+est séparé des identités. La question d'un représentant dans l'UE est ouverte. C'est une analyse générale, pas un avis
+juridique — détail dans `docs/roadmap/FINANCEMENT_JURIDIQUE.md`.
+
+**Comment suivez-vous les partenariats ?**
+Avec l'écran que vous avez vu : demandes, réponses, délai avant le premier oui, partenariats par étape — demande,
+accord, essai, résultat —, résultats déclarés par le Club quand il clôture un reçu. Des agrégats seulement ; sous
+trois personnes, l'écran dit « moins de trois ». Une ligne nominative n'apparaît que si le membre ET le Club l'ont
+permis. On ne suit jamais les vues, ni les inscrits inactifs, ni des « matchs » d'IA. Les chiffres montrés ce soir
+sont ceux du monde de démonstration.
+
+**Pourquoi un juré peut-il répondre sans compte ?**
+Ce n'est pas un compte, c'est un passe découverte : signé, utilisable une seule fois, valable quatre-vingt-dix jours,
+révocable par le Club, limité à trois demandes. L'invité déclare son entreprise et reçoit un reçu, comme un membre.
+Mais sa réponse est une proposition : elle ne remplit jamais une capacité à elle seule — le Club confirme, une
+personne décide. Et « Rejoindre le Club » enregistre une intention, rien de plus ; la suite (un membre de la
+commission qui écrit) est simulée en démonstration.
+
+**Et les membres éloignés — Haut-Valais, Vaud, Haute-Savoie ?**
+C'est la phase 2 de la feuille de route : interface en allemand, statut de membre à distance, réponse depuis l'e-mail,
+adhésion croisée avec un partenaire français. Aujourd'hui, ce qui existe : les écrans d'invité en français et en
+allemand, et la zone déclarée par l'invité. Prévu ensuite, pas fait.
+
 ## Économie
 
 **Qui paie ? Ça coûte combien ?**
@@ -104,12 +137,15 @@ une IA facultative facturée à l'appel. Le modèle économique — abonnement d
 hypothèse à valider avec le Club, pas une promesse.
 
 **Combien de membres, combien d'utilisateurs ?**
-Zéro membre réel : tout ce que vous avez vu est un monde fictif, et chaque écran le dit. On n'a pas voulu simuler une
+Le Club compte une cinquantaine de membres. Utilisateurs réels du prototype : zéro — tout ce que vous avez vu est un
+monde fictif (150 profils), et chaque écran le dit. On n'a pas voulu simuler une
 adoption. La première chose à faire après ce week-end, c'est cinq vrais membres et cinq vraies demandes.
 
 ## Réponses à ne pas donner
 
-- Ne jamais dire « sans compte » pour un membre (seulement pour le passe juré : « quinze minutes, sans compte »).
+- Ne jamais dire « sans compte » pour un membre (seulement pour le passe juré : « quinze minutes, sans compte » ; le
+  passe découverte : « sans être membre »).
+- Ne jamais dire « conversion » : « intention d'adhésion ».
 - Ne jamais dire « dix secondes ».
 - Ne jamais citer un chiffre absent de la slide 14 ou de la slide 16.
 - Ne jamais dire « propulsé par Apertus » : « on a sondé et mesuré Apertus ».

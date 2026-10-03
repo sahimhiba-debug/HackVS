@@ -34,10 +34,10 @@ Et après ?
 
 [carton : « Ce qui se passe entre deux événements. »]
 
-Après, en général… rien. Pas par mauvaise volonté. La Foire, c'est dix jours, des centaines de rencontres. Et le
+Après, en général… rien. Pas par mauvaise volonté. La Foire, c'est dix jours de rencontres. Et le
 lendemain, chacun retourne à son entreprise, à ses mails, à ses clients.
 
-Le Club des Affaires ne manque pas de rencontres. Il en crée plus que n'importe qui dans ce canton. Ce qui manque,
+Le Club des Affaires, c'est une cinquantaine de membres. Ils ne manquent pas de rencontres. Ce qui manque,
 c'est l'après. Le moment où une rencontre devient quelque chose qu'on fait ensemble.
 
 Et quand ça arrive quand même, vous savez pourquoi ? Parce que quelqu'un a dit oui. Pas « on s'appelle ». Oui.
@@ -74,7 +74,7 @@ une salle, quelqu'un qui parle allemand, un minibus. Deux sont là, déclarées 
 Il manque le minibus.
 
 Le Club ne cherche pas « quelqu'un ». Il demande une chose précise — un minibus de douze places — à ceux qui
-pourraient l'avoir. Pas un mail à deux cents personnes. Une question, aux bonnes personnes.
+pourraient l'avoir. Pas un mail à tout le Club. Une question, aux bonnes personnes.
 
 [Prénom], le téléphone est à toi.
 
@@ -123,27 +123,41 @@ au pressing, mais pour un minibus.
 
 ---
 
-## 6. Le retrait — 8:50
+## 6. Le retrait, le passe découverte, Suivi — 8:50
 
 **V1 —** Maintenant, la question que tout le monde se pose : et si Pauline change d'avis ?
 
 [V2 appuie sur « Retirer mon consentement »]
 
-**V2 —** Je retire. Et le téléphone me dit : « Personne ne saura que c'est vous. »
+**V2 —** Je retire. Et le téléphone me dit : « Personne ne sera prévenu que c'est vous. »
 
-**V1 —** L'Établi dit : « transport : ce composant n'est plus disponible ». Le rôle. Jamais la personne. Pas de
-« c'est Pauline qui nous a lâchés » à l'apéro. Et la demande repart, vers un autre membre — jamais vers elle.
+**V1 —** L'Établi dit : « un composant n'est plus disponible ». Même pas « transport » : ici, une seule personne a un
+minibus, le dire, ce serait la montrer du doigt. Pas de « c'est Pauline qui nous a lâchés » à l'apéro. Le système ne
+nomme jamais, il ne demande jamais pourquoi. Dans un petit club, on peut parfois deviner — on ne vous promet pas
+l'impossible. Et la demande repart, vers un autre membre — jamais vers elle.
 
-[si le temps le permet, et si samedi a validé le QR sur un vrai téléphone :]
+[si le rituel de 08:00 a validé le passe découverte sur un vrai téléphone ; sinon, directement Suivi :]
 
-Et cet autre membre, ce soir, c'est l'un de vous. Un passe de quinze minutes, sans compte, utilisable une seule
-fois. Scannez : vous jouez Markus — personnage fictif, rassurez-vous — et la demande est sur votre téléphone.
+Ce minibus, le Club ne l'a pas trouvé chez lui. Alors il cherche dehors. Ce QR, c'est un passe découverte : trois
+mois pour essayer le Club sans en être membre. Scannez : vous êtes exposant invité d'Annecy. Votre entreprise, votre
+métier, votre région — et un reçu, comme Pauline. « Je peux aider. »
+
+[« Le Club cherche » : « un invité propose son aide — à confirmer par le Club »]
+
+Le manque est comblé. À confirmer par le Club — par une personne, pas par une machine. Et votre nom d'entreprise
+n'est nulle part sur cet écran.
+
+[onglet Suivi — toujours]
+
+Vous nous avez dit que le Club ne sait jamais où en sont les partenariats. Voilà l'écran. Des demandes, des oui, des
+étapes, des résultats. Jamais un nom : en dessous de trois personnes, l'écran dit « moins de trois ». Et ce sont les
+chiffres du monde de démonstration — c'est écrit en haut.
 
 Voilà pour l'essai. Maintenant, ce qui est prouvé.
 
 ---
 
-## 7. Les preuves — 9:50
+## 7. Les preuves — 11:00
 
 [carton : « Ce qui est prouvé. Rien de plus. » — puis la slide des chiffres]
 
@@ -168,7 +182,7 @@ Rien de tout ça n'est un argument de vente. C'est ce qui vous permet de croire 
 
 ---
 
-## 8. L'IA — 11:20
+## 8. L'IA — 12:30
 
 [slide : « L'IA propose. Les règles vérifient. Le membre décide. »]
 
@@ -191,7 +205,7 @@ comme juge. Prévu ensuite. Pas aujourd'hui.
 
 ---
 
-## 9. La carte et le reçu — 12:30
+## 9. La carte et le reçu — 13:40
 
 [carton : « Et après, maintenant, il se passe quelque chose. » — puis la carte, et le reçu réel à côté]
 
@@ -199,6 +213,8 @@ Vous vous souvenez de cette carte.
 
 La voilà. Et à côté, ce que Pauline a dans la poche en sortant d'ici : un reçu. Daté. Référencé. Qu'elle peut
 retirer. Même geste de la main. Mais cette fois, il engage.
+
+Un club qui prouve sa valeur toute l'année recrute, y compris à 200 kilomètres.
 
 Et après ? … Après, maintenant, il se passe quelque chose.
 
