@@ -41,6 +41,12 @@
       <button class="btn discret petit" role="tab" data-vue="suivi" aria-selected="true">Suivi</button>
       <button class="btn discret petit" role="tab" data-vue="cherche" aria-selected="false">Le Club cherche</button>
       <button class="btn discret petit" role="tab" data-vue="boite" aria-selected="false">Boîte de sortie</button>
+      <button class="btn discret petit" role="tab" data-vue="assembler" aria-selected="false">Ce que votre Club pourrait assembler</button>
+    </div>
+    <div id="vue-assembler" hidden>
+      <h1 class="titre">Ce que votre Club pourrait assembler</h1>
+      <p class="sous" id="assembler-source"></p>
+      <div id="assembler"></div>
     </div>
     <div id="vue-cherche" hidden>
       <h1 class="titre">Le Club cherche</h1>
@@ -194,7 +200,27 @@
       $("#vue-boite").hidden = b.dataset.vue !== "boite";
       if (b.dataset.vue === "cherche") lireCherche();
       if (b.dataset.vue === "boite") lireBoite();
+      $("#vue-assembler").hidden = b.dataset.vue !== "assembler";
+      if (b.dataset.vue === "assembler") lireAssembler();
     });
+    async function lireAssembler() {
+      try {
+        const r = await consoleFetch("/api/pulse/console/club/assembler", {});
+        if (!r.ok) return;
+        const { assembler: a, cherche: q, chiffres: n } = await r.json();
+        if (!a.disponible) { $("#assembler").replaceChildren(h("p", { class: "note" }, a.note)); return; }
+        $("#assembler-source").textContent = `${n.entreprises} entreprises, ${n.representants} représentants — ${a.source}. Agrégats seulement, aucun nom.`;
+        $("#assembler").replaceChildren(
+          h("p", { class: "chiffre", "data-role": "assemblables" }, `${a.assemblables} sur ${a.total}`),
+          h("table", {}, h("tbody", {}, a.capacites.map((x) => h("tr", { "data-capacite": x.id, "data-assemblable": String(x.assemblable) },
+            h("td", {}, x.titre),
+            h("td", {}, x.assemblable ? "assemblable" : `manque : ${x.manque.join(", ")}`),
+            h("td", { class: "note" }, x.pieces.map((p) => `${p.piece} ${p.entreprises}`).join(" · ")))))),
+          h("p", { class: "note", "data-role": "cherche-liste" },
+            `D'après la liste — absents : ${q.absents.join(", ") || "aucun"} ; rares (${q.rares_affiche}) : ${q.rares.join(", ") || "aucun"}.`),
+          h("p", { class: "sous", "data-role": "phrase" }, a.phrase));
+      } catch (e) { /* écran figé */ }
+    }
     async function lirePasses() {
       try {
         const r = await consoleFetch("/api/pulse/console/decouverte", {});

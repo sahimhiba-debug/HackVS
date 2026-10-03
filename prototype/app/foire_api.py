@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from .urls import base_publique
-from intelligence import carte, club_cherche, distance, metiers, partenariats, suivi
+from intelligence import assembler, carte, club_cherche, distance, metiers, partenariats, suivi
 
 
 class Cloture(BaseModel):
@@ -139,6 +139,17 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     @r.get("/console/club-cherche", dependencies=[Depends(console)])
     def le_club_cherche() -> dict:
         return au_monde(foire(club_cherche.calculer))
+
+    @r.get("/console/club/assembler", dependencies=[Depends(console)])
+    def club_assembler() -> dict:
+        """Liste du Club : « Ce que votre Club pourrait assembler », « le Club cherche » d'après la liste, chiffres."""
+        def f(c):
+            liste = club_cherche.entreprises_par_metier()
+            pm = liste["par_metier"] if liste else None
+            k = c.reglages.k_anonymat
+            return {"assembler": assembler.calculer(pm, k), "cherche": assembler.absents_et_rares(pm, k),
+                    "chiffres": assembler.chiffres(liste)}
+        return au_monde(foire(f))
 
     @r.get("/console/decouverte", dependencies=[Depends(console)])
     def passes_decouverte() -> list[dict]:

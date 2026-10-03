@@ -163,3 +163,25 @@ def test_la_carte_devient_le_profil_formulaire_sans_ia(url_foire):
         tel.locator("[data-role=carte-recu]:has-text('pas conservée')").wait_for()
         b.close()
     assert not erreurs, erreurs
+
+
+def test_ce_que_votre_club_pourrait_assembler(url_foire):
+    """Liste du Club : 8 sur 9, la délégation germanophone manque l'interprète ; aucun nom ; « < 3 » pour les rares."""
+    from playwright.sync_api import sync_playwright
+    erreurs: list[str] = []
+    with sync_playwright() as p:
+        b = _chromium(p)
+        console = b.new_context(viewport={"width": 1366, "height": 860}).new_page()
+        console.set_default_timeout(30_000)
+        console.on("pageerror", lambda e: erreurs.append(str(e)))
+        console.goto(url_foire + "/suivi")
+        console.click("#vues [data-vue=assembler]")
+        console.locator("[data-role=assemblables]:has-text('8 sur 9')").wait_for()
+        assert console.locator("[data-capacite=delegation][data-assemblable=false]").inner_text().count("manque : interprète") == 1
+        assert "classification à confirmer" in console.inner_text("#assembler-source")
+        assert "< 3 entreprises" in console.inner_text("[data-role=cherche-liste]")
+        assert "Club Pulse dit ce qu'il peut faire cette semaine" in console.inner_text("[data-role=phrase]")
+        texte = console.inner_text("body")
+        assert "null" not in texte and "undefined" not in texte
+        b.close()
+    assert erreurs == []
