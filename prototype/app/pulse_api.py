@@ -33,7 +33,7 @@ from .foire_api import ajouter_routes as ajouter_routes_foire
 from .salle_api import ajouter_routes as ajouter_routes_salle
 from .visite_api import ajouter_routes as ajouter_routes_visite
 from .visite_api import visite
-from .protections import LOCALES
+from .protections import est_local
 from .taxonomy import Taxonomie
 
 T = TypeVar("T")
@@ -262,7 +262,7 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
                 raise HTTPException(403, "Console du Club : jeton invalide.")
         elif visite():
             pass                                      # monde « visite » : bac à sable fictif, conteneur à part (docs/DEPLOIEMENT.md)
-        elif (request.client.host if request.client else "") not in LOCALES:
+        elif not est_local(request.client.host if request.client else "", request.headers.raw):
             # sans jeton configuré, la console (qui peut incarner chaque membre) ne répond qu'à CETTE machine :
             # un déploiement accessible depuis le réseau doit définir HACKVS_CONSOLE_JETON
             raise HTTPException(403, "Console du Club : hors de cette machine, définissez HACKVS_CONSOLE_JETON.")

@@ -24,10 +24,20 @@ CORPS_MAX = 64 * 1024
 # « la carte devient le profil » : la photo, RÉDUITE sur le téléphone, peut dépasser 64 Kio — une seule route, plafond 1 Mio
 CORPS_MAX_ROUTES = {"/api/pulse/moi/carte/proposer": 1024 * 1024}
 LOCALES = {"127.0.0.1", "::1", "localhost", "testclient"}      # « testclient » : client de test en processus
+# En-têtes posés par un relais (Tailscale Funnel, tunnel Cloudflare, Caddy…). Derrière un tunnel, tout arrive de
+# 127.0.0.1 : une requête qui porte l'un d'eux vient d'AILLEURS et n'est jamais « locale » (docs/DEMO_TUNNEL.md).
+RELAIS = (b"x-forwarded-for", b"forwarded", b"cf-connecting-ip", b"tailscale-funnel-request", b"x-real-ip", b"cf-ray")
+
+
+def est_local(client_hote: str, entetes: "list[tuple[bytes, bytes]] | dict") -> bool:
+    """Vraiment cette machine : adresse locale ET aucun en-tête de relais."""
+    noms = {k.lower() for k in (entetes.keys() if isinstance(entetes, dict) else (k for k, _ in entetes))}
+    return client_hote in LOCALES and not noms & set(RELAIS)
 # ce que le serveur de démonstration sert : Club Pulse, et rien d'autre (l'ancien prototype est derrière un drapeau)
 CLUB_PULSE_EXACTS = {"/app", "/app/", "/app/manifest.webmanifest", "/app/sw.js", "/console", "/projection", "/demo/regie", "/etabli",
                      "/suivi", "/decouverte", "/reponse", "/salle", "/salle/ecran", "/salle/regie",
-                     "/favicon.ico", "/sante", "/feuille-de-route"}   # Foire 2026 : Suivi, passe découverte, réponse e-mail
+                     "/favicon.ico", "/sante", "/feuille-de-route",
+                     "/qr/salle.svg", "/qr/salle.txt"}   # Foire 2026 : Suivi, passe découverte, réponse e-mail
 CLUB_PULSE_PREFIXES = ("/api/pulse/", "/static/pulse/")
 TROP_GROS = '{"detail": "Corps de requête trop volumineux (64 Kio au plus)."}'.encode()
 _SCRIPT = re.compile(r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>", re.S | re.I)
@@ -133,7 +143,7 @@ class Perimetre:
             permis = hmac.compare_digest(fourni, jeton)
         else:
             client = scope.get("client") or ("", 0)
-            permis = client[0] in LOCALES
+            permis = est_local(client[0], scope.get("headers") or [])
         if not permis:
             await _refuser(send, 403, b'{"detail": "Ancien prototype : accessible seulement depuis cette machine ou avec le jeton de console."}')
             return
