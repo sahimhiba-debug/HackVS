@@ -11,6 +11,7 @@ Analyse du besoin : règles locales par défaut ; Claude si HACKVS_LLM=claude + 
 from __future__ import annotations
 
 import asyncio
+import hmac
 import json
 import os
 from datetime import date, datetime, timezone
@@ -809,8 +810,14 @@ _SALLE_FERMEE = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
 
 
 def _lien_salle(request: Request) -> Optional[str]:
+    """AUDIT D5 : le QR porte le jeton de la salle ; il ne sort QUE vers cette machine (le deck, l'écran géant) ou avec
+    le jeton de console — jamais vers une requête relayée par le tunnel (sinon n'importe qui occupe les 80 places)."""
+    from .protections import est_local
+    fourni = request.headers.get("x-pulse-console", "")
+    autorise = est_local(request.client.host if request.client else "", request.headers.raw) or (
+        bool(_CONSOLE_JETON) and hmac.compare_digest(fourni, _CONSOLE_JETON or ""))
     lien = getattr(globals().get("_PULSE"), "lien_salle", None)
-    return lien(request) if lien else None
+    return lien(request) if lien and autorise else None
 
 
 @app.get("/qr/salle.svg")

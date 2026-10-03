@@ -37,7 +37,7 @@ documentation Tailscale Funnel. À relire le jour J : ces services changent.
      lanceur **exige donc `HACKVS_CONSOLE_JETON`** : la console ne dépend jamais de l'adresse d'origine.
 4. **Le QR de la salle est servi en direct**, à `<PUBLIC_BASE_URL>/qr/salle.svg`, sans cache.
    - Il suit l'adresse du tunnel ; il n'est jamais figé dans le deck. Salle fermée : une image « salle fermée ».
-   - `<PUBLIC_BASE_URL>/qr/salle.txt` donne l'adresse encodée, pour la vérifier.
+   - `/qr/salle.txt` donne l'adresse encodée, pour la vérifier — **sur le Mac seulement** (ou avec le jeton de console) : à travers le tunnel, le QR et son jeton ne sortent jamais (audit D5).
 
 ## Avant le pitch (la veille, puis à H-1)
 
@@ -83,7 +83,7 @@ n'a rien à régénérer.
 ```sh
 curl -fsS "$PUBLIC_BASE_URL/sante"
 curl -fsS -H "X-Pulse-Console: $HACKVS_CONSOLE_JETON" "$PUBLIC_BASE_URL/api/pulse/console/salle/etat"
-curl -fsS "$PUBLIC_BASE_URL/qr/salle.txt"                      # « salle fermée » tant que la régie n'a pas ouvert
+curl -fsS "http://127.0.0.1:8000/qr/salle.txt"               # sur le Mac seulement : à travers le tunnel, le jeton ne sort jamais
 cd prototype && python scripts/charge_salle.py --base-url "$PUBLIC_BASE_URL" --jeton "$HACKVS_CONSOLE_JETON" --n 80
 ```
 

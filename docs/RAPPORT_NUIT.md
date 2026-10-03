@@ -177,7 +177,7 @@ export HACKVS_CONSOLE_JETON="<jeton>" PUBLIC_BASE_URL="https://<mac>.<tailnet>.t
 ./demo-tunnel.sh                       # terminal 1 : serveur sur 127.0.0.1:8000, caffeinate
 tailscale funnel 8000                  # terminal 2 : le tunnel
 python3 docs/presentation/deck/lancer.py   # terminal 3 : deck → http://127.0.0.1:8765/v2.html (v1 : index.html)
-curl -fsS "$PUBLIC_BASE_URL/sante" && curl -fsS "$PUBLIC_BASE_URL/qr/salle.txt"
+curl -fsS "$PUBLIC_BASE_URL/sante" && curl -fsS http://127.0.0.1:8000/qr/salle.txt
 cd prototype && python scripts/charge_salle.py --base-url "$PUBLIC_BASE_URL" --jeton "$HACKVS_CONSOLE_JETON" --n 80
 ```
 

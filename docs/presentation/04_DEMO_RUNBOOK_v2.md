@@ -17,7 +17,7 @@ Le runbook v1 ([04_DEMO_RUNBOOK.md](04_DEMO_RUNBOOK.md)) reste le plan B complet
 
 1. Alimentation branchée ; partage 4G prêt ; `./demo-tunnel.sh` lancé (PUBLIC_BASE_URL + HACKVS_CONSOLE_JETON).
 2. Tunnel lancé (Funnel ; sinon Cloudflare) ; `curl "$PUBLIC_BASE_URL/sante"` répond.
-3. Régie → **Purger**, puis **Ouvrir la salle**. `curl "$PUBLIC_BASE_URL/qr/salle.txt"` donne l'adresse attendue.
+3. Régie → **Purger**, puis **Ouvrir la salle**. `curl http://127.0.0.1:8000/qr/salle.txt` (sur le Mac) donne l'adresse attendue.
 4. Deck v2 → slide « Sortez vos téléphones » : le QR s'affiche (sinon l'emplacement dit « QR servi en direct »).
 5. Scanner le QR avec 2 téléphones de l'équipe, à travers le tunnel (4G, pas le Wi-Fi du Mac).
 6. Constellation : `/salle/ecran` affiche les points ; mode jour ou nuit selon la salle (touche J).
