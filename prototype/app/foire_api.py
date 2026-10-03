@@ -12,7 +12,8 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
 from .urls import base_publique
-from intelligence import annonces, assembler, associe, carte, club_cherche, distance, metiers, partenariats, recu_27560, suivi, tableau_bord
+from intelligence import (annonces, assembler, associe, carte, club_cherche, distance, metiers, partenariats, piliers, recu_27560, suivi,
+                          tableau_bord)
 
 
 class Cloture(BaseModel):
@@ -67,6 +68,10 @@ class Lien(BaseModel):
 
 class Annonce(BaseModel):
     texte: str = Field(min_length=1, max_length=400)
+
+
+class Pilier(BaseModel):
+    actif: bool
 
 
 class Associe(BaseModel):
@@ -181,6 +186,18 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     @r.post("/moi/annonces/{chiffre}/accepter/{n}")
     def accepter_annonce(chiffre: str, n: int, pid: str = Depends(membre)) -> dict:
         return au_monde(foire(lambda c: annonces.accepter(c, pid, chiffre[:12], n)))
+
+    @r.post("/moi/pilier")
+    def declarer_pilier(x: Pilier, pid: str = Depends(membre)) -> dict:
+        return au_monde(foire(lambda c: piliers.declarer(c, pid, x.actif)))
+
+    @r.get("/moi/escalades")
+    def mes_escalades(pid: str = Depends(membre)) -> list[dict]:
+        return au_monde(foire(lambda c: piliers.escalades(c, pid)))
+
+    @r.get("/console/piliers", dependencies=[Depends(console)])
+    def lire_piliers() -> dict:
+        return au_monde(foire(piliers.agregats))
 
     @r.get("/console/tableau", dependencies=[Depends(console)])
     def tableau() -> dict:
