@@ -21,6 +21,7 @@ qui n'existe plus.
 | [audit/club-pulse-pivot/PREUVES.md](audit/club-pulse-pivot/PREUVES.md) | commandes exécutées et résultats (chiffres finaux figés au gel) |
 | [roadmap/README.md](roadmap/README.md) · [ROADMAP](roadmap/ROADMAP.md) · [SUIVI_METRIQUES](roadmap/SUIVI_METRIQUES.md) · [FINANCEMENT_JURIDIQUE](roadmap/FINANCEMENT_JURIDIQUE.md) · [BENCHMARK](roadmap/BENCHMARK.md) · [APERTUS_PLAN](roadmap/APERTUS_PLAN.md) | feuille de route six mois, tableau d'avancement daté, métriques de Suivi, financement et cadre juridique, benchmark, plan Apertus |
 | [bilans/bilan-demo.md](bilans/bilan-demo.md) · [bilan-7j](bilans/bilan-7j.md) · [bilan-trimestre](bilans/bilan-trimestre.md) | bilans de période générés par `make bilan` (monde de démonstration, scène Foire 2026 jouée par le script) : mêmes chiffres que Suivi |
+| [RAPPORT_NUIT.md](RAPPORT_NUIT.md) | rapport de la nuit Foire 2026 : fait / non fait, chiffres mesurés, simulé, risques, rituel de 08:00 |
 | [NUIT.md](NUIT.md) | nuit du 3 au 4 octobre (« Foire 2026 ») : plan horaire, statut heure par heure |
 | [THREAT_MODEL.md](THREAT_MODEL.md) | modèle de menaces |
 | [design/DESIGN_SYSTEM.md](design/DESIGN_SYSTEM.md) | design system v1.0 et écarts assumés |

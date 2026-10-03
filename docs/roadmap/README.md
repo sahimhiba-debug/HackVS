@@ -11,7 +11,7 @@ simulée). Le Club réel compte **une cinquantaine de membres** ; rien ici n'a e
 | [BENCHMARK.md](BENCHMARK.md) | BNI, Protopia, nexxt-change, Sardex / WIR, CCI France Suisse, b2match, Lunchclub — et la leçon de chacun |
 | [APERTUS_PLAN.md](APERTUS_PLAN.md) | état mesuré (1/26), jeu de test humain figé, entraînement synthétique, LoRA, service en Suisse |
 
-## Tableau d'avancement — état au 03.10.2026, 14:50 (mis à jour au gel-final)
+## Tableau d'avancement — état au 03.10.2026, 15:30 (branche `foire-2026`, dernier commit de la nuit ; gel-final le 04.10 à 08:00)
 
 ✅ fait et testé · 🟡 en cours / partiel · ⬜ prévu
 
@@ -24,9 +24,10 @@ simulée). Le Club réel compte **une cinquantaine de membres** ; rien ici n'a e
 | **Anonymat à petite échelle** : rôle masqué sous 3 porteurs | ✅ | CLAIMS n° 41–42 |
 | **Passe découverte** 90 jours (invité non membre) | ✅ | CLAIMS n° 49–53 |
 | **« Le Club cherche »** + inviter un contact (FR / DE) | ✅ | CLAIMS n° 54–56 |
-| Membre à distance : zone, langue, réponse depuis l'e-mail | ⬜ | prévu (nuit : P1 F) |
-| Bilan de période (`make bilan`) | ⬜ | prévu (nuit : P1 G) |
-| Pipeline Tally → jeu d'évaluation, taxonomie, harnais | 🟡 | taxonomie des métiers livrée ; pipeline prévu (nuit : P1 H) |
+| Membre à distance : zone, langue, réponse depuis l'e-mail | ✅ prototype | CLAIMS n° 57–60 — **l'envoi d'e-mails est simulé en démonstration** (boîte de sortie, aucun SMTP) |
+| Bilan de période (`make bilan`) | ✅ | CLAIMS n° 61–62 ; récit Apertus vérifié par le code — aucun récit réel généré cette nuit |
+| Pipeline Tally → jeu d'évaluation, taxonomie, harnais | 🟡 | pipeline, taxonomie (21 métiers FR / DE) et harnais livrés (CLAIMS n° 63–65) ; mesure Apertus sur les 26 cas ; **les 21 phrases Tally ne sont pas encore arrivées dans le dépôt** ; annotation humaine à faire |
 | Pilote avec les membres réels | ⬜ | phase 1 de la [ROADMAP.md](ROADMAP.md) |
-| Interface en allemand | 🟡 | écrans d'invité FR / DE ; le reste en phase 2 |
+| Interface en allemand | 🟡 | écrans d'invité, page de réponse et e-mails FR / DE ; le reste en phase 2 |
 | Adhésion croisée avec un partenaire français | ⬜ | phase 2 |
+| Conversion d'adhésion réelle | ⬜ | « Rejoindre le Club » enregistre une intention ; la suite est **simulée en démonstration** |
