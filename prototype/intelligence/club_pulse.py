@@ -701,7 +701,8 @@ class ClubPulse:
         """Ce que dit le PROFIL aujourd'hui : disponible, sollicitable, et — pour une capacité du catalogue — la déclare
         encore. Relu par le banc à chaque couverture (accords des essais, consentements des capacités)."""
         p = self.r.par_id().get(pid)
-        return p is not None and p.disponible and p.accepte_introductions and (
+        from .espace_membre import en_pause          # ANNÉE 1 · LOT 3 : en pause (vacances), on ne reçoit plus rien
+        return p is not None and p.disponible and p.accepte_introductions and not en_pause(self, pid) and (
             concept is None or concept in {o.concept for o in p.offre})
 
     def _non_sollicitable(self, porteur: str, candidat: str) -> Optional[str]:

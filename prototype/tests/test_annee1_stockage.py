@@ -200,3 +200,42 @@ def test_le_serveur_complet_demarre_sur_postgres_et_se_dit_pret(url_pg):
         assert d["pret"] is True and d["faits"] > 0
     with serveur(HACKVS_ESSAIS_DB=url_pg, HACKVS_FOIRE="1") as base:    # redémarrage : le journal est REPRIS
         assert json.load(urllib.request.urlopen(base + "/sante/pret", timeout=10))["faits"] >= d["faits"]
+
+
+def test_reecrire_garde_l_ordre_et_ajoute_la_trace(url):
+    """LOT 3 — purge réelle : les faits réécrits gardent leur place (seq), les autres ne bougent pas d'un octet."""
+    m = Memoire(url)
+    for i, qui in enumerate(["a", "b", "a"]):
+        m.ajouter(Evt(type="NOTE", le=J, acteurs=[qui], donnees={"texte": f"secret {i}"}, statut=Statut.DECLARE))
+    avant = {e.seq: e.model_dump_json() for e in m.evenements()}
+
+    def masquer(e: Evt) -> Evt:
+        return e.model_copy(update={"donnees": {"texte": "[effacé]", "i": e.seq}}) if "a" in e.acteurs else e
+    n = m.reecrire(masquer, Evt(type="PURGE", le=J, donnees={"faits": 2}, statut=Statut.OBSERVE))
+    apres = m.evenements()
+    assert n == 2 and [e.type for e in apres] == ["NOTE", "NOTE", "NOTE", "PURGE"]
+    assert [e.seq for e in apres[:3]] == sorted(avant)
+    assert apres[1].model_dump_json() == avant[apres[1].seq]                      # « b » : intact
+    relu = Memoire(url).evenements() if url != ":memory:" else apres                   # relu du disque
+    assert "secret 0" not in "".join(e.model_dump_json() for e in relu) and len(relu) == 4
+
+
+def test_reecrire_est_tout_ou_rien(url):
+    m = Memoire(url)
+    for i in range(3):
+        m.ajouter(Evt(type="NOTE", le=J, acteurs=["a"], donnees={"texte": f"t{i}"}, statut=Statut.DECLARE))
+    avant = [e.model_dump_json() for e in m.evenements()]
+    with pytest.raises(ValueError, match="identiques"):     # deux faits deviendraient identiques : rien n'a changé
+        m.reecrire(lambda e: e.model_copy(update={"donnees": {"texte": "x"}}))
+    assert [e.model_dump_json() for e in m.evenements()] == avant
+    if url != ":memory:":
+        assert [e.model_dump_json() for e in Memoire(url).evenements()] == avant
+
+
+def test_reecrire_refuse_dans_une_transaction(url):
+    """Audit lot 1 (note lot 3) : réécrire dans une transaction en cours en validerait la moitié — refusé."""
+    m = Memoire(url)
+    m.ajouter(Evt(type="NOTE", le=J, acteurs=["a"], donnees={"texte": "t"}, statut=Statut.DECLARE))
+    with pytest.raises(RuntimeError, match="transaction"):
+        with m.transaction():
+            m.reecrire(lambda e: e)

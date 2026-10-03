@@ -227,3 +227,9 @@
   de: Konten und Rollen — Einmal-Einladung, Sitzungen und Geräte, persönliche Konten, Zwei-Faktor (TOTP) für die Konsole, Admin-Protokoll
   en: Accounts and roles — single-use invitation, sessions and devices, named accounts, two-factor (TOTP) for the console, admin log
   tests: test_annee1_comptes.py, test_annee1_comptes_api.py
+- id: a1-espace-membre
+  statut: annee1
+  fr: Espace membre — mode pause (vacances), préférences langue / région / canaux, mes demandes envoyées, solde privé « reçus / donnés », export de mes données, suppression du compte avec purge réelle du journal
+  de: Mitgliederbereich — Pausenmodus (Ferien), Sprache / Region / Kanäle, meine gesendeten Anfragen, privater Saldo « erhalten / gegeben », Export meiner Daten, Kontolöschung mit echter Bereinigung des Journals
+  en: Member space — pause mode (holidays), language / region / channel preferences, my sent requests, private balance « received / given », export of my data, account deletion with a real journal purge
+  tests: test_annee1_espace_membre.py, test_annee1_espace_membre_api.py

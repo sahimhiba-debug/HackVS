@@ -13,12 +13,15 @@ d'essai (`essai_api`) partagent ces sessions, ce verrou et ces erreurs.
 from __future__ import annotations
 
 import hmac
+import os
 import threading
 import time
 from collections import defaultdict, deque
+from datetime import date
 from typing import Callable, Iterator, Literal, Optional, TypeVar
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from intelligence.club_pulse import ClubPulse
@@ -109,6 +112,16 @@ class Demande(BaseModel):
 
 class Effacement(BaseModel):
     confirme: Literal[True]                            # « Tout effacer » : jamais sans une confirmation explicite
+
+
+class Pause(BaseModel):
+    jusqu_au: date
+
+
+class Preferences(BaseModel):
+    langue: Literal["fr", "de", "en", "it"]
+    region: str = Field(default="", max_length=60)
+    canaux: list[Literal["app", "email", "sms"]] = Field(min_length=1, max_length=3)
 
 
 class Temps(BaseModel):
@@ -354,6 +367,48 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     @r.post("/moi/effacer")
     def effacer(x: Effacement, pid: str = Depends(membre)) -> dict:
         return au_monde(lambda c: c.effacer(pid))
+
+    # ANNÉE 1 · LOT 3 — l'espace membre (pause, préférences, mes demandes, export, effacement définitif) : construit sur
+    # la branche annee-1, éteint par défaut (HACKVS_ESPACE_MEMBRE=1) — la démo n'en dépend pas
+    def espace_allume() -> None:
+        if os.environ.get("HACKVS_ESPACE_MEMBRE") != "1":
+            raise HTTPException(404, "Not Found")
+
+    @r.get("/moi/espace", dependencies=[Depends(espace_allume)])
+    def espace(pid: str = Depends(membre)) -> dict:
+        from intelligence import espace_membre as em, reciprocite
+        return au_monde(lambda c: {"pause": em.etat_pause(c, pid), "preferences": em.preferences(c, pid),
+                                   "demandes": em.mes_demandes(c, pid), "solde": reciprocite.balance(c, pid),
+                                   "pause_max_jours": em.PAUSE_MAX_JOURS})
+
+    @r.post("/moi/pause", dependencies=[Depends(espace_allume)])
+    def pause(x: Pause, pid: str = Depends(membre)) -> dict:
+        from intelligence import espace_membre as em
+        limiter(limite_ecritures, f"ecrit|{pid}")
+        return au_monde(lambda c: em.mettre_en_pause(c, pid, x.jusqu_au))
+
+    @r.post("/moi/pause/fin", dependencies=[Depends(espace_allume)])
+    def pause_fin(pid: str = Depends(membre)) -> dict:
+        from intelligence import espace_membre as em
+        limiter(limite_ecritures, f"ecrit|{pid}")
+        return au_monde(lambda c: em.reprendre(c, pid))
+
+    @r.post("/moi/preferences", dependencies=[Depends(espace_allume)])
+    def regler_preferences(x: Preferences, pid: str = Depends(membre)) -> dict:
+        from intelligence import espace_membre as em
+        limiter(limite_ecritures, f"ecrit|{pid}")
+        return au_monde(lambda c: em.regler_preferences(c, pid, langue=x.langue, region=x.region, canaux=list(x.canaux)))
+
+    @r.get("/moi/export", dependencies=[Depends(espace_allume)])
+    def exporter(pid: str = Depends(membre)) -> JSONResponse:
+        from intelligence import espace_membre as em
+        return JSONResponse(au_monde(lambda c: em.exporter(c, pid)), headers={
+            "Content-Disposition": 'attachment; filename="club-pulse-mes-donnees.json"', "Cache-Control": "no-store"})
+
+    @r.post("/moi/effacer-definitivement", dependencies=[Depends(espace_allume)])
+    def effacer_definitivement(x: Effacement, pid: str = Depends(membre)) -> dict:
+        from intelligence import espace_membre as em
+        return au_monde(lambda c: em.effacer_definitivement(c, pid))
 
     @r.get("/moi/notes")
     def notes(pid: str = Depends(membre)) -> list[dict]:

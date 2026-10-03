@@ -44,6 +44,7 @@ def monde(tmp_path, monkeypatch):
     monkeypatch.setenv("HACKVS_SECRET", SECRET)
     monkeypatch.setenv("HACKVS_ESSAIS_DB", str(tmp_path / "journal.db"))
     monkeypatch.setenv("HACKVS_FOIRE", "1")                           # les routes de la Foire sont balayées allumées
+    monkeypatch.setenv("HACKVS_ESPACE_MEMBRE", "1")                   # ANNÉE 1 · lot 3 : l'espace membre aussi
     routeur = creer_routeur(TAX)
     app = FastAPI()
     app.include_router(routeur)

@@ -58,7 +58,31 @@ def main() -> None:
         pg.wait_for_timeout(300)
         pg.screenshot(path=str(DOSSIER / "lot2-2-compte-totp.png"), full_page=True)
         nav.close()
+    capturer_espace()
     print("vitrine annee-1 capturée dans", DOSSIER)
+
+
+def capturer_espace() -> None:
+    """LOT 3 : l'espace membre d'un membre FICTIF du monde de démonstration (pause posée, préférences, solde)."""
+    from datetime import date, timedelta
+    tmp = tempfile.mkdtemp()
+    with serveur(HACKVS_ESPACE_MEMBRE="1", HACKVS_ESSAIS_DB=str(Path(tmp) / "j.db"), HACKVS_FOIRE="1") as base, \
+            sync_playwright() as p:
+        req = urllib.request.Request(base + "/api/pulse/console/personas", headers={"X-Pulse-Console": "1"})
+        from intelligence.monde_demo import PAULINE
+        session = next(x["session"] for x in json.load(urllib.request.urlopen(req)) if x["id"] == PAULINE)
+        nav = p.chromium.launch(executable_path="/opt/pw-browsers/chromium")
+        pg = nav.new_context(viewport=TELEPHONE).new_page()
+        pg.goto(f"{base}/espace?session={session}")
+        pg.locator("#b-pause").wait_for()
+        jour = pg.evaluate("fetch('/api/pulse/moi/date', {headers: {'X-Pulse-Session': new URLSearchParams(location.search)"
+                           ".get('session')}}).then(r => r.json())")
+        pg.fill("#pause-date", (date.fromisoformat(jour["date"]) + timedelta(days=14)).isoformat())
+        pg.click("#pause-ok")
+        pg.locator("#pause-etat:has-text('En pause')").wait_for()
+        pg.wait_for_timeout(300)
+        pg.screenshot(path=str(DOSSIER / "lot3-espace-membre.png"), full_page=True)
+        nav.close()
 
 
 if __name__ == "__main__":

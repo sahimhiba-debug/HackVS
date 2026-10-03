@@ -103,10 +103,11 @@ _observabilite.configurer(_observabilite.niveau_depuis_env(os.environ))
 # ordre : la dernière ajoutée est la plus EXTÉRIEURE → l'identifiant de requête couvre aussi les refus 413
 PAGES_PULSE = ("app.html", "console.html", "projection.html", "regie.html", "etabli.html", "suivi.html", "decouverte.html",
                "reponse.html", "salle.html", "salle-ecran.html", "salle-regie.html", "feuille-de-route.html", "preflight.html",
-               "compte.html")
+               "compte.html", "espace.html")
 app.add_middleware(_Protections, csp=_politique_contenu([WEB_PULSE / f for f in PAGES_PULSE]),
                    chemins_csp=("/app", "/console", "/etabli", "/suivi", "/decouverte", "/reponse", "/salle", "/salle/ecran",
-                                "/salle/regie", "/feuille-de-route", "/projection", "/demo/regie", "/preflight", "/compte"),
+                                "/salle/regie", "/feuille-de-route", "/projection", "/demo/regie", "/preflight", "/compte",
+                                "/espace"),
                    # JOUR J : l'écran de la salle (et l'Établi, où mène la bascule scriptée) s'affichent DANS le deck local
                    csp_integrable=_politique_contenu([WEB_PULSE / f for f in PAGES_PULSE],
                                                      ancetres="'self' " + _origines_deck(os.environ.get("HACKVS_DECK_ORIGINES"))),
@@ -1058,6 +1059,14 @@ def page_reponse():
     if MODE != "demo":
         raise HTTPException(501, "Club Pulse est présenté en mode démo (monde fictif).")
     return FileResponse(WEB / "pulse" / "reponse.html")
+
+
+@app.get("/espace")
+def page_espace():
+    """ANNÉE 1 · LOT 3 : mon espace (pause, préférences, demandes, solde, export, effacement) — si HACKVS_ESPACE_MEMBRE=1."""
+    if os.environ.get("HACKVS_ESPACE_MEMBRE") != "1":
+        raise HTTPException(404, "Not Found")
+    return FileResponse(WEB / "pulse" / "espace.html", headers={"Cache-Control": "no-store"})
 
 
 @app.get("/compte")

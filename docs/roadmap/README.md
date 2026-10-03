@@ -52,6 +52,7 @@ simulée). Le Club réel compte **145 entreprises et 173 représentants** ; rien
 | Journal sur stockage interchangeable SQLite / PostgreSQL, migrations réversibles, sauvegarde et restauration vérifiées | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_stockage.py |
 | Exploitation — configuration documentée, disponibilité (/sante/pret), métriques, Docker de production | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_exploitation.py |
 | Comptes et rôles — invitation à usage unique, sessions et appareils, comptes nominatifs, double authentification (TOTP) pour la console, journal d'administration | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_comptes.py, test_annee1_comptes_api.py |
+| Espace membre — mode pause (vacances), préférences langue / région / canaux, mes demandes envoyées, solde privé « reçus / donnés », export de mes données, suppression du compte avec purge réelle du journal | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_espace_membre.py, test_annee1_espace_membre_api.py |
 <!-- etat:fin -->
 
 Page publique, trilingue, avec des liens vers les écrans du monde « visite » : `/feuille-de-route`.

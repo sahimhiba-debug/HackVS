@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Club Pulse · Mon espace</title>
+  <meta name="description" content="Mon espace : pause, préférences, mes demandes, mon solde privé, mes données, effacement. Construit sur la branche annee-1.">
+  <link rel="icon" href="/static/pulse/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/pulse/pulse.css">
+  <style>
+    body { background: var(--papier); }
+    .page { max-width: 560px; margin: 0 auto; padding: 16px; display: grid; gap: 14px; }
+    .bloc { background: var(--card); border-radius: var(--r-card); padding: 14px 16px; box-shadow: var(--sh-card-light); }
+    .bloc h2 { font-size: 17px; margin: 0 0 8px; }
+    label { display: block; font-size: 14px; margin: 8px 0 4px; }
+    input, select { width: 100%; font: inherit; padding: 10px; border-radius: 10px; border: 1px solid var(--hairline-2, #ccd); box-sizing: border-box; }
+    fieldset { border: 0; padding: 0; margin: 8px 0; } fieldset label { display: inline-flex; gap: 6px; margin-right: 14px; }
+    fieldset input { width: auto; }
+    ul { padding-left: 18px; margin: 6px 0; } li { margin: 4px 0; }
+    .solde { display: flex; gap: 24px; font-size: 15px; } .solde b { font-size: 26px; display: block; }
+    .etat { font-size: 14px; color: var(--secondary, #5b6270); min-height: 1.2em; }
+    .danger { border: 1px solid #c0392b; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <span class="marque"><span class="pouls-point" aria-hidden="true"></span>Mon espace</span>
+    <span class="puce fictif">construit — branche annee-1, pas dans la démo</span>
+    <p id="sans-session" hidden>Ouvrez d'abord l'application avec votre lien personnel.</p>
+
+    <section class="bloc" id="b-pause" hidden>
+      <h2>Mode pause</h2>
+      <p id="pause-etat"></p>
+      <label for="pause-date">En pause jusqu'au (vacances : vous ne recevez plus rien)</label>
+      <input id="pause-date" type="date">
+      <button class="btn" id="pause-ok">Me mettre en pause</button>
+      <button class="btn discret" id="pause-fin">Reprendre maintenant</button>
+    </section>
+
+    <section class="bloc" id="b-pref" hidden>
+      <h2>Mes préférences</h2>
+      <label for="langue">Langue</label>
+      <select id="langue"><option value="fr">Français</option><option value="de">Deutsch</option><option value="en">English</option><option value="it">Italiano</option></select>
+      <label for="region">Région</label>
+      <input id="region" maxlength="60" placeholder="Valais, Vaud, Haute-Savoie…">
+      <fieldset><legend>Me prévenir par</legend>
+        <label><input type="checkbox" value="app" class="canal"> l'application</label>
+        <label><input type="checkbox" value="email" class="canal"> e-mail</label>
+        <label><input type="checkbox" value="sms" class="canal"> SMS</label>
+      </fieldset>
+      <button class="btn" id="pref-ok">Enregistrer</button>
+    </section>
+
+    <section class="bloc" id="b-solde" hidden>
+      <h2>Mon solde — visible par moi seul</h2>
+      <div class="solde"><span><b id="donne">0</b>donnés</span><span><b id="recu">0</b>reçus</span></div>
+      <p class="note">Le Club ne voit pas ce solde, et rien ne le classe.</p>
+    </section>
+
+    <section class="bloc" id="b-demandes" hidden>
+      <h2>Mes demandes envoyées</h2>
+      <ul id="demandes"></ul>
+    </section>
+
+    <section class="bloc" id="b-donnees" hidden>
+      <h2>Mes données</h2>
+      <button class="btn discret" id="export">Télécharger mes données (JSON)</button>
+    </section>
+
+    <section class="bloc danger" id="b-effacer" hidden>
+      <h2>Supprimer mon compte</h2>
+      <p>Définitif : votre identité est supprimée, vos textes sont retirés du journal du Club. Rien ne pourra être rendu.</p>
+      <label><input type="checkbox" id="effacer-sur" style="width:auto"> Je comprends que c'est définitif</label>
+      <button class="btn" id="effacer" disabled>Supprimer définitivement</button>
+    </section>
+    <p class="etat" id="etat" aria-live="polite"></p>
+  </main>
+  <script type="module">
+    const $ = (s) => document.querySelector(s);
+    const lire = (k) => { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
+    const session = new URLSearchParams(location.search).get("session") || lire("pulse-session");
+    const dire = (t) => { $("#etat").textContent = t; };
+    async function api(chemin, corps) {
+      const r = await fetch("/api/pulse" + chemin, { method: corps ? "POST" : "GET",
+        headers: { "Content-Type": "application/json", "X-Pulse-Session": session || "" }, body: corps ? JSON.stringify(corps) : undefined });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(typeof d.detail === "string" ? d.detail : "refusé (" + r.status + ")");
+      return d;
+    }
+    const jourFr = (iso) => new Date(iso + "T12:00:00").toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" });
+    async function rafraichir() {
+      const e = await api("/moi/espace");
+      for (const id of ["b-pause", "b-pref", "b-solde", "b-demandes", "b-donnees", "b-effacer"]) $("#" + id).hidden = false;
+      $("#pause-etat").textContent = e.pause.en_pause ? `En pause jusqu'au ${jourFr(e.pause.jusqu_au)} : vous ne recevez rien.` : "Vous êtes joignable.";
+      $("#pause-fin").hidden = !e.pause.en_pause;
+      $("#langue").value = e.preferences.langue; $("#region").value = e.preferences.region;
+      document.querySelectorAll(".canal").forEach((c) => { c.checked = e.preferences.canaux.includes(c.value); });
+      $("#donne").textContent = e.solde.donne; $("#recu").textContent = e.solde.recu;
+      $("#demandes").replaceChildren(...(e.demandes.length ? e.demandes.map((d) => { const li = document.createElement("li"); li.textContent = `${jourFr(d.le)} — ${d.texte}`; return li; })
+        : [Object.assign(document.createElement("li"), { textContent: "Aucune demande envoyée pour l'instant." })]));
+    }
+    $("#pause-ok").addEventListener("click", async () => { try { await api("/moi/pause", { jusqu_au: $("#pause-date").value }); dire("Pause enregistrée."); rafraichir(); } catch (e) { dire("Refusé : " + e.message); } });
+    $("#pause-fin").addEventListener("click", async () => { try { await api("/moi/pause/fin", {}); dire("Vous êtes de nouveau joignable."); rafraichir(); } catch (e) { dire("Refusé : " + e.message); } });
+    $("#pref-ok").addEventListener("click", async () => {
+      const canaux = [...document.querySelectorAll(".canal:checked")].map((c) => c.value);
+      try { await api("/moi/preferences", { langue: $("#langue").value, region: $("#region").value, canaux }); dire("Préférences enregistrées."); }
+      catch (e) { dire(canaux.length ? "Refusé : " + e.message : "Gardez au moins un canal — pour ne plus rien recevoir, utilisez la pause."); }
+    });
+    $("#export").addEventListener("click", async () => {
+      try {
+        const d = await api("/moi/export");
+        const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([JSON.stringify(d, null, 2)], { type: "application/json" })), download: "club-pulse-mes-donnees.json" });
+        a.click(); dire("Fichier téléchargé.");
+      } catch (e) { dire("Refusé : " + e.message); }
+    });
+    $("#effacer-sur").addEventListener("change", (e) => { $("#effacer").disabled = !e.target.checked; });
+    $("#effacer").addEventListener("click", async () => {
+      try { await api("/moi/effacer-definitivement", { confirme: true }); try { sessionStorage.clear(); } catch (e) { /* sans stockage */ }
+        document.querySelectorAll(".bloc").forEach((b) => { b.hidden = true; }); dire("Votre compte est supprimé. Merci d'avoir fait partie du Club."); }
+      catch (e) { dire("Refusé : " + e.message); }
+    });
+    if (!session) $("#sans-session").hidden = false; else rafraichir().catch((e) => dire("Session refusée : " + e.message));
+  </script>
+</body>
+</html>

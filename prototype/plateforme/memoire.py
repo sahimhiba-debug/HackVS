@@ -160,6 +160,39 @@ class Memoire:
         with self._v:
             self._ferme = True
 
+    def reecrire(self, transformer: Callable[[Evt], Evt], fait: Optional[Evt] = None) -> int:
+        """ANNÉE 1 · LOT 3 — PURGE RÉELLE : réécrit tout le journal en UNE transaction (tout ou rien), chaque fait passé par
+        `transformer` (réécrit à sa place), puis ajoute `fait` (la trace de la purge, sans contenu). Deux faits devenus
+        identiques : ValueError, rien n'est modifié (et la contrainte d'unicité de la base en dernier rempart). Rend le nombre de faits modifiés. Le seul
+        geste qui modifie le passé : réservé à l'effacement définitif demandé par un membre."""
+        with self._v:
+            if self._ferme:
+                raise MondeRemplace("ce monde a été remplacé : écriture refusée")
+            if self._profondeur:
+                raise RuntimeError("réécriture refusée dans une transaction en cours (elle en validerait une partie)")
+            avant = list(self._synchroniser())
+            apres = [transformer(e) for e in avant]
+            modifies = sum(1 for a, b in zip(avant, apres, strict=True) if a.id != b.id)
+            if len({e.id for e in apres + ([fait] if fait else [])}) != len(apres) + (1 if fait else 0):
+                raise ValueError("réécriture refusée : deux faits deviendraient identiques — rien n'est modifié")
+            self._db.debut()
+            try:
+                for a, b in zip(avant, apres, strict=True):
+                    if a.id != b.id:      # même place dans le journal (seq) : l'ordre et les autres faits ne bougent pas
+                        self._db.executer("UPDATE evenements SET id = ?, donnees = ? WHERE seq = ?",
+                                          (b.id, b.model_dump_json(exclude={"seq"}), a.seq))
+                if fait:
+                    self._db.inserer(fait.id, fait.model_dump_json(exclude={"seq"}))
+                self._db.valider()
+            except BaseException:
+                self._db.annuler()
+                raise
+            finally:
+                self._cache = []
+                self._sale = True
+                self._generation += 1
+            return modifies
+
     def vider(self) -> None:
         with self._v:
             self._db.vider()
