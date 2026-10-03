@@ -1,0 +1,76 @@
+# Taxonomie des MÉTIERS (Foire 2026) — une vingtaine de métiers, FR / DE.
+# Sert : la déclaration d'un invité (passe découverte), les métiers présents/absents (« le Club cherche »), la
+# classification des phrases Tally (scripts/ingest_tally.py). Les rôles des patrons de capacités y figurent (role: …).
+# Format volontairement simple (lu par intelligence/metiers.py sans dépendance) : une entrée par « - id: ».
+- id: transport
+  fr: Transport de personnes
+  de: Personenbeförderung
+  role: transport
+- id: lieu
+  fr: Salle, lieu d'accueil
+  de: Saal, Veranstaltungsort
+  role: lieu
+- id: traiteur
+  fr: Traiteur, restauration
+  de: Catering, Gastronomie
+  role: traiteur
+- id: interpretation
+  fr: Interprétation, traduction
+  de: Dolmetschen, Übersetzung
+  role: voix
+- id: logistique
+  fr: Logistique, entreposage
+  de: Logistik, Lagerung
+  role: logistique
+- id: formation
+  fr: Formation
+  de: Weiterbildung
+  role: formation
+- id: recrutement
+  fr: Recrutement, apprentissage
+  de: Rekrutierung, Lehrstellen
+  role: recrutement
+- id: expertise
+  fr: Conseil, expertise
+  de: Beratung, Fachwissen
+  role: expertise
+- id: communication
+  fr: Communication, médias
+  de: Kommunikation, Medien
+  role: public
+- id: construction
+  fr: Construction, bâtiment
+  de: Bau
+- id: energie
+  fr: Énergie
+  de: Energie
+- id: viticulture
+  fr: Viticulture, vins
+  de: Weinbau, Weine
+- id: agroalimentaire
+  fr: Agroalimentaire
+  de: Lebensmittelindustrie
+- id: tourisme
+  fr: Tourisme, hôtellerie
+  de: Tourismus, Hotellerie
+- id: commerce
+  fr: Commerce de détail
+  de: Detailhandel
+- id: finance
+  fr: Banque, assurance, fiduciaire
+  de: Bank, Versicherung, Treuhand
+- id: informatique
+  fr: Informatique, numérique
+  de: Informatik, Digitales
+- id: industrie
+  fr: Industrie, mécanique
+  de: Industrie, Maschinenbau
+- id: sante
+  fr: Santé, social
+  de: Gesundheit, Soziales
+- id: juridique
+  fr: Juridique
+  de: Recht
+- id: artisanat
+  fr: Artisanat
+  de: Handwerk

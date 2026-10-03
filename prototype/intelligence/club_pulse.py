@@ -29,6 +29,7 @@ from app.taxonomy import Taxonomie
 from plateforme.affirmations import Statut
 from plateforme.memoire import Evt, Memoire
 
+from .decouverte import Decouverte
 from . import memoire_club
 from .capacites import Claim, Instance, Registre, charger_patrons, choisir_asks, index_claims, pulse_diff
 from . import monde_demo as md
@@ -77,6 +78,7 @@ class ClubPulse:
         brut = md.construire(sophie_profilee=False, recherches_autres=md.BESOINS_SUIVANTS)
         self.coffre = Coffre(AdhesionsSynthetiques(brut.profils).importer(), secret=self.reglages.secret)
         self.sessions = Sessions(self.reglages.secret, self.reglages.duree_session_s)
+        self.decouverte = Decouverte(self, self.reglages.decouverte_jours)   # FOIRE 2026 · D (routes derrière HACKVS_FOIRE)
         self.passes_jure = PassesJure(self.reglages.secret)         # QR juré : court, à usage unique, par personnage fictif
         brut.profils = [self.coffre.pseudonymiser(p) for p in brut.profils]    # le moteur ne voit que des pseudonymes
         self.r = brut

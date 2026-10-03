@@ -3,9 +3,10 @@ cherche ». Un adaptateur mince, comme capacites_api : valider, authentifier, ap
 Interrupteur éteint : chaque route répond 404 « désactivé » — le produit d'hier, à l'identique."""
 from __future__ import annotations
 
+import os
 from typing import Callable, Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from intelligence import partenariats, suivi
@@ -20,7 +21,34 @@ class Visibilite(BaseModel):
     visible: bool
 
 
-def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: Callable) -> None:
+class Emission(BaseModel):
+    origine: Literal["stand", "demande"] = "stand"
+    demande: Optional[str] = Field(default=None, max_length=120)
+
+
+class Activation(BaseModel):
+    jeton: str = Field(max_length=120)
+
+
+class Declaration(BaseModel):
+    entreprise: str = Field(min_length=2, max_length=80)
+    metier: str = Field(max_length=40)
+    zone: str = Field(max_length=40)
+
+
+class Aide(BaseModel):
+    aide: bool
+
+
+def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: Callable, *, limiter: Callable,
+                   nouveau_limiteur: Callable, qr: Callable[[str], str]) -> None:
+    # PASSE DÉCOUVERTE : jamais par adresse IP (une salle partage la même) — par CODE tenté, par SESSION d'invité, et un
+    # plafond global doux ; l'émission (console) est plafonnée aussi
+    limite_emission = nouveau_limiteur(30, 60.0)
+    limite_activation_global = nouveau_limiteur(300, 60.0)
+    limite_activation_code = nouveau_limiteur(5, 60.0)
+    limite_invite = nouveau_limiteur(60, 60.0)
+
     def foire(f: Callable) -> Callable:
         def g(c):
             if not c.reglages.foire:
@@ -53,3 +81,52 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     @r.post("/moi/recus/{reference}/visible")
     def visible_membre(reference: str, x: Visibilite, pid: str = Depends(membre)) -> dict:
         return au_monde(foire(lambda c: partenariats.rendre_visible(c, reference[:40], "membre", x.visible, membre=pid)))
+
+    # ------------------------------------------------------------------ D · passe découverte
+    def invite(x_pulse_invite: Optional[str] = Header(None)) -> str:
+        """La session d'un INVITÉ (passe découverte activé) : vérifiée à chaque requête (signature, révocation, terme)."""
+        limiter(limite_invite, "invite|" + (x_pulse_invite or "")[:60])
+        au_monde(foire(lambda c: c.decouverte.invite(x_pulse_invite or "")))
+        return x_pulse_invite or ""
+
+    @r.post("/console/decouverte", dependencies=[Depends(console)])
+    def emettre_decouverte(x: Emission, request: Request) -> dict:
+        limiter(limite_emission, "decouverte-emission")
+        res = au_monde(foire(lambda c: c.decouverte.emettre(x.origine, x.demande)))
+        base = os.environ.get("HACKVS_URL_PUBLIQUE") or str(request.base_url).rstrip("/")
+        return res | {"url": base + res["chemin"], "qr": qr(base + res["chemin"])}
+
+    @r.get("/console/decouverte", dependencies=[Depends(console)])
+    def passes_decouverte() -> list[dict]:
+        return au_monde(foire(lambda c: c.decouverte.liste()))
+
+    @r.post("/console/decouverte/{nonce}/revoquer", dependencies=[Depends(console)])
+    def revoquer_decouverte(nonce: str) -> dict:
+        return au_monde(foire(lambda c: c.decouverte.revoquer(nonce[:40])))
+
+    @r.post("/decouverte/activer")
+    def activer_decouverte(a: Activation) -> dict:
+        limiter(limite_activation_global, "decouverte")
+        limiter(limite_activation_code, "decouverte-code|" + a.jeton.split(".")[1][:40] if a.jeton.count(".") == 2 else "decouverte-code|?")
+        return au_monde(foire(lambda c: c.decouverte.activer(a.jeton)))
+
+    @r.get("/decouverte/moi")
+    def moi_invite(session: str = Depends(invite)) -> dict:
+        return au_monde(foire(lambda c: c.decouverte.demandes(session)))
+
+    @r.post("/decouverte/declaration")
+    def declarer(x: Declaration, session: str = Depends(invite)) -> dict:
+        return au_monde(foire(lambda c: c.decouverte.declarer(session, x.entreprise, x.metier, x.zone)))
+
+    @r.post("/decouverte/demandes/{ask_id}/reponse")
+    def repondre_invite(ask_id: str, x: Aide, session: str = Depends(invite)) -> dict:
+        return au_monde(foire(lambda c: c.decouverte.repondre(session, ask_id[:120], x.aide)))
+
+    @r.post("/decouverte/rejoindre")
+    def rejoindre(session: str = Depends(invite)) -> dict:
+        return au_monde(foire(lambda c: c.decouverte.rejoindre(session)))
+
+    @r.get("/decouverte/referentiel")
+    def referentiel(session: str = Depends(invite)) -> dict:
+        from intelligence import metiers
+        return {"metiers": [{"id": m["id"], "fr": m["fr"], "de": m["de"]} for m in metiers.metiers()], "zones": list(metiers.ZONES)}

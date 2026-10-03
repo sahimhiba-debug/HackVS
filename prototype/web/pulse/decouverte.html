@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Club Pulse · Passe découverte</title>
+  <meta name="description" content="Passe découverte du Club : 90 jours pour essayer le Club, sans être membre. Monde de démonstration.">
+  <link rel="icon" href="/static/pulse/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/pulse/pulse.css">
+  <style>
+    body { background: var(--papier); }
+    .page { max-width: 520px; margin: 0 auto; padding: 16px 16px 40px; }
+    header.haut { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid var(--hairline-2); background: var(--card); }
+    header.haut .droite { margin-left: auto; display: flex; gap: 8px; }
+    h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin-top: 10px; }
+    .carte { background: var(--card); border-radius: var(--r-card); padding: 14px 16px; box-shadow: var(--sh-card-light); margin-top: 14px; }
+    label { display: block; font-size: 13px; font-weight: 700; margin-top: 10px; }
+    input, select { font: inherit; width: 100%; padding: 9px 10px; border: 1px solid var(--hairline); border-radius: 10px; margin-top: 4px; background: var(--card); color: var(--ink); }
+    .boutons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    ul { padding-left: 18px; }
+  </style>
+</head>
+<body>
+  <header class="haut">
+    <span class="marque"><span class="pouls-point" aria-hidden="true"></span>Club Pulse</span>
+    <span class="puce fictif" data-role="monde">monde de démonstration</span>
+    <span class="droite"><button class="btn discret petit" id="langue">Deutsch</button></span>
+  </header>
+  <div class="page">
+    <span class="surtitre" id="sur">Passe découverte · invité</span>
+    <h1 id="titre">…</h1>
+    <div id="contenu"></div>
+  </div>
+  <script type="module">
+    const $ = (s) => document.querySelector(s);
+    function h(tag, attrs = {}, ...enfants) {
+      const el = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs || {})) {
+        if (v === null || v === undefined || v === false) continue;
+        if (k === "class") el.className = v; else if (k.startsWith("on")) el.addEventListener(k.slice(2), v); else el.setAttribute(k, v === true ? "" : v);
+      }
+      for (const e of enfants.flat(Infinity)) if (e !== null && e !== undefined && e !== false) el.append(e instanceof Node ? e : document.createTextNode(String(e)));
+      return el;
+    }
+    const T = {
+      fr: { titre: "Essayez le Club, sans être membre", sur: "Passe découverte · invité", autre: "Deutsch", entreprise: "Votre entreprise (ou votre stand)",
+        metier: "Votre métier", zone: "D'où venez-vous ?", declarer: "Déclarer et recevoir mon reçu", recu: "Votre reçu de consentement",
+        demandes: "Ce que le Club cherche", aider: "Je peux aider", pas: "Pas cette fois", reste: (n) => `encore ${n} demande(s) possible(s) avec ce passe`,
+        rejoindre: "Rejoindre le Club", prevu: "Prévu ensuite", valable: (d) => `Passe valable jusqu'au ${d} (date du monde de démonstration).`,
+        merci: "Merci : proposition transmise au Club.", invalide: "Ce passe n'est plus valable (déjà utilisé, révoqué ou expiré).", aucun: "Aucune demande ouverte pour l'instant." },
+      de: { titre: "Den Club kennenlernen, ohne Mitglied zu sein", sur: "Schnupperpass · Gast", autre: "Français", entreprise: "Ihr Unternehmen (oder Ihr Stand)",
+        metier: "Ihr Beruf", zone: "Woher kommen Sie?", declarer: "Angeben und Quittung erhalten", recu: "Ihre Einwilligungsquittung",
+        demandes: "Was der Club sucht", aider: "Ich kann helfen", pas: "Diesmal nicht", reste: (n) => `noch ${n} Anfrage(n) mit diesem Pass möglich`,
+        rejoindre: "Dem Club beitreten", prevu: "Wie es weitergeht", valable: (d) => `Pass gültig bis ${d} (Datum der Demo-Welt).`,
+        merci: "Danke: Vorschlag an den Club übermittelt.", invalide: "Dieser Pass ist nicht mehr gültig (bereits benutzt, widerrufen oder abgelaufen).", aucun: "Zurzeit keine offene Anfrage." },
+    };
+    let L = "fr", session = null, ref = null, recu = null, prevu = null, message = "";
+    const lire = (k) => { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
+    const ecrire = (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) { /* page utilisable sans stockage */ } };
+    async function api(chemin, corps) {
+      const r = await fetch("/api/pulse" + chemin, { method: corps === undefined ? "GET" : "POST",
+        headers: { "Content-Type": "application/json", ...(session ? { "X-Pulse-Invite": session } : {}) }, body: corps === undefined ? undefined : JSON.stringify(corps) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw Object.assign(new Error(j.detail || `serveur : ${r.status}`), { statut: r.status });
+      return j;
+    }
+    async function rendre() {
+      const t = T[L];
+      $("#titre").textContent = t.titre; $("#sur").textContent = t.sur; $("#langue").textContent = t.autre;
+      if (!session) { $("#contenu").replaceChildren(h("p", { class: "note", "data-role": "invalide" }, t.invalide)); return; }
+      let moi;
+      try { moi = await api("/decouverte/moi"); } catch (e) { $("#contenu").replaceChildren(h("p", { class: "note", "data-role": "invalide" }, t.invalide)); return; }
+      ref = ref || await api("/decouverte/referentiel");
+      const blocs = [h("p", { class: "note" }, t.valable(moi.jusqu_au))];
+      if (!moi.declaration) {
+        const e = h("input", { id: "entreprise", maxlength: 80, autocomplete: "organization" });
+        const m = h("select", { id: "metier" }, ref.metiers.map((x) => h("option", { value: x.id }, x[L])));
+        const z = h("select", { id: "zone" }, ref.zones.map((x) => h("option", { value: x }, x)));
+        blocs.push(h("section", { class: "carte" }, h("label", { for: "entreprise" }, t.entreprise), e, h("label", { for: "metier" }, t.metier), m,
+          h("label", { for: "zone" }, t.zone), z,
+          h("div", { class: "boutons" }, h("button", { class: "btn", id: "declarer", onclick: async () => {
+            try { recu = (await api("/decouverte/declaration", { entreprise: e.value, metier: m.value, zone: z.value })).recu; message = ""; }
+            catch (err) { message = err.message; }
+            rendre();
+          } }, t.declarer))));
+      }
+      if (recu) blocs.push(h("section", { class: "carte", "data-role": "recu" }, h("span", { class: "surtitre" }, t.recu), h("p", {}, recu.finalite),
+        h("p", { class: "note" }, `${recu.reference} · ${recu.donne_le} → ${recu.jusqu_au} · révocable`)));
+      if (moi.declaration) {
+        blocs.push(h("section", { class: "carte" }, h("span", { class: "surtitre" }, t.demandes), h("p", { class: "note" }, t.reste(moi.reste)),
+          moi.demandes.length ? moi.demandes.map((d) => h("div", { "data-demande": d.id, style: "margin-top:10px" }, h("b", {}, d.titre), h("p", {}, d.texte),
+            h("div", { class: "boutons" }, ...[[true, t.aider], [false, t.pas]].map(([aide, lib]) => h("button", { class: aide ? "btn" : "btn discret",
+              onclick: async () => { try { await api(`/decouverte/demandes/${encodeURIComponent(d.id)}/reponse`, { aide }); message = aide ? t.merci : ""; } catch (err) { message = err.message; } rendre(); } }, lib)))))
+            : h("p", { class: "note" }, t.aucun)));
+        blocs.push(h("div", { class: "boutons" }, h("button", { class: "btn discret", id: "rejoindre", onclick: async () => {
+          try { prevu = await api("/decouverte/rejoindre", {}); } catch (err) { message = err.message; } rendre(); } }, t.rejoindre)));
+      }
+      if (prevu) blocs.push(h("section", { class: "carte", "data-role": "prevu" }, h("span", { class: "surtitre" }, t.prevu),
+        h("ul", {}, prevu.prevu_ensuite.map((x) => h("li", {}, x))), h("p", { class: "note" }, prevu.simule)));
+      if (message) blocs.push(h("p", { class: "note", "data-role": "message" }, message));
+      $("#contenu").replaceChildren(...blocs);
+    }
+    $("#langue").addEventListener("click", () => { L = L === "fr" ? "de" : "fr"; document.documentElement.lang = L; rendre(); });
+    (async () => {
+      const m = location.hash.match(/passe=([\w.\-]+)/);
+      if (m) {
+        history.replaceState(null, "", location.pathname);                  // le passe ne reste pas dans l'adresse
+        try { session = (await api("/decouverte/activer", { jeton: m[1] })).invite; ecrire("invite", session); } catch (e) { session = lire("invite"); }
+      } else session = lire("invite");
+      rendre();
+    })();
+  </script>
+</body>
+</html>

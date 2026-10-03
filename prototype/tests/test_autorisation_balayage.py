@@ -2,7 +2,10 @@
 une route ajoutée demain sans garde fait échouer ce test.
 
 Pour chaque route :
-- PUBLIQUE : seulement `/acces` et `/jure` (activer un compte, activer un passe juré) — toute autre route publique échoue ;
+- PUBLIQUE : seulement `/acces`, `/jure` et `/decouverte/activer` (activer un compte, un passe juré, un passe
+  découverte) — toute autre route publique échoue ;
+- INVITÉ (passe découverte, Foire 2026) : sans en-tête, mal formé, signature falsifiée, passe jamais activé, session de
+  membre à la place → 401 ;
 - CONSOLE : sans l'en-tête → 403 ; avec l'en-tête mais depuis une autre machine → 403 ;
 - MEMBRE : sans session, session mal formée, signature falsifiée, session EXPIRÉE (bien signée), session d'un compte EFFACÉ
   → 401 ; et la session d'un membre n'ouvre JAMAIS la console.
@@ -24,7 +27,7 @@ from app.taxonomy import charger_taxonomie
 TAX = charger_taxonomie()
 SECRET = "b" * 8 + "-secret-du-balayage-d-autorisation-fictif"
 CONSOLE = {"X-Pulse-Console": "1"}
-PUBLIQUES = {("POST", "/api/pulse/acces"), ("POST", "/api/pulse/jure")}
+PUBLIQUES = {("POST", "/api/pulse/acces"), ("POST", "/api/pulse/jure"), ("POST", "/api/pulse/decouverte/activer")}
 VALEURS = {"n": "1", "index": "0", "etape": "0"}
 
 
@@ -37,6 +40,7 @@ def _signer(pid: str, exp: int) -> str:
 def monde(tmp_path, monkeypatch):
     monkeypatch.setenv("HACKVS_SECRET", SECRET)
     monkeypatch.setenv("HACKVS_ESSAIS_DB", str(tmp_path / "journal.db"))
+    monkeypatch.setenv("HACKVS_FOIRE", "1")                           # les routes de la Foire sont balayées allumées
     routeur = creer_routeur(TAX)
     app = FastAPI()
     app.include_router(routeur)
@@ -44,7 +48,7 @@ def monde(tmp_path, monkeypatch):
     for r in routeur.routes:
         assert isinstance(r, APIRoute)
         noms = {d.call.__name__ for d in r.dependant.dependencies}
-        genre = "console" if "console" in noms else "membre" if "membre" in noms else "publique"
+        genre = "console" if "console" in noms else "membre" if "membre" in noms else "invite" if "invite" in noms else "publique"
         chemin = re.sub(r"\{(\w+)\}", lambda m: VALEURS.get(m.group(1), "x1"), r.path)
         routes += [(m, chemin, genre) for m in sorted(r.methods)]
     return app, routes
@@ -54,7 +58,7 @@ def _appel(client, methode, chemin, entetes=None):
     return client.request(methode, chemin, headers=entetes or {}, json={} if methode != "GET" else None).status_code
 
 
-def test_seules_l_activation_et_le_passe_jure_sont_publiques(monde):
+def test_seules_les_activations_sont_publiques(monde):
     _, routes = monde
     assert {(m, c) for m, c, g in routes if g == "publique"} == PUBLIQUES
     assert len(routes) > 60                                          # le balayage voit bien toutes les routes
@@ -120,10 +124,38 @@ def test_contre_epreuve_bien_authentifie_on_passe_la_garde(monde):
     code = next(p["code"] for p in client.get("/api/pulse/console/personas", headers=CONSOLE).json() if p["id"] == "n01")
     s = {"X-Pulse-Session": client.post("/api/pulse/acces", json={"code": code}).json()["session"]}
     lectures = [(m, c, g) for m, c, g in routes if m == "GET"]
-    assert lectures
+    assert lectures and any(g == "invite" for _, _, g in lectures)
+    inv = {"X-Pulse-Invite": _invite(client)}
     for m, c, g in lectures:
-        statut = _appel(client, m, c, CONSOLE if g == "console" else s)
+        statut = _appel(client, m, c, CONSOLE if g == "console" else inv if g == "invite" else s)
         assert statut not in (401, 403), (m, c, statut)
+
+
+def _invite(client):
+    jeton = client.post("/api/pulse/console/decouverte", headers=CONSOLE, json={"origine": "stand"}).json()["jeton"]
+    return client.post("/api/pulse/decouverte/activer", json={"jeton": jeton}).json()["invite"]
+
+
+def test_chaque_route_invite_refuse_toute_session_non_valide(monde):
+    app, routes = monde
+    client = TestClient(app)
+    valide = _invite(client)
+    _, nonce, _ = valide.split(".")
+    jamais = client.post("/api/pulse/console/decouverte", headers=CONSOLE, json={"origine": "stand"}).json()["nonce"]
+    code = next(p["code"] for p in client.get("/api/pulse/console/personas", headers=CONSOLE).json() if p["id"] == "n01")
+    membre = client.post("/api/pulse/acces", json={"code": code}).json()["session"]
+    mauvaises = {"absente": None, "mal formée": "pas-un-jeton", "signature falsifiée": f"i1.{nonce}.{'0' * 32}",
+                 "passe d'émission au lieu de la session": f"d1.{nonce}.{'0' * 32}",
+                 "jamais activé (signature inventée)": f"i1.{jamais}.{'1' * 32}", "session de membre": membre}
+    n = 0
+    for m, c, g in routes:
+        if g != "invite":
+            continue
+        n += 1
+        for nom, jeton in mauvaises.items():
+            entetes = {} if jeton is None else {"X-Pulse-Invite": jeton}
+            assert _appel(client, m, c, entetes) == 401, (m, c, nom)
+    assert n >= 4
 
 
 def _sessions(client):

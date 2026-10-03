@@ -29,6 +29,7 @@ class Reglages:
     # « le Club cherche ») derrière UN interrupteur. Défaut : allumé (HACKVS_FOIRE=0 rend le produit d'hier, à l'identique).
     foire: bool = False
     k_anonymat: int = 3                # HACKVS_K_ANONYMAT : sous ce nombre de membres, une catégorie n'est jamais dite
+    decouverte_jours: int = 90         # HACKVS_DECOUVERTE_JOURS : durée d'un passe découverte (horloge du monde)
 
     @classmethod
     def depuis_env(cls, env: Optional[Mapping[str, str]] = None) -> "Reglages":
@@ -44,4 +45,5 @@ class Reglages:
                    asks_montrees=int(e.get("HACKVS_ASKS_MONTREES", "1")), plafond_jours=int(e.get("HACKVS_PLAFOND_JOURS", "7")),
                    budget_noeuds=int(e.get("HACKVS_BUDGET_NOEUDS", "20000")),
                    budget_relance=int(e.get("HACKVS_BUDGET_RELANCE", "1000000")),
-                   foire=e.get("HACKVS_FOIRE", "1") == "1", k_anonymat=max(1, int(e.get("HACKVS_K_ANONYMAT", "3"))))
+                   foire=e.get("HACKVS_FOIRE", "1") == "1", k_anonymat=max(1, int(e.get("HACKVS_K_ANONYMAT", "3"))),
+                   decouverte_jours=max(1, int(e.get("HACKVS_DECOUVERTE_JOURS", "90"))))

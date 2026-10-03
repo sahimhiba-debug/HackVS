@@ -44,6 +44,9 @@
     </div>
     <div id="suivi"></div>
     <div id="recus"></div>
+    <section class="bloc" aria-label="Passes découverte"><span class="surtitre">Passes découverte (90 jours, invités non membres)</span>
+      <div class="boutons" style="display:flex;gap:8px;margin-top:8px"><button class="btn petit" id="qr-stand">QR du stand</button></div>
+      <div id="qr"></div><div id="passes"></div></section>
   </div>
   <script type="module">
     import { consoleFetch } from "/static/pulse/jeton-console.js";
@@ -108,6 +111,34 @@
       } catch (e) { $("#fraicheur").textContent = "clôture refusée : " + e.message; $("#fraicheur").className = "puce rouge"; }
       await lire();
     }
+    async function emettre(origine, demande) {
+      try {
+        const r = await consoleFetch("/api/pulse/console/decouverte", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ origine, ...(demande ? { demande } : {}) }) });
+        const p = await r.json();
+        if (!r.ok) throw new Error(p.detail || `serveur : ${r.status}`);
+        $("#qr").replaceChildren(h("div", { style: "margin-top:10px", "data-role": "qr-decouverte" },
+          h("img", { src: p.qr, alt: "QR code du passe découverte", style: "width:min(60vw,240px);background:#fff;padding:8px" }),
+          h("p", { class: "note" }, `Un passe, un scan : à usage unique, valable ${p.jours} jours (jusqu'au ${p.jusqu_au}, date du monde de démonstration), révocable.`),
+          h("p", { class: "note" }, h("a", { href: p.url, target: "_blank", rel: "noopener" }, "ouvrir le lien"))));
+      } catch (e) { $("#qr").replaceChildren(h("p", { class: "note" }, "Passe indisponible : " + e.message)); }
+      lirePasses();
+    }
+    window.emettrePasse = emettre;
+    async function lirePasses() {
+      try {
+        const r = await consoleFetch("/api/pulse/console/decouverte", {});
+        if (!r.ok) return;
+        const l = await r.json();
+        $("#passes").replaceChildren(l.length ? h("table", {}, h("tbody", {}, l.map((x) => h("tr", { "data-passe": x.nonce },
+          h("td", {}, x.origine === "stand" ? "stand" : "lié à une demande"), h("td", {}, `jusqu'au ${x.jusqu_au}`),
+          h("td", {}, x.revoque ? "révoqué" : x.active ? `activé · ${x.reponses} réponse(s)${x.intention ? " · intention d'adhésion" : ""}` : "pas encore activé"),
+          h("td", {}, x.revoque ? "" : h("button", { class: "btn discret petit", onclick: async () => {
+            await consoleFetch(`/api/pulse/console/decouverte/${encodeURIComponent(x.nonce)}/revoquer`, { method: "POST" }); lirePasses(); lire(); } }, "Révoquer")))))) :
+          h("p", { class: "note" }, "Aucun passe émis."));
+      } catch (e) { /* la liste attend la prochaine lecture */ }
+    }
+    $("#qr-stand").addEventListener("click", () => emettre("stand"));
     async function lire() {
       const t = performance.now();
       try {
@@ -123,7 +154,7 @@
       for (const x of document.querySelectorAll("#periodes button")) x.setAttribute("aria-selected", String(x === b));
       lire();
     });
-    lire(); setInterval(lire, 3000);
+    lire(); lirePasses(); setInterval(lire, 3000); setInterval(lirePasses, 5000);
   </script>
 </body>
 </html>
