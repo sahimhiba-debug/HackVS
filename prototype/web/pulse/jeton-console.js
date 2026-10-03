@@ -47,6 +47,12 @@ function obtenir(refuse) {
   enCours = (async () => {
     let j = await demanderAuxOnglets();
     if (!j || j === refuse) {
+      if (window.top !== window.self) {
+        // JOUR J (audit B1) : intégrée au deck, la page ne demande JAMAIS rien devant le public ; elle prévient le deck,
+        // qui dit « jeton manquant » et garde la touche B. Le message ne porte aucun secret.
+        try { window.parent.postMessage({ type: "club-pulse-jeton-manquant" }, "*"); } catch (e) { /* pas de parent */ }
+        return null;
+      }
       if (demandes >= 2) return null;
       demandes += 1;
       j = window.prompt("Jeton de la console du Club :");

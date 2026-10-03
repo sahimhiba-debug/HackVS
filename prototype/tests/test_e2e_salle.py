@@ -163,3 +163,25 @@ def test_ecran_injoignable_le_deck_le_dit_et_garde_la_video(deck_et_salle):
         page.keyboard.press("b")
         assert "on" in page.locator("#video-constellation").get_attribute("class").split()
         b.close()
+
+
+def test_sans_jeton_l_ecran_integre_ne_demande_rien_devant_le_public(deck_et_salle):
+    """AUDIT JOUR J B1 : régie du Mac fermée (ou jeton jamais collé) → l'écran intégré n'ouvre JAMAIS de fenêtre de saisie
+    sur le projecteur ; le deck dit « jeton manquant » et garde la touche B. Le clavier reste au deck."""
+    from playwright.sync_api import sync_playwright
+    deck, base = deck_et_salle
+    dialogues: list[str] = []
+    with sync_playwright() as p:
+        b = _chromium(p)
+        page = b.new_page(viewport={"width": 1920, "height": 1080})
+        page.set_default_timeout(30_000)
+        page.on("dialog", lambda d: dialogues.append(d.message) or d.dismiss())
+        page.goto(f"{deck}/v2.html?app={base}")
+        page.evaluate("window.pret")
+        page.evaluate("allerA('constellation', 0)")
+        page.locator("#ecran-absent:has-text('jeton')").wait_for(state="visible")
+        page.wait_for_timeout(1500)
+        assert dialogues == []
+        page.keyboard.press("b")
+        assert "on" in page.locator("#video-constellation").get_attribute("class").split()
+        b.close()

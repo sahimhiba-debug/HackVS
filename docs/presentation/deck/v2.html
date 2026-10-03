@@ -321,7 +321,7 @@ body.jour .plan-b-video { background: var(--bg); }
 <section class="slide gris" data-id="constellation" data-acte="3" data-pas="3" data-constellation="1">
   <div class="abs etiq" style="left:var(--marge);top:96px">L'écran géant · en direct · intégré au deck</div>
   <ol class="reperes"><li>La demande part</li><li>Les oui ferment l'anneau</li><li>Un retrait, le Club recompose</li></ol>
-  <div class="abs corps" id="ecran-absent" style="left:var(--marge);top:300px;max-width:1300px">L'écran de la salle ne répond pas (prototype arrêté ?).<br>Touche <span class="mono">B</span> : la vidéo de 30 s, séance simulée, enregistrée sur le vrai écran.</div>
+  <div class="abs corps" id="ecran-absent" style="left:var(--marge);top:300px;max-width:1300px"><span id="ecran-raison">L'écran de la salle ne répond pas (prototype arrêté ?).</span><br>Touche <span class="mono">B</span> : la vidéo de 30 s, séance simulée, enregistrée sur le vrai écran.</div>
   <!-- JOUR J : l'écran de la salle EN DIRECT (APP/salle/ecran), sans ⌘-Tab. Il ne prend ni le focus ni les clics : le
        clavier et la télécommande restent au deck. Jeton de console : transmis par la régie ouverte dans le même Chrome. -->
   <iframe id="ecran-salle" class="ecran-live" tabindex="-1" title="L'écran de la salle, en direct" aria-hidden="true"></iframe>
@@ -521,22 +521,25 @@ rafraichirQr(); setInterval(rafraichirQr, 10000);
 /* ── Acte 3 : l'écran de la salle EN DIRECT dans la slide « constellation » (iframe vers APP/salle/ecran ; le
       prototype n'accepte d'être intégré que par ce deck local). Injoignable : le message, et B pour la vidéo. ─ */
 const ecranSalle = document.getElementById("ecran-salle"), ecranAbsent = document.getElementById("ecran-absent");
-let sondeSalle = null;
+let sondeSalle = null, sansJeton = 0;
+// l'écran intégré n'a pas le jeton (régie du Mac fermée, ou jeton jamais collé) : il le dit, sans rien demander (audit B1)
+addEventListener("message", e => { if (e.origin === APP && e.data && e.data.type === "club-pulse-jeton-manquant") { sansJeton = Date.now(); verifierEcran(); } });
 async function salleJoignable() {
   const c = new AbortController(), t = setTimeout(() => c.abort(), 1500);
   try { await fetch(`${APP}/sante`, { mode: "no-cors", cache: "no-store", signal: c.signal }); return true; }
   catch (e) { return false; } finally { clearTimeout(t); }
 }
 async function verifierEcran() {
-  const ok = await salleJoignable();
+  if (sansJeton && Date.now() - sansJeton > 10000) { sansJeton = 0; ecranSalle.removeAttribute("src"); }  // réessayer : la régie a pu le recevoir
+  const ok = await salleJoignable(), pret = ok && !sansJeton;
   if (ok && !ecranSalle.getAttribute("src")) ecranSalle.src = `${APP}/salle/ecran?mode=${window.modeDeck()}`;
   if (!ok) ecranSalle.removeAttribute("src");
-  ecranSalle.classList.toggle("on", ok); ecranAbsent.style.display = ok ? "none" : "";
+  document.getElementById("ecran-raison").textContent = !ok ? "L'écran de la salle ne répond pas (prototype arrêté ?)."
+    : "Jeton manquant : coller le jeton dans la régie du Mac (onglet ouvert par le lanceur).";
+  ecranSalle.classList.toggle("on", pret); ecranAbsent.style.display = pret ? "none" : "";
 }
-function ecranActif(on) {                      // chargé dès l'acte 3 (« Sortez vos téléphones ») : prêt à l'arrivée
-  clearInterval(sondeSalle); sondeSalle = null;
-  if (on && !STATIQUE) { verifierEcran(); sondeSalle = setInterval(verifierEcran, 3000); }
-}
+// chargé DÈS L'OUVERTURE du deck : l'écran reçoit le jeton pendant que la régie du Mac est encore active (audit B1)
+if (!STATIQUE) { verifierEcran(); sondeSalle = setInterval(verifierEcran, 3000); }
 
 /* ── Slides conditionnelles : « la carte devient le profil » n'existe que si ?carte=1 (5/5 au rituel) ─ */
 const CONDITIONS = new Set((params.get("carte") === "1") ? ["carte"] : []);
@@ -579,7 +582,6 @@ function montrer(n, p, depuis) {
   if (b.dataset.demo) b.querySelectorAll(".reperes li").forEach((li, k) => { li.classList.toggle("fait", k < pas); li.classList.toggle("ici", k === pas - 1); });
   document.getElementById("secours").classList.remove("on");
   const v = document.getElementById("video-constellation"); if (v && !b.dataset.constellation) { v.classList.remove("on"); v.pause(); }
-  if (a !== b || sondeSalle === null) ecranActif(b.dataset.acte === "3");
   // QR en coin : de « Sortez vos téléphones » jusqu'à la demande au Club (jamais sur noir, film, carte finale)
   const coin = document.getElementById("qr-coin"), a3 = +b.dataset.acte >= 3 && +b.dataset.acte <= 6;
   coin.classList.toggle("on", a3 && !b.classList.contains("noir") && b.dataset.qr !== "grand" && !b.dataset.constellation);  // l'écran montre son QR
