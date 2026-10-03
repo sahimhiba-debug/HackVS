@@ -78,3 +78,9 @@ def test_qr_salle_servi_en_direct_depuis_public_base_url(c, monkeypatch):
     url = c.get("/qr/salle.txt").text
     assert url.startswith("https://mac-du-pitch.exemple.ts.net/salle#s=s1.")
     c.post("/api/pulse/console/salle/purger", headers=CONSOLE)
+
+
+def test_qr_feuille_de_route_suit_l_adresse_publique(c, monkeypatch):
+    monkeypatch.setenv("PUBLIC_BASE_URL", "https://mac-du-pitch.exemple.ts.net")
+    r = c.get("/qr/feuille-de-route.svg")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("image/svg+xml") and "<svg" in r.text

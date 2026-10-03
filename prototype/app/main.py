@@ -822,6 +822,12 @@ def qr_salle(request: Request):
     return Response(corps, media_type="image/svg+xml", headers={"Cache-Control": "no-store"})
 
 
+@app.get("/qr/feuille-de-route.svg")
+def qr_feuille_de_route(request: Request):
+    """QR vers la feuille de route vivante, servi EN DIRECT depuis l'adresse publique du moment (deck v2)."""
+    return Response(_svg_qr(base_publique(request) + "/feuille-de-route"), media_type="image/svg+xml", headers={"Cache-Control": "no-store"})
+
+
 @app.get("/qr/salle.txt")
 def qr_salle_texte(request: Request):
     """L'adresse encodée dans le QR (pour la vérifier avant le pitch : `curl …/qr/salle.txt`)."""
