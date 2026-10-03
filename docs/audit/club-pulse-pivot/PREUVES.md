@@ -109,6 +109,21 @@ serveur déployé : `python scripts/charge_salle.py --url https://<domaine> --je
 | p50 / p95 par route (ms) | entrer 178,9 / 200,7 · déclarer 159,9 / 208,4 · relire (moi) 115,9 / 138,9 · répondre 66,5 / 79,2 · écran 6,8 / 19,2 |
 | Cohérence finale | écran = téléphones (80 participants, capacités par métier, réponses par choix ; « < 3 » accepté seulement si le vrai nombre est 1 ou 2) ; anneau fermé ; **purge vérifiée** (0 participant après) |
 
+## Liste du Club (reçue le 3 octobre 2026) — décomptes, aucun nom
+
+Fichier `docs/data/entreprises.csv` : colonne métier seule ; source : la liste fournie par le Club ; métiers proposés
+par l'équipe, **à confirmer**. Le message de l'équipe annonce 101 entreprises classées et 44 à confirmer (valant
+« autre ») ; le fichier compte **48 lignes « autre »** — écart de 4 à vérifier avec l'équipe.
+
+| Mesure | Résultat | Commande / test |
+|---|---|---|
+| Entreprises (lignes de la liste) | **145** ; 145 / 145 rattachées à un métier de la taxonomie (25 métiers) | `test_assembler.py` |
+| Représentants | **173** — chiffre communiqué par le Club avec la liste (pas dans le fichier) | — |
+| En tête | construction / artisanat 18, finance 11, agriculture / viticulture 9, immobilier 7 | `club_cherche.entreprises_par_metier()` |
+| « Ce que votre Club pourrait assembler » | **8 capacités types sur 9** ; la délégation germanophone bloque sur « interprète », **absent** de la liste | `test_assembler.py::test_liste_du_club_huit_sur_neuf…` |
+| Métiers rares (1 ou 2 entreprises, affichés « < 3 ») | logistique, santé / sécurité, juridique, comptabilité, informatique, formation, tourisme | `test_assembler.py::test_absents_et_rares…` |
+| Faits donnés par l'équipe sur les membres (pas dans le fichier, pas vérifiés par le dépôt) | « un de vos membres exploite déjà le train vers la France » ; « parmi vos membres : une haute école, une fédération patronale, deux communes » | message de l'équipe du 03.10 |
+
 ## Contexte — faits EXTERNES relevés par l'équipe le 03.10.2026 (pas des mesures du produit)
 
 Repris tels que relevés, avec leur source ; ils ne sont pas vérifiés par le dépôt et ne sont pas des résultats de
