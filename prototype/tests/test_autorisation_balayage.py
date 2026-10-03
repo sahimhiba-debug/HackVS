@@ -64,18 +64,14 @@ def monde(tmp_path, monkeypatch):
 
 
 def _secretariat_eleve(app) -> str:
-    """Un compte nominatif du secrétariat, double authentification active, session élevée (ANNÉE 1 · lots 2 et 4)."""
+    """Un compte nominatif d'administration, double authentification active, session élevée (ANNÉE 1 · lots 2, 4, 6)."""
     from intelligence.comptes import code_totp
     cp = app.state.routeur.comptes()
     admin = cp.amorcer_administration("Administration (fictive)")
     pa = cp.preparer_totp(admin)
     cp.confirmer_totp(admin, code_totp(pa["secret"], time.time()))
     cp.elever(admin, code_totp(pa["secret"], time.time() + 30))
-    s = cp.accepter(cp.inviter(admin, role="secretariat", etiquette="Secrétariat (fictif)", duree_s=600)["jeton"], appareil="x")
-    prep = cp.preparer_totp(s)
-    cp.confirmer_totp(s, code_totp(prep["secret"], time.time()))
-    cp.elever(s, code_totp(prep["secret"], time.time() + 30))
-    return s
+    return admin              # l'administration élevée ouvre TOUTES les routes de la console (dont le journal des accès)
 
 
 def _appel(client, methode, chemin, entetes=None):

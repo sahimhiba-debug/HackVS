@@ -37,7 +37,8 @@ DUREE_ELEVATION_S = 12 * 3600               # une élévation TOTP vaut une jour
 LIMITE_ECRITURES_MINUTE = 60
 TropDeRequetes = Limite
 TYPES = ("COMPTE_ADMIN_AMORCE", "COMPTE_INVITATION", "COMPTE_CREE", "COMPTE_ROLE", "COMPTE_REVOQUE", "SESSION_OUVERTE",
-         "SESSION_FERMEE", "SESSION_ELEVEE", "TOTP_PREPARE", "TOTP_ACTIF", "TOTP_PAS_CONSOMME", "ADMIN_ACTION")
+         "SESSION_FERMEE", "SESSION_ELEVEE", "TOTP_PREPARE", "TOTP_ACTIF", "TOTP_PAS_CONSOMME", "ADMIN_ACTION",
+         "ACCES_CONSOLE")
 # qui peut inviter qui (lot 2 : les membres n'invitent pas encore)
 PEUT_INVITER = {ADMIN: set(ROLES), SECRETARIAT: {MEMBRE, INVITE}}
 
@@ -234,6 +235,19 @@ class Comptes:
             self._garder_un_admin(etat, compte)
             self._ecrire("COMPTE_REVOQUE", [compte], compte=compte)
             self._admin(s["compte"], "revoquer", compte)
+
+    # ------------------------------------------------------------------ ANNÉE 1 · LOT 6 : journal des accès
+    def tracer_acces(self, session: str, route: str) -> None:
+        """Chaque consultation de la console : qui (compte), quoi (la route, jamais les données rendues), quand."""
+        _, s, _, _ = self._session(session)
+        self._ecrire("ACCES_CONSOLE", [s["compte"]], compte=s["compte"], route=route[:120])
+
+    def journal_acces(self, session: str, limite: int = 500) -> list[dict]:
+        if self.exiger_console(session)["role"] != ADMIN:
+            raise Interdit("journal des accès réservé à l'administration")
+        etiquettes = {k: c["etiquette"] for k, c in self._etat()["comptes"].items()}
+        return [{"le": e.donnees["t"], "qui": etiquettes.get(e.donnees["compte"], "?"), "route": e.donnees["route"]}
+                for e in self._evts("ACCES_CONSOLE")][-limite:]
 
     @staticmethod
     def _garder_un_admin(etat: dict, compte: str) -> None:

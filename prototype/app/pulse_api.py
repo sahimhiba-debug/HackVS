@@ -554,6 +554,8 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
             comptes().exiger_console(x_pulse_compte)
             if request.method != "GET":
                 comptes().compter_ecriture(x_pulse_compte)
+            route = request.scope.get("route")             # ANNÉE 1 · lot 6 : journal des accès (la route, jamais
+            comptes().tracer_acces(x_pulse_compte, f"{request.method} {getattr(route, 'path', request.url.path)}")  # les données)
         except ErreurMetier as e:
             raise traduire(e) from None
         return x_pulse_compte
@@ -596,6 +598,10 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
         from intelligence import secretariat as sec
         base = base_publique(request)
         return au_monde(lambda c: sec.lancer_campagne(c, x.metier, x.nombre, base=base))
+
+    @r.get("/secretariat/acces")
+    def sec_acces(s: str = Depends(secretariat)) -> list:
+        return au_monde(lambda c: comptes().journal_acces(s))
 
     @r.get("/secretariat/comptes")
     def sec_comptes(s: str = Depends(secretariat)) -> list:

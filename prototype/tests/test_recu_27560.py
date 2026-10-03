@@ -59,7 +59,7 @@ def test_export_jsonld_conforme_pour_chaque_recu(pauline):
 def test_retrait_donne_consent_withdrawn_et_une_date(pauline):
     assert client.post(f"/api/pulse/moi/capacites/{A}/retrait", headers=pauline).status_code == 200
     rec = next(x for x in _export(pauline)["@graph"] if x["dpv:hasConsentStatus"] == "dpv:ConsentWithdrawn")
-    assert rec["dpv:hasWithdrawalTime"] and r27.conforme(rec) == []
+    assert rec["dct:modified"] and r27.conforme(rec) == []                    # date du retrait (lot 6 : terme DPV vérifié)
 
 
 def test_aucune_identite_dans_l_export(pauline):

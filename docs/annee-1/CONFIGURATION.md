@@ -29,6 +29,7 @@ Règles :
 | `HACKVS_CONSOLE_JETON` | (aucun : console limitée à cette machine) | **secret** — jeton de la console du Club ; exigé derrière un tunnel ou sur un serveur joignable |
 | `HACKVS_DECK_ORIGINES` | `http://127.0.0.1:8765 http://localhost:8765` | origines du deck local autorisées à intégrer l'écran de la salle (boucle locale seulement) |
 | `HACKVS_K_ANONYMAT` | `3` | seuil « < k » du mode salle (compté en entreprises distinctes ailleurs) |
+| `HACKVS_HSTS` | `0` | **lot 6** — `1` : en-tête Strict-Transport-Security (production derrière HTTPS seulement) |
 | `HACKVS_ANCIEN_PROTOTYPE` | `0` | `1` : sert aussi l'ancien prototype (local ou jeton) |
 
 ## Serveur

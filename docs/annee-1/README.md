@@ -5,6 +5,7 @@
 
 | Lot | Ce qui est construit | Preuve | Vitrine |
 |---|---|---|---|
+| 6 · Confiance et conformité | termes DPV vérifiés, journal des accès, HSTS, textes juridiques à valider, ASVS niveau 2 (auto-évaluation) | `test_annee1_confiance.py`, `test_annee1_dpv.py` · CLAIMS 110 | [vitrine/lot6.md](vitrine/lot6.md) · [conformite/](conformite/README.md) |
 | 5 · Notifications | e-mail SMTP générique (réel si `SMTP_HOST`, sinon simulé), SMS (interface + faux fournisseur), modèles FR/DE, suivi, désinscription signée ; relance depuis la console | `test_annee1_notifications.py`, `test_annee1_notifications_api.py` · CLAIMS 109 | [vitrine/lot5.md](vitrine/lot5.md) |
 | 4 · Console du secrétariat | comptes (inviter, révoquer), métiers à confirmer, critères du pilote gelés d'avance, bilan trimestriel MD / CSV / PDF, campagne d'invitation reliée à « Le Club cherche » ; page `/secretariat` (compte nominatif + TOTP) | `test_annee1_secretariat.py`, `test_annee1_secretariat_api.py` · CLAIMS 108 | [vitrine/lot4.md](vitrine/lot4.md) |
 | 3 · Espace membre | mode pause, préférences langue / région / canaux, mes demandes envoyées, solde privé, export de mes données, suppression avec purge réelle du journal ; page `/espace` | `test_annee1_espace_membre.py`, `test_annee1_espace_membre_api.py` · CLAIMS 107 | [vitrine/lot3.md](vitrine/lot3.md) |

@@ -245,3 +245,9 @@
   de: Benachrichtigungen — E-Mail über jeden SMTP-Server, SMS (Schnittstelle und Testanbieter), Vorlagen FR/DE, Versandprotokoll ohne Adresse und Inhalt, Abmeldung per signiertem Link; in der Demo alles simuliert und gekennzeichnet
   en: Notifications — e-mail through any SMTP server, SMS (interface and fake provider), FR/DE templates, delivery tracking without address or content, unsubscribe by signed link; in the demo, everything simulated and labelled
   tests: test_annee1_notifications.py, test_annee1_notifications_api.py
+- id: a1-conformite
+  statut: annee1
+  fr: Confiance et conformité — reçus 27560 aux termes DPV vérifiés, journal des accès à la console, HSTS en production, registre, analyse d'impact, politiques FR/DE et contrat de sous-traitance (à valider par un juriste), checklist ASVS niveau 2
+  de: Vertrauen und Konformität — 27560-Belege mit geprüften DPV-Begriffen, Zugriffsprotokoll der Konsole, HSTS in Produktion, Verzeichnis, Folgenabschätzung, Richtlinien FR/DE und Auftragsverarbeitungsvertrag (juristisch zu prüfen), ASVS-Checkliste Stufe 2
+  en: Trust and compliance — 27560 receipts with verified DPV terms, console access log, HSTS in production, records of processing, impact assessment, FR/DE policies and processing agreement (to be reviewed by a lawyer), ASVS level 2 checklist
+  tests: test_annee1_confiance.py, test_annee1_dpv.py

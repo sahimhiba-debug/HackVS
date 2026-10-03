@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import base64
+import os
 import hashlib
 import hmac
 import re
@@ -120,6 +121,8 @@ class Protections:
                     h.append((b"content-security-policy", self.csp_integrable))
                 elif chemin in self.chemins_csp or chemin.rstrip("/") in self.chemins_csp:
                     h.append((b"content-security-policy", self.csp))
+                if os.environ.get("HACKVS_HSTS") == "1":      # ANNÉE 1 · lot 6 : derrière HTTPS seulement (production)
+                    h.append((b"strict-transport-security", b"max-age=31536000; includeSubDomains"))
                 if chemin.startswith("/api/pulse/"):
                     h.append((b"cache-control", b"no-store"))    # données personnelles : jamais en cache intermédiaire
                 m["headers"] = h

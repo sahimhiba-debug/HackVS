@@ -5,8 +5,9 @@ touche pas). Ce module le PROJETTE, à la lecture, vers la structure d'un enregi
 27560 et l'exporte en JSON-LD avec le vocabulaire DPV (Data Privacy Vocabulary, W3C DPVCG).
 
 Limites, dites telles quelles :
-- la table de correspondance est proposée par l'équipe ; les termes DPV ont été choisis sans accès à la spécification
-  pendant la nuit du 3 octobre (site inaccessible depuis la session) — **à relire** par quelqu'un qui la connaît ;
+- la table de correspondance est proposée par l'équipe ; ANNÉE 1 · lot 6 : chaque terme « dpv:… » est maintenant
+  VÉRIFIÉ contre la liste officielle de DPV 2.1 (test_annee1_dpv.py) — deux termes inventés ont été remplacés ; le
+  SENS de la correspondance reste **à relire** par quelqu'un qui connaît la norme ;
 - la conformité testée ici est celle de NOTRE table : chaque champ marqué obligatoire est présent et non vide, le
   statut suit l'état du reçu, aucune identité ne sort (la personne concernée est un pseudonyme)."""
 from __future__ import annotations
@@ -31,10 +32,11 @@ CHAMPS: list[dict[str, Any]] = [
     {"champ_27560": "statut du consentement", "recu": "etat", "terme_dpv": "dpv:hasConsentStatus", "obligatoire": True},
     {"champ_27560": "date de l'accord", "recu": "donne_le", "terme_dpv": "dpv:isIndicatedAtTime", "obligatoire": True},
     {"champ_27560": "méthode d'expression", "recu": "(geste « Oui » sur le téléphone)", "terme_dpv": "dpv:isIndicatedBy", "obligatoire": True},
-    {"champ_27560": "durée de validité", "recu": "jusqu_au", "terme_dpv": "dpv:hasExpiryTime", "obligatoire": False},
+    {"champ_27560": "durée de validité", "recu": "jusqu_au", "terme_dpv": "dpv:hasDuration", "obligatoire": False},
     {"champ_27560": "destinataires", "recu": "partage", "terme_dpv": "dpv:hasRecipient", "obligatoire": False},
     {"champ_27560": "version de la notice", "recu": "version", "terme_dpv": "dpv:hasNotice", "obligatoire": False},
-    {"champ_27560": "date du retrait", "recu": "retire_le", "terme_dpv": "dpv:hasWithdrawalTime", "obligatoire": False},
+    {"champ_27560": "date du retrait", "recu": "retire_le", "terme_dpv": "dpv:ConsentWithdrawn",
+     "note": "statut retiré, daté par dct:modified", "obligatoire": False},
 ]
 OBLIGATOIRES = [c["terme_dpv"] for c in CHAMPS if c["obligatoire"]]
 
@@ -59,12 +61,13 @@ def enregistrement(recu: dict, sujet: str) -> dict:
         "dpv:hasConsentStatus": _statut(recu),
         "dpv:isIndicatedAtTime": recu["donne_le"],
         "dpv:isIndicatedBy": "geste « Oui » du membre sur son téléphone",
-        "dpv:hasExpiryTime": recu.get("jusqu_au"),
+        # ANNÉE 1 · lot 6 : termes VÉRIFIÉS contre DPV 2.1 (« hasExpiryTime » et « hasWithdrawalTime » n'y existent pas)
+        "dpv:hasDuration": {"@type": "dpv:UntilTimeDuration", "dct:date": recu.get("jusqu_au")} if recu.get("jusqu_au") else None,
         "dpv:hasRecipient": recu.get("partage"),
         "dpv:hasNotice": {"dct:hasVersion": recu.get("version")},
     }
     if recu.get("retire_le"):
-        rec["dpv:hasWithdrawalTime"] = recu["retire_le"]
+        rec["dct:modified"] = recu["retire_le"]        # le statut dpv:ConsentWithdrawn, daté de son changement
     return rec
 
 
@@ -73,8 +76,8 @@ def conforme(rec: dict) -> list[str]:
     ecarts = [f"{t} manquant" for t in OBLIGATOIRES if rec.get(t) in (None, "", {}, [])]
     if rec.get("@type") != "dpv:ConsentRecord":
         ecarts.append("@type n'est pas dpv:ConsentRecord")
-    if rec.get("dpv:hasConsentStatus") == "dpv:ConsentWithdrawn" and not rec.get("dpv:hasWithdrawalTime"):
-        ecarts.append("dpv:hasWithdrawalTime manquant pour un retrait")
+    if rec.get("dpv:hasConsentStatus") == "dpv:ConsentWithdrawn" and not rec.get("dct:modified"):
+        ecarts.append("dct:modified (date du retrait) manquant pour un retrait")
     return ecarts
 
 
