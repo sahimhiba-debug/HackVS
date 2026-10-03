@@ -1,6 +1,7 @@
 """Lance le deck hors ligne : petit serveur local (127.0.0.1) + navigateur.
 
     python3 docs/presentation/deck/lancer.py          # puis F11 / plein écran
+    python3 docs/presentation/deck/lancer.py 8765 --sans-navigateur   # (lanceur du jour J)
 
 Pourquoi un serveur : ouvert en double-clic (file://), Chrome refuse de lire data/gel.json. Ici rien ne sort de la
 machine : le serveur n'écoute que 127.0.0.1 et ne sert que ce dossier. Bibliothèque standard Python uniquement.
@@ -19,7 +20,9 @@ import webbrowser
 from pathlib import Path
 
 DOSSIER = Path(__file__).resolve().parent
-PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8765
+ARGS = [a for a in sys.argv[1:] if not a.startswith("--")]
+PORT = int(ARGS[0]) if ARGS else 8765
+SANS_NAVIGATEUR = "--sans-navigateur" in sys.argv     # le lanceur du jour J ouvre lui-même Chrome
 PLAGE = re.compile(r"bytes=(\d*)-(\d*)$")
 
 
@@ -87,7 +90,8 @@ def main() -> None:
     with Serveur(("127.0.0.1", PORT), gestion) as srv:
         url = f"http://127.0.0.1:{PORT}/index.html"
         print(f"Deck : {url}   (Ctrl+C pour arrêter)")
-        threading.Timer(0.6, lambda: webbrowser.open(url)).start()
+        if not SANS_NAVIGATEUR:
+            threading.Timer(0.6, lambda: webbrowser.open(url)).start()
         srv.serve_forever()
 
 

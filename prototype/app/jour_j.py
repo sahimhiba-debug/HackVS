@@ -300,7 +300,7 @@ def en_texte(vs: list[Voyant], couleurs: bool = True) -> str:
         return f"{_ANSI[couleur]}{t}\033[0m" if couleurs else t
     lignes = ["", "Check-list Club Pulse (aussi sur http://127.0.0.1:8000/preflight)", ""]
     for v in vs:
-        lignes.append(f"  {c(v.couleur, '● ' + v.couleur.upper()):<20} {v.titre} — {v.detail}")
+        lignes.append(f"  {c(v.couleur, '● ' + v.couleur.upper())}{' ' * (9 - len(v.couleur))}{v.titre} — {v.detail}")
     texte, raisons = verdict(vs)
     lignes.append("")
     lignes += [f"  · {r}" for r in raisons]

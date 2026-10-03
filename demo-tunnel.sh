@@ -12,15 +12,17 @@ case "$PUBLIC_BASE_URL" in https://*) ;; *) echo "ERREUR : PUBLIC_BASE_URL doit 
 [ "${#HACKVS_CONSOLE_JETON}" -ge 16 ] || { echo "ERREUR : HACKVS_CONSOLE_JETON doit compter au moins 16 caractères"; exit 1; }
 [ "${VERIFIER_SEULEMENT:-0}" = "1" ] && { echo "OK : configuration du tunnel valide."; exit 0; }
 PY="${PY:-python3}"
-mkdir -p var
-test -s var/secret_demo || "$PY" -c "import secrets; print(secrets.token_urlsafe(48))" > var/secret_demo
-chmod 600 var/secret_demo
+PORT="${CLUBPULSE_PORT:-8000}"
+VAR="${CLUBPULSE_VAR:-var}"                       # tests du lanceur : un dossier temporaire, jamais prototype/var
+mkdir -p "$VAR"
+test -s "$VAR/secret_demo" || "$PY" -c "import secrets; print(secrets.token_urlsafe(48))" > "$VAR/secret_demo"
+chmod 600 "$VAR/secret_demo"
 # empêcher la veille (écran et système) tant que le serveur tourne — macOS seulement
 VEILLE=()
 command -v caffeinate >/dev/null && VEILLE=(caffeinate -dimsu)
-echo "Club Pulse sur http://127.0.0.1:8000 — public : ${PUBLIC_BASE_URL} — QR de la salle : ${PUBLIC_BASE_URL}/qr/salle.svg"
-exec ${VEILLE[@]+"${VEILLE[@]}"} env HACKVS_SECRET="$(cat var/secret_demo)" HACKVS_ESSAIS_DB=var/club_pulse.db \
+echo "Club Pulse sur http://127.0.0.1:${PORT} — public : ${PUBLIC_BASE_URL} — QR de la salle : ${PUBLIC_BASE_URL}/qr/salle.svg"
+exec ${VEILLE[@]+"${VEILLE[@]}"} env HACKVS_SECRET="$(cat "$VAR/secret_demo")" HACKVS_ESSAIS_DB="$VAR/club_pulse.db" \
   HACKVS_MODE=demo HACKVS_DB=:memory: HACKVS_DECISIONS_DB=:memory: HACKVS_CYCLE_DB=:memory: \
   HACKVS_FOIRE="${HACKVS_FOIRE:-1}" HACKVS_SALLE="${HACKVS_SALLE:-1}" \
   PUBLIC_BASE_URL="$PUBLIC_BASE_URL" HACKVS_CONSOLE_JETON="$HACKVS_CONSOLE_JETON" \
-  "$PY" -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log
+  "$PY" -m uvicorn app.main:app --host 127.0.0.1 --port "$PORT" --no-access-log
