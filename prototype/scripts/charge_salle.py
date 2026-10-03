@@ -3,7 +3,9 @@ réponse à la demande, un retrait — puis cohérence finale. Mesure p50 / p95 
 l'écran géant dit exactement ce que les téléphones ont fait.
 
     python scripts/charge_salle.py --local                                   # serveur local neuf (mesure de PREUVES.md)
-    python scripts/charge_salle.py --url https://<domaine> --jeton <HACKVS_CONSOLE_JETON> --n 80   # serveur déployé
+    python scripts/charge_salle.py --base-url https://<mac>.<tailnet>.ts.net --jeton <HACKVS_CONSOLE_JETON> --n 80   # via le tunnel
+
+Depuis UNE machine, les 80 téléphones simulés partagent une adresse IP : c'est exactement la situation du tunnel.
 
 ATTENTION : purge la salle au début et à la fin. Aucun nom, aucune donnée personnelle : des passes et des capacités."""
 import argparse
@@ -108,7 +110,7 @@ def mesurer(base: str, jeton: str, n: int, graine: int = 7) -> dict:
 
 def main() -> int:
     a = argparse.ArgumentParser()
-    a.add_argument("--url")
+    a.add_argument("--url", "--base-url", dest="url", help="adresse publique (ex. celle du tunnel : https://<mac>.ts.net)")
     a.add_argument("--jeton", default="1")
     a.add_argument("--n", type=int, default=80)
     a.add_argument("--local", action="store_true")
