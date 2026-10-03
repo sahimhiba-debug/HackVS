@@ -116,3 +116,12 @@ corrections et livraison avant 07:30. Aucun tag, aucun push sur `main` — **`ma
 - https://american-image.com/ten-tips-for-better-trade-show-leads-follow-up/
 - https://www.liip.ch/en/blog/apertus-1-5-6-ways-to-try-out-switzerland-s-updated-ai-model
 - https://docs.vllm.ai/en/latest/api/vllm/tool_parsers/apertus_tool_parser/
+
+## Mission « Année 1 » (reçue le 03.10 à 22:10, heure de Martigny)
+
+Arrêt des nouveautés : **dim. 04.10, 14:10** · barrière fermée (arrêt − 8 h) : **dim. 04.10, 06:10**.
+Filet : branche `pitch-stable` = `d2eaa30` (tête de `foire-2026` à l'ouverture). Voie produit : branche `annee-1`.
+
+| Heure | Fait | En cours | Abandonné |
+|---|---|---|---|
+| 22:45 | Section 1 (foire-2026, documents) : version parlée dans le script v2 + 3e « Et après ? » (`9a55ff7`) ; 18 / 15 min + trois répétitions (`9a55ff7`) ; prompteur (`606eeb0`) ; six jurys simulés, 48 questions, top 20, page d'entraînement (`0feb345`) ; visite guidée, 18 captures réelles | lot 1 (annee-1) | — |
