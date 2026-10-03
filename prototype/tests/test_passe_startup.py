@@ -30,3 +30,14 @@ def test_passe_startup_deux_fois_plus_long_et_marque_a_valider():
 
 def test_origine_inconnue_refusee():
     assert client.post("/api/pulse/console/decouverte", headers=CONSOLE, json={"origine": "ark"}).status_code == 422
+
+
+def test_l_invite_retire_son_consentement_et_son_passe_ne_vaut_plus_rien():
+    """Audit D2 : le reçu dit « révocable » — l'invité rend son passe ; le nom n'a jamais été dans le journal."""
+    s = client.post("/api/pulse/console/decouverte", headers=CONSOLE, json={"origine": "stand"}).json()
+    inv = {"X-Pulse-Invite": client.post("/api/pulse/decouverte/activer", json={"jeton": s["jeton"]}).json()["invite"]}
+    ref = client.get("/api/pulse/decouverte/referentiel", headers=inv).json()
+    corps = {"entreprise": "Atelier Témoin Sàrl", "metier": "transport", "zone": ref["zones"][0]}
+    assert client.post("/api/pulse/decouverte/declaration", headers=inv, json=corps).status_code == 200
+    assert client.post("/api/pulse/decouverte/retirer", headers=inv).json()["retire"] is True
+    assert client.get("/api/pulse/decouverte/moi", headers=inv).status_code == 401

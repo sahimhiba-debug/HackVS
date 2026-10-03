@@ -264,6 +264,10 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     def repondre_invite(ask_id: str, x: Aide, session: str = Depends(invite)) -> dict:
         return au_monde(foire(lambda c: c.decouverte.repondre(session, ask_id[:120], x.aide)))
 
+    @r.post("/decouverte/retirer")
+    def retirer_decouverte(session: str = Depends(invite)) -> dict:
+        return au_monde(foire(lambda c: c.decouverte.retirer(session)))
+
     @r.post("/decouverte/rejoindre")
     def rejoindre(session: str = Depends(invite)) -> dict:
         return au_monde(foire(lambda c: c.decouverte.rejoindre(session)))

@@ -45,6 +45,13 @@ PREVU_ENSUITE = [
 class Decouverte:
     def __init__(self, c: "ClubPulse", jours: int = 90):
         self.c, self.jours = c, jours
+        # AUDIT D2 : le NOM d'entreprise déclaré par l'invité reste HORS du journal (comme la carte → profil) ; le journal
+        # n'en garde qu'une clé HMAC, qui sert seulement à compter des entreprises distinctes (seuil « < 3 », audit D3)
+        self._noms: dict[str, str] = {}
+
+    def _cle_entreprise(self, nom: str) -> str:
+        norme = " ".join(nom.lower().split())
+        return "ENT-" + hmac.new(self.c.reglages.secret, f"decouverte|entreprise|{norme}".encode(), hashlib.sha256).hexdigest()[:12]
 
     # ------------------------------------------------------------------ jetons
     def _sig(self, usage: str, nonce: str) -> str:
@@ -73,7 +80,9 @@ class Decouverte:
                                        "active_le": None, "revoque": False, "declaration": None, "reponses": [], "intention": False}
         for type_, f in (("DECOUVERTE_ACTIVE", lambda p, e: p.update(active_le=e.le)),
                          ("DECOUVERTE_REVOQUE", lambda p, e: p.update(revoque=True)),
-                         ("DECOUVERTE_DECLARATION", lambda p, e: p.update(declaration=e.donnees | {"le": e.le})),
+                         ("DECOUVERTE_RETRAIT", lambda p, e: p.update(revoque=True, declaration=None)),
+                         ("DECOUVERTE_DECLARATION", lambda p, e: p.update(declaration=e.donnees | {"le": e.le,
+                                                                         "entreprise": self._noms.get(e.donnees["nonce"], "—")})),
                          ("DECOUVERTE_REPONSE", lambda p, e: p["reponses"].append(e.donnees | {"le": e.le})),
                          ("DECOUVERTE_INTENTION", lambda p, e: p.update(intention=True))):
             for e in self._evs(type_):
@@ -153,7 +162,8 @@ class Decouverte:
         if zone not in metiers.ZONES:
             raise Invalide("zone inconnue")
         finalite = FINALITE.format(jours=self.jours)
-        self.c.banc._ecrire("DECOUVERTE_DECLARATION", [], Statut.OBSERVE, nonce=p["nonce"], entreprise=entreprise,
+        self._noms[p["nonce"]] = entreprise                     # en mémoire seulement (audit D2)
+        self.c.banc._ecrire("DECOUVERTE_DECLARATION", [], Statut.OBSERVE, nonce=p["nonce"], cle_entreprise=self._cle_entreprise(entreprise),
                             metier=metier, zone=zone, finalite=finalite)
         return {"recu": {"reference": f"decouverte-{p['nonce'][:8]}", "finalite": finalite, "donne_le": self.c.jour.isoformat(),
                          "jusqu_au": p["jusqu_au"].isoformat(), "revocable": True, "fictif": True}}
@@ -185,6 +195,14 @@ class Decouverte:
         return {"ask": ask, "aide": aide, "note": "Proposition transmise au Club : elle ne remplit pas la capacité à elle seule — "
                                                    "un membre de la commission reprend contact (simulé en démonstration)."}
 
+    def retirer(self, session: str) -> dict:
+        """Le reçu le dit révocable (audit D2) : l'invité rend son passe — la déclaration est oubliée (le nom, en mémoire,
+        est effacé ; le journal n'en a jamais eu que la clé), le passe ne vaut plus rien."""
+        p = self.invite(session)
+        self._noms.pop(p["nonce"], None)
+        self.c.banc._ecrire("DECOUVERTE_RETRAIT", [], Statut.OBSERVE, nonce=p["nonce"])
+        return {"retire": True, "message": "Consentement retiré : votre passe et votre déclaration sont effacés."}
+
     def rejoindre(self, session: str) -> dict:
         p = self.invite(session)
         if not p["intention"]:
@@ -193,12 +211,18 @@ class Decouverte:
 
     # ------------------------------------------------------------------ Suivi
     def statistiques(self, debut: Optional[date], k: int) -> dict:
-        def kk(n: int):
-            return f"< {k}" if 0 < n < k else n
+        """Agrégats pour Suivi — seuil « < k » compté en ENTREPRISES distinctes (audit D3) : la clé d'entreprise déclarée,
+        ou le passe lui-même tant que rien n'est déclaré."""
+        def ent(p: dict) -> str:
+            return (p["declaration"] or {}).get("cle_entreprise") or f"passe:{p['nonce']}"
+
+        def kk(groupe: list[dict]):
+            n, e = len(groupe), len({ent(p) for p in groupe})
+            return f"< {k}" if n and e < k else n
         ps = [p for p in self.passes().values() if p["active_le"] is not None and (debut is None or p["active_le"] >= debut)]
         hors = [p for p in ps if p["declaration"] and p["declaration"]["zone"] not in metiers.VALAIS]
-        return {"actifs": kk(sum(self._valable(p) for p in ps)),
-                "ont_contribue": kk(sum(any(r["aide"] for r in p["reponses"]) for p in ps)),
-                "intentions_adhesion": kk(sum(p["intention"] for p in ps)),
-                "hors_valais": kk(len(hors)), "emis": len([p for p in self.passes().values()
-                                                           if debut is None or p["emis_le"] >= debut])}
+        return {"actifs": kk([p for p in ps if self._valable(p)]),
+                "ont_contribue": kk([p for p in ps if any(r["aide"] for r in p["reponses"])]),
+                "intentions_adhesion": kk([p for p in ps if p["intention"]]),
+                "hors_valais": kk(hors), "emis": len([p for p in self.passes().values()
+                                                       if debut is None or p["emis_le"] >= debut])}
