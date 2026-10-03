@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 
 RACINE = Path(__file__).resolve().parents[2]
-SECRETS = ("HACKVS_SECRET", "HACKVS_CONSOLE_JETON", "APERTUS_API_KEY", "DOMAINE", "PUBLIC_BASE_URL")
+SECRETS = ("HACKVS_SECRET", "HACKVS_CONSOLE_JETON", "APERTUS_API_KEY", "DOMAINE", "PUBLIC_BASE_URL", "DOMAINE_VISITE", "PUBLIC_VISITE_URL")
 
 
 def test_env_example_ne_contient_aucune_valeur_secrete():

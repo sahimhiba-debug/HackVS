@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Club Pulse · Feuille de route</title>
+  <meta name="description" content="Club Pulse — ce qui est construit, ce qui est validé sur le terrain, ce qui est prévu. FR / DE / EN.">
+  <link rel="icon" href="/static/pulse/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/pulse/pulse.css">
+  <style>
+    body { background: var(--papier); }
+    header.haut { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid var(--hairline-2); background: var(--card); }
+    header.haut .droite { margin-left: auto; display: flex; gap: 6px; }
+    .page { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
+    h1 { font-size: clamp(24px, 3vw, 34px); font-weight: 800; letter-spacing: -0.03em; }
+    .colonnes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+    .colonne { background: var(--card); border-radius: var(--r-card); padding: 14px 16px; box-shadow: var(--sh-card-light); }
+    .colonne h2 { font-size: 16px; font-weight: 800; }
+    .colonne li { margin: 8px 0; font-size: 14px; line-height: 1.4; }
+    .colonne small { display: block; color: var(--secondary); font-size: 12px; margin-top: 2px; }
+    .langues button[aria-pressed="true"] { background: var(--ink); color: var(--card); }
+    .qr img { width: 160px; background: #fff; padding: 8px; border-radius: 12px; }
+    @media (max-width: 760px) { .colonnes { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header class="haut"><span class="marque"><span class="pouls-point" aria-hidden="true"></span>Club Pulse</span>
+    <span class="droite langues" id="langues"><button class="btn discret petit" data-l="fr" aria-pressed="true">FR</button>
+      <button class="btn discret petit" data-l="de" aria-pressed="false">DE</button><button class="btn discret petit" data-l="en" aria-pressed="false">EN</button></span></header>
+  <div class="page"><h1 id="titre">…</h1><p class="sous note" id="sous"></p><div class="colonnes" id="colonnes"></div>
+    <div style="display:flex;gap:16px;align-items:center;margin-top:18px" class="qr"><span id="qr"></span><p class="note" id="qr-texte"></p></div></div>
+  <script type="module">
+    const $ = (s) => document.querySelector(s);
+    function h(tag, attrs = {}, ...enfants) {
+      const el = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs || {})) { if (v === null || v === undefined || v === false) continue; if (k === "class") el.className = v; else el.setAttribute(k, v === true ? "" : v); }
+      for (const e of enfants.flat(Infinity)) if (e !== null && e !== undefined && e !== false) el.append(e instanceof Node ? e : document.createTextNode(String(e)));
+      return el;
+    }
+    const T = {
+      fr: { titre: "Où nous en sommes", sous: "Trois statuts, rien de plus : construit (code et tests), validé sur le terrain (preuve réelle), prévu. Les écrans « construits » s'ouvrent dans un monde de visite fictif.", ouvrir: "voir l'écran", qr: "Scannez pour retrouver cette page après la présentation." },
+      de: { titre: "Wo wir stehen", sous: "Drei Status, nicht mehr: gebaut (Code und Tests), im Feld bestätigt (echter Nachweis), geplant. Die « gebauten » Bildschirme öffnen sich in einer fiktiven Besuchswelt.", ouvrir: "Bildschirm ansehen", qr: "Scannen Sie, um diese Seite nach der Präsentation wiederzufinden." },
+      en: { titre: "Where we stand", sous: "Three statuses, nothing more: built (code and tests), validated in the field (real evidence), planned. \"Built\" screens open in a fictional visit world.", ouvrir: "open the screen", qr: "Scan to find this page again after the presentation." },
+    };
+    let L = "fr", d = null;
+    function rendre() {
+      const t = T[L];
+      document.documentElement.lang = L; $("#titre").textContent = t.titre; $("#sous").textContent = t.sous; $("#qr-texte").textContent = t.qr;
+      if (!d) return;
+      $("#colonnes").replaceChildren(...["construit", "valide", "prevu"].map((st) => {
+        const items = d.chantiers.filter((c) => c.statut === st);
+        return h("section", { class: "colonne", "data-statut": st }, h("h2", {}, items.length ? items[0].libelles[L] : st, ` (${items.length})`),
+          h("ul", {}, items.map((c) => h("li", { "data-chantier": c.id }, c.titre[L],
+            c.lien ? h("small", {}, h("a", { href: c.lien, target: "_blank", rel: "noopener" }, t.ouvrir)) : null,
+            c.preuve_terrain ? h("small", {}, c.preuve_terrain) : null, c.note ? h("small", {}, c.note) : null))));
+      }));
+    }
+    for (const b of document.querySelectorAll("#langues button")) b.addEventListener("click", () => {
+      L = b.dataset.l; for (const x of document.querySelectorAll("#langues button")) x.setAttribute("aria-pressed", String(x === b)); rendre(); });
+    (async () => {
+      try { d = await (await fetch("/api/pulse/feuille-de-route")).json(); $("#qr").replaceChildren(h("img", { src: d.qr, alt: "QR code de la feuille de route" })); }
+      catch (e) { $("#sous").textContent = "hors ligne"; }
+      rendre();
+    })();
+  </script>
+</body>
+</html>

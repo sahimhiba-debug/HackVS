@@ -1,73 +1,84 @@
-# Feuille de route — six mois après la Foire (octobre 2026 → avril 2027)
+# Feuille de route — 30 jours pour lancer, 45 pour prouver, la Foire 2027 pour grandir
 
-Le prototype tourne sur un **monde de démonstration** (150 profils fictifs). Le Club réel compte **une cinquantaine de
-membres**. Rien ci-dessous n'est fait sauf mention contraire (voir [README.md](README.md) pour l'état daté). Chaque
-jalon chiffré est un **objectif**, mesuré par l'écran Suivi ([SUIVI_METRIQUES.md](SUIVI_METRIQUES.md)) — jamais
-affiché comme atteint avant d'être mesuré.
+Révisée le 03.10.2026 (vague 2) : la vitesse de la nuit du 3 octobre change le plan. **Le code n'est plus le goulot ;
+la validation l'est** — avec des membres réels, un juriste, des partenaires. Les trois jalons sont comptés **à partir
+du feu vert du Club** (J0). Le prototype tourne sur un **monde de démonstration** (150 profils fictifs) ; le Club réel
+compte **une cinquantaine de membres**. Rien ci-dessous n'est fait sauf mention contraire : l'état daté de chaque
+chantier est dans [etat.yaml](etat.yaml), repris par [README.md](README.md).
 
-## Phase 0 — cadrage (semaines 1 à 3)
+## Jalon 1 — « Lancer » (J0 → J+30)
 
-- **Métriques signées par le Club** : les définitions de [SUIVI_METRIQUES.md](SUIVI_METRIQUES.md), relues et signées
-  par le comité ; le seuil k = 3 confirmé.
-- **Analyse d'impact nLPD / RGPD** (voir [FINANCEMENT_JURIDIQUE.md](FINANCEMENT_JURIDIQUE.md)) avant toute donnée réelle.
-- **Rendez-vous** : CimArk / Innosuisse (chèque d'innovation), Secrétariat conjoint Interreg France-Suisse (chef de
-  file français), contact **HES-SO Valais-Wallis** (partenaire de recherche).
-- Sortie : un pilote autorisé, des métriques signées, un calendrier de financement.
+Durcir ce qui existe pour la production, faire valider ce qui touche aux personnes, puis lancer devant les membres.
 
-## Phase 1 — mois 1 à 3 · 5 ingénieurs · pilote mesuré avec les 50 membres
-
-| Chantier | État au gel | Remarque |
+| Chantier | Qui | Sortie |
 |---|---|---|
-| Pilote mesuré avec les membres réels | ⬜ | données d'identité séparées du journal dès le jour 1 |
-| Réponse depuis l'e-mail (Oui / Non / Pas cette fois, liens signés à usage unique) | ⬜ / 🟡 selon F | prototype : boîte de sortie locale « simulé en démonstration » si F livré |
-| Escalade vers des membres « piliers » quand une demande reste sans réponse | ⬜ | décidée par une personne, jamais par l'IA |
-| Clôture de reçu (signé / test sans suite / contact établi / abandonné) | ✅ prototype | B, testé |
-| Tableau de bord du secrétariat (Suivi) | ✅ prototype | A, agrégats, k = 3 |
-| Bilan trimestriel | ⬜ / 🟡 selon G | `make bilan` |
-| Passe découverte | ✅ prototype | D, 90 jours, 3 demandes |
+| Durcissement : sécurité, sauvegardes chiffrées du journal, supervision, vrais e-mails (fournisseur suisse) | 2 ingénieurs | service en production, restauration testée |
+| **Audit de sécurité externe** | prestataire | rapport, corrections faites avant le lancement |
+| **Analyse d'impact nLPD / RGPD avec un juriste** (registre des traitements : modèle prêt dans `docs/conformite/`) | juriste + secrétariat | analyse signée, information FR / DE validée |
+| Relecture des traductions allemandes par des germanophones | 2 membres du Haut-Valais | écrans DE validés |
+| **Lancement auprès des 50 membres lors d'un événement du Club** (le mode salle sert ce soir-là) | communauté + secrétariat | membres inscrits, capacités déclarées |
 
-**Jalon de fin de phase 1 (objectifs, à mesurer)** : ≥ 30 membres avec une capacité déclarée ; ≥ 40 demandes
-adressées ; ≥ 30 % de oui ; premier oui en moins de 72 h en médiane.
+## Jalon 2 — « Prouver » : pilote de 45 jours (début janvier → mi-février 2027)
 
-## Phase 2 — mois 4 et 5 · 8 ingénieurs · au-delà du Valais romand
+Le pilote évite les fêtes. Les **critères de réussite sont fixés d'avance** et marqués **« à valider avec le Club »** :
 
-- Interface et demandes **en allemand** (Haut-Valais, acheteurs alémaniques) ; les écrans d'invité sont déjà FR / DE.
-- Statut **membre à distance** (zone, langue, réponse depuis l'e-mail).
-- **Adhésion croisée** avec un partenaire français (CCI France Suisse / CCSF — voir [BENCHMARK.md](BENCHMARK.md)).
-- **Annonces sous chiffre intermédiées** (le Club relaie, l'entreprise reste anonyme jusqu'à son accord).
-- Dossiers de **financement** déposés (Interreg avant le 12 mars 2027, Innosuisse).
+| Critère (à valider avec le Club) | Seuil |
+|---|---|
+| Demandes adressées | **≥ 25** |
+| Part de « oui » | **≥ 30 %** |
+| Premier oui, médiane | **< 72 h** |
+| Membres actifs | **≥ 15 sur 50** |
+| Incidents de confidentialité | **0** |
 
-**Jalon (objectifs)** : ≥ 10 membres actifs hors Valais romand ; un partenaire français signé.
+**Avec ce volume, le taux de réponse est un signal, pas une mesure fine** : 25 demandes, c'est un ordre de grandeur,
+pas une statistique. Le bilan le dira tel quel.
 
-## Phase 3 — mois 6 · « Allumage Foire »
+Pendant et à la fin du pilote : bilan au comité (`make bilan`, mêmes chiffres que Suivi) ; **premier partenaire
+français** approché ; **dépôt Interreg France-Suisse avant le 12 mars 2027**, avec les résultats du pilote ; **chèque
+d'innovation Innosuisse** avec la HES-SO Valais-Wallis (voir [FINANCEMENT_JURIDIQUE.md](FINANCEMENT_JURIDIQUE.md)).
 
-- QR sur les stands de la Foire, passe découverte, page « prévu ensuite » ;
-- pont avec le concours de pitch **The Ark** ;
-- **simulation à 50 utilisateurs** (charge, concurrence, mode salle) avant l'édition suivante.
+## Jalon 3 — « Grandir » (jusqu'à la Foire 2027)
 
-## Équipe
+- **Membres à distance** et **adhésion croisée** avec une chambre partenaire (exemple fictif dans le prototype, aucun
+  partenaire acquis) ;
+- parcours **« Allumage Foire »** avec les exposants : QR sur les stands, passe découverte, page « prévu ensuite » ;
+- **mesure des adhésions venues du passe découverte** (intentions → adhésions réelles, comptées par le secrétariat).
 
-| Rôle | Phase 1 | Phase 2 |
-|---|---|---|
-| Produit / animation du Club | 1 | 1 |
-| Back-end (journal, registre, sécurité) | 2 | 3 |
-| Front-end (téléphone, console, accessibilité) | 1 | 2 |
-| IA (Apertus, évaluation, voir [APERTUS_PLAN.md](APERTUS_PLAN.md)) | 1 | 1 |
-| Données / juridique (nLPD, RGPD, DPIA) | — (prestataire) | 1 |
-| **Total ingénieurs** | **5** | **8** |
+## Équipe (resserrée)
+
+| Rôle | Charge |
+|---|---|
+| 2 ingénieurs : production, sécurité, support | plein temps pendant « Lancer », mi-temps ensuite |
+| 1 personne communauté et partenariats | mi-temps |
+| Le secrétariat du Club | temps partiel (clôture des reçus, relais des annonces, bilan) |
+
+## Budget — hypothèses (à chiffrer, rien n'est engagé)
+
+| Poste | Hypothèse |
+|---|---|
+| Hébergement en Suisse (VPS, sauvegardes, e-mails) | quelques dizaines de CHF par mois |
+| Audit de sécurité externe | forfait à demander à deux prestataires |
+| Juriste (analyse d'impact) | forfait à demander |
+| Ingénierie | 2 personnes sur 30 jours, puis mi-temps — à couvrir par fonds propres, chèque Innosuisse, puis Interreg |
+| Modèle de langage (Apertus) | à l'appel ; la démonstration et le pilote tournent aussi sans modèle |
+
+## Métriques
+
+Celles de l'écran Suivi ([SUIVI_METRIQUES.md](SUIVI_METRIQUES.md)) : demandes, oui / non / pas cette fois, délai du
+premier oui, partenariats par étape, membres actifs, hors Valais, invités — agrégats, seuil « < 3 ».
 
 ## Dépendances
 
-Accord du comité sur les métriques ; analyse d'impact avant données réelles ; hébergement en Suisse ; un chef de file
-français pour Interreg ; disponibilité d'un modèle Apertus servi en Suisse.
+Feu vert du comité ; juriste disponible avant le lancement ; hébergement en Suisse ; un chef de file français pour
+Interreg ; disponibilité d'Apertus (facultatif : le produit tient sans modèle).
 
 ## Risques et parades
 
 | Risque | Parade |
 |---|---|
-| Les membres ne répondent pas (taux de oui faible) | une demande à la fois, plafond hebdomadaire, réponse depuis l'e-mail ; on mesure avant d'élargir |
-| Un petit club permet de deviner qui s'est retiré | k = 3 sur tout décompte ; message honnête (« dans un petit club on peut parfois deviner ») |
-| Données de membres résidant en France | RGPD + nLPD dès la phase 0 ; consentement prouvé par le reçu ; purge réelle des identités |
-| L'IA se trompe sur des demandes vagues | l'IA propose, le membre décide ; parité IA allumée / éteinte ; repli déterministe |
-| Financement en retard | pilote phase 1 dimensionné sur fonds propres + chèque d'innovation |
-| Dépendance à une seule personne du secrétariat | console documentée, bilan généré, runbook |
+| Peu de réponses pendant le pilote | une demande à la fois, plafond hebdomadaire, réponse depuis l'e-mail, escalade vers des piliers volontaires |
+| Un petit club permet de deviner | seuil « < 3 » partout ; message honnête ; rien de nominatif sans double accord |
+| Données de membres résidant en France | analyse d'impact avec un juriste avant le lancement ; consentement prouvé par le reçu ; purge réelle |
+| L'IA se trompe sur des demandes vagues | l'IA propose, le membre décide ; parité IA allumée / éteinte ; abstention permise |
+| Volume trop faible pour conclure | dit d'avance : le taux est un signal ; décision du comité sur des critères fixés avant |
+| Le secrétariat porte trop | tableau de bord, bilan généré, relais minimal |

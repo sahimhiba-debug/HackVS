@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 [ -f .env ] || { echo "ERREUR : .env absent — cp .env.example .env puis remplir (docs/DEPLOIEMENT.md)"; exit 1; }
 set -a; . ./.env; set +a
-for v in DOMAINE PUBLIC_BASE_URL HACKVS_SECRET HACKVS_CONSOLE_JETON; do
+for v in DOMAINE PUBLIC_BASE_URL DOMAINE_VISITE PUBLIC_VISITE_URL HACKVS_SECRET HACKVS_CONSOLE_JETON; do
   [ -n "${!v:-}" ] || { echo "ERREUR : $v est vide dans .env"; exit 1; }
 done
 [ "${#HACKVS_SECRET}" -ge 32 ] || { echo "ERREUR : HACKVS_SECRET doit compter au moins 32 caractères"; exit 1; }

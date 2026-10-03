@@ -99,10 +99,10 @@ WEB_PULSE = Path(__file__).resolve().parent.parent / "web" / "pulse"
 _observabilite.configurer(_observabilite.niveau_depuis_env(os.environ))
 # ordre : la dernière ajoutée est la plus EXTÉRIEURE → l'identifiant de requête couvre aussi les refus 413
 PAGES_PULSE = ("app.html", "console.html", "projection.html", "regie.html", "etabli.html", "suivi.html", "decouverte.html",
-               "reponse.html", "salle.html", "salle-ecran.html", "salle-regie.html")
+               "reponse.html", "salle.html", "salle-ecran.html", "salle-regie.html", "feuille-de-route.html")
 app.add_middleware(_Protections, csp=_politique_contenu([WEB_PULSE / f for f in PAGES_PULSE]),
                    chemins_csp=("/app", "/console", "/etabli", "/suivi", "/decouverte", "/reponse", "/salle", "/salle/ecran",
-                                "/salle/regie", "/projection", "/demo/regie"))
+                                "/salle/regie", "/feuille-de-route", "/projection", "/demo/regie"))
 app.add_middleware(_Perimetre, ancien_actif=lambda: ANCIEN_PROTOTYPE, jeton=lambda: _CONSOLE_JETON)
 app.add_middleware(_observabilite.MiddlewareRequete)
 
@@ -1001,6 +1001,12 @@ def page_reponse():
 def sante() -> dict:
     """Vérification de santé (deploy.sh, healthcheck du conteneur) : le processus répond. Ne lit ni n'écrit rien."""
     return {"ok": True}
+
+
+@app.get("/feuille-de-route")
+def page_feuille_de_route():
+    """FEUILLE DE ROUTE VIVANTE (publique, FR / DE / EN), hors du parcours de scène."""
+    return FileResponse(WEB / "pulse" / "feuille-de-route.html")
 
 
 @app.get("/salle")

@@ -29,7 +29,8 @@ SECRET = "b" * 8 + "-secret-du-balayage-d-autorisation-fictif"
 CONSOLE = {"X-Pulse-Console": "1"}
 PUBLIQUES = {("POST", "/api/pulse/acces"), ("POST", "/api/pulse/jure"), ("POST", "/api/pulse/decouverte/activer"),
              ("POST", "/api/pulse/courriel/lire"), ("POST", "/api/pulse/courriel/repondre"),   # liens d'e-mail : signés
-             ("POST", "/api/pulse/salle/entrer")}                                                 # QR de la salle : signé
+             ("POST", "/api/pulse/salle/entrer"),                                                 # QR de la salle : signé
+             ("GET", "/api/pulse/monde"), ("GET", "/api/pulse/feuille-de-route")}                 # publics, lecture seule
 VALEURS = {"n": "1", "index": "0", "etape": "0"}
 
 

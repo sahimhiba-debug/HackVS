@@ -39,7 +39,7 @@ def ajouter_routes(r: APIRouter, console: Callable, secret: Callable[[], bytes],
     limite_passe = nouveau_limiteur(120, 60.0)         # un téléphone qui relit toutes les 2 s, plus ses gestes
 
     def actif() -> bool:
-        return os.environ.get("HACKVS_SALLE", "1") == "1"
+        return os.environ.get("HACKVS_SALLE", "1") == "1" and os.environ.get("HACKVS_VISITE") != "1"   # jamais dans le monde « visite »
 
     def salle() -> Salle:
         if not actif():

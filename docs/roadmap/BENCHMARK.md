@@ -19,9 +19,9 @@
 |---|---|---|---|
 | **BNI** | chapitres, recommandations, mesure des affaires conclues | clôturer chaque partenariat avec un résultat | ✅ clôture de reçu (B), Suivi (A) |
 | **Protopia** | une demande → un petit groupe ciblé → réponse depuis l'e-mail | une demande à la fois, à la bonne personne ; réponse en un clic | ✅ une demande montrée à la fois ; ⬜/🟡 réponse depuis l'e-mail (F) |
-| **nexxt-change / IHK** | annonces de reprise / coopération sous chiffre, intermédiées | le Club relaie, l'entreprise reste anonyme | ⬜ phase 2 |
+| **nexxt-change / IHK** | annonces de reprise / coopération sous chiffre, intermédiées | le Club relaie, l'entreprise reste anonyme | ⬜ jalon « Grandir » |
 | **Sardex**, **WIR** | monnaies complémentaires, réciprocité comptée | rendre la réciprocité visible sans monnaie | 🟡 résultats par catégorie (agrégats) |
-| **CCI France Suisse**, **CCSF** | chambres de commerce binationales | adhésion croisée plutôt qu'un second club | ⬜ phase 2 |
+| **CCI France Suisse**, **CCSF** | chambres de commerce binationales | adhésion croisée plutôt qu'un second club | ⬜ jalon « Grandir » |
 | **b2match** | rendez-vous B2B pendant les salons | prolonger la communauté après l'événement | ✅ passe découverte 90 jours (D) |
 | **Lunchclub** (contre-exemple) | rencontres proposées par un algorithme, sans besoin | ne jamais « matcher » sans demande ; aucun match IA suivi | ✅ règle : jamais de « matchs » IA dans Suivi |
 

@@ -11,23 +11,31 @@ simulée). Le Club réel compte **une cinquantaine de membres** ; rien ici n'a e
 | [BENCHMARK.md](BENCHMARK.md) | BNI, Protopia, nexxt-change, Sardex / WIR, CCI France Suisse, b2match, Lunchclub — et la leçon de chacun |
 | [APERTUS_PLAN.md](APERTUS_PLAN.md) | état mesuré (1/26), jeu de test humain figé, entraînement synthétique, LoRA, service en Suisse |
 
-## Tableau d'avancement — état au 03.10.2026, 15:30 (branche `foire-2026`, dernier commit de la nuit ; gel-final le 04.10 à 08:00)
+## Tableau d'avancement
 
-✅ fait et testé · 🟡 en cours / partiel · ⬜ prévu
+<!-- etat:debut (généré depuis etat.yaml — ne pas éditer à la main) -->
+*État au 03.10.2026, généré depuis [etat.yaml](etat.yaml).* ✅ construit (code + tests) · 🟢 validé sur le terrain (preuve réelle) · ⬜ prévu
 
-| Élément | État | Preuve |
+| Chantier | Statut | Preuve |
 |---|---|---|
-| Registre des capacités : pièces déclarées, consenties par finalité, reçu, retrait anonyme | ✅ | CLAIMS n° 2, 3, 19 |
-| Journal rejouable, mode salle (sans Internet), IA allumée / éteinte à parité | ✅ | CLAIMS n° 5, 7, 15 |
-| **Suivi** : agrégats, k = 3, nominatif sous double accord | ✅ | CLAIMS n° 43–46, 48 |
-| **Clôture de reçu** : quatre étapes, résultat déclaré | ✅ | CLAIMS n° 47 |
-| **Anonymat à petite échelle** : rôle masqué sous 3 porteurs | ✅ | CLAIMS n° 41–42 |
-| **Passe découverte** 90 jours (invité non membre) | ✅ | CLAIMS n° 49–53 |
-| **« Le Club cherche »** + inviter un contact (FR / DE) | ✅ | CLAIMS n° 54–56 |
-| Membre à distance : zone, langue, réponse depuis l'e-mail | ✅ prototype | CLAIMS n° 57–60 — **l'envoi d'e-mails est simulé en démonstration** (boîte de sortie, aucun SMTP) |
-| Bilan de période (`make bilan`) | ✅ | CLAIMS n° 61–62 ; récit Apertus vérifié par le code — aucun récit réel généré cette nuit |
-| Pipeline Tally → jeu d'évaluation, taxonomie, harnais | 🟡 | pipeline, taxonomie (21 métiers FR / DE) et harnais livrés (CLAIMS n° 63–65) ; mesure Apertus sur les 26 cas ; **les 21 phrases Tally ne sont pas encore arrivées dans le dépôt** ; annotation humaine à faire |
-| Pilote avec les membres réels | ⬜ | phase 1 de la [ROADMAP.md](ROADMAP.md) |
-| Interface en allemand | 🟡 | écrans d'invité, page de réponse et e-mails FR / DE ; le reste en phase 2 |
-| Adhésion croisée avec un partenaire français | ⬜ | phase 2 |
-| Conversion d'adhésion réelle | ⬜ | « Rejoindre le Club » enregistre une intention ; la suite est **simulée en démonstration** |
+| Registre des capacités — pièces déclarées, consenties par finalité, reçu | ✅ Construit | test_capacites_regles.py, test_capacites_oracle.py |
+| Retrait anonyme en un geste, rôle masqué sous trois porteurs | ✅ Construit | test_capacites_retrait.py, test_foire_anonymat.py |
+| Mode salle « le Club, c'est vous » — QR, constellation, purge | ✅ Construit | test_salle.py, test_e2e_salle.py |
+| Suivi des partenariats — agrégats, « < 3 », nominatif sous double accord | ✅ Construit | test_foire_suivi.py |
+| Passe découverte 90 jours pour les non-membres | ✅ Construit | test_foire_decouverte.py, test_e2e_foire.py |
+| « Le Club cherche » et inviter un contact (FR / DE) | ✅ Construit | test_foire_club_cherche.py |
+| Membre à distance et réponse depuis l'e-mail (envoi simulé en démonstration) | ✅ Construit | test_foire_distance.py |
+| Bilan de période (make bilan), récit IA vérifié par le code | ✅ Construit | test_foire_bilan.py |
+| Prêt à déployer (VPS, HTTPS) et charge de 80 téléphones mesurée en local | ✅ Construit | test_deploiement.py |
+| Phrases recueillies par le QR de la Foire (21, en agrégats) | 🟢 Validé sur le terrain | 21 réponses réelles du 03.10.2026 ; 20 fr, 1 en ; classées par Apertus seulement (21 validées, 20 abstentions) — PREUVES.md |
+| Pilote de 45 jours avec les 50 membres (janvier – mi-février 2027) | ⬜ Prévu | critères à valider avec le Club |
+| Analyse d'impact nLPD / RGPD avec un juriste | ⬜ Prévu | — |
+| Audit de sécurité externe avant le lancement | ⬜ Prévu | — |
+| Premier partenaire français (adhésion croisée) | ⬜ Prévu | aucun partenaire acquis |
+| Dépôt Interreg France-Suisse avant le 12 mars 2027 | ⬜ Prévu | — |
+| Reçus en attestations vérifiables dans le portefeuille swiyu (e-ID) | ⬜ Prévu | note d'architecture — docs/roadmap/ARCHITECTURE_SWIYU_VOIX_MINI.md |
+| Demandes vocales via l'entrée audio d'Apertus 1.5 (expérimentale, à mesurer en français et en dialecte) | ⬜ Prévu | note d'architecture — docs/roadmap/ARCHITECTURE_SWIYU_VOIX_MINI.md |
+| Extraction sur le téléphone avec Apertus Mini | ⬜ Prévu | note d'architecture — docs/roadmap/ARCHITECTURE_SWIYU_VOIX_MINI.md |
+<!-- etat:fin -->
+
+Page publique, trilingue, avec des liens vers les écrans du monde « visite » : `/feuille-de-route`.

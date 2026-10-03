@@ -1,0 +1,120 @@
+# ÉTAT DES CHANTIERS — SOURCE UNIQUE de la feuille de route vivante (/feuille-de-route) et du tableau de
+# docs/roadmap/README.md (régénéré par `make feuille-de-route`, vérifié par test_feuille_de_route.py).
+# statut : construit (code + tests ; `tests` obligatoire, `ecran` = lien dans le monde « visite ») ·
+#          valide (validé sur le terrain : `preuve_terrain` RÉELLE obligatoire) · prevu (membres réels, partenaires,
+#          financement, juriste ou temps). Format simple (une entrée par « - id: »), lu sans dépendance.
+- id: registre
+  statut: construit
+  fr: Registre des capacités — pièces déclarées, consenties par finalité, reçu
+  de: Fähigkeitsregister — erklärte, zweckgebunden eingewilligte Beiträge, Quittung
+  en: Capability registry — declared pieces, purpose-bound consent, receipt
+  ecran: /etabli
+  tests: test_capacites_regles.py, test_capacites_oracle.py
+- id: retrait
+  statut: construit
+  fr: Retrait anonyme en un geste, rôle masqué sous trois porteurs
+  de: Anonymer Rückzug mit einer Geste, Rolle unter drei Trägern verborgen
+  en: One-tap anonymous withdrawal, role hidden under three holders
+  ecran: /app
+  tests: test_capacites_retrait.py, test_foire_anonymat.py
+- id: salle
+  statut: construit
+  fr: Mode salle « le Club, c'est vous » — QR, constellation, purge
+  de: Saalmodus « Der Club sind Sie » — QR, Konstellation, Löschung
+  en: Room mode "You are the Club" — QR, constellation, purge
+  ecran: /salle/ecran
+  tests: test_salle.py, test_e2e_salle.py
+- id: suivi
+  statut: construit
+  fr: Suivi des partenariats — agrégats, « < 3 », nominatif sous double accord
+  de: Partnerschafts-Monitoring — Aggregate, « < 3 », namentlich nur mit doppelter Zustimmung
+  en: Partnership tracking — aggregates, "< 3", named only with double consent
+  ecran: /suivi
+  tests: test_foire_suivi.py
+- id: decouverte
+  statut: construit
+  fr: Passe découverte 90 jours pour les non-membres
+  de: 90-Tage-Schnupperpass für Nichtmitglieder
+  en: 90-day discovery pass for non-members
+  ecran: /suivi
+  tests: test_foire_decouverte.py, test_e2e_foire.py
+- id: club_cherche
+  statut: construit
+  fr: « Le Club cherche » et inviter un contact (FR / DE)
+  de: « Der Club sucht » und einen Kontakt einladen (FR / DE)
+  en: "The Club is looking for" and invite a contact (FR / DE)
+  ecran: /suivi
+  tests: test_foire_club_cherche.py
+- id: distance
+  statut: construit
+  fr: Membre à distance et réponse depuis l'e-mail (envoi simulé en démonstration)
+  de: Fernmitglied und Antwort per E-Mail (Versand in der Demo simuliert)
+  en: Remote member and reply from e-mail (sending simulated in the demo)
+  ecran: /app
+  tests: test_foire_distance.py
+- id: bilan
+  statut: construit
+  fr: Bilan de période (make bilan), récit IA vérifié par le code
+  de: Periodenbilanz (make bilan), KI-Text vom Code geprüft
+  en: Period report (make bilan), AI narrative checked by code
+  ecran: /suivi
+  tests: test_foire_bilan.py
+- id: deploiement
+  statut: construit
+  fr: Prêt à déployer (VPS, HTTPS) et charge de 80 téléphones mesurée en local
+  de: Bereit zur Bereitstellung (VPS, HTTPS), Last von 80 Telefonen lokal gemessen
+  en: Ready to deploy (VPS, HTTPS), 80-phone load measured locally
+  ecran: /sante
+  tests: test_deploiement.py
+- id: tally
+  statut: valide
+  fr: Phrases recueillies par le QR de la Foire (21, en agrégats)
+  de: Über den QR-Code der Messe gesammelte Sätze (21, aggregiert)
+  en: Sentences collected by the fair QR code (21, aggregated)
+  preuve_terrain: 21 réponses réelles du 03.10.2026 ; 20 fr, 1 en ; classées par Apertus seulement (21 validées, 20 abstentions) — PREUVES.md
+  tests: test_foire_tally.py
+- id: pilote
+  statut: prevu
+  fr: Pilote de 45 jours avec les 50 membres (janvier – mi-février 2027)
+  de: 45-Tage-Pilot mit den 50 Mitgliedern (Januar – Mitte Februar 2027)
+  en: 45-day pilot with the 50 members (January – mid-February 2027)
+  note: critères à valider avec le Club
+- id: juriste
+  statut: prevu
+  fr: Analyse d'impact nLPD / RGPD avec un juriste
+  de: Datenschutz-Folgenabschätzung (DSG / DSGVO) mit Jurist
+  en: nFADP / GDPR impact assessment with a lawyer
+- id: audit_externe
+  statut: prevu
+  fr: Audit de sécurité externe avant le lancement
+  de: Externes Sicherheitsaudit vor dem Start
+  en: External security audit before launch
+- id: partenaire_fr
+  statut: prevu
+  fr: Premier partenaire français (adhésion croisée)
+  de: Erster französischer Partner (gegenseitige Mitgliedschaft)
+  en: First French partner (cross-membership)
+  note: aucun partenaire acquis
+- id: interreg
+  statut: prevu
+  fr: Dépôt Interreg France-Suisse avant le 12 mars 2027
+  de: Interreg-Eingabe Frankreich-Schweiz vor dem 12. März 2027
+  en: Interreg France-Switzerland submission before 12 March 2027
+- id: swiyu
+  statut: prevu
+  fr: Reçus en attestations vérifiables dans le portefeuille swiyu (e-ID)
+  de: Quittungen als überprüfbare Nachweise in der swiyu-Wallet (E-ID)
+  en: Receipts as verifiable credentials in the swiyu wallet (e-ID)
+  note: note d'architecture — docs/roadmap/ARCHITECTURE_SWIYU_VOIX_MINI.md
+- id: voix
+  statut: prevu
+  fr: Demandes vocales via l'entrée audio d'Apertus 1.5 (expérimentale, à mesurer en français et en dialecte)
+  de: Sprachanfragen über den Audioeingang von Apertus 1.5 (experimentell, auf Französisch und Dialekt zu messen)
+  en: Voice requests via Apertus 1.5 audio input (experimental, to be measured in French and dialect)
+  note: note d'architecture — docs/roadmap/ARCHITECTURE_SWIYU_VOIX_MINI.md
+- id: mini
+  statut: prevu
+  fr: Extraction sur le téléphone avec Apertus Mini
+  de: Extraktion auf dem Telefon mit Apertus Mini
+  en: On-phone extraction with Apertus Mini
+  note: note d'architecture — docs/roadmap/ARCHITECTURE_SWIYU_VOIX_MINI.md

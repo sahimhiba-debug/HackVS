@@ -31,6 +31,8 @@ from .capacites_api import ajouter_routes as ajouter_routes_capacites
 from .essai_api import ajouter_routes as ajouter_routes_essai
 from .foire_api import ajouter_routes as ajouter_routes_foire
 from .salle_api import ajouter_routes as ajouter_routes_salle
+from .visite_api import ajouter_routes as ajouter_routes_visite
+from .visite_api import visite
 from .protections import LOCALES
 from .taxonomy import Taxonomie
 
@@ -258,6 +260,8 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
         if console_jeton:
             if not hmac.compare_digest(x_pulse_console, console_jeton):
                 raise HTTPException(403, "Console du Club : jeton invalide.")
+        elif visite():
+            pass                                      # monde « visite » : bac à sable fictif, conteneur à part (docs/DEPLOIEMENT.md)
         elif (request.client.host if request.client else "") not in LOCALES:
             # sans jeton configuré, la console (qui peut incarner chaque membre) ne répond qu'à CETTE machine :
             # un déploiement accessible depuis le réseau doit définir HACKVS_CONSOLE_JETON
@@ -416,6 +420,7 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
                          lambda pid: limiter(limite_ecritures, f"ecrit|{pid}"), hors_verrou)
     ajouter_routes_capacites(r, au_monde, membre, console)
     ajouter_routes_foire(r, au_monde, membre, console, limiter=limiter, nouveau_limiteur=Limiteur, qr=qr_svg)
+    ajouter_routes_visite(r, qr_svg)
     ajouter_routes_salle(r, console, lambda: etat["demo"].club.reglages.secret, limiter=limiter, nouveau_limiteur=Limiteur, qr=qr_svg)
 
     @r.get("/console/personas", dependencies=[Depends(console)])

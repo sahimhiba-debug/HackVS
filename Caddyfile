@@ -7,3 +7,9 @@
 		-Server
 	}
 }
+
+# Monde « visite » (bac à sable fictif, console ouverte) : un sous-domaine à part
+{$DOMAINE_VISITE} {
+	encode zstd gzip
+	reverse_proxy visite:8080
+}

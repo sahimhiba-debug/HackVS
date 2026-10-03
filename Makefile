@@ -11,7 +11,7 @@ export HACKVS_SEMANTIQUE ?= 0
 HOTE ?= 127.0.0.1
 URL_PUBLIQUE ?=
 
-.PHONY: setup browsers lint typecheck test e2e e2e-salle sonde-ia latence-ia banc-ia banc-ia-dry-run banc-ia-comparer eval secrets audit coverage demo quality-check mutation perf bilan ingest-tally eval-classification
+.PHONY: setup browsers lint typecheck test e2e e2e-salle sonde-ia latence-ia banc-ia banc-ia-dry-run banc-ia-comparer eval secrets audit coverage demo quality-check mutation perf bilan ingest-tally eval-classification feuille-de-route
 
 setup:
 	cd $(P) && $(PY) -m pip install -r requirements-dev.txt -c constraints.txt
@@ -44,6 +44,10 @@ ingest-tally:
 	cd $(P) && $(PY) scripts/ingest_tally.py
 eval-classification:
 	cd $(P) && $(PY) scripts/eval_classification.py --fournisseur $(FOURNISSEUR)
+
+# Feuille de route vivante (§7) : régénère le tableau de docs/roadmap/README.md depuis docs/roadmap/etat.yaml
+feuille-de-route:
+	cd $(P) && $(PY) -c "from datetime import date; from intelligence import feuille_de_route as f; f.regenerer_readme(date.today()); print('README à jour')"
 
 e2e:
 	cd $(P) && HACKVS_FOIRE=$${HACKVS_FOIRE:-1} HACKVS_E2E_OBLIGATOIRE=1 $(PY) -m pytest -q tests/test_e2e_scene.py tests/test_e2e_pulse.py tests/test_e2e_action.py tests/test_e2e_capacites.py tests/test_e2e_hermetique.py tests/test_e2e_serveur.py tests/test_e2e_ia.py tests/test_e2e_foire.py tests/test_e2e_salle.py

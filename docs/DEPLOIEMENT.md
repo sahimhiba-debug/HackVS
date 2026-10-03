@@ -11,6 +11,7 @@ fera sur le VPS ; `docker compose config` a validé le fichier). L'ancien guide 
 |---|---|---|---|
 | 1 | **Adresse IP** du VPS et **utilisateur SSH** (avec `sudo`) | session locale : `ssh <utilisateur>@<ip>` | clé SSH déjà installée sur le VPS |
 | 2 | **Nom de domaine** (ex. `pulse.<domaine>.ch`) avec un enregistrement **A** (et AAAA si IPv6) vers l'IP du VPS | `.env` : `DOMAINE`, `PUBLIC_BASE_URL=https://<domaine>` | propagé AVANT le premier `deploy.sh` (Caddy obtient le certificat au démarrage) |
+| 2b | Un **second sous-domaine** pour le monde « visite » (ex. `visite.pulse.<domaine>.ch`), même IP | `.env` : `DOMAINE_VISITE`, `PUBLIC_VISITE_URL` | bac à sable fictif, console ouverte : le jury explore après le pitch depuis `/feuille-de-route` |
 | 3 | **Ports 80 et 443 ouverts** (pare-feu Infomaniak et `ufw`) | — | HTTPS automatique par Caddy |
 | 4 | Un **secret** de 48 caractères (généré sur place) | `.env` : `HACKVS_SECRET` | `python3 -c "import secrets; print(secrets.token_urlsafe(48))"` — ne jamais le mettre dans le dépôt |
 | 5 | Un **jeton de console** (généré sur place) | `.env` : `HACKVS_CONSOLE_JETON` | à saisir une fois dans le navigateur de l'écran géant et de la télécommande |
@@ -31,7 +32,7 @@ git clone <url-du-dépôt> club-pulse && cd club-pulse && git checkout foire-202
 
 # 2. une seule fois : la configuration (aucun secret dans le dépôt)
 cp .env.example .env && chmod 600 .env
-nano .env           # DOMAINE, PUBLIC_BASE_URL, HACKVS_SECRET, HACKVS_CONSOLE_JETON (+ APERTUS_API_KEY facultatif)
+nano .env           # DOMAINE, PUBLIC_BASE_URL, DOMAINE_VISITE, PUBLIC_VISITE_URL, HACKVS_SECRET, HACKVS_CONSOLE_JETON (+ APERTUS_API_KEY)
 
 # 3. déployer (et à chaque mise à jour)
 ./deploy.sh         # pull, build, redémarrage, vérification de /sante — « OK » ou les journaux en cas d'échec

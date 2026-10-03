@@ -48,3 +48,14 @@ Toute autre transition est refusée (`partenariats.suivante`).
 
 Les **vues** (qui a lu quoi), les **inscrits inactifs** (qui ne répond pas), les **« matchs »** proposés par une IA.
 Le Suivi mesure des gestes faits par des personnes, pas une activité supposée.
+
+## Critères du pilote de 45 jours (à valider avec le Club)
+
+Fixés d'avance dans [ROADMAP.md](ROADMAP.md) et lus sur cet écran, période « trimestre » : au moins 25 demandes, au
+moins 30 % de oui, premier oui en moins de 72 h en médiane, au moins 15 membres actifs sur 50, zéro incident de
+confidentialité. Avec ce volume, le taux de réponse est **un signal, pas une mesure fine**.
+
+## Mode salle (pitch)
+
+L'écran géant et son bilan (« en N minutes, cette salle a rendu possible… ») suivent les mêmes règles : agrégats,
+seuil « < 3 », aucun identifiant ; tout est effacé après la présentation (purge vérifiée).

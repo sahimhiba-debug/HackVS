@@ -18,6 +18,21 @@ services:
       interval: 15s
       timeout: 5s
       retries: 4
+  # MONDE « VISITE » : même image, journal à lui, mode salle et IA éteints, console ouverte (bac à sable fictif) —
+  # le jury explore après le pitch depuis /feuille-de-route. Servi sur DOMAINE_VISITE.
+  visite:
+    build: .
+    environment:
+      HACKVS_MODE: demo
+      HACKVS_VISITE: "1"
+      HACKVS_SALLE: "0"
+      HACKVS_ESSAIS_DB: /srv/prototype/var/club_pulse.db
+      PUBLIC_BASE_URL: ${PUBLIC_VISITE_URL}
+    volumes:
+      - visite:/srv/prototype/var
+    restart: unless-stopped
+    expose:
+      - "8080"
   caddy:
     image: caddy:2
     env_file: .env
@@ -36,5 +51,6 @@ services:
 
 volumes:
   pulse:
+  visite:
   caddy_data:
   caddy_config:
