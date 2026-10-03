@@ -102,10 +102,11 @@ WEB_PULSE = Path(__file__).resolve().parent.parent / "web" / "pulse"
 _observabilite.configurer(_observabilite.niveau_depuis_env(os.environ))
 # ordre : la dernière ajoutée est la plus EXTÉRIEURE → l'identifiant de requête couvre aussi les refus 413
 PAGES_PULSE = ("app.html", "console.html", "projection.html", "regie.html", "etabli.html", "suivi.html", "decouverte.html",
-               "reponse.html", "salle.html", "salle-ecran.html", "salle-regie.html", "feuille-de-route.html", "preflight.html")
+               "reponse.html", "salle.html", "salle-ecran.html", "salle-regie.html", "feuille-de-route.html", "preflight.html",
+               "compte.html")
 app.add_middleware(_Protections, csp=_politique_contenu([WEB_PULSE / f for f in PAGES_PULSE]),
                    chemins_csp=("/app", "/console", "/etabli", "/suivi", "/decouverte", "/reponse", "/salle", "/salle/ecran",
-                                "/salle/regie", "/feuille-de-route", "/projection", "/demo/regie", "/preflight"),
+                                "/salle/regie", "/feuille-de-route", "/projection", "/demo/regie", "/preflight", "/compte"),
                    # JOUR J : l'écran de la salle (et l'Établi, où mène la bascule scriptée) s'affichent DANS le deck local
                    csp_integrable=_politique_contenu([WEB_PULSE / f for f in PAGES_PULSE],
                                                      ancetres="'self' " + _origines_deck(os.environ.get("HACKVS_DECK_ORIGINES"))),
@@ -986,6 +987,9 @@ if MODE == "demo":  # scène de présentation : monde ISOLÉ et déterministe (d
     from .pulse_api import creer_routeur as _routeur_pulse
     _PULSE = _routeur_pulse(TAX, console_jeton=_CONSOLE_JETON)
     app.include_router(_PULSE)
+    if os.environ.get("HACKVS_COMPTES") == "1":         # ANNÉE 1 · LOT 2 : comptes, rôles, TOTP (éteint par défaut)
+        from .comptes_api import creer_routeur_comptes
+        app.include_router(creer_routeur_comptes(lambda: _PULSE.comptes()))  # type: ignore[attr-defined]
 
 
 @app.get("/app")
@@ -1054,6 +1058,14 @@ def page_reponse():
     if MODE != "demo":
         raise HTTPException(501, "Club Pulse est présenté en mode démo (monde fictif).")
     return FileResponse(WEB / "pulse" / "reponse.html")
+
+
+@app.get("/compte")
+def page_compte():
+    """ANNÉE 1 · LOT 2 : mon compte (invitation, appareils, double authentification) — seulement si HACKVS_COMPTES=1."""
+    if os.environ.get("HACKVS_COMPTES") != "1":
+        raise HTTPException(404, "Not Found")
+    return FileResponse(WEB / "pulse" / "compte.html", headers={"Cache-Control": "no-store"})
 
 
 @app.get("/preflight")

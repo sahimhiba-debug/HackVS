@@ -51,6 +51,7 @@ simulée). Le Club réel compte **145 entreprises et 173 représentants** ; rien
 | Extraction sur le téléphone avec Apertus Mini | ⬜ Prévu | note d'architecture — docs/roadmap/ARCHITECTURE_SWIYU_VOIX_MINI.md |
 | Journal sur stockage interchangeable SQLite / PostgreSQL, migrations réversibles, sauvegarde et restauration vérifiées | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_stockage.py |
 | Exploitation — configuration documentée, disponibilité (/sante/pret), métriques, Docker de production | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_exploitation.py |
+| Comptes et rôles — invitation à usage unique, sessions et appareils, comptes nominatifs, double authentification (TOTP) pour la console, journal d'administration | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_comptes.py, test_annee1_comptes_api.py |
 <!-- etat:fin -->
 
 Page publique, trilingue, avec des liens vers les écrans du monde « visite » : `/feuille-de-route`.

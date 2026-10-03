@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Club Pulse · Mon compte</title>
+  <meta name="description" content="Mon compte : invitation, appareils, double authentification. Construit sur la branche annee-1.">
+  <link rel="icon" href="/static/pulse/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/pulse/pulse.css">
+  <style>
+    body { background: var(--papier); }
+    .page { max-width: 560px; margin: 0 auto; padding: 16px; display: grid; gap: 14px; }
+    .bloc { background: var(--card); border-radius: var(--r-card); padding: 14px 16px; box-shadow: var(--sh-card-light); }
+    .bloc h2 { font-size: 17px; margin: 0 0 8px; }
+    label { display: block; font-size: 14px; margin: 8px 0 4px; }
+    input { width: 100%; font: inherit; padding: 10px; border-radius: 10px; border: 1px solid var(--hairline-2, #ccd); }
+    ul { padding-left: 18px; margin: 6px 0; } li { margin: 4px 0; }
+    code { overflow-wrap: anywhere; font-size: 13px; }
+    .etat { font-size: 14px; color: var(--secondary, #5b6270); min-height: 1.2em; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <span class="marque"><span class="pouls-point" aria-hidden="true"></span>Mon compte</span>
+    <span class="puce fictif">construit — branche annee-1, pas dans la démo</span>
+
+    <section class="bloc" id="accueil">
+      <h2>Accepter mon invitation</h2>
+      <p>Le Club vous a envoyé un lien personnel, à usage unique.</p>
+      <label for="appareil">Nom de cet appareil</label>
+      <input id="appareil" value="Mon téléphone" maxlength="60">
+      <button class="btn" id="accepter">Accepter et ouvrir ma session</button>
+    </section>
+
+    <section class="bloc" id="moi" hidden>
+      <h2>Mon compte</h2>
+      <p id="qui"></p>
+      <button class="btn discret" id="deconnexion">Me déconnecter</button>
+    </section>
+
+    <section class="bloc" id="appareils" hidden>
+      <h2>Mes appareils</h2>
+      <ul id="liste"></ul>
+    </section>
+
+    <section class="bloc" id="totp" hidden>
+      <h2>Double authentification</h2>
+      <p>Obligatoire pour la console du secrétariat. Scannez le code dans votre application d'authentification, puis
+        entrez le code à six chiffres.</p>
+      <button class="btn discret" id="preparer">Préparer</button>
+      <p id="secret" hidden>Clé : <code id="cle"></code><br><small>Adresse : <code id="uri"></code></small></p>
+      <label for="code">Code à six chiffres</label>
+      <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8">
+      <button class="btn" id="confirmer">Confirmer</button>
+      <button class="btn discret" id="elever">Ouvrir la console (élever la session)</button>
+    </section>
+    <p class="etat" id="etat" aria-live="polite"></p>
+  </main>
+  <script type="module">
+    const $ = (s) => document.querySelector(s);
+    const BASE = "/api/pulse/comptes";
+    const lire = () => { try { return sessionStorage.getItem("compte-session"); } catch (e) { return null; } };
+    const garder = (v) => { try { v ? sessionStorage.setItem("compte-session", v) : sessionStorage.removeItem("compte-session"); } catch (e) { /* sans stockage */ } };
+    const dire = (t) => { $("#etat").textContent = t; };
+    async function api(chemin, corps, methode) {
+      const s = lire();
+      const r = await fetch(BASE + chemin, { method: methode || (corps ? "POST" : "GET"),
+        headers: { "Content-Type": "application/json", ...(s ? { "X-Pulse-Compte": s } : {}) }, body: corps ? JSON.stringify(corps) : undefined });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.detail || String(r.status));
+      return d;
+    }
+    async function rafraichir() {
+      if (!lire()) return;
+      try {
+        const m = await api("/moi");
+        $("#accueil").hidden = true; $("#moi").hidden = false; $("#appareils").hidden = false; $("#totp").hidden = false;
+        const ROLES = { membre: "membre", invite: "invité", secretariat: "secrétariat", administration: "administration" };
+        $("#qui").textContent = `${m.etiquette} · rôle : ${ROLES[m.role] || m.role}` + (m.elevee ? " · console ouverte" : "");
+        const apps = await api("/moi/appareils");
+        $("#liste").replaceChildren(...apps.map((a) => {
+          const li = document.createElement("li");
+          li.textContent = a.appareil + (a.celui_ci ? " (cet appareil)" : " ");
+          if (!a.celui_ci) {
+            const b = document.createElement("button"); b.className = "btn discret petit"; b.textContent = "Déconnecter";
+            b.addEventListener("click", async () => { await api(`/moi/appareils/${encodeURIComponent(a.id)}/deconnexion`, {}); rafraichir(); });
+            li.appendChild(b);
+          }
+          return li;
+        }));
+      } catch (e) { garder(null); dire("Session terminée : " + e.message); }
+    }
+    $("#accepter").addEventListener("click", async () => {
+      const jeton = new URLSearchParams(location.hash.slice(1)).get("invitation");
+      if (!jeton) return dire("Aucune invitation dans ce lien.");
+      try {
+        const d = await api("/invitations/accepter", { jeton, appareil: $("#appareil").value || "appareil" });
+        garder(d.session); history.replaceState(null, "", location.pathname); dire("Session ouverte."); rafraichir();
+      } catch (e) { dire("Refusé : " + e.message); }
+    });
+    $("#deconnexion").addEventListener("click", async () => { try { await api("/moi/deconnexion", {}); } catch (e) { /* déjà fermée */ } garder(null); location.reload(); });
+    $("#preparer").addEventListener("click", async () => {
+      try { const d = await api("/moi/totp/preparer", {}); $("#cle").textContent = d.secret; $("#uri").textContent = d.uri; $("#secret").hidden = false; }
+      catch (e) { dire("Refusé : " + e.message); }
+    });
+    $("#confirmer").addEventListener("click", async () => {
+      try { await api("/moi/totp/confirmer", { code: $("#code").value }); $("#secret").hidden = true; dire("Double authentification activée."); }
+      catch (e) { dire("Refusé : " + e.message); }
+    });
+    $("#elever").addEventListener("click", async () => {
+      try { await api("/moi/elever", { code: $("#code").value }); dire("Console ouverte pour la journée."); rafraichir(); }
+      catch (e) { dire("Refusé : " + e.message); }
+    });
+    rafraichir();
+  </script>
+</body>
+</html>

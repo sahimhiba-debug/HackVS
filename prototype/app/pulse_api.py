@@ -423,6 +423,21 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
                          hors_verrou=hors_verrou)
     ajouter_routes_visite(r, qr_svg)
     r.journal = lambda: etat["demo"].club.journal  # type: ignore[attr-defined]   # ANNÉE 1 : /sante/pret, /metriques
+    _comptes: dict = {"club": None, "c": None}
+
+    def comptes():
+        """ANNÉE 1 · LOT 2 : les comptes vivent dans le journal du Club (et le suivent s'il est remplacé). Clé propre,
+        dérivée du secret du serveur : une signature de session de membre ne vaut jamais pour un compte."""
+        import hashlib
+        import hmac as _hmac
+
+        from intelligence.comptes import Comptes
+        club = etat["demo"].club
+        if _comptes["club"] is not club:
+            cle = _hmac.new(club.reglages.secret, b"comptes|annee-1", hashlib.sha256).digest()
+            _comptes["club"], _comptes["c"] = club, Comptes(club.journal, cle)
+        return _comptes["c"]
+    r.comptes = comptes  # type: ignore[attr-defined]
     r.lien_salle, r.apercu_salle = ajouter_routes_salle(r, console,  # type: ignore[attr-defined]
                                                          lambda: etat["demo"].club.reglages.secret, limiter=limiter,
                                                          nouveau_limiteur=Limiteur, qr=qr_svg)

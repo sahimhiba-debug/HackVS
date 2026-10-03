@@ -60,6 +60,7 @@ Règles :
 | `HACKVS_BUDGET_RELANCE` | `1000000` | budget de la relance |
 | `HACKVS_SOIREE_DEBUT` | `2026-10-03T18:30` | début de la soirée (ancien prototype) |
 | `HACKVS_METRIQUES` | `0` | **lot 1** — `1` : sert `/metriques` (cette machine ou jeton de console seulement) |
+| `HACKVS_COMPTES` | `0` | **lot 2** — `1` : comptes, rôles, double authentification (`/compte`, `/api/pulse/comptes/…`) |
 
 ## Intelligence artificielle (facultative : le Club marche pareil sans)
 

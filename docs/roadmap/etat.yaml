@@ -221,3 +221,9 @@
   de: Betrieb — dokumentierte Konfiguration, Bereitschaft (/sante/pret), Metriken, Produktions-Docker
   en: Operations — documented configuration, readiness (/sante/pret), metrics, production Docker
   tests: test_annee1_exploitation.py
+- id: a1-comptes
+  statut: annee1
+  fr: Comptes et rôles — invitation à usage unique, sessions et appareils, comptes nominatifs, double authentification (TOTP) pour la console, journal d'administration
+  de: Konten und Rollen — Einmal-Einladung, Sitzungen und Geräte, persönliche Konten, Zwei-Faktor (TOTP) für die Konsole, Admin-Protokoll
+  en: Accounts and roles — single-use invitation, sessions and devices, named accounts, two-factor (TOTP) for the console, admin log
+  tests: test_annee1_comptes.py, test_annee1_comptes_api.py
