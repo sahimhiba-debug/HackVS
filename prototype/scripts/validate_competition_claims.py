@@ -142,6 +142,40 @@ def chiffres(texte: str) -> set[str]:
     return set(re.findall(r"(?<![\w.,])\d+(?:[.,]\d+)?", texte))
 
 
+INTERDITS_V2 = ("Public AI", "certifié", "cinquantaine", "vraie demande", "train vers la France", "nos utilisateurs",
+                "validé sur le terrain", "CI verte")
+
+
+def verifier_v2() -> list[str]:
+    """AUDIT IMPORTANT 7 : ce qui sera PROJETÉ et DIT le jour J (deck v2, script v2) passe aussi la porte. Formulations
+    interdites absentes ; chaque nombre DIT dans le script v2 figure dans une source (PREUVES, ROADMAP, etat.yaml,
+    gel.json) — les nombres du deck v2 viennent de gel.json et sont recalculés par tests/test_deck_v2.py."""
+    pres = RACINE / "docs" / "presentation"
+    echecs = []
+    sources = "\n".join(f.read_text(encoding="utf-8") for f in (
+        RACINE / "docs" / "audit" / "club-pulse-pivot" / "PREUVES.md", RACINE / "docs" / "roadmap" / "ROADMAP.md",
+        RACINE / "docs" / "roadmap" / "etat.yaml", pres / "deck" / "data" / "gel.json", pres / "05_FILM_INTEGRATION.md"))
+    connus = chiffres(sources) | {x.replace(",", ".") for x in chiffres(sources)}
+    for f in (pres / "deck" / "v2.html", pres / "03b_SCRIPT_A_DIRE_v2.md", pres / "06_SLIDE_CONTENT_v2.md"):
+        if not f.exists():
+            continue
+        texte = f.read_text(encoding="utf-8")
+        if f.suffix == ".html":
+            texte = re.sub(r"<style>.*?</style>|<script>.*?</script>", " ", texte, flags=re.S)
+            texte = re.sub(r"<[^>]+>", " ", texte)
+        for mot in INTERDITS_V2:
+            if mot == "validé sur le terrain" and texte.count(mot) <= 1:      # le libellé du statut, compté par etat.yaml
+                continue
+            if mot in texte:
+                echecs.append(f"{f.name} : formulation interdite « {mot} »")
+        if f.name.startswith("03b"):
+            dits = re.sub(r"\[[^\]]*\]|#.*|\d+:\d+(?:[–-]\d+:\d+)?", " ", texte)
+            inconnus = sorted(chiffres(dits) - connus)
+            if inconnus:
+                echecs.append(f"{f.name} dit des nombres sans source : {inconnus}")
+    return echecs
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sans-benchmark", action="store_true")
@@ -224,6 +258,7 @@ def main() -> None:
     resume += ["", "Chiffres autorisés dans le pitch : " + ", ".join(sorted(autorises, key=lambda x: (len(x), x))), ""]
     if not a.verifier:
         (COMP / "15_CLAIMS.md").write_text(avec_banniere("\n".join(resume)), encoding="utf-8")
+    echecs += verifier_v2()
     print("\n".join(echecs) if echecs else "Toutes les affirmations contrôlables sont vérifiées ; aucun chiffre non prouvé dans le pitch.")
     sys.exit(1 if echecs else 0)
 
