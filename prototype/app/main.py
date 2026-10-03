@@ -98,8 +98,8 @@ WEB_PULSE = Path(__file__).resolve().parent.parent / "web" / "pulse"
 _observabilite.configurer(_observabilite.niveau_depuis_env(os.environ))
 # ordre : la dernière ajoutée est la plus EXTÉRIEURE → l'identifiant de requête couvre aussi les refus 413
 app.add_middleware(_Protections, csp=_politique_contenu([WEB_PULSE / f for f in ("app.html", "console.html", "projection.html", "regie.html",
-                                                                              "etabli.html", "suivi.html", "decouverte.html")]),
-                   chemins_csp=("/app", "/console", "/etabli", "/suivi", "/decouverte", "/projection", "/demo/regie"))
+                                                                              "etabli.html", "suivi.html", "decouverte.html", "reponse.html")]),
+                   chemins_csp=("/app", "/console", "/etabli", "/suivi", "/decouverte", "/reponse", "/projection", "/demo/regie"))
 app.add_middleware(_Perimetre, ancien_actif=lambda: ANCIEN_PROTOTYPE, jeton=lambda: _CONSOLE_JETON)
 app.add_middleware(_observabilite.MiddlewareRequete)
 
@@ -984,6 +984,14 @@ def page_decouverte():
     if MODE != "demo":
         raise HTTPException(501, "Club Pulse est présenté en mode démo (monde fictif).")
     return FileResponse(WEB / "pulse" / "decouverte.html")
+
+
+@app.get("/reponse")
+def page_reponse():
+    """Club Pulse — RÉPONSE DEPUIS L'E-MAIL (Foire 2026) : le lien signé arrive dans le fragment ; la page lit par POST."""
+    if MODE != "demo":
+        raise HTTPException(501, "Club Pulse est présenté en mode démo (monde fictif).")
+    return FileResponse(WEB / "pulse" / "reponse.html")
 
 
 @app.get("/demo/regie")

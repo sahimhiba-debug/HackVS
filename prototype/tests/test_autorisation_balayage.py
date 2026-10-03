@@ -2,8 +2,8 @@
 une route ajoutée demain sans garde fait échouer ce test.
 
 Pour chaque route :
-- PUBLIQUE : seulement `/acces`, `/jure` et `/decouverte/activer` (activer un compte, un passe juré, un passe
-  découverte) — toute autre route publique échoue ;
+- PUBLIQUE : seulement `/acces`, `/jure`, `/decouverte/activer` et `/courriel/lire|repondre` (activer un compte, un
+  passe juré, un passe découverte ; lire et utiliser un lien d'e-mail signé) — toute autre route publique échoue ;
 - INVITÉ (passe découverte, Foire 2026) : sans en-tête, mal formé, signature falsifiée, passe jamais activé, session de
   membre à la place → 401 ;
 - CONSOLE : sans l'en-tête → 403 ; avec l'en-tête mais depuis une autre machine → 403 ;
@@ -27,7 +27,8 @@ from app.taxonomy import charger_taxonomie
 TAX = charger_taxonomie()
 SECRET = "b" * 8 + "-secret-du-balayage-d-autorisation-fictif"
 CONSOLE = {"X-Pulse-Console": "1"}
-PUBLIQUES = {("POST", "/api/pulse/acces"), ("POST", "/api/pulse/jure"), ("POST", "/api/pulse/decouverte/activer")}
+PUBLIQUES = {("POST", "/api/pulse/acces"), ("POST", "/api/pulse/jure"), ("POST", "/api/pulse/decouverte/activer"),
+             ("POST", "/api/pulse/courriel/lire"), ("POST", "/api/pulse/courriel/repondre")}   # liens d'e-mail : signés
 VALEURS = {"n": "1", "index": "0", "etape": "0"}
 
 

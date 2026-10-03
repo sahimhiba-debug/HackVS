@@ -40,11 +40,17 @@
     <div class="onglets" role="tablist" id="vues">
       <button class="btn discret petit" role="tab" data-vue="suivi" aria-selected="true">Suivi</button>
       <button class="btn discret petit" role="tab" data-vue="cherche" aria-selected="false">Le Club cherche</button>
+      <button class="btn discret petit" role="tab" data-vue="boite" aria-selected="false">Boîte de sortie</button>
     </div>
     <div id="vue-cherche" hidden>
       <h1 class="titre">Le Club cherche</h1>
       <p class="sous">Les demandes restées sans réponse, par métier. Inviter un contact : un passe découverte lié à la demande, à transmettre soi-même.</p>
       <div id="cherche"></div>
+    </div>
+    <div id="vue-boite" hidden>
+      <h1 class="titre">Boîte de sortie</h1>
+      <p class="sous"><b>Simulé en démonstration</b> : les e-mails qui partiraient vers les membres à distance. Aucun n'est envoyé.</p>
+      <div id="boite"></div>
     </div>
     <div id="vue-suivi">
     <h1 class="titre">Où en sont les partenariats</h1>
@@ -167,13 +173,27 @@
       } catch (e) { $("#invitation").replaceChildren(h("p", { class: "note" }, "Invitation indisponible : " + e.message)); }
       lirePasses();
     }
+    async function lireBoite() {
+      try {
+        const r = await consoleFetch("/api/pulse/console/boite", {}); if (!r.ok) return;
+        const x = await r.json();
+        $("#boite").replaceChildren(h("p", { class: "note", "data-role": "simule" }, `${x.simule} — ${x.note}`),
+          ...(x.courriels.length ? x.courriels.map((m) => h("section", { class: "bloc", "data-courriel": m.langue },
+            h("span", { class: "surtitre" }, `À : ${m.a} · ${m.zone} · ${m.langue}`), h("p", {}, h("b", {}, m.objet)),
+            h("pre", { style: "white-space:pre-wrap;font:inherit" }, m.corps),
+            h("div", { class: "cloture" }, m.liens.map((l) => h("a", { class: "btn discret petit", href: l.url, target: "_blank", rel: "noopener", "data-lien": l.libelle }, l.libelle)))))
+            : [h("p", { class: "note" }, "Aucun membre à distance n'a de demande en ce moment (zone non déclarée, ou rien à demander).")]));
+      } catch (e) { /* écran figé */ }
+    }
     async function lireCherche() {
       try { const r = await consoleFetch("/api/pulse/console/club-cherche", {}); if (r.ok) rendreCherche(await r.json()); } catch (e) { /* écran figé */ }
     }
     for (const b of document.querySelectorAll("#vues button")) b.addEventListener("click", () => {
       for (const x of document.querySelectorAll("#vues button")) x.setAttribute("aria-selected", String(x === b));
       $("#vue-suivi").hidden = b.dataset.vue !== "suivi"; $("#vue-cherche").hidden = b.dataset.vue !== "cherche";
+      $("#vue-boite").hidden = b.dataset.vue !== "boite";
       if (b.dataset.vue === "cherche") lireCherche();
+      if (b.dataset.vue === "boite") lireBoite();
     });
     async function lirePasses() {
       try {

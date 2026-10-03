@@ -16,6 +16,7 @@ from collections import Counter
 from datetime import date, timedelta
 from typing import TYPE_CHECKING, Optional, Union
 
+from . import distance
 from .erreurs import Invalide
 from .partenariats import CLUB, ETAPES, RESULTATS, demandes_repondues, recus_du_club
 
@@ -79,7 +80,6 @@ def calculer(c: "ClubPulse", periode: str = "demo") -> dict:
 
     actifs = {e.acteurs[0] for e in reponses} | {e.acteurs[0] for e in c.journal.evenements("ACCORD") if dans(e) and e.acteurs}
     invites = getattr(c, "decouverte", None)
-    zones = getattr(c, "zones_membres", None)
     nominatif = [{"titre": r["titre"], "piece": r["piece"], "etape": r["etape"],
                   "resultat": (r["cloture"] or {}).get("resultat"), "note": (r["cloture"] or {}).get("note"),
                   "membre": (c.coffre.identite(r["membre"]).nom if c.coffre.identite(r["membre"]) else "—")}  # type: ignore[union-attr]
@@ -100,7 +100,7 @@ def calculer(c: "ClubPulse", periode: str = "demo") -> dict:
         "resultats": par_resultat,
         "metiers_manquants": [{"metier": m, "demandes": n} for m, n in manquants.most_common()],
         "membres_actifs": _k(len(actifs), k),
-        "hors_valais": zones(debut, k) if callable(zones) else "zone non renseignée",
+        "hors_valais": distance.zones_membres(c, debut, k),
         "invites": invites.statistiques(debut, k) if invites is not None else {"actifs": 0, "ont_contribue": 0, "intentions_adhesion": 0},
         "nominatif": nominatif,
         "regles": f"Agrégats seulement. Tout décompte de personnes sous {k} s'affiche « < {k} ». Une ligne nominative "

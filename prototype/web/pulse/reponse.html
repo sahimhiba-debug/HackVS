@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Club Pulse · Réponse</title>
+  <meta name="description" content="Répondre à une demande du Club depuis un e-mail. Monde de démonstration.">
+  <link rel="icon" href="/static/pulse/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/pulse/pulse.css">
+  <style>
+    body { background: var(--papier); }
+    header.haut { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid var(--hairline-2); background: var(--card); }
+    .page { max-width: 520px; margin: 0 auto; padding: 16px 16px 40px; }
+    h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin-top: 10px; }
+    .carte { background: var(--card); border-radius: var(--r-card); padding: 14px 16px; box-shadow: var(--sh-card-light); margin-top: 14px; }
+    label { display: block; font-size: 13px; font-weight: 700; margin-top: 10px; }
+    input { font: inherit; width: 100%; padding: 9px 10px; border: 1px solid var(--hairline); border-radius: 10px; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <header class="haut"><span class="marque"><span class="pouls-point" aria-hidden="true"></span>Club Pulse</span>
+    <span class="puce fictif" data-role="monde">monde de démonstration</span></header>
+  <div class="page"><span class="surtitre" id="sur">Réponse depuis l'e-mail</span><h1 id="titre">…</h1><div id="contenu"></div></div>
+  <script type="module">
+    const $ = (s) => document.querySelector(s);
+    function h(tag, attrs = {}, ...enfants) {
+      const el = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs || {})) {
+        if (v === null || v === undefined || v === false) continue;
+        if (k === "class") el.className = v; else if (k.startsWith("on")) el.addEventListener(k.slice(2), v); else el.setAttribute(k, v === true ? "" : v);
+      }
+      for (const e of enfants.flat(Infinity)) if (e !== null && e !== undefined && e !== false) el.append(e instanceof Node ? e : document.createTextNode(String(e)));
+      return el;
+    }
+    const DE = { "oui": "Ja", "non": "Nein", "pas cette fois": "Diesmal nicht" };
+    async function poster(chemin, corps) {
+      const r = await fetch("/api/pulse" + chemin, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(corps) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.detail || `serveur : ${r.status}`);
+      return j;
+    }
+    const m = location.hash.match(/lien=([\w.\-]+)/);
+    const jeton = m ? m[1] : null;
+    history.replaceState(null, "", location.pathname);                      // le lien ne reste pas dans l'adresse
+    (async () => {
+      if (!jeton) { $("#titre").textContent = "Lien incomplet"; return; }
+      let d;
+      try { d = await poster("/courriel/lire", { jeton }); }
+      catch (e) { $("#titre").textContent = "Ce lien ne vaut plus"; $("#contenu").replaceChildren(h("p", { class: "note", "data-role": "erreur" }, e.message)); return; }
+      const de = d.langue === "de";
+      $("#titre").textContent = de ? `Ihre Antwort: ${DE[d.choix]}` : `Votre réponse : ${d.choix}`;
+      const champs = Object.entries(d.minimums).map(([k, min]) => {
+        const i = h("input", { type: "number", min, id: "att-" + k, inputmode: "numeric" });
+        return [h("label", { for: "att-" + k }, `${k} (${de ? "mindestens" : "au moins"} ${min})`), i];
+      });
+      $("#contenu").replaceChildren(h("section", { class: "carte" }, h("b", {}, d.titre), h("p", {}, d.texte), ...champs.flat(),
+        h("button", { class: "btn", id: "confirmer", style: "margin-top:12px", onclick: async () => {
+          const attributs = Object.fromEntries(champs.map(([, i]) => [i.id.slice(4), Number(i.value)]).filter(([, v]) => v));
+          try {
+            const r = await poster("/courriel/repondre", { jeton, attributs });
+            $("#contenu").replaceChildren(h("p", { "data-role": "fait" }, r.note));
+          } catch (e) { $("#contenu").append(h("p", { class: "note", "data-role": "erreur" }, e.message)); }
+        } }, de ? "Bestätigen" : "Confirmer")),
+        h("p", { class: "note" }, de ? `Einmal gültig, bis ${d.expire} (Datum der Demo-Welt).` : `Ce lien ne sert qu'une fois, jusqu'au ${d.expire} (date du monde de démonstration).`));
+    })();
+  </script>
+</body>
+</html>

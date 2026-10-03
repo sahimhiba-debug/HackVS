@@ -23,8 +23,8 @@ from .observabilite import ASGIApp, Message, Receive, Scope, Send
 CORPS_MAX = 64 * 1024
 LOCALES = {"127.0.0.1", "::1", "localhost", "testclient"}      # « testclient » : client de test en processus
 # ce que le serveur de démonstration sert : Club Pulse, et rien d'autre (l'ancien prototype est derrière un drapeau)
-CLUB_PULSE_EXACTS = {"/app", "/app/", "/app/manifest.webmanifest", "/app/sw.js", "/console", "/projection", "/demo/regie", "/etabli", "/suivi", "/decouverte",
-                     "/favicon.ico"}
+CLUB_PULSE_EXACTS = {"/app", "/app/", "/app/manifest.webmanifest", "/app/sw.js", "/console", "/projection", "/demo/regie", "/etabli",
+                     "/suivi", "/decouverte", "/reponse", "/favicon.ico"}   # Foire 2026 : Suivi, passe découverte, réponse e-mail
 CLUB_PULSE_PREFIXES = ("/api/pulse/", "/static/pulse/")
 TROP_GROS = '{"detail": "Corps de requête trop volumineux (64 Kio au plus)."}'.encode()
 _SCRIPT = re.compile(r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>", re.S | re.I)

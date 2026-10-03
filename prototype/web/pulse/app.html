@@ -467,6 +467,7 @@
         section("Mes consentements", d.consentements.length ? d.consentements.map((r) => h("p", {}, `${r.titre} — ${r.etat}`)) : vide("Aucun.")),
         section("Mes réponses aux demandes", d.reponses_aux_demandes.length ? d.reponses_aux_demandes.map((r) => h("p", {}, `${jourDe(r.le)} : ${r.reponse}`)) : vide("Aucune.")),
         section("Ailleurs", h("p", {}, d.hors_du_journal), h("p", { class: "note" }, `Notes privées : ${d.notes_privees} (vous seul·e)`)),
+        h("div", { id: "foire-distance" }),
         section("Tout effacer", h("p", { class: "note" }, "Votre identité quitte le coffre ; vos déclarations, offres, consentements, "
           + "participations en cours, préférences, notes et votre compte sont retirés. Ce qui RESTE : le journal du Club, qui "
           + "ne s'efface pas, garde une trace technique sans nom ni contact (un identifiant et vos textes déjà anonymisés) — "
@@ -480,6 +481,25 @@
               afficher(h("h1", { class: "grand" }, "Effacé"), ...r.efface.map((x) => h("p", {}, "— " + x)), h("p", { class: "note" }, "Ce qui reste : " + r.reste));
             } catch (e) { toast(e.message, "erreur"); }
           } }, "Tout effacer")));
+      foireDistance();
+    }
+    // FOIRE 2026 (F, B) : zone, langue, « visible par le Club » — seulement si l'interrupteur est allumé (sinon : rien)
+    async function foireDistance() {
+      let x;
+      try { x = await api("/api/pulse/moi/distance"); } catch (e) { return; }
+      const zone = h("select", { id: "dist-zone" }, x.zones.map((z) => h("option", { value: z, selected: x.profil && x.profil.zone === z }, z)));
+      const langue = h("select", { id: "dist-langue" }, x.langues.map((l) => h("option", { value: l, selected: x.profil && x.profil.langue === l }, l === "fr" ? "français" : "Deutsch")));
+      const bloc = $("#foire-distance"); if (!bloc) return;
+      bloc.replaceChildren(...[section("Où je suis, ma langue",
+        h("p", { class: "note" }, "Pour recevoir les demandes par e-mail et compter les membres hors Valais (jamais nommément)."),
+        zone, langue, h("button", { class: "btn discret petit", id: "dist-enregistrer", onclick: async () => {
+          try { await api("/api/pulse/moi/distance", { corps: { zone: zone.value, langue: langue.value } }); toast("Enregistré."); } catch (e) { toast(e.message, "erreur"); }
+        } }, "Enregistrer"), x.profil ? h("p", { class: "note" }, `Déclaré : ${x.profil.zone} · ${x.profil.langue}`) : null),
+        x.recus.length ? section("Visible par le Club",
+          h("p", { class: "note" }, "Le Club ne voit votre nom à côté d'un partenariat que si vous ET le Club l'avez permis."),
+          x.recus.map((r) => h("label", { class: "ligne" }, h("input", { type: "checkbox", "data-visible": r.reference, checked: r.visible_par_le_club,
+            onchange: async (ev) => { try { await api(`/api/pulse/moi/recus/${encodeURIComponent(r.reference)}/visible`, { corps: { visible: ev.target.checked } }); }
+              catch (e) { ev.target.checked = !ev.target.checked; toast(e.message, "erreur"); } } }), ` ${r.titre}`))) : null].filter(Boolean));
     }
 
     // ------------------------------------------------------------------ routeur

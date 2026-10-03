@@ -66,3 +66,77 @@ def test_le_jure_devient_exposant_invite_d_annecy(url_foire):
         assert "ohne Mitgliedschaft" in console.input_value("[data-role=invitation] textarea[data-langue=DE]")
         b.close()
     assert not erreurs, erreurs
+
+
+def test_membre_a_distance_repond_depuis_l_e_mail_simule(url_foire):
+    """F : Markus déclare « Haut-Valais, Deutsch » sur son téléphone → la boîte de sortie (simulé en démonstration)
+    montre l'e-mail en allemand avec trois liens → « Diesmal nicht » s'ouvre sur la page de réponse, confirme, et le
+    même lien rouvert ne vaut plus."""
+    from playwright.sync_api import sync_playwright
+    from tests.test_e2e_pulse import _api, _telephone
+    erreurs: list[str] = []
+    _api(url_foire, "/api/pulse/demo/reinitialiser", {})
+    codes = {x["id"]: x["code"] for x in _api(url_foire, "/api/pulse/console/personas")}
+    with sync_playwright() as p:
+        b = _chromium(p)
+        _, tel = _telephone(b, url_foire, codes["s14"], (390, 844), erreurs)
+        tel.goto(url_foire + "/app#donnees")
+        tel.locator("#dist-zone").wait_for()
+        tel.select_option("#dist-zone", "Haut-Valais")
+        tel.select_option("#dist-langue", "de")
+        tel.click("#dist-enregistrer")
+        tel.locator(".toast:has-text('Enregistré')").wait_for()
+        assert _api(url_foire, "/api/pulse/console/boite")["courriels"], "la déclaration n'a pas produit d'e-mail"
+        console = b.new_context(viewport={"width": 1366, "height": 860}).new_page()
+        console.set_default_timeout(30_000)
+        console.on("pageerror", lambda e: erreurs.append(str(e)))
+        console.goto(url_foire + "/suivi")
+        console.click("#vues >> text=Boîte de sortie")
+        console.locator("[data-role=simule]:has-text('simulé en démonstration')").wait_for()
+        console.locator("[data-courriel=de] >> text=Der Club fragt Sie").wait_for()
+        assert "[object" not in console.inner_text("#vue-boite")
+        lien = console.locator("[data-courriel=de] [data-lien='Diesmal nicht']").get_attribute("href")
+        rep = b.new_context(viewport={"width": 390, "height": 844}).new_page()
+        rep.on("pageerror", lambda e: erreurs.append(str(e)))
+        rep.goto(lien)
+        rep.locator("h1:has-text('Diesmal nicht')").wait_for()
+        assert "lien=" not in rep.url
+        rep.click("#confirmer")
+        rep.locator("[data-role=fait]").wait_for()
+        rep2 = b.new_context().new_page()
+        rep2.goto(lien)
+        rep2.locator("[data-role=erreur]").wait_for()
+        b.close()
+    assert not erreurs, erreurs
+
+
+def test_visible_par_le_club_double_accord_depuis_le_telephone(url_foire):
+    """B : Pauline coche « Visible par le Club » sur SON reçu ; le Club l'a permis aussi → une ligne nominative apparaît
+    dans Suivi ; elle décoche → la ligne disparaît."""
+    import json
+    import urllib.request
+    from playwright.sync_api import sync_playwright
+    from tests.test_e2e_pulse import _api, _telephone
+    erreurs: list[str] = []
+    _api(url_foire, "/api/pulse/demo/reinitialiser", {})
+    codes = {x["id"]: x["code"] for x in _api(url_foire, "/api/pulse/console/personas")}
+    with sync_playwright() as p:
+        b = _chromium(p)
+        _, tel = _telephone(b, url_foire, codes["s01"], (390, 844), erreurs)
+        session = tel.evaluate("sessionStorage.getItem('pulse-session') || localStorage.getItem('pulse-session')")
+        h = {"X-Pulse-Session": session, "Content-Type": "application/json"}
+        ask = json.load(urllib.request.urlopen(urllib.request.Request(url_foire + "/api/pulse/moi/asks", headers=h)))[0]["id"]
+        urllib.request.urlopen(urllib.request.Request(f"{url_foire}/api/pulse/moi/asks/{ask}/reponse", method="POST", headers=h,
+                                                      data=json.dumps({"oui": True, "attributs": {"places": 14}}).encode()))
+        ref = json.load(urllib.request.urlopen(urllib.request.Request(url_foire + "/api/pulse/moi/consentements", headers=h)))[0]["reference"]
+        _api(url_foire, f"/api/pulse/console/recus/{ref}/visible", {"visible": True})
+        assert _api(url_foire, "/api/pulse/console/suivi")["nominatif"] == []
+        tel.goto(url_foire + "/app#donnees")
+        tel.locator(f"[data-visible='{ref}']").check()
+        tel.wait_for_timeout(500)
+        assert len(_api(url_foire, "/api/pulse/console/suivi")["nominatif"]) == 1
+        tel.locator(f"[data-visible='{ref}']").uncheck()
+        tel.wait_for_timeout(500)
+        assert _api(url_foire, "/api/pulse/console/suivi")["nominatif"] == []
+        b.close()
+    assert not erreurs, erreurs

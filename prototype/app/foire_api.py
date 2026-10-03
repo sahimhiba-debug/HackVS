@@ -9,7 +9,7 @@ from typing import Callable, Literal, Optional
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from intelligence import club_cherche, metiers, partenariats, suivi
+from intelligence import club_cherche, distance, metiers, partenariats, suivi
 
 
 class Cloture(BaseModel):
@@ -40,6 +40,16 @@ class Aide(BaseModel):
     aide: bool
 
 
+class Distance(BaseModel):
+    zone: str = Field(max_length=40)
+    langue: Literal["fr", "de"]
+
+
+class Lien(BaseModel):
+    jeton: str = Field(max_length=300)
+    attributs: dict[str, int] = Field(default_factory=dict, max_length=4)
+
+
 def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: Callable, *, limiter: Callable,
                    nouveau_limiteur: Callable, qr: Callable[[str], str]) -> None:
     # PASSE DÉCOUVERTE : jamais par adresse IP (une salle partage la même) — par CODE tenté, par SESSION d'invité, et un
@@ -48,6 +58,8 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     limite_activation_global = nouveau_limiteur(300, 60.0)
     limite_activation_code = nouveau_limiteur(5, 60.0)
     limite_invite = nouveau_limiteur(60, 60.0)
+    limite_lien_global = nouveau_limiteur(300, 60.0)       # liens d'e-mail : par lien tenté, et un plafond global doux
+    limite_lien = nouveau_limiteur(10, 60.0)
 
     def foire(f: Callable) -> Callable:
         def g(c):
@@ -139,3 +151,33 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     @r.get("/decouverte/referentiel")
     def referentiel(session: str = Depends(invite)) -> dict:
         return {"metiers": [{"id": m["id"], "fr": m["fr"], "de": m["de"]} for m in metiers.metiers()], "zones": list(metiers.ZONES)}
+
+    # ------------------------------------------------------------------ F · membre à distance, réponse depuis l'e-mail
+    @r.get("/moi/distance")
+    def ma_distance(pid: str = Depends(membre)) -> dict:
+        return au_monde(foire(lambda c: {"profil": distance.profil(c, pid), "zones": list(metiers.ZONES), "langues": list(distance.LANGUES),
+                                         "recus": [{"reference": x["reference"], "titre": x["titre"], "visible_par_le_club": "membre" in x["visible"]}
+                                                   for x in partenariats.recus_du_club(c) if x["membre"] == pid and x["etape"] != "retire"]}))
+
+    @r.post("/moi/distance")
+    def declarer_distance(x: Distance, pid: str = Depends(membre)) -> dict:
+        return au_monde(foire(lambda c: distance.declarer(c, pid, x.zone, x.langue)))
+
+    @r.get("/console/boite", dependencies=[Depends(console)])
+    def boite_de_sortie(request: Request) -> dict:
+        base = os.environ.get("HACKVS_URL_PUBLIQUE") or str(request.base_url).rstrip("/")
+        return au_monde(foire(lambda c: distance.boite(c, base)))
+
+    def _limiter_lien(jeton: str) -> None:
+        limiter(limite_lien_global, "courriel")
+        limiter(limite_lien, "courriel|" + jeton[-32:])
+
+    @r.post("/courriel/lire")
+    def lire_courriel(x: Lien) -> dict:
+        _limiter_lien(x.jeton)
+        return au_monde(foire(lambda c: distance.lire_lien(c, x.jeton)))
+
+    @r.post("/courriel/repondre")
+    def repondre_courriel(x: Lien) -> dict:
+        _limiter_lien(x.jeton)
+        return au_monde(foire(lambda c: distance.repondre_lien(c, x.jeton, x.attributs or None)))
