@@ -97,3 +97,19 @@ corrections et livraison avant 07:30. Aucun tag, aucun push sur `main` — **`ma
 | 9 | Chantiers P3 n° 1 à 16 | ⬜ | dans l'ordre, après le P1 |
 | 11 | Audit (sous-agent, branche `audit-nuit`) | ⬜ | ≤ 04:00 |
 | 12 | Livraison | ⬜ | ≤ 07:30 |
+
+### Contexte — URL des sources externes (message de l'équipe, 03.10)
+
+- https://latele.ch/articles/martigny-la-foire-du-valais-fera-son-cinema
+- https://www.bluewin.ch/fr/infos/suisse/par-ici-la-bobine-la-foire-du-valais-annonce-son-blockbuster-2026-li.3274212
+- https://www.regione.vda.it/allegato.aspx?pk=129254
+- https://latele.ch/articles/pres-de-250-000-personnes-attendues-a-la-foire-du-valais
+- https://www.cransmontana2027.ch/en
+- https://www.iamexpat.ch/expat-info/swiss-news/e-id-coming-switzerland-december-1
+- https://ecommons.cornell.edu/entities/publication/9c0adbfb-985c-4f7d-aae3-96959822bc4c
+- https://archive.harbus.org/2019/rcs-learn-to-give-and-take
+- https://digitaleconomy.stanford.edu/publication/a-causal-test-of-the-strength-of-weak-ties
+- https://www.iso27001security.com/html/27560 · https://w3id.org/dpv/guides/consent-27560
+- https://american-image.com/ten-tips-for-better-trade-show-leads-follow-up/
+- https://www.liip.ch/en/blog/apertus-1-5-6-ways-to-try-out-switzerland-s-updated-ai-model
+- https://docs.vllm.ai/en/latest/api/vllm/tool_parsers/apertus_tool_parser/

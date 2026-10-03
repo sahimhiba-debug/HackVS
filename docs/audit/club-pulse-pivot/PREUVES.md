@@ -102,6 +102,26 @@ serveur déployé : `python scripts/charge_salle.py --url https://<domaine> --je
 | p50 / p95 par route (ms) | entrer 178,9 / 200,7 · déclarer 159,9 / 208,4 · relire (moi) 115,9 / 138,9 · répondre 66,5 / 79,2 · écran 6,8 / 19,2 |
 | Cohérence finale | écran = téléphones (80 participants, capacités par métier, réponses par choix ; « < 3 » accepté seulement si le vrai nombre est 1 ou 2) ; anneau fermé ; **purge vérifiée** (0 participant après) |
 
+## Contexte — faits EXTERNES relevés par l'équipe le 03.10.2026 (pas des mesures du produit)
+
+Repris tels que relevés, avec leur source ; ils ne sont pas vérifiés par le dépôt et ne sont pas des résultats de
+Club Pulse.
+
+| Fait | Source |
+|---|---|
+| Foire du Valais 2026, du 2 au 11 octobre ; thème : le cinéma ; des courts métrages réalisés pendant la Foire sont présentés le deuxième samedi ; la Haute-Savoie est région d'honneur ; Crans-Montana 2027 et Port-Valais parmi les invités ; la Vallée d'Aoste y a un stand | latele.ch (« La Foire du Valais fera son cinéma ») ; bluewin.ch (« Par ici la bobine ») ; regione.vda.it (allegato 129254) |
+| Plus de 250 000 visiteurs en 2025 (record), plus de 400 exposants, environ 35 % de visiteurs d'un autre canton romand, retombées estimées à environ 40 millions de francs en 2025 ; premier hackathon intégré à une foire grand public en Suisse ; dimanche, le public entre dans les coulisses | latele.ch (« Près de 250 000 personnes attendues à la Foire du Valais ») |
+| Championnats du monde de ski alpin, Crans-Montana, 1er – 14 février 2027 | cransmontana2027.ch |
+| e-ID suisse attendue à partir du 1er décembre 2026 (portefeuille swiyu, qui accueille aussi d'autres attestations vérifiables) | iamexpat.ch (« e-ID coming to Switzerland December 1 ») |
+| Flynn & Lake (2008) : on sous-estime jusqu'à environ 50 % la probabilité qu'une demande d'aide soit acceptée, en négligeant le coût social de dire non | ecommons.cornell.edu (publication 9c0adbfb…) |
+| Reciprocity Ring (Wayne et Cheryl Baker) : la plupart des gens veulent aider mais demandent peu ; à Harvard : 24 demandes, 114 offres ; demandes SMART | archive.harbus.org (2019, « RCs learn to give and take ») |
+| Liens faibles (Science, 2022, plus de 20 millions de personnes) : les liens moyennement faibles créent le plus de mobilité ; les liens forts comptent davantage dans les secteurs peu numériques | digitaleconomy.stanford.edu (« A causal test of the strength of weak ties ») |
+| ISO/IEC TS 27560:2023 : structure des enregistrements et reçus de consentement ; guide RGPD avec DPV | iso27001security.com (27560) ; w3id.org/dpv/guides/consent-27560 |
+| « 80 % des contacts de salon jamais rappelés » : statistique très citée mais **contestée et invérifiable** | american-image.com (« Ten tips for better trade show leads follow-up ») |
+| Apertus 1.5 : compréhension d'images, audio expérimental, meilleur suivi d'instructions et appel d'outils ; format d'appel d'outil Apertus dans vLLM | liip.ch (« Apertus 1.5 : 6 ways to try out… ») ; docs.vllm.ai (apertus_tool_parser) |
+
+URL complètes : celles du message de l'équipe du 03.10 (conservées dans `docs/NUIT.md`, section Contexte).
+
 ## Non exécuté (et pourquoi)
 - Apertus réel : aucun identifiant fourni. *(vrai au 30.09 ; depuis le 01.10, voir « Ajouts du 01.10 » ci-dessus.)*
 - Vrais téléphones sur le réseau d'une salle : remplacés par des contextes de navigateur indépendants.
