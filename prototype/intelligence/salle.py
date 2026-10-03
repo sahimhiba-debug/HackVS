@@ -223,11 +223,32 @@ class Salle:
             return self.ecran()
 
     def declencher_retrait(self) -> dict:
+        """Retrait SIMULÉ (régie) — audit IMPORTANT 9 : il ne retire le consentement d'aucun vrai participant. La pièce est
+        libérée pour la démonstration ; son fournisseur repasse en RÉSERVE (son oui reste valable) ; une autre personne de
+        la réserve la reprend si elle existe. L'écran le dit : « simulé en démonstration »."""
         with self._v:
             cible = next(((n, y) for n, y in self.participants.items() if y["statut"] == "fournit"), None)
             if cible is None:
                 raise Conflit("aucune pièce fournie à retirer")
-            self._retirer(*cible, simule=True)
+            nonce, x = cible
+            piece = x["capacite"]
+            x["statut"] = "reserve"
+            self.fournisseurs[piece] = None
+            self.ferme_le = None
+            self._noter("retrait simulé en démonstration : " + (f"{self._role(piece)}ce composant n'est plus disponible"
+                                                                 if self._role(piece) else "un composant n'est plus disponible"))
+            relais = next((n for n, y in self.participants.items() if y["capacite"] == piece and y["statut"] == "reserve" and n != nonce),
+                          None)
+            if relais:
+                self.fournisseurs[piece] = relais
+                self.participants[relais]["statut"] = "fournit"
+                self._noter("recomposition : une autre personne de la salle reprend la pièce")
+                self._fermer_si_complet()
+            else:
+                self.fournisseurs[piece] = nonce                # personne d'autre : la pièce revient à son fournisseur
+                self.participants[nonce]["statut"] = "fournit"
+                self._noter("personne d'autre en réserve : la pièce revient à la même personne")
+                self._fermer_si_complet()
             return self.ecran() | {"simule": "retrait déclenché par la télécommande — simulé en démonstration"}
 
     def afficher(self, vue: str) -> dict:

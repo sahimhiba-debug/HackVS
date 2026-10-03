@@ -253,3 +253,16 @@ def test_fil_sans_double_ponctuation(s):
     for p in passes:
         s.repondre(p, "oui")
     assert s.ecran()["fil"] and all(": :" not in f["texte"] for f in s.ecran()["fil"])
+
+
+def test_retrait_simule_ne_retire_le_consentement_de_personne(s):
+    """Audit IMPORTANT 9 : le retrait déclenché par la régie est SIMULÉ — il ne retire le consentement d'aucun vrai
+    participant (le fournisseur repasse en réserve, son oui reste valable), et l'écran le dit « simulé »."""
+    ps = [_entrer(s, c) for c in ("voiture", "voiture", "salle", "allemand")]
+    s.lancer()
+    for p in ps:
+        s.repondre(p, "oui")
+    s.declencher_retrait()
+    statuts = [y["statut"] for y in s.participants.values()]
+    assert "retire" not in statuts and statuts.count("fournit") == 3
+    assert any("simulé" in f["texte"] for f in s.ecran()["fil"])
