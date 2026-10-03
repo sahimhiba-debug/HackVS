@@ -3,13 +3,16 @@ cherche ». Un adaptateur mince, comme capacites_api : valider, authentifier, ap
 Interrupteur éteint : chaque route répond 404 « désactivé » — le produit d'hier, à l'identique."""
 from __future__ import annotations
 
+import json
+import os
+
 from typing import Callable, Literal, Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
 from .urls import base_publique
-from intelligence import assembler, carte, club_cherche, distance, metiers, partenariats, suivi
+from intelligence import assembler, carte, club_cherche, distance, metiers, partenariats, recu_27560, suivi
 
 
 class Cloture(BaseModel):
@@ -139,6 +142,14 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     @r.get("/console/club-cherche", dependencies=[Depends(console)])
     def le_club_cherche() -> dict:
         return au_monde(foire(club_cherche.calculer))
+
+    @r.get("/moi/recus/27560")
+    def recus_27560(pid: str = Depends(membre)):
+        """Mes reçus, alignés sur ISO/IEC TS 27560 (JSON-LD, DPV) — interrupteur HACKVS_RECU_27560 (allumé par défaut)."""
+        if os.environ.get("HACKVS_RECU_27560", "1") != "1":
+            raise HTTPException(404, "Export ISO/IEC TS 27560 désactivé (HACKVS_RECU_27560=0).")
+        doc = au_monde(lambda c: recu_27560.export(c, pid))
+        return Response(json.dumps(doc, ensure_ascii=False), media_type="application/ld+json")
 
     @r.get("/console/club/assembler", dependencies=[Depends(console)])
     def club_assembler() -> dict:

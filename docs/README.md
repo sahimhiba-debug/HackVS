@@ -28,6 +28,7 @@ qui n'existe plus.
 | [ADR/README.md](ADR/README.md) | décisions d'architecture et leur statut relu contre le code |
 | [audit/EXTRACTION_EVAL.md](audit/EXTRACTION_EVAL.md) · [audit/probe_publicai.md](audit/probe_publicai.md) (sonde exécutée contre le CSCS) | évaluation EXTRACT (prête, non exécutée contre un vrai modèle) ; sonde du fournisseur |
 | [BANC_MULTI_FOURNISSEURS.md](BANC_MULTI_FOURNISSEURS.md) | banc IA Apertus / OpenAI / Claude sur les 26 mêmes cas : choix du fournisseur, variables, commandes, dry-run, rapport, limites |
+| [conformite/RECU_27560.md](conformite/RECU_27560.md) | reçus alignés sur ISO/IEC TS 27560 (jamais « certifiés ») : table de correspondance, export JSON-LD DPV, test de conformité, limites |
 | [DEMO_TUNNEL.md](DEMO_TUNNEL.md) | **démo publique sur le Mac du pitch** : lanceur, Tailscale Funnel (principal), Cloudflare (secours), vérifications, ce qu'on dit |
 | [DEPLOIEMENT.md](DEPLOIEMENT.md) | production future : déploiement VPS Infomaniak (Docker Compose + Caddy, HTTPS) pas à pas |
 | [DEPLOIEMENT_CLOUD_RUN.md](DEPLOIEMENT_CLOUD_RUN.md) | déploiement public Cloud Run : commandes exactes, variables, secrets, contrôles (rien n'est déployé) |

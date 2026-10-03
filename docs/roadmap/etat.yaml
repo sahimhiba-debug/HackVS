@@ -73,6 +73,13 @@
   en: The business card becomes the profile — photo of one's card, Apertus suggests, the member confirms
   ecran: /app
   tests: test_carte_profil.py, test_e2e_foire.py
+- id: recu_27560
+  statut: construit
+  fr: Reçus alignés sur ISO/IEC TS 27560 (export JSON-LD, vocabulaire DPV) — aligné, pas certifié
+  de: Belege nach ISO/IEC TS 27560 ausgerichtet (JSON-LD-Export, DPV-Vokabular) — ausgerichtet, nicht zertifiziert
+  en: Receipts aligned with ISO/IEC TS 27560 (JSON-LD export, DPV vocabulary) — aligned, not certified
+  ecran: /api/pulse/moi/recus/27560
+  tests: test_recu_27560.py
 - id: tally
   statut: valide
   fr: Phrases recueillies par le QR de la Foire (21, en agrégats)
