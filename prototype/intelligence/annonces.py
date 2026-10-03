@@ -43,7 +43,8 @@ def publier(c: "ClubPulse", pid: str, texte: str) -> dict:
     t = c._net(texte.strip())
     if not 5 <= len(t) <= 400:
         raise Invalide("annonce vide ou trop longue")
-    chiffre = f"A-{len(_annonces(c)) + 1:03d}"
+    # AUDIT D4 : compté sur TOUT le journal (annonces d'auteurs effacés comprises) — un chiffre n'est jamais réattribué
+    chiffre = f"A-{len(c.journal.evenements('ANNONCE')) + 1:03d}"
     c.banc._ecrire("ANNONCE", [pid], Statut.DECLARE, chiffre=chiffre, texte=t)
     return {"chiffre": chiffre}
 
