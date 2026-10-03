@@ -16,6 +16,8 @@ import json
 import os
 import secrets
 import shutil
+import socket
+import ssl
 import subprocess
 import tempfile
 import urllib.error
@@ -24,6 +26,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Callable, Optional
+from urllib.parse import urlparse
 
 EXTENSIONS = (".mp4", ".m4v", ".mov")
 TAILLE_MIN = 1024 * 1024                 # un film de quelques minutes pèse des dizaines de Mo ; une icône iCloud, quelques Ko
@@ -223,12 +226,71 @@ def jeton(dossier_jj: Path) -> str:
 
 
 # ------------------------------------------------------------------ voyants de la check-list
+def contexte_ssl() -> ssl.SSLContext:
+    """AUDIT B2 : le Python de python.org ne lit pas le trousseau de macOS — les autorités de certifi (installé avec
+    httpx) rendent la sonde HTTPS juste ; à défaut, le magasin du système."""
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except (ImportError, OSError):
+        return ssl.create_default_context()
+
+
 def sonde_http(url: str, delai: float = 3.0) -> bool:
     try:
-        with urllib.request.urlopen(urllib.request.Request(url, headers={"Cache-Control": "no-cache"}), timeout=delai) as r:
+        req = urllib.request.Request(url, headers={"Cache-Control": "no-cache"})
+        with urllib.request.urlopen(req, timeout=delai, context=contexte_ssl() if url.startswith("https:") else None) as r:
             return 200 <= r.status < 400
     except (OSError, urllib.error.URLError, ValueError):
         return False
+
+
+def resoudre_public(hote: str) -> list[str]:
+    """Le nom tel qu'Internet le voit (DNS public par HTTPS), pas tel que MagicDNS le donne à ce Mac."""
+    req = urllib.request.Request(f"https://1.1.1.1/dns-query?name={hote}&type=A", headers={"Accept": "application/dns-json"})
+    with urllib.request.urlopen(req, timeout=4, context=contexte_ssl()) as r:
+        d = json.load(r)
+    return [a["data"] for a in d.get("Answer", []) if a.get("type") == 1]
+
+
+def obtenir_par_ip(ip: str, hote: str, chemin: str) -> Optional[int]:
+    """GET https://hote/chemin en se connectant à l'adresse publique `ip` (SNI et Host = hote) : le chemin d'Internet."""
+    try:
+        with socket.create_connection((ip, 443), timeout=4) as s, contexte_ssl().wrap_socket(s, server_hostname=hote) as t:
+            t.sendall(f"GET {chemin} HTTP/1.1\r\nHost: {hote}\r\nConnection: close\r\n\r\n".encode())
+            return int(t.recv(64).split(b"\r\n", 1)[0].split()[1])
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def _est_ip(hote: str) -> bool:
+    try:
+        socket.inet_pton(socket.AF_INET6 if ":" in hote else socket.AF_INET, hote)
+        return True
+    except OSError:
+        return False
+
+
+def sonde_publique(url: str, resoudre: Callable[[str], list[str]] = resoudre_public,
+                   obtenir: Callable[[str, str, str], Optional[int]] = obtenir_par_ip,
+                   sonde_locale: Callable[[str], bool] = sonde_http) -> tuple[str, str]:
+    """AUDIT I1 : avec MagicDNS, le Mac joint son propre nom *.ts.net par le tailnet — un vert local ne prouve pas que les
+    téléphones en 4G y arrivent. Vert seulement si l'adresse PUBLIQUE du nom (relais Funnel) répond."""
+    u = urlparse(url)
+    hote, chemin = u.hostname or "", u.path or "/"
+    try:
+        ips = [hote] if _est_ip(hote) else resoudre(hote)
+    except (OSError, ValueError):
+        if sonde_locale(url):
+            return "orange", f"{url} répond depuis ce Mac, mais le DNS public est injoignable : confirmer avec un téléphone en 4G"
+        return "rouge", f"{url} injoignable : tunnel Tailscale arrêté ou Mac hors réseau"
+    if not ips:
+        return "rouge", f"{hote} n'est pas publié sur Internet : Funnel désactivé pour ce Mac ? (console Tailscale)"
+    for ip in ips:
+        code = obtenir(ip, hote, chemin)
+        if code is not None and 200 <= code < 400:
+            return "vert", f"{url} · joignable depuis Internet (relais {ip})"
+    return "rouge", f"{url} ne répond pas depuis Internet (relais {', '.join(ips)}) : tunnel arrêté ?"
 
 
 def pmset() -> Optional[str]:
@@ -260,18 +322,20 @@ def voyant_salle(etat: Optional[dict]) -> Voyant:
 
 
 def controles(*, bureau: Path, cible: Path, dossier: Path, base_locale: str, base_publique: Optional[str], deck_url: str,
-              salle: Optional[dict], sonde: Callable[[str], bool], pmset: Callable[[], Optional[str]]) -> list[Voyant]:
+              salle: Optional[dict], sonde: Callable[[str], bool], pmset: Callable[[], Optional[str]],
+              sonde_pub: Optional[Callable[[str], tuple[str, str]]] = None) -> list[Voyant]:
     urls = {"serveur": base_locale + "/sante", "deck": deck_url}
-    if base_publique:
-        urls["public"] = base_publique.rstrip("/") + "/sante"
+    url_pub = base_publique.rstrip("/") + "/sante" if base_publique else None
+    sp = sonde_pub or (lambda u: ("vert", u) if sonde(u) else ("rouge", f"{u} injoignable : tunnel Tailscale arrêté ou Mac hors réseau"))
     with ThreadPoolExecutor(max_workers=3) as ex:                 # trois sondes en parallèle : la page reste vive
-        ok = dict(zip(urls, ex.map(sonde, urls.values()), strict=True))
+        futurs = {k: ex.submit(sonde, u) for k, u in urls.items()}
+        pub = ex.submit(sp, url_pub) if url_pub else None
+        ok = {k: f.result() for k, f in futurs.items()}
+        public = pub.result() if pub else ("rouge", "PUBLIC_BASE_URL absent")
     vs = [voyant_film(bureau, cible, dossier),
           Voyant("serveur", "vert" if ok["serveur"] else "rouge", "Serveur local",
                  base_locale if ok["serveur"] else f"{base_locale} ne répond pas (journal : ~/.clubpulse/logs/prototype.log)"),
-          Voyant("public", "rouge", "Adresse publique", "PUBLIC_BASE_URL absent") if not base_publique else
-          Voyant("public", "vert" if ok["public"] else "rouge", "Adresse publique",
-                 urls["public"] if ok["public"] else f"{urls['public']} injoignable : tunnel Tailscale arrêté ou Mac hors réseau"),
+          Voyant("public", public[0], "Adresse publique", public[1]),
           Voyant("deck", "vert" if ok["deck"] else "rouge", "Deck", deck_url if ok["deck"] else f"{deck_url} ne répond pas"),
           voyant_secteur(pmset()),
           voyant_salle(salle)]

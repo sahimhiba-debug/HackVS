@@ -1075,7 +1075,8 @@ def preflight_json(request: Request):
     vs = jour_j.controles(bureau=jour_j.bureau(), cible=jour_j.cible_film(), dossier=jour_j.dossier(),
                           base_locale=f"http://127.0.0.1:{port}", base_publique=os.environ.get("PUBLIC_BASE_URL") or None,
                           deck_url=os.environ.get("CLUBPULSE_DECK_URL", "http://127.0.0.1:8765/v2.html"),
-                          salle=apercu() if apercu else None, sonde=lambda u: jour_j.sonde_http(u), pmset=jour_j.pmset)
+                          salle=apercu() if apercu else None, sonde=lambda u: jour_j.sonde_http(u), pmset=jour_j.pmset,
+                          sonde_pub=lambda u: jour_j.sonde_publique(u))
     return JSONResponse(jour_j.en_dict(vs), headers={"Cache-Control": "no-store"})
 
 

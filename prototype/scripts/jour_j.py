@@ -57,7 +57,7 @@ def preflight(couleurs: bool) -> int:
     vs = jj.controles(bureau=jj.bureau(), cible=jj.cible_film(), dossier=jj.dossier(), base_locale=base,
                       base_publique=os.environ.get("PUBLIC_BASE_URL") or None,
                       deck_url=f"http://127.0.0.1:{port_deck}/v2.html", salle=_salle(base, jj.jeton(jj.dossier())),
-                      sonde=jj.sonde_http, pmset=jj.pmset)
+                      sonde=jj.sonde_http, pmset=jj.pmset, sonde_pub=jj.sonde_publique)
     print(jj.en_texte(vs, couleurs=couleurs).replace("http://127.0.0.1:8000/preflight", base + "/preflight"))
     return 0 if jj.verdict(vs)[0] == "FEU VERT v2" else 1
 

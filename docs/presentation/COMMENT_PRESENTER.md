@@ -88,7 +88,9 @@ d'aucun réseau.
 ### La toute première fois
 
 1. Installer Python 3.11 (une fois) : télécharger l'installeur macOS sur python.org (version 3.11), double-cliquer,
-   suivre. Si `git` manque, macOS propose de l'installer à la première commande : accepter.
+   suivre. Puis, dans le Finder : Applications → Python 3.11 → double-clic sur **« Install Certificates.command »**
+   (sans cela, ce Python ne vérifie aucune adresse HTTPS ; la check-list utilise de toute façon les certificats de
+   `certifi`, installés avec le prototype). Si `git` manque, macOS propose de l'installer à la première commande : accepter.
 2. Dans Terminal :
 
 ```sh

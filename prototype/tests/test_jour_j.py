@@ -175,6 +175,7 @@ def client(monkeypatch, tmp_path):
     monkeypatch.setenv("CLUBPULSE_BUREAU", str(tmp_path))
     monkeypatch.setenv("CLUBPULSE_DOSSIER", str(tmp_path / "d"))
     monkeypatch.setattr(jj, "sonde_http", lambda url, delai=3.0: True)
+    monkeypatch.setattr(jj, "sonde_publique", lambda url: ("vert", url))     # aucun accès réseau dans la suite
     return TestClient(main.app)
 
 
@@ -208,3 +209,40 @@ def test_l_ecran_de_la_salle_s_integre_seulement_dans_le_deck_local():
         r = cl.get(chemin)
         assert "frame-ancestors 'self';" in r.headers["content-security-policy"], chemin
         assert r.headers["x-frame-options"] == "SAMEORIGIN", chemin
+
+
+# ------------------------------------------------------------------ AUDIT JOUR J : B2, I1 — la sonde de l'adresse publique
+def test_audit_b2_la_sonde_https_porte_les_certificats_de_certifi(monkeypatch):
+    """Le Python de python.org ne lit pas le trousseau de macOS : sans certificats fournis, toute sonde HTTPS échoue
+    (CERTIFICATE_VERIFY_FAILED) et le voyant « Adresse publique » serait rouge pour toujours."""
+    ctx = jj.contexte_ssl()
+    assert len(ctx.get_ca_certs()) > 50                          # les autorités de certifi, pas le magasin du système
+    vus = {}
+
+    class Rep:
+        status = 200
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+
+    def urlopen(req, timeout=None, context=None):
+        vus["context"] = context
+        return Rep()
+    monkeypatch.setattr(jj.urllib.request, "urlopen", urlopen)
+    assert jj.sonde_http("https://exemple.invalid/sante") is True
+    assert vus["context"] is not None
+
+
+def test_audit_i1_l_adresse_publique_est_sondee_depuis_internet_pas_depuis_le_tailnet():
+    """Avec MagicDNS, le Mac joint son propre nom *.ts.net par le tailnet : un vert local ne prouve pas que Funnel est
+    joignable depuis Internet. On résout le nom par un DNS public, puis on sonde l'adresse du relais."""
+    url = "https://clubpulse.exemple.ts.net/sante"
+    assert jj.sonde_publique(url, resoudre=lambda h: ["203.0.113.7"], obtenir=lambda ip, h, c: 200)[0] == "vert"
+    couleur, detail = jj.sonde_publique(url, resoudre=lambda h: [], obtenir=lambda ip, h, c: 200)
+    assert couleur == "rouge" and "Funnel" in detail                      # nom absent du DNS public : Funnel éteint
+    assert jj.sonde_publique(url, resoudre=lambda h: ["203.0.113.7"], obtenir=lambda ip, h, c: None)[0] == "rouge"
+
+    def panne(h):
+        raise OSError("DNS public injoignable")
+    couleur, detail = jj.sonde_publique(url, resoudre=panne, obtenir=lambda ip, h, c: 200, sonde_locale=lambda u: True)
+    assert couleur == "orange" and "4G" in detail                         # seulement vu depuis ce Mac : à confirmer
+    assert jj.sonde_publique(url, resoudre=panne, obtenir=lambda ip, h, c: 200, sonde_locale=lambda u: False)[0] == "rouge"
