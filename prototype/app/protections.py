@@ -37,7 +37,7 @@ def est_local(client_hote: str, entetes: "list[tuple[bytes, bytes]] | dict") -> 
 CLUB_PULSE_EXACTS = {"/app", "/app/", "/app/manifest.webmanifest", "/app/sw.js", "/console", "/projection", "/demo/regie", "/etabli",
                      "/suivi", "/decouverte", "/reponse", "/salle", "/salle/ecran", "/salle/regie",
                      "/favicon.ico", "/sante", "/feuille-de-route",
-                     "/qr/salle.svg", "/qr/salle.txt", "/qr/feuille-de-route.svg"}   # Foire 2026 : Suivi, passe découverte, réponse e-mail
+                     "/qr/salle.svg", "/qr/salle.txt", "/qr/feuille-de-route.svg", "/confidentialite"}   # Foire 2026 : Suivi, passe découverte, réponse e-mail
 CLUB_PULSE_PREFIXES = ("/api/pulse/", "/static/pulse/")
 TROP_GROS = '{"detail": "Corps de requête trop volumineux (64 Kio au plus)."}'.encode()
 _SCRIPT = re.compile(r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>", re.S | re.I)

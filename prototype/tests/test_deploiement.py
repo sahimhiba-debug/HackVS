@@ -65,3 +65,16 @@ def test_lanceur_tunnel_exige_jeton_et_https():
     ok = lancer(PUBLIC_BASE_URL="https://mac.exemple.ts.net", HACKVS_CONSOLE_JETON="x" * 24)
     assert ok.returncode == 0, ok.stdout + ok.stderr
     assert "--host 127.0.0.1" in script.read_text() and "caffeinate" in script.read_text()
+
+
+
+def test_page_d_information_fr_de_et_registre_marques_a_valider():
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+    r = TestClient(app).get("/confidentialite")
+    assert r.status_code == 200
+    assert "à valider par un juriste" in r.text and 'lang="de"' in r.text and "Ihre Daten" in r.text
+    assert "<script" not in r.text
+    reg = (RACINE / "docs" / "conformite" / "REGISTRE_TRAITEMENTS.md").read_text(encoding="utf-8")
+    assert "Modèle à valider par un juriste" in reg

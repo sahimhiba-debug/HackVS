@@ -1045,6 +1045,12 @@ def sante() -> dict:
     return {"ok": True}
 
 
+@app.get("/confidentialite")
+def page_confidentialite():
+    """Information sur les données, FR / DE (projet, à valider par un juriste). Page statique, sans script."""
+    return FileResponse(WEB / "pulse" / "confidentialite.html")
+
+
 @app.get("/feuille-de-route")
 def page_feuille_de_route():
     """FEUILLE DE ROUTE VIVANTE (publique, FR / DE / EN), hors du parcours de scène."""
