@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
 from .urls import base_publique
-from intelligence import assembler, associe, carte, club_cherche, distance, metiers, partenariats, recu_27560, suivi
+from intelligence import annonces, assembler, associe, carte, club_cherche, distance, metiers, partenariats, recu_27560, suivi
 
 
 class Cloture(BaseModel):
@@ -65,6 +65,10 @@ class Lien(BaseModel):
     attributs: dict[str, int] = Field(default_factory=dict, max_length=4)
 
 
+class Annonce(BaseModel):
+    texte: str = Field(min_length=1, max_length=400)
+
+
 class Associe(BaseModel):
     membre: str = Field(min_length=1, max_length=40)
 
@@ -79,6 +83,7 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
     limite_invite = nouveau_limiteur(60, 60.0)
     limite_lien_global = nouveau_limiteur(300, 60.0)       # liens d'e-mail : par lien tenté, et un plafond global doux
     limite_lien = nouveau_limiteur(10, 60.0)
+    limite_annonce = nouveau_limiteur(5, 60.0)            # annonces sous chiffre : 5 par minute et par membre
 
     def foire(f: Callable) -> Callable:
         def g(c):
@@ -154,6 +159,32 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
             raise HTTPException(404, "Export ISO/IEC TS 27560 désactivé (HACKVS_RECU_27560=0).")
         doc = au_monde(lambda c: recu_27560.export(c, pid))
         return Response(json.dumps(doc, ensure_ascii=False), media_type="application/ld+json")
+
+    # ---- annonces sous chiffre (P3 n°9)
+    @r.post("/moi/annonces")
+    def publier_annonce(x: Annonce, pid: str = Depends(membre)) -> dict:
+        limiter(limite_annonce, "annonce|" + pid)
+        return au_monde(foire(lambda c: annonces.publier(c, pid, x.texte)))
+
+    @r.get("/moi/annonces")
+    def mes_annonces(pid: str = Depends(membre)) -> list[dict]:
+        return au_monde(foire(lambda c: annonces.mes_annonces(c, pid)))
+
+    @r.get("/annonces")
+    def lire_annonces(pid: str = Depends(membre)) -> list[dict]:
+        return au_monde(foire(lambda c: annonces.pour_membre(c, pid)))
+
+    @r.post("/moi/annonces/{chiffre}/interet")
+    def interet_annonce(chiffre: str, pid: str = Depends(membre)) -> dict:
+        return au_monde(foire(lambda c: annonces.interet(c, pid, chiffre[:12])))
+
+    @r.post("/moi/annonces/{chiffre}/accepter/{n}")
+    def accepter_annonce(chiffre: str, n: int, pid: str = Depends(membre)) -> dict:
+        return au_monde(foire(lambda c: annonces.accepter(c, pid, chiffre[:12], n)))
+
+    @r.get("/console/annonces", dependencies=[Depends(console)])
+    def agregats_annonces() -> dict:
+        return au_monde(foire(annonces.agregats))
 
     @r.get("/console/associes", dependencies=[Depends(console)])
     def lire_associes() -> dict:

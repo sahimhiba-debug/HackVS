@@ -532,6 +532,28 @@
           catch (e) { toast(e.message, "erreur"); }
         } }, "Sans photo : le formulaire"), h("div", { id: "carte-zone-resultat" }));
     }
+    // P3 n°9 : ANNONCES SOUS CHIFFRE — aucun auteur affiché ; le nom n'apparaît qu'après l'accord mutuel
+    function sectionAnnonces() {
+      const zone = h("div", { id: "annonces" });
+      const texte = h("textarea", { id: "annonce-texte", rows: 2, maxlength: 400, placeholder: "Ex. : Cherche un local de stockage à Martigny, 20 m², 3 mois." });
+      const charger = async () => {
+        let toutes, miennes;
+        try { [toutes, miennes] = await Promise.all([api("/api/pulse/annonces"), api("/api/pulse/moi/annonces")]); } catch (e) { return; }
+        zone.replaceChildren(...toutes.filter((a) => !a.mienne).map((a) => h("div", { class: "carte", "data-annonce": a.chiffre },
+            h("p", {}, h("b", {}, a.chiffre), " — ", a.texte),
+            a.contact ? h("p", { class: "encadre" }, `Accord mutuel : ${a.contact.nom}${a.contact.entreprise ? " · " + a.contact.entreprise : ""}`)
+              : a.interet_dit ? h("p", { class: "note" }, "Intérêt transmis, sans votre nom.")
+              : h("button", { class: "btn discret petit", onclick: async () => { try { await api(`/api/pulse/moi/annonces/${a.chiffre}/interet`, { corps: {} }); charger(); } catch (e) { toast(e.message, "erreur"); } } }, "Je suis intéressé·e"))),
+          ...miennes.map((a) => h("div", { class: "carte", "data-mienne": a.chiffre }, h("p", {}, h("b", {}, `${a.chiffre} (la vôtre)`), " — ", a.texte),
+            a.interets.length ? a.interets.map((i) => i.contact ? h("p", { class: "encadre" }, `Intérêt n° ${i.n} : ${i.contact.nom}${i.contact.entreprise ? " · " + i.contact.entreprise : ""}`)
+              : h("button", { class: "btn discret petit", "data-accepter": i.n, onclick: async () => { try { await api(`/api/pulse/moi/annonces/${a.chiffre}/accepter/${i.n}`, { corps: {} }); charger(); } catch (e) { toast(e.message, "erreur"); } } }, `Accepter l'intérêt n° ${i.n}`))
+              : h("p", { class: "note" }, "Aucun intérêt pour l'instant."))));
+      };
+      charger();
+      return section("Annonces sous chiffre", h("p", { class: "note" }, "Votre nom n'est montré à personne. Il ne l'est qu'après un accord mutuel, et seulement à l'autre personne."),
+        zone, h("div", { class: "champ" }, h("label", { for: "annonce-texte" }, "Publier une annonce"), texte),
+        h("button", { class: "btn discret petit", id: "annonce-publier", onclick: async () => { try { await api("/api/pulse/moi/annonces", { corps: { texte: texte.value } }); texte.value = ""; toast("Publiée sous chiffre."); charger(); } catch (e) { toast(e.message, "erreur"); } } }, "Publier sous chiffre"));
+    }
     // FOIRE 2026 (F, B) : zone, langue, « visible par le Club » — seulement si l'interrupteur est allumé (sinon : rien)
     async function foireDistance() {
       let x;
@@ -540,7 +562,7 @@
       const zone = h("select", { id: "dist-zone" }, x.zones.map((z) => h("option", { value: z, selected: x.profil && x.profil.zone === z }, z)));
       const langue = h("select", { id: "dist-langue" }, x.langues.map((l) => h("option", { value: l, selected: x.profil && x.profil.langue === l }, l === "fr" ? "français" : "Deutsch")));
       const bloc = $("#foire-distance"); if (!bloc) return;
-      bloc.replaceChildren(...[sectionCarte(),
+      bloc.replaceChildren(...[sectionCarte(), sectionAnnonces(),
         assoc && assoc.partenaire ? h("p", { class: "encadre", "data-role": "associe" }, `Statut : membre associé, via ${assoc.partenaire.nom}.`) : null,
         section("Où je suis, ma langue",
         h("p", { class: "note" }, "Pour recevoir les demandes par e-mail et compter les membres hors Valais (jamais nommément)."),

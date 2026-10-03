@@ -215,3 +215,33 @@ def test_interface_allemande_selon_la_langue_preferee(url_foire):
         assert tel.locator("[data-role=traduction]").count() == 0
         b.close()
     assert erreurs == [], erreurs
+
+
+def test_annonce_sous_chiffre_accord_mutuel_dans_deux_navigateurs(url_foire):
+    """P3 n°9 : Pauline publie sous chiffre ; Markus dit son intérêt sans voir l'auteur ; Pauline accepte ; chacun voit l'autre."""
+    from playwright.sync_api import sync_playwright
+    from tests.test_e2e_pulse import _api, _telephone
+    erreurs: list[str] = []
+    _api(url_foire, "/api/pulse/demo/reinitialiser", {})
+    per = {x["id"]: x for x in _api(url_foire, "/api/pulse/console/personas")}
+    with sync_playwright() as p:
+        b = _chromium(p)
+        _, pauline = _telephone(b, url_foire, per["s01"]["code"], (390, 844), erreurs)
+        _, markus = _telephone(b, url_foire, per["s14"]["code"], (390, 844), erreurs)
+        pauline.goto(url_foire + "/app#donnees")
+        pauline.fill("#annonce-texte", "Cherche un local de stockage à Martigny, 20 m², 3 mois.")
+        pauline.click("#annonce-publier")
+        pauline.locator("[data-mienne='A-001']").wait_for()
+        markus.goto(url_foire + "/app#donnees")
+        carte = markus.locator("[data-annonce='A-001']")
+        carte.wait_for()
+        assert per["s01"]["nom"] not in markus.inner_text("#annonces")
+        carte.locator("button:has-text('intéressé')").click()
+        markus.locator("text=Intérêt transmis").wait_for()
+        pauline.reload()
+        pauline.locator("[data-accepter='1']").click()
+        pauline.locator(f"text={per['s14']['nom']}").wait_for()
+        markus.reload()
+        markus.locator(f"[data-annonce='A-001'] >> text={per['s01']['nom']}").wait_for()
+        b.close()
+    assert erreurs == [], erreurs
