@@ -1,0 +1,41 @@
+# ANNÉE 1 · LOT 1 — Production : Club Pulse + PostgreSQL 16. Construit — branche annee-1, PAS la démo du pitch.
+#   POSTGRES_PASSWORD=… HACKVS_SECRET=… HACKVS_CONSOLE_JETON=… PUBLIC_BASE_URL=https://… \
+#     docker compose -f docker-compose.annee1.yml up -d --build
+# Aucun secret écrit ici : chaque valeur sensible vient de l'environnement (ou d'un fichier .env HORS du dépôt), et la
+# composition refuse de démarrer si elle manque (« ${VAR:?…} »).
+services:
+  base:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: clubpulse
+      POSTGRES_DB: clubpulse
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD requis}
+    volumes:
+      - base:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clubpulse -d clubpulse"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  clubpulse:
+    build:
+      context: .
+      args:
+        AVEC_POSTGRES: "1"
+    restart: unless-stopped
+    depends_on:
+      base:
+        condition: service_healthy
+    environment:
+      HACKVS_MODE: demo
+      HACKVS_ESSAIS_DB: postgresql://clubpulse@base:5432/clubpulse
+      PGPASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD requis}
+      HACKVS_SECRET: ${HACKVS_SECRET:?HACKVS_SECRET requis (32 caractères ou plus, stable)}
+      HACKVS_CONSOLE_JETON: ${HACKVS_CONSOLE_JETON:?HACKVS_CONSOLE_JETON requis}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:?PUBLIC_BASE_URL requis (https://…)}
+      HACKVS_METRIQUES: ${HACKVS_METRIQUES:-0}
+    ports:
+      - "127.0.0.1:8080:8080"   # derrière un proxy TLS (Caddyfile) : jamais exposé directement
+volumes:
+  base:

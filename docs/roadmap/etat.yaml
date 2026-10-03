@@ -209,3 +209,15 @@
   de: Extraktion auf dem Telefon mit Apertus Mini
   en: On-phone extraction with Apertus Mini
   note: note d'architecture — docs/roadmap/ARCHITECTURE_SWIYU_VOIX_MINI.md
+- id: a1-stockage
+  statut: annee1
+  fr: Journal sur stockage interchangeable SQLite / PostgreSQL, migrations réversibles, sauvegarde et restauration vérifiées
+  de: Journal auf austauschbarem Speicher SQLite / PostgreSQL, umkehrbare Migrationen, geprüfte Sicherung und Wiederherstellung
+  en: Event log on swappable storage SQLite / PostgreSQL, reversible migrations, verified backup and restore
+  tests: test_annee1_stockage.py
+- id: a1-exploitation
+  statut: annee1
+  fr: Exploitation — configuration documentée, disponibilité (/sante/pret), métriques, Docker de production
+  de: Betrieb — dokumentierte Konfiguration, Bereitschaft (/sante/pret), Metriken, Produktions-Docker
+  en: Operations — documented configuration, readiness (/sante/pret), metrics, production Docker
+  tests: test_annee1_exploitation.py

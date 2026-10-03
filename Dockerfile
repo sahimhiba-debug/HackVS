@@ -11,6 +11,9 @@ COPY prototype/requirements.txt prototype/requirements.txt
 COPY prototype/constraints.txt prototype/constraints.txt
 RUN apt-get update && apt-get install -y --no-install-recommends libsodium23 && rm -rf /var/lib/apt/lists/*  # intentions scellées : ristretto255 (sinon repli plus lent)
 RUN pip install --no-cache-dir -r prototype/requirements.txt -c prototype/constraints.txt   # versions exactes testées
+# ANNÉE 1 · LOT 1 : journal sur PostgreSQL (HACKVS_ESSAIS_DB=postgresql://…) — `docker build --build-arg AVEC_POSTGRES=1`
+ARG AVEC_POSTGRES=0
+RUN if [ "$AVEC_POSTGRES" = "1" ]; then pip install --no-cache-dir "psycopg[binary]>=3.1"; fi
 COPY prototype/app prototype/app
 COPY prototype/intelligence prototype/intelligence
 COPY prototype/prompts prototype/prompts
@@ -30,4 +33,7 @@ EXPOSE 8080
 # et HACKVS_CONSOLE_JETON se passent à `docker run -e`. Sans secret : secret aléatoire par démarrage (sessions
 # invalidées, sorties IA non rejouées après un redémarrage). Sans jeton, la console du Club ne répond qu'à la machine
 # locale — depuis l'hôte d'un conteneur, il FAUT donc `-e HACKVS_CONSOLE_JETON=<jeton>` (la console le demande).
+# ANNÉE 1 · LOT 1 : disponibilité — le journal répond et son schéma est au dernier niveau (/sante/pret)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD python -c "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.environ.get('PORT', '8080') + '/sante/pret', timeout=4)" || exit 1
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --no-access-log --timeout-keep-alive 5"]

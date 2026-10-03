@@ -188,3 +188,15 @@ def test_la_restauration_refuse_un_fichier_altere_ou_une_cible_non_vide(tmp_path
     assert Memoire(str(tmp_path / "b.db")).evenements() == []          # rien d'écrit : tout ou rien
     with pytest.raises(sauvegarde.SauvegardeInvalide):
         sauvegarde.restaurer(src, f)                                     # cible non vide : jamais de mélange
+
+
+def test_le_serveur_complet_demarre_sur_postgres_et_se_dit_pret(url_pg):
+    """Intégration : le vrai serveur (sous-processus), le journal du Club sur PostgreSQL, /sante/pret à 200."""
+    import urllib.request
+
+    from tests.test_e2e_scene import serveur
+    with serveur(HACKVS_ESSAIS_DB=url_pg, HACKVS_FOIRE="1") as base:
+        d = json.load(urllib.request.urlopen(base + "/sante/pret", timeout=10))
+        assert d["pret"] is True and d["faits"] > 0
+    with serveur(HACKVS_ESSAIS_DB=url_pg, HACKVS_FOIRE="1") as base:    # redémarrage : le journal est REPRIS
+        assert json.load(urllib.request.urlopen(base + "/sante/pret", timeout=10))["faits"] >= d["faits"]

@@ -18,7 +18,11 @@ ETAT = RACINE / "docs" / "roadmap" / "etat.yaml"
 README = RACINE / "docs" / "roadmap" / "README.md"
 TESTS = RACINE / "prototype" / "tests"
 STATUTS = {"construit": ("✅", "Construit", "Gebaut", "Built"), "valide": ("🟢", "Validé sur le terrain", "Im Feld bestätigt",
-           "Validated in the field"), "prevu": ("⬜", "Prévu", "Geplant", "Planned")}
+           "Validated in the field"), "prevu": ("⬜", "Prévu", "Geplant", "Planned"),
+           # ANNÉE 1 : construit sur la branche annee-1 — montré comme tel, jamais compté avec la démo (chiffres_demo)
+           "annee1": ("🔧", "Construit — branche annee-1, pas dans la démo", "Gebaut — Zweig annee-1, nicht in der Demo",
+                      "Built — annee-1 branch, not in the demo")}
+DEMO = ("construit", "valide", "prevu")
 DEBUT, FIN = "<!-- etat:debut (généré depuis etat.yaml — ne pas éditer à la main) -->", "<!-- etat:fin -->"
 
 
@@ -28,10 +32,10 @@ def charger(chemin: Path = ETAT) -> list[dict]:
         s = e.get("statut")
         if s not in STATUTS or not e.get("en"):
             raise ValueError(f"etat.yaml : statut ou titre anglais manquant ({e['id']})")
-        if s == "construit":
+        if s in ("construit", "annee1"):
             fichiers = [t.strip() for t in e.get("tests", "").split(",") if t.strip()]
-            if not fichiers or not e.get("ecran"):
-                raise ValueError(f"etat.yaml : « construit » exige des tests et un écran ({e['id']})")
+            if not fichiers or (s == "construit" and not e.get("ecran")):
+                raise ValueError(f"etat.yaml : « {s} » exige des tests" + (" et un écran" if s == "construit" else "") + f" ({e['id']})")
             manquants = [f for f in fichiers if not (TESTS / f).exists()]
             if manquants:
                 raise ValueError(f"etat.yaml : tests introuvables pour {e['id']} : {manquants}")
@@ -40,9 +44,16 @@ def charger(chemin: Path = ETAT) -> list[dict]:
     return entrees
 
 
+def chiffres_demo(entrees: list[dict] | None = None) -> dict[str, int]:
+    """Les trois chiffres que montre la démo : ce qui est sur la branche annee-1 n'y entre jamais."""
+    es = charger() if entrees is None else entrees
+    return {s: sum(1 for e in es if e["statut"] == s) for s in DEMO}
+
+
 def tableau(entrees: list[dict], jour: date) -> str:
     L = [DEBUT, f"*État au {jour.strftime('%d.%m.%Y')}, généré depuis [etat.yaml](etat.yaml).* ✅ construit (code + tests) · "
-         "🟢 validé sur le terrain (preuve réelle) · ⬜ prévu", "", "| Chantier | Statut | Preuve |", "|---|---|---|"]
+         "🟢 validé sur le terrain (preuve réelle) · ⬜ prévu · 🔧 construit sur la branche annee-1, pas dans la démo",
+         "", "| Chantier | Statut | Preuve |", "|---|---|---|"]
     for e in entrees:
         preuve = e.get("preuve_terrain") or e.get("tests") or e.get("note") or "—"
         L.append(f"| {e['fr']} | {STATUTS[e['statut']][0]} {STATUTS[e['statut']][1]} | {preuve} |")

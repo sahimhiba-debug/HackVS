@@ -14,7 +14,7 @@ simulée). Le Club réel compte **145 entreprises et 173 représentants** ; rien
 ## Tableau d'avancement
 
 <!-- etat:debut (généré depuis etat.yaml — ne pas éditer à la main) -->
-*État au 03.10.2026, généré depuis [etat.yaml](etat.yaml).* ✅ construit (code + tests) · 🟢 validé sur le terrain (preuve réelle) · ⬜ prévu
+*État au 03.10.2026, généré depuis [etat.yaml](etat.yaml).* ✅ construit (code + tests) · 🟢 validé sur le terrain (preuve réelle) · ⬜ prévu · 🔧 construit sur la branche annee-1, pas dans la démo
 
 | Chantier | Statut | Preuve |
 |---|---|---|
@@ -49,6 +49,8 @@ simulée). Le Club réel compte **145 entreprises et 173 représentants** ; rien
 | Reçus en attestations vérifiables dans le portefeuille swiyu (e-ID) | ⬜ Prévu | note d'architecture — docs/roadmap/ARCHITECTURE_SWIYU_VOIX_MINI.md |
 | Demandes vocales via l'entrée audio d'Apertus 1.5 (expérimentale, à mesurer en français et en dialecte) | ⬜ Prévu | note d'architecture — docs/roadmap/ARCHITECTURE_SWIYU_VOIX_MINI.md |
 | Extraction sur le téléphone avec Apertus Mini | ⬜ Prévu | note d'architecture — docs/roadmap/ARCHITECTURE_SWIYU_VOIX_MINI.md |
+| Journal sur stockage interchangeable SQLite / PostgreSQL, migrations réversibles, sauvegarde et restauration vérifiées | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_stockage.py |
+| Exploitation — configuration documentée, disponibilité (/sante/pret), métriques, Docker de production | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_exploitation.py |
 <!-- etat:fin -->
 
 Page publique, trilingue, avec des liens vers les écrans du monde « visite » : `/feuille-de-route`.

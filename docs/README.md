@@ -37,6 +37,8 @@ qui n'existe plus.
 | [DEPLOIEMENT_CLOUD_RUN.md](DEPLOIEMENT_CLOUD_RUN.md) | déploiement public Cloud Run : commandes exactes, variables, secrets, contrôles (rien n'est déployé) |
 | [audit/latence_apertus.md](audit/latence_apertus.md) | latence réelle d'Apertus (n appels, médiane, p95), mesure séparée de la démonstration |
 
+| [annee-1/CONFIGURATION.md](annee-1/CONFIGURATION.md) · [annee-1/README.md](annee-1/README.md) · [vitrine lot 1](annee-1/vitrine/lot1.md) | **Année 1 — branche `annee-1`, pas dans la démo** : configuration complète (variables d'environnement), vitrine des lots |
+
 ## Daté (exact à sa date, non mis à jour)
 
 | Fichier | Date |

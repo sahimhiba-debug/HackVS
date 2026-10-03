@@ -114,6 +114,8 @@ class MiddlewareRequete:
             await send({"type": "http.response.body", "body": corps})
         finally:
             code = statut["code"]
+            from . import metriques                     # ANNÉE 1 · LOT 1 : compteurs sans étiquette par route ni membre
+            metriques.enregistrer(code, time.perf_counter() - t0)
             niveau = logging.ERROR if code >= 500 else logging.WARNING if code in (401, 403, 409, 429) else logging.INFO
             journal.log(niveau, "requête", extra={"route": scope.get("path"), "methode": scope.get("method"), "statut": code,
                                                   "duree_ms": round((time.perf_counter() - t0) * 1000, 1)})

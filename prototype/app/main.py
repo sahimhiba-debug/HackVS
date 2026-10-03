@@ -36,6 +36,7 @@ from .protections import Perimetre as _Perimetre
 from .protections import Protections as _Protections
 from .protections import politique_contenu as _politique_contenu
 from .protections import origines_deck as _origines_deck
+from . import metriques as _metriques  # noqa: F401  (ANNÉE 1 : le temps depuis le démarrage part du chargement du serveur)
 from .store import STATUTS_PUBLICS, ErreurMetier, Interdit, Magasin
 from .taxonomy import DATA_DIR, charger_taxonomie
 from adaptateurs.club import cycle as cycle_club
@@ -1078,6 +1079,42 @@ def preflight_json(request: Request):
                           salle=apercu() if apercu else None, sonde=lambda u: jour_j.sonde_http(u), pmset=jour_j.pmset,
                           sonde_pub=lambda u: jour_j.sonde_publique(u))
     return JSONResponse(jour_j.en_dict(vs), headers={"Cache-Control": "no-store"})
+
+
+def _journal_pour_sante():
+    journal = getattr(globals().get("_PULSE"), "journal", None)
+    if journal is None:
+        raise OSError("journal du Club non chargé")
+    return journal()
+
+
+@app.get("/sante/pret")
+def sante_pret():
+    """ANNÉE 1 · LOT 1 — DISPONIBILITÉ (répartiteur de charge, HEALTHCHECK Docker) : le journal répond et son schéma est
+    au dernier niveau. Publique : rien d'autre que « prêt », le niveau du schéma et le nombre de faits."""
+    from plateforme.migrations import DERNIERE, niveau
+    try:
+        j = _journal_pour_sante()
+        faits, schema = len(j.evenements()), niveau(j._db)
+    except Exception:                                   # base injoignable, schéma illisible : pas prêt, sans détail
+        return JSONResponse({"pret": False, "schema": None, "faits": None}, status_code=503)
+    pret = schema == DERNIERE
+    return JSONResponse({"pret": pret, "schema": schema, "faits": faits}, status_code=200 if pret else 503)
+
+
+@app.get("/metriques")
+def metriques_route(request: Request):
+    """ANNÉE 1 · LOT 1 — MÉTRIQUES (format texte Prometheus) : éteintes par défaut (HACKVS_METRIQUES=1 pour les
+    allumer), et seulement pour cette machine ou avec le jeton de console — jamais par le tunnel."""
+    from . import metriques
+    if os.environ.get("HACKVS_METRIQUES") != "1" or not _cette_machine(request):
+        raise HTTPException(404, "Not Found")
+    try:
+        faits = len(_journal_pour_sante().evenements())
+    except Exception:
+        faits = -1
+    return Response(metriques.texte(faits), media_type="text/plain; version=0.0.4; charset=utf-8",
+                    headers={"Cache-Control": "no-store"})
 
 
 @app.get("/sante")
