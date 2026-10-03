@@ -79,7 +79,7 @@ def test_bascule_vers_la_demo_scriptee_si_la_salle_est_vide(url_salle):
 
 # ------------------------------------------------------------------ JOUR J : l'écran de la salle DANS le deck v2
 DECK = __import__("pathlib").Path(__file__).resolve().parents[2] / "docs" / "presentation" / "deck"
-JETON_DECK = "jeton-de-console" + "-du-deck-fictif-0123"            # fictif ; assemblé hors du motif de la porte « secrets »
+FAUX_JETON_DECK = "jeton-de-console-du-deck-fictif-0123"
 
 
 @pytest.fixture(scope="module")
@@ -98,7 +98,7 @@ def deck_et_salle():
     port = srv.server_address[1]
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     try:
-        with serveur(HACKVS_FOIRE="1", HACKVS_SALLE="1", HACKVS_CONSOLE_JETON=JETON_DECK,
+        with serveur(HACKVS_FOIRE="1", HACKVS_SALLE="1", HACKVS_CONSOLE_JETON=FAUX_JETON_DECK,
                      HACKVS_DECK_ORIGINES=f"http://127.0.0.1:{port}") as base:
             yield f"http://127.0.0.1:{port}", base
     finally:
@@ -117,7 +117,7 @@ def test_l_ecran_de_la_salle_vit_dans_le_deck_sans_changer_de_fenetre(deck_et_sa
         ctx = b.new_context(viewport={"width": 1920, "height": 1080})
         regie = ctx.new_page()
         regie.set_default_timeout(30_000)
-        regie.on("dialog", lambda d: d.accept(JETON_DECK))                    # la régie demande le jeton UNE fois
+        regie.on("dialog", lambda d: d.accept(FAUX_JETON_DECK))                    # la régie demande le jeton UNE fois
         regie.goto(base + "/salle/regie")
         regie.click("#purger")
         regie.click("#ouvrir")
@@ -131,7 +131,7 @@ def test_l_ecran_de_la_salle_vit_dans_le_deck_sans_changer_de_fenetre(deck_et_sa
         page.evaluate("allerA('constellation', 0)")
         cadre = page.locator("#ecran-salle")
         cadre.wait_for(state="visible")
-        assert JETON_DECK not in (cadre.get_attribute("src") or "")              # jamais dans l'URL
+        assert FAUX_JETON_DECK not in (cadre.get_attribute("src") or "")              # jamais dans l'URL
         ecran = page.frame_locator("#ecran-salle")
         ecran.locator("#qr img").wait_for()                                     # la console a répondu : jeton reçu de la régie
         ecran.locator("[data-role=monde]").wait_for()
