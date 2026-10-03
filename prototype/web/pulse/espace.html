@@ -52,6 +52,14 @@
       <button class="btn" id="pref-ok">Enregistrer</button>
     </section>
 
+    <section class="bloc" id="b-clubs" hidden>
+      <h2>Mes clubs</h2>
+      <p class="note">Un club partenaire peut vous solliciter seulement si vous le choisissez ici. Les clubs partenaires
+        affichés sont des exemples fictifs.</p>
+      <ul id="clubs"></ul>
+      <label><input type="checkbox" id="a-distance" style="width:auto"> Je participe à distance (je ne me déplace pas)</label>
+    </section>
+
     <section class="bloc" id="b-solde" hidden>
       <h2>Mon solde — visible par moi seul</h2>
       <div class="solde"><span><b id="donne">0</b>donnés</span><span><b id="recu">0</b>reçus</span></div>
@@ -96,6 +104,7 @@
     async function rafraichir() {
       const e = await api("/moi/espace");
       for (const id of ["b-pause", "b-pref", "b-solde", "b-demandes", "b-donnees", "b-effacer"]) $("#" + id).hidden = false;
+      mesClubs();
       $("#pause-etat").textContent = e.pause.en_pause ? `En pause jusqu'au ${jourFr(e.pause.jusqu_au)} : vous ne recevez rien.` : "Vous êtes joignable.";
       $("#pause-fin").hidden = !e.pause.en_pause;
       $("#langue").value = e.preferences.langue; $("#region").value = e.preferences.region;
@@ -104,6 +113,24 @@
       $("#demandes").replaceChildren(...(e.demandes.length ? e.demandes.map((d) => { const li = document.createElement("li"); li.textContent = `${jourFr(d.le)} — ${d.texte}`; return li; })
         : [Object.assign(document.createElement("li"), { textContent: "Aucune demande envoyée pour l'instant." })]));
     }
+    async function mesClubs() {
+      let d;
+      try { d = await api("/moi/clubs"); } catch (e) { return; }      // plusieurs clubs : interrupteur éteint
+      $("#b-clubs").hidden = false;
+      $("#a-distance").checked = d.moi.a_distance;
+      $("#clubs").replaceChildren(...d.clubs.map((x) => {
+        const li = document.createElement("li");
+        li.textContent = x.nom + (x.principal ? " — votre club" : " ");
+        if (!x.principal) {
+          const dedans = d.moi.croises.includes(x.id), b = document.createElement("button");
+          b.className = "btn discret petit"; b.textContent = dedans ? "Ne plus participer" : "Participer aussi";
+          b.addEventListener("click", async () => { try { await api(`/moi/clubs/${encodeURIComponent(x.id)}${dedans ? "/quitter" : ""}`, {}); dire(dedans ? "Vous ne participez plus à ce club." : "Vous participez aussi à ce club."); mesClubs(); } catch (e) { dire("Refusé : " + e.message); } });
+          li.appendChild(b);
+        }
+        return li;
+      }));
+    }
+    $("#a-distance").addEventListener("change", async (e) => { try { await api("/moi/a-distance", { oui: e.target.checked }); dire("Enregistré."); } catch (er) { dire("Refusé : " + er.message); } });
     $("#pause-ok").addEventListener("click", async () => { try { await api("/moi/pause", { jusqu_au: $("#pause-date").value }); dire("Pause enregistrée."); rafraichir(); } catch (e) { dire("Refusé : " + e.message); } });
     $("#pause-fin").addEventListener("click", async () => { try { await api("/moi/pause/fin", {}); dire("Vous êtes de nouveau joignable."); rafraichir(); } catch (e) { dire("Refusé : " + e.message); } });
     $("#pref-ok").addEventListener("click", async () => {

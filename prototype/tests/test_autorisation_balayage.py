@@ -49,6 +49,7 @@ def monde(tmp_path, monkeypatch):
     monkeypatch.setenv("HACKVS_COMPTES", "1")                         # ANNÉE 1 · lot 4 : la console du secrétariat aussi
     monkeypatch.setenv("HACKVS_SECRETARIAT", "1")
     monkeypatch.setenv("HACKVS_NOTIFICATIONS", "1")                   # ANNÉE 1 · lot 5
+    monkeypatch.setenv("HACKVS_MULTICLUB", "1")                       # ANNÉE 1 · lot 8
     routeur = creer_routeur(TAX)
     app = FastAPI()
     app.include_router(routeur)

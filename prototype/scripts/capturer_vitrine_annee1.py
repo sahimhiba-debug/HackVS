@@ -77,6 +77,7 @@ def main() -> None:
         nav.close()
     capturer_espace()
     capturer_desinscription()
+    capturer_multiclub()
     print("vitrine annee-1 capturée dans", DOSSIER)
 
 
@@ -112,6 +113,33 @@ def capturer_desinscription() -> None:
         pg.locator("#ok").wait_for()
         pg.wait_for_timeout(300)
         pg.screenshot(path=str(DOSSIER / "lot5-desinscription.png"))
+        nav.close()
+
+
+def capturer_multiclub() -> None:
+    """LOT 8 : un club partenaire EXEMPLE FICTIF ; « Mes clubs » dans l'espace ; l'interface en anglais."""
+    tmp = str(Path(tempfile.mkdtemp()) / "j.db")
+    env = {"HACKVS_MULTICLUB": "1", "HACKVS_ESPACE_MEMBRE": "1", "HACKVS_ESSAIS_DB": tmp, "HACKVS_FOIRE": "1"}
+    with serveur(**env) as base, sync_playwright() as p:
+        req = urllib.request.Request(base + "/api/pulse/console/personas", headers={"X-Pulse-Console": "1"})
+        from intelligence.monde_demo import PAULINE
+        session = next(x["session"] for x in json.load(urllib.request.urlopen(req)) if x["id"] == PAULINE)
+        subprocess.run([sys.executable, "-c", "import sys; sys.path.insert(0, '.'); from app.taxonomy import charger_taxonomie; "
+                        "from intelligence.demo import Demo; from intelligence import clubs; c = Demo(charger_taxonomie(), "
+                        "reprendre=True).club; clubs.declarer(c, 'hs-exemple', 'Club partenaire Haute-Savoie — exemple fictif', "
+                        "region='Haute-Savoie', pays='FR', fictif=True)"], cwd=PROTO, env={**os.environ, **env}, check=True)
+        nav = p.chromium.launch(executable_path="/opt/pw-browsers/chromium")
+        pg = nav.new_context(viewport=TELEPHONE).new_page()
+        pg.goto(f"{base}/espace?session={session}")
+        pg.locator("#clubs li").first.wait_for()
+        pg.locator("#b-clubs").scroll_into_view_if_needed()
+        pg.wait_for_timeout(300)
+        pg.locator("#b-clubs").screenshot(path=str(DOSSIER / "lot8-mes-clubs.png"))
+        en = nav.new_context(viewport=TELEPHONE).new_page()
+        en.goto(f"{base}/app?lang=en#acces")
+        en.locator("[data-role=traduction]").wait_for()
+        en.wait_for_timeout(300)
+        en.screenshot(path=str(DOSSIER / "lot8-interface-en.png"))
         nav.close()
 
 

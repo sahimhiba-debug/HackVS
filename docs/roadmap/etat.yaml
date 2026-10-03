@@ -257,3 +257,9 @@
   de: Annahmequote dessen, was der Club aus einer Anfrage versteht (Modell Apertus oder Regeln als Rückfall), nur Zahlen, in der Sekretariatskonsole
   en: Acceptance rate of what the Club understands from a request (Apertus model or fallback rules), counts only, in the secretariat console
   tests: test_annee1_suivi_ia.py
+- id: a1-multiclub
+  statut: annee1
+  fr: Plusieurs clubs — club partenaire (exemple fictif marqué), adhésion croisée choisie par le membre, membres à distance ; interface FR / DE / EN (à relire par un natif)
+  de: Mehrere Clubs — Partnerclub (als fiktives Beispiel gekennzeichnet), Doppelmitgliedschaft nach Wahl des Mitglieds, Mitglieder aus der Ferne; Oberfläche FR / DE / EN (von Muttersprachigen zu prüfen)
+  en: Several clubs — partner club (marked fictitious example), cross-membership chosen by the member, remote members; FR / DE / EN interface (to be reviewed by native speakers)
+  tests: test_annee1_multiclub.py

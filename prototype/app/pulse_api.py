@@ -160,6 +160,18 @@ def _imprimer_pdf(html_doc: str) -> bytes:
             b.close()
 
 
+class ADistance(BaseModel):
+    oui: bool
+
+
+class ClubExemple(BaseModel):
+    id: str = Field(min_length=2, max_length=40)
+    nom: str = Field(min_length=3, max_length=80)
+    region: str = Field(default="", max_length=60)
+    pays: str = Field(default="CH", min_length=2, max_length=2)
+    fictif: bool
+
+
 class Desinscription(BaseModel):
     jeton: str = Field(min_length=8, max_length=200)
 
@@ -456,6 +468,34 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
         from intelligence import espace_membre as em
         return au_monde(lambda c: em.effacer_definitivement(c, pid))
 
+    # ANNÉE 1 · LOT 8 — plusieurs clubs (exemples fictifs), adhésion croisée choisie par le membre, membre à distance
+    def multiclub_allume() -> None:
+        if os.environ.get("HACKVS_MULTICLUB") != "1":
+            raise HTTPException(404, "Not Found")
+
+    @r.get("/moi/clubs", dependencies=[Depends(multiclub_allume)])
+    def mes_clubs(pid: str = Depends(membre)) -> dict:
+        from intelligence import clubs
+        return au_monde(lambda c: {"clubs": clubs.liste(c), "moi": clubs.clubs_de(c, pid)})
+
+    @r.post("/moi/clubs/{cid}", dependencies=[Depends(multiclub_allume)])
+    def rejoindre_club(cid: str, pid: str = Depends(membre)) -> dict:
+        from intelligence import clubs
+        limiter(limite_ecritures, f"ecrit|{pid}")
+        return au_monde(lambda c: clubs.rejoindre(c, pid, cid[:40]))
+
+    @r.post("/moi/clubs/{cid}/quitter", dependencies=[Depends(multiclub_allume)])
+    def quitter_club(cid: str, pid: str = Depends(membre)) -> dict:
+        from intelligence import clubs
+        limiter(limite_ecritures, f"ecrit|{pid}")
+        return au_monde(lambda c: clubs.quitter(c, pid, cid[:40]))
+
+    @r.post("/moi/a-distance", dependencies=[Depends(multiclub_allume)])
+    def membre_a_distance(x: ADistance, pid: str = Depends(membre)) -> dict:
+        from intelligence import clubs
+        limiter(limite_ecritures, f"ecrit|{pid}")
+        return au_monde(lambda c: clubs.a_distance(c, pid, x.oui))
+
     @r.get("/moi/notes")
     def notes(pid: str = Depends(membre)) -> list[dict]:
         return au_monde(lambda c: c.vues.notes_de(pid))
@@ -604,6 +644,16 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     def sec_ia(s: str = Depends(secretariat)) -> dict:
         from intelligence import suivi_ia
         return au_monde(suivi_ia.taux) | {"allume": suivi_ia.allume()}
+
+    @r.get("/secretariat/clubs", dependencies=[Depends(multiclub_allume)])
+    def sec_clubs(s: str = Depends(secretariat)) -> dict:
+        from intelligence import clubs
+        return au_monde(clubs.vue_console)
+
+    @r.post("/secretariat/clubs", dependencies=[Depends(multiclub_allume)])
+    def sec_declarer_club(x: ClubExemple, s: str = Depends(secretariat)) -> dict:
+        from intelligence import clubs
+        return au_monde(lambda c: clubs.declarer(c, x.id, x.nom, region=x.region, pays=x.pays, fictif=x.fictif))
 
     @r.get("/secretariat/acces")
     def sec_acces(s: str = Depends(secretariat)) -> list:
