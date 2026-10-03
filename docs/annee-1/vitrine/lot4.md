@@ -10,7 +10,7 @@
 | Demandé par la mission | Où | Preuve |
 |---|---|---|
 | Gestion des membres (inviter, révoquer, rôles) | console : membres et invités ; l'administration change les rôles (lot 2) | `test_gestion_des_comptes_depuis_la_console` |
-| Confirmation des métiers à vérifier | « Métiers à confirmer » (colonne métier seule) | `test_les_metiers_non_reconnus_…`, `test_confirmer_un_metier_…` |
+| Confirmation des métiers à vérifier | « Métiers à confirmer » (colonne métier seule ; comptés en entreprises ; libellés de moins de 3 entreprises jamais montrés — audit des lots 4-5) | `test_les_metiers_non_reconnus_…`, `test_confirmer_un_metier_…` |
 | Annonces sous chiffre | existait (Foire 2026) | `test_annonces.py` |
 | Escalade vers les piliers volontaires | existait (P3 n°15) | tests existants des piliers |
 | Tableau de bord du pilote, critères fixés d'avance | « Pilote » + `docs/annee-1/pilote/criteres.json` (PROPOSITION à fixer en comité) | `test_les_criteres_du_pilote_sont_geles_…` |

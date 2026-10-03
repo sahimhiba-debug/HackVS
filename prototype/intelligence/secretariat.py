@@ -28,6 +28,7 @@ if TYPE_CHECKING:
 
 CRITERES_DEFAUT = Path(__file__).resolve().parents[2] / "docs" / "annee-1" / "pilote" / "criteres.json"
 Nombre = Union[int, str, None]
+CAMPAGNE_MAX, PASSES_PAR_JOUR = 20, 100
 
 
 def _k(c: "ClubPulse", n: int) -> Nombre:
@@ -41,23 +42,30 @@ def confirmations(c: "ClubPulse") -> dict[str, str]:
 
 
 def metiers_a_verifier(c: "ClubPulse") -> dict:
-    libelles = club_cherche.libelles_metier()
-    if libelles is None:
-        return {"source": "absente", "a_verifier": [], "note": "liste d'entreprises non fournie"}
+    """Les libellés de la colonne métier que le Club ne sait pas rattacher. AUDIT des lots 4-5, I5 : comptés en
+    ENTREPRISES distinctes ; un libellé porté par moins de k entreprises n'est JAMAIS montré (il peut contenir un nom) —
+    seul leur nombre est dit (« rares ») ; le secrétariat peut en confirmer un en le saisissant lui-même."""
+    lignes = club_cherche.libelles_par_entreprise()
+    if lignes is None:
+        return {"source": "absente", "a_verifier": [], "rares": 0, "note": "liste d'entreprises non fournie"}
+    k = c.reglages.k_anonymat
     conf = confirmations(c)
-    compte: dict[str, int] = {}
-    for v in libelles:
+    entreprises: dict[str, set[str]] = {}
+    for v, cle in lignes:
         if v and v not in conf and club_cherche._metier_csv(v) is None:
-            compte[v] = compte.get(v, 0) + 1
-    return {"source": "liste d'entreprises (colonne métier seulement)", "lignes": len(libelles),
-            "a_verifier": [{"valeur": v, "lignes": _k(c, n)} for v, n in sorted(compte.items())],
+            entreprises.setdefault(v, set()).add(cle)
+    montres = sorted(v for v, e in entreprises.items() if len(e) >= k)
+    return {"source": "liste d'entreprises (colonne métier seulement)", "lignes": len(lignes),
+            "a_verifier": [{"valeur": v, "entreprises": len(entreprises[v])} for v in montres],
+            "rares": len(entreprises) - len(montres),
+            "regle": f"un libellé porté par moins de {k} entreprises n'est pas montré : saisissez-le pour le rattacher",
             "metiers": [{"id": m["id"], "fr": metiers.libelle(m["id"]), "de": metiers.libelle(m["id"], "de")}
                         for m in metiers.metiers()]}
 
 
 def confirmer_metier(c: "ClubPulse", valeur: str, metier: str, par: str = "") -> dict:
     v = club_cherche.normaliser(valeur)
-    if not v or len(v) > 80:
+    if not v or len(v) > 200:
         raise Invalide("libellé vide ou trop long")
     if metier not in metiers.ids():
         raise Invalide("métier inconnu")
@@ -94,11 +102,23 @@ def _lire_criteres(f: Path) -> list[dict]:
     if not isinstance(d, list) or not all(isinstance(x, dict) and {"id", "libelle", "mesure", "sens", "seuil"} <= set(x)
                                           and x["sens"] in (">=", "<=") for x in d):
         raise Invalide("critères mal formés : une liste de {id, libelle, mesure, sens (>= ou <=), seuil}")
+    for x in d:                                       # audit des lots 4-5, I6 : un seuil est un NOMBRE (jamais un booléen)
+        if not isinstance(x["seuil"], (int, float)) or isinstance(x["seuil"], bool):
+            raise Invalide(f"critère « {x['id']} » : le seuil doit être un nombre")
     return d
 
 
+def _mesure_connue(s: dict, chemin: str) -> bool:
+    x: Any = s
+    for morceau in chemin.split("."):
+        if not isinstance(x, dict) or morceau not in x:
+            return False
+        x = x[morceau]
+    return True
+
+
 def geler_criteres(c: "ClubPulse", f: Path = CRITERES_DEFAUT, par: str = "") -> dict:
-    _lire_criteres(f)
+    tableau_pilote(c, f)                              # on ne gèle que des critères lisibles et mesurables
     if c.journal.evenements("CRITERES_GELES"):
         raise Invalide("les critères sont déjà gelés : le premier gel fait foi (un changement se décide en comité, et se "
                        "dit dans le bilan)")
@@ -118,6 +138,9 @@ def tableau_pilote(c: "ClubPulse", f: Path = CRITERES_DEFAUT, periode: str = "tr
     criteres = _lire_criteres(f)
     gel = c.journal.evenements("CRITERES_GELES")
     s = suivi.calculer(c, periode)
+    inconnues = [x["id"] for x in criteres if not _mesure_connue(s, x["mesure"])]
+    if inconnues:
+        raise Invalide(f"mesure inconnue pour : {', '.join(inconnues)}")
     lignes = []
     for x in criteres:
         v = _valeur(s, x["mesure"])
@@ -190,8 +213,11 @@ def bilan_trimestriel(c: "ClubPulse", fmt: str) -> str:
 
 # ------------------------------------------------------------------ campagne d'invitation
 def lancer_campagne(c: "ClubPulse", metier: str, nombre: int, base: str) -> dict:
-    if not 1 <= nombre <= 50:
-        raise Invalide("de 1 à 50 invitations par campagne")
+    if not 1 <= nombre <= CAMPAGNE_MAX:
+        raise Invalide(f"de 1 à {CAMPAGNE_MAX} invitations par campagne")
+    aujourd_hui = sum(len(e.donnees["passes"]) for e in c.journal.evenements("CAMPAGNE") if e.le == c.jour)
+    if aujourd_hui + nombre > PASSES_PAR_JOUR:            # audit des lots 4-5, I3 : borné par jour
+        raise Invalide(f"au plus {PASSES_PAR_JOUR} invitations par jour : {aujourd_hui} déjà préparées aujourd'hui")
     groupe = next((g for g in club_cherche.calculer(c)["metiers"] if g["metier"] == metier), None)
     if groupe is None:
         raise Invalide("aucune demande sans réponse pour ce métier")

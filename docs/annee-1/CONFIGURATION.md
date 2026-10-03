@@ -83,6 +83,7 @@ Règles :
 | `SMTP_HOST` | (vide : simulé) | serveur SMTP |
 | `SMTP_PORT` | `587` | port |
 | `SMTP_STARTTLS` | `1` | `0` : sans STARTTLS (serveur local de test seulement) |
+| `SMTP_DELAI_S` | `15` | délai d'une opération SMTP (l'envoi se fait hors du verrou du monde) |
 | `SMTP_UTILISATEUR` | (vide) | identifiant SMTP |
 | `SMTP_MOT_DE_PASSE` | (vide) | **secret** — mot de passe SMTP |
 | `SMTP_EXPEDITEUR` | `club@exemple.invalid` | adresse d'expédition |

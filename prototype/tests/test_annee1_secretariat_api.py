@@ -83,9 +83,10 @@ def test_seul_un_compte_nominatif_eleve_ouvre_la_console(api):
 def test_metier_confirme_campagne_et_pilote(api):
     cl, compte = api
     s = h(compte("secretariat"))
-    assert {x["valeur"] for x in cl.get("/api/pulse/secretariat/metiers", headers=s).json()["a_verifier"]} == {"fiduciaire", "paysagiste"}
+    m = cl.get("/api/pulse/secretariat/metiers", headers=s).json()
+    assert m["a_verifier"] == [] and m["rares"] == 2                      # une entreprise chacun : jamais montrés (audit I5)
     assert cl.post("/api/pulse/secretariat/metiers", headers=s, json={"valeur": "Fiduciaire", "metier": "comptabilite"}).status_code == 200
-    assert {x["valeur"] for x in cl.get("/api/pulse/secretariat/metiers", headers=s).json()["a_verifier"]} == {"paysagiste"}
+    assert cl.get("/api/pulse/secretariat/metiers", headers=s).json()["rares"] == 1
     metier = cl.get("/api/pulse/secretariat/campagnes", headers=s).json()["metiers_cherches"][0]["metier"]
     r = cl.post("/api/pulse/secretariat/campagnes", headers=s, json={"metier": metier, "nombre": 2})
     assert r.status_code == 200 and len(r.json()["invitations"]) == 2

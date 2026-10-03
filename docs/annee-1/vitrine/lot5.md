@@ -49,5 +49,7 @@ Le journal ne garde **ni l'adresse, ni le contenu** : canal, modèle, résultat,
 | En démo, tout simulé et étiqueté | sans `SMTP_HOST` : « simulé » | `test_relance_simulee_sans_smtp` |
 | Respect de la pause et des canaux choisis (lot 3) | `Notifications.envoyer` | `test_en_pause_on_ne_recoit_rien`, `test_seuls_les_canaux_choisis_sont_utilises` |
 
+**Après l'audit des lots 4-5** ([AUDIT_LOT45.md](../AUDIT_LOT45.md)) : l'envoi se fait hors du verrou du monde ; une adresse piégée n'est jamais envoyée ; un message par modèle, canal et jour au plus.
+
 **Limites.** Un échec SMTP est suivi, pas réessayé (pas de file d'attente). Un membre qui a choisi l'anglais ou
 l'italien reçoit le français (seuls FR et DE sont rédigés). Aucun envoi réel n'a été fait vers une vraie adresse.

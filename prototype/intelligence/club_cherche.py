@@ -46,6 +46,31 @@ def libelles_metier(chemin: Optional[Path] = None) -> Optional[list[str]]:
         return [] if col is None else [normaliser(ligne.get(col) or "") for ligne in lecteur]
 
 
+COLONNES_NOM = ("nom", "entreprise", "raison sociale", "raison_sociale", "société", "societe", "organisation")
+
+
+def libelles_par_entreprise(chemin: Optional[Path] = None) -> Optional[list[tuple[str, str]]]:
+    """ANNÉE 1 · audit des lots 4-5, I5 : (libellé métier normalisé, clé d'entreprise) par ligne. La clé est une
+    empreinte du nom, JAMAIS rendue ni affichée — elle sert seulement à compter des entreprises distinctes. Sans colonne
+    de nom, chaque ligne compte pour une entreprise (et c'est dit par l'appelant)."""
+    import hashlib
+    p = chemin or Path(os.environ.get("HACKVS_ENTREPRISES_CSV") or CSV_DEFAUT)
+    if not p.is_file():
+        return None
+    with p.open(encoding="utf-8-sig", newline="") as f:
+        separateur = ";" if ";" in f.readline() else ","
+        f.seek(0)
+        lecteur = csv.DictReader(f, delimiter=separateur)
+        cols = lecteur.fieldnames or []
+        col = next((c for c in cols if c and c.strip().lower() in COLONNES_METIER), None)
+        nom = next((c for c in cols if c and c.strip().lower() in COLONNES_NOM), None)
+        if col is None:
+            return []
+        return [(normaliser(ligne.get(col) or ""),
+                 hashlib.sha256(normaliser(ligne.get(nom) or "").encode()).hexdigest() if nom else f"ligne:{i}")
+                for i, ligne in enumerate(lecteur)]
+
+
 def _metier_csv(valeur: str) -> Optional[str]:
     v = normaliser(valeur)
     if not v:

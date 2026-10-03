@@ -76,8 +76,9 @@ def test_relance_reelle_par_smtp_puis_desinscription(api):
         assert cl.post("/api/pulse/notifications/desinscrire", json={"jeton": jeton}).json()["desinscrit"] is True
         assert cl.post("/api/pulse/notifications/desinscrire", json={"jeton": jeton[:-2] + "00"}).status_code == 401
         avant = len(smtp.recus)
-        cl.post("/api/pulse/secretariat/notifications/relance", headers=sec)
-        assert len(smtp.recus) == avant + r["envoye"] - 1                 # la personne désinscrite ne reçoit plus rien
+        r2 = cl.post("/api/pulse/secretariat/notifications/relance", headers=sec).json()
+        assert len(smtp.recus) == avant and r2["envoye"] == 0             # même jour : aucun doublon (audit I2), et la
+        #                                                                   personne désinscrite ne reçoit plus rien
     finally:
         smtp.fermer()
 

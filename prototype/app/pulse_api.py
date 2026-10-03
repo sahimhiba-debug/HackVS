@@ -126,13 +126,13 @@ class Preferences(BaseModel):
 
 
 class MetierConfirme(BaseModel):
-    valeur: str = Field(min_length=1, max_length=80)
+    valeur: str = Field(min_length=1, max_length=200)
     metier: str = Field(min_length=1, max_length=40)
 
 
 class Campagne(BaseModel):
     metier: str = Field(min_length=1, max_length=40)
-    nombre: int = Field(ge=1, le=50)
+    nombre: int = Field(ge=1, le=20)
 
 
 class InvitationConsole(BaseModel):
@@ -269,6 +269,7 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     limite_acces_code = Limiteur(5, 60.0)
     limite_acces_global = Limiteur(300, 60.0)
     limite_ia = Limiteur(30, 60.0)                    # appels de langage (notes, demandes) : 30 par minute et par membre
+    limite_desinscription = Limiteur(5, 60.0)         # ANNÉE 1 · lot 5 : par lien de désinscription valide
     # ÉCRITURES qui font grandir le journal (offres, essais, notes) : 30 par minute et par MEMBRE — un passe juré est une
     # session de membre, il a donc le même plafond (décision D2 ; sans plafond, des centaines d'offres ou de brouillons
     # alourdissaient chaque recalcul de l'Établi, voir durcissement H2)
@@ -634,13 +635,19 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     def sec_relance(request: Request, s: str = Depends(secretariat)) -> dict:
         from intelligence import notifications as nt
         n = notifications(request)
-        return au_monde(lambda c: nt.relancer_demandes(n))
+        envois = au_monde(lambda c: nt.preparer_relance(n))      # sous le verrou : lire le monde
+        n.expedier(envois)                                       # HORS du verrou : le réseau (audit des lots 4-5, B1)
+        au_monde(lambda c: n.tracer(envois))                     # sous le verrou : écrire le suivi
+        return nt.bilan_relance(envois)
 
     @r.post("/notifications/desinscrire", dependencies=[Depends(notifications_allumees)])
     def desinscrire(x: Desinscription, request: Request) -> dict:
         """PUBLIQUE : le lien signé de chaque message (aucune session : on se désinscrit sans se connecter)."""
-        limiter(limite_acces_global, "desinscription")
         n = notifications(request)
+        if not n.signature_valide(x.jeton):                      # audit I4 : seuls les liens FAUX partagent un plafond
+            limiter(limite_acces_global, "desinscription-invalide")
+            raise HTTPException(401, "lien de désinscription invalide")
+        limiter(limite_desinscription, f"desinscription|{x.jeton[-32:]}")
         return au_monde(lambda c: n.desinscrire(x.jeton))
 
     @r.get("/secretariat/bilan.{fmt}")

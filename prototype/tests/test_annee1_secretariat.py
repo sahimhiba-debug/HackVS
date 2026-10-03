@@ -26,20 +26,19 @@ def demo(monkeypatch, tmp_path):
 
 # ------------------------------------------------------------------ métiers à confirmer
 def test_les_metiers_non_reconnus_sont_a_confirmer_sans_aucun_nom(demo):
+    """Audit des lots 4-5 (I5) : les libellés portés par moins de 3 ENTREPRISES ne sont jamais montrés (ils peuvent
+    contenir un nom) — seul leur nombre est dit ; aucun nom d'entreprise ne sort."""
     a = sec.metiers_a_verifier(demo.club)
-    valeurs = {x["valeur"] for x in a["a_verifier"]}
-    assert valeurs == {"fiduciaire", "paysagiste", "agence web"}             # libellés normalisés, jamais la colonne « nom »
     brut = json.dumps(a, ensure_ascii=False)
     assert not any(nom in brut for nom in ("ZoéTraiteurSA", "QuirinFidu", "XavFidu", "YvoJardins", "WebWolfSarl"))
-    assert all(isinstance(x["lignes"], (int, str)) for x in a["a_verifier"])
-    fid = next(x for x in a["a_verifier"] if x["valeur"] == "fiduciaire")
-    assert fid["lignes"] == "< 3"                                          # deux lignes : sous le seuil, jamais le nombre exact
+    assert a["a_verifier"] == [] and a["rares"] == 3                        # fiduciaire (2), paysagiste (1), agence web (1)
+    assert "fiduciaire" not in brut and "agence web" not in brut
 
 
 def test_confirmer_un_metier_le_compte_dans_le_club_cherche(demo):
     c = demo.club
-    sec.confirmer_metier(c, "Fiduciaire", "comptabilite")
-    assert "fiduciaire" not in {x["valeur"] for x in sec.metiers_a_verifier(c)["a_verifier"]}
+    sec.confirmer_metier(c, "Fiduciaire", "comptabilite")                   # saisi par le secrétariat (libellé rare)
+    assert sec.metiers_a_verifier(c)["rares"] == 2
     from intelligence import club_cherche
     assert club_cherche.entreprises_par_metier(confirmes=sec.confirmations(c))["par_metier"]["comptabilite"] == 2
     with pytest.raises(Invalide):
