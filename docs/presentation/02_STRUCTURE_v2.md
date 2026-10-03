@@ -19,9 +19,10 @@ La fin tombe toujours à 18:00.
 | 7 | 16:20–17:20 | 1:00 | « Regardez votre téléphone : vous avez un reçu. » La carte et le reçu. Phrase finale, identique au carton du film. Noir | regardez, 18, 19, 20 | V1 |
 | — | 17:20–18:00 | 0:40 | **Marge.** On ne meuble pas ; slide 21 pour les questions | 21 | — |
 
-**Estimation, pas un chronométrage.** 821 mots dits (03b v2) à environ 130 mots par minute, soit 6:20 de parole. S'y
-ajoutent le film (3:21), le temps de scan et des oui en salle (environ 2:30), et les respirations : **environ 15 à 16
-minutes**. La marge réelle se mesure au rituel de 08:00 (mode `R` du deck : 8 points de contrôle).
+**Estimation, pas un chronométrage.** Version parlée du 03.10 : 1 085 mots dits (03b v2, contre 821 avant) à
+environ 130 mots par minute, soit 8:20 de parole. S'y ajoutent le film (3:21), le temps de scan et des oui en salle
+(environ 2:30), et les respirations : **environ 16 à 17 minutes**. Les deux durées (18 et 15 min) et la liste des
+coupes : [08_VERSIONS_18_15.md](08_VERSIONS_18_15.md). La marge réelle se mesure au rituel de 08:00 (mode `R` du deck : 8 points de contrôle).
 
 ## Points de contrôle (touche R du deck v2)
 
