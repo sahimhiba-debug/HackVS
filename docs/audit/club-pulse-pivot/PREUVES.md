@@ -62,6 +62,16 @@ pas un chiffre de présentation.
 
 Après le gel : uniquement `docs/` ou correctif bloquant de démo validé par Hiba.
 
+## Foire 2026 — mesures de la nuit du 03 au 04.10 (branche `foire-2026`)
+
+Chiffres MESURÉS seulement ; le reste est dans `docs/RAPPORT_NUIT.md`.
+
+| Mesure | Résultat | Commande |
+|---|---|---|
+| Classification des 26 cas existants dans la taxonomie des métiers, par Apertus (`swiss-ai/Apertus-v1.5-70B`, API CSCS), 03.10 13:10 UTC | 25 / 26 sorties acceptées par la validation du code, dont 8 abstentions ; 1 rejetée (métier hors taxonomie). **Aucune exactitude mesurée** (pas encore d'étiquettes humaines) | `make eval-classification FOURNISSEUR=apertus` → `prototype/eval/resultats_classification/cas-26-apertus.md` |
+| Langue détectée sur les 26 cas | 22 fr, 2 de (dont suisse allemand), 1 it, 1 en — conforme aux textes | `test_foire_tally.py::test_langues_des_26_cas_detectees_justes` |
+| Phrases Tally (QR de la Foire) | **non ingérées cette nuit** : le CSV n'est pas arrivé dans le dépôt | `make ingest-tally` (tourne avec ou sans le fichier) |
+
 ## Non exécuté (et pourquoi)
 - Apertus réel : aucun identifiant fourni. *(vrai au 30.09 ; depuis le 01.10, voir « Ajouts du 01.10 » ci-dessus.)*
 - Vrais téléphones sur le réseau d'une salle : remplacés par des contextes de navigateur indépendants.
