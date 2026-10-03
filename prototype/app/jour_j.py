@@ -283,7 +283,7 @@ def resoudre_public(hote: str) -> list[str]:
 
 
 def obtenir_par_ip(ip: str, hote: str, chemin: str) -> Optional[int]:
-    """GET https://hote/chemin en se connectant à l'adresse publique `ip` (SNI et Host = hote) : le chemin d'Internet."""
+    """GET en HTTPS de `chemin` sur `hote`, connecté à l'adresse publique `ip` (SNI et Host = hote) : le chemin d'Internet."""
     try:
         with socket.create_connection((ip, 443), timeout=4) as s, contexte_ssl().wrap_socket(s, server_hostname=hote) as t:
             t.sendall(f"GET {chemin} HTTP/1.1\r\nHost: {hote}\r\nConnection: close\r\n\r\n".encode())
