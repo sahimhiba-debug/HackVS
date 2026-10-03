@@ -59,7 +59,7 @@
         $("#raisons").replaceChildren(...d.raisons.map((x) => { const li = document.createElement("li"); li.textContent = x; return li; }));
         $("#maj").textContent = "mis à jour à " + new Date().toLocaleTimeString("fr-CH") + " · se rafraîchit toutes les 3 s";
       } catch (e) {
-        $("#verdict").textContent = "PASSER EN v1";
+        $("#verdict").textContent = "RÉPARER D'ABORD";
         $("#verdict").className = "verdict ko";
         $("#maj").textContent = "serveur local injoignable : relancer « 1 - Lancer Club Pulse »";
       }

@@ -140,8 +140,11 @@ def test_feu_vert_v2_seulement_si_tout_est_vert():
     assert jj.verdict(_voyants())[0] == "FEU VERT v2"
     texte, raisons = jj.verdict(_voyants(public="adresse publique injoignable"))
     assert texte == "PASSER EN v1" and any("adresse publique" in r for r in raisons)
-    texte, _ = jj.verdict([*_voyants()[:-1], jj.Voyant("salle", "orange", "salle", "?")])
-    assert texte == "PASSER EN v1"
+    texte, raisons = jj.verdict([*_voyants()[:-1], jj.Voyant("salle", "orange", "salle", "?")])
+    assert texte == "RÉPARER D'ABORD"                                    # audit I6 : la v1 en dépend aussi
+    for cle in ("serveur", "deck", "secteur"):
+        assert jj.verdict(_voyants(**{cle: "x"}))[0] == "RÉPARER D'ABORD", cle
+    assert jj.verdict(_voyants(public="x", serveur="y"))[0] == "RÉPARER D'ABORD"
 
 
 def test_le_film_absent_ne_change_pas_la_version_mais_rappelle_le_plan_b():
@@ -186,7 +189,7 @@ def test_preflight_sert_la_check_list_a_cette_machine(client):
     assert r.status_code == 200
     d = r.json()
     assert [v["cle"] for v in d["voyants"]] == ["film", "serveur", "public", "deck", "secteur", "salle"]
-    assert d["verdict"] in ("FEU VERT v2", "PASSER EN v1")
+    assert d["verdict"] in ("FEU VERT v2", "RÉPARER D'ABORD", "PASSER EN v1")
     page = client.get("/preflight")
     assert page.status_code == 200 and "preflight.json" in page.text
 

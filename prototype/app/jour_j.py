@@ -5,7 +5,7 @@
   jamais de devinette. Un .mov : orange (Chrome ne le lit pas toujours).
 - LE JETON de la console : créé une fois, rangé HORS du dépôt (~/.clubpulse/jeton, droits 600).
 - LA CHECK-LIST : six voyants (film, serveur local, adresse publique, deck, secteur, salle) et une dernière ligne,
-  « FEU VERT v2 » ou « PASSER EN v1 » avec la raison. Mêmes voyants dans le terminal (scripts/jour_j.py) et sur la page
+  « FEU VERT v2 », « RÉPARER D'ABORD » ou « PASSER EN v1 », avec la raison. Mêmes voyants dans le terminal (scripts/jour_j.py) et sur la page
   locale /preflight (app/main.py, cette machine seulement).
 
 Bibliothèque standard seulement : le lanceur l'appelle avant même que le serveur tourne."""
@@ -375,12 +375,23 @@ def controles(*, bureau: Path, cible: Path, dossier: Path, base_locale: str, bas
     return vs
 
 
+# AUDIT I6 : seule l'adresse publique est propre à la v2 (les téléphones de la salle passent par le tunnel). Serveur,
+# deck, secteur et salle comptent autant pour la v1 : passer en v1 ne les réparerait pas.
+PROPRE_A_V2 = ("public",)
+
+
 def verdict(vs: list[Voyant]) -> tuple[str, list[str]]:
-    """« FEU VERT v2 » si tout est vert. Le film n'entre pas dans le choix : v1 et v2 lisent le même film."""
-    raisons = [f"{v.titre} : {v.detail}" for v in vs if v.cle != "film" and v.couleur != "vert"]
+    """« FEU VERT v2 » si tout est vert ; « RÉPARER D'ABORD » si ce qui manque manquerait aussi à la v1 ; sinon
+    « PASSER EN v1 » (double-clic sur « 3 - Passer en v1 »). Le film n'entre pas dans le choix : v1 et v2 lisent le même."""
+    communs = [f"{v.titre} : {v.detail}" for v in vs if v.cle not in ("film", *PROPRE_A_V2) and v.couleur != "vert"]
+    v2 = [f"{v.titre} : {v.detail}" for v in vs if v.cle in PROPRE_A_V2 and v.couleur != "vert"]
     film = next((v for v in vs if v.cle == "film"), None)
     notes = [PLAN_B] if film and PLAN_B in film.detail else []
-    return ("FEU VERT v2" if not raisons else "PASSER EN v1"), raisons + notes
+    if communs:
+        return "RÉPARER D'ABORD", communs + v2 + notes
+    if v2:
+        return "PASSER EN v1", v2 + ["si ça ne se règle pas : double-clic sur « 3 - Passer en v1 »"] + notes
+    return "FEU VERT v2", notes
 
 
 def en_dict(vs: list[Voyant]) -> dict:

@@ -6,49 +6,28 @@
 #   e. en arrière-plan : le prototype, le tunnel (tailscale funnel --bg), le serveur du deck, caffeinate
 #      (journaux : ~/.clubpulse/logs) ;
 #   f. attend que tout réponde, réinitialise la salle, ouvre Chrome sur la régie et le deck v2 ;
-#   g. affiche la check-list (aussi sur http://127.0.0.1:8000/preflight) : « FEU VERT v2 » ou « PASSER EN v1 ».
+#   g. affiche la check-list (aussi sur http://127.0.0.1:8000/preflight) : « FEU VERT v2 », « RÉPARER D'ABORD »
+#      ou « PASSER EN v1 » (alors : « 3 - Passer en v1 »).
 # Pour tout arrêter : « 2 - Arrêter et effacer.command ». Dépannage : docs/presentation/COMMENT_PRESENTER.md (annexe).
 set -u
 RACINE="$(cd "$(dirname "$0")" && pwd)"
 cd "$RACINE" || exit 1
-DOSSIER="${CLUBPULSE_DOSSIER:-$HOME/.clubpulse}"
-LOGS="$DOSSIER/logs"
-PIDS="$DOSSIER/pids"
-mkdir -p "$LOGS" "$PIDS" && chmod 700 "$DOSSIER"
-PORT="${CLUBPULSE_PORT:-8000}"
-PORT_DECK="${CLUBPULSE_PORT_DECK:-8765}"
-export CLUBPULSE_DOSSIER="$DOSSIER" CLUBPULSE_PORT="$PORT" CLUBPULSE_PORT_DECK="$PORT_DECK"
+. prototype/scripts/jour_j_commun.sh
 export PUBLIC_BASE_URL="${CLUBPULSE_URL_PUBLIQUE:-https://clubpulse.tailfcbc50.ts.net}"
 export CLUBPULSE_DECK_URL="http://127.0.0.1:$PORT_DECK/v2.html"
 [ "$PORT_DECK" = "8765" ] || export HACKVS_DECK_ORIGINES="http://127.0.0.1:$PORT_DECK http://localhost:$PORT_DECK"
-if [ -t 1 ]; then R=$'\033[1;31m'; V=$'\033[1;32m'; O=$'\033[1;33m'; F=$'\033[0m'; else R=; V=; O=; F=; fi
-vert() { printf '  %s● VERT%s     %s\n' "$V" "$F" "$*"; }
-orange() { printf '  %s● ORANGE%s   %s\n' "$O" "$F" "$*"; }
-rouge() { printf '  %s● ROUGE%s    %s\n' "$R" "$F" "$*"; }
-stop() { printf '\n%sARRÊT : %s%s\n' "$R" "$*" "$F"; exit 1; }
 
 printf '\nClub Pulse — lancement du jour J\n\n'
 
 # b. Python (avant le film : c'est lui qui cherche et copie)
-if [ -f .venv/bin/activate ]; then
-  . .venv/bin/activate && vert "Python : .venv activé"
-else
-  orange "Python : pas de .venv à la racine du dépôt — python3 du système (COMMENT_PRESENTER.md, annexe)"
-fi
-PY="$(command -v python3)" || stop "python3 introuvable"
-export PY
+python_du_depot
 
 # a. Le film
 python3 prototype/scripts/jour_j.py film
 
-# relance propre : les processus d'un lancement précédent sont arrêtés d'abord
-for f in "$PIDS"/*; do
-  [ -f "$f" ] || continue
-  pid="$(cat "$f")"
-  if kill -0 "$pid" 2>/dev/null; then kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null; sleep 1; fi
-  rm -f "$f"
-done
-occupe() { python3 -c "import socket,sys; s=socket.socket(); sys.exit(0 if s.connect_ex(('127.0.0.1', int(sys.argv[1]))) == 0 else 1)" "$1"; }
+# relance propre : les processus NÔTRES d'un lancement précédent sont arrêtés d'abord (jamais un étranger)
+# shellcheck disable=SC2046
+arreter $(tous_les_noms)
 occupe "$PORT" && stop "un autre programme utilise déjà le port $PORT (un ancien Terminal de démo ?) — le fermer, ou redémarrer le Mac"
 occupe "$PORT_DECK" && stop "un autre programme utilise déjà le port $PORT_DECK (un ancien deck ?) — le fermer, ou redémarrer le Mac"
 
@@ -64,18 +43,31 @@ fi
 # e. En arrière-plan, chacun dans son groupe de processus (l'arrêt les retrouve tous, enfants compris)
 set -m
 nohup ./demo-tunnel.sh </dev/null >"$LOGS/prototype.log" 2>&1 &
-echo $! >"$PIDS/prototype"
+noter prototype $!
 nohup python3 docs/presentation/deck/lancer.py "$PORT_DECK" --sans-navigateur </dev/null >"$LOGS/deck.log" 2>&1 &
-echo $! >"$PIDS/deck"
+noter deck $!
 if command -v caffeinate >/dev/null 2>&1; then
   nohup caffeinate -dimsu </dev/null >/dev/null 2>&1 &
-  echo $! >"$PIDS/caffeinate"
+  noter caffeinate $!
 fi
 set +m
-TS="$(command -v tailscale || echo /Applications/Tailscale.app/Contents/MacOS/Tailscale)"
+
+# AUDIT I5 : si Funnel n'est pas autorisé, `tailscale funnel` affiche une adresse à visiter et ATTEND — jamais de
+# fenêtre figée : délai maximal, puis voyant rouge et journal.
+TS="$(tailscale_cli)"
 if [ -x "$TS" ]; then
-  if "$TS" funnel --bg "$PORT" >"$LOGS/tunnel.log" 2>&1; then vert "Tunnel : tailscale funnel --bg $PORT"
-  else rouge "Tunnel : refusé (journal : $LOGS/tunnel.log) — Tailscale connecté ? Funnel autorisé ?"; fi
+  "$TS" funnel --bg "$PORT" </dev/null >"$LOGS/tunnel.log" 2>&1 &
+  tp=$!
+  n=0
+  while kill -0 "$tp" 2>/dev/null && [ "$n" -lt $(( ${CLUBPULSE_ATTENTE_TUNNEL:-20} * 2 )) ]; do sleep 0.5; n=$((n + 1)); done
+  if kill -0 "$tp" 2>/dev/null; then
+    kill "$tp" 2>/dev/null
+    rouge "Tunnel : Tailscale attend une action (Funnel autorisé pour ce Mac ?) — voir $LOGS/tunnel.log"
+  elif wait "$tp"; then
+    vert "Tunnel : tailscale funnel --bg $PORT"
+  else
+    rouge "Tunnel : refusé — Tailscale connecté ? Funnel autorisé ? (journal : $LOGS/tunnel.log)"
+  fi
 else
   rouge "Tunnel : Tailscale introuvable (App Store, puis se connecter)"
 fi
@@ -89,14 +81,12 @@ python3 prototype/scripts/jour_j.py attendre "$PUBLIC_BASE_URL/sante" "${CLUBPUL
   || rouge "Adresse publique : $PUBLIC_BASE_URL ne répond pas (encore ?) — la check-list continue de vérifier"
 python3 prototype/scripts/jour_j.py purger >/dev/null 2>&1 && vert "Salle : réinitialisée"
 
-REGIE="http://127.0.0.1:$PORT/salle/regie"
-if open -Ra "Google Chrome" >/dev/null 2>&1; then open -a "Google Chrome" "$REGIE" "$CLUBPULSE_DECK_URL"
-else open "$REGIE" "$CLUBPULSE_DECK_URL" 2>/dev/null || orange "Chrome : ouvrir à la main $REGIE puis $CLUBPULSE_DECK_URL"; fi
+chrome "http://127.0.0.1:$PORT/salle/regie" "$CLUBPULSE_DECK_URL"
+printf '\n  Régie : coller le jeton (⌘-V) quand elle le demande. Pour tout arrêter : « 2 - Arrêter et effacer ».\n'
+printf '  Si la check-list dit « PASSER EN v1 » : « 3 - Passer en v1 ».\n'
 
-# g. La check-list
-python3 prototype/scripts/jour_j.py preflight
-if [ $? -ne 0 ]; then
-  open -a "Google Chrome" "http://127.0.0.1:$PORT/preflight" >/dev/null 2>&1 || true
-  printf '\n  La page http://127.0.0.1:%s/preflight se met à jour toute seule : attendre le feu vert, ou passer en v1.\n' "$PORT"
+# g. La check-list — son verdict est la DERNIÈRE ligne
+if ! python3 prototype/scripts/jour_j.py preflight; then
+  chrome "http://127.0.0.1:$PORT/preflight" >/dev/null 2>&1    # la page se met à jour toute seule
 fi
-printf '\n  Régie : coller le jeton (⌘-V) quand elle le demande. Pour tout arrêter : « 2 - Arrêter et effacer ».\n\n'
+fin_de_fenetre

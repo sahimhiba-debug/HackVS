@@ -21,7 +21,10 @@ ARRETER = RACINE / "2 - Arrêter et effacer.command"
 pytestmark = pytest.mark.skipif(shutil.which("bash") is None, reason="bash absent")
 
 STUBS = {
-    "tailscale": '#!/bin/bash\necho "tailscale $*" >> "$CLUBPULSE_DOSSIER/stubs.log"\n',
+    # STUB_TS_BLOQUE=1 : comme un Funnel non autorisé, « funnel --bg » affiche une adresse à visiter et ATTEND
+    "tailscale": '#!/bin/bash\necho "tailscale $*" >> "$CLUBPULSE_DOSSIER/stubs.log"\n'
+                 '[ "${STUB_TS_BLOQUE:-0}" = 1 ] && [ "$1 $2" = "funnel --bg" ] && exec sleep 301\nexit 0\n',
+    "ipconfig": '#!/bin/bash\necho 127.0.0.1\n',
     "open": '#!/bin/bash\necho "open $*" >> "$CLUBPULSE_DOSSIER/stubs.log"\n',
     "pbcopy": '#!/bin/bash\ncat > "$CLUBPULSE_DOSSIER/presse-papiers"\n',
     "pmset": "#!/bin/bash\necho \"Now drawing from 'AC Power'\"\n",
@@ -58,8 +61,8 @@ def jour_j(tmp_path):
             "CLUBPULSE_URL_PUBLIQUE": f"https://127.0.0.1:{_port_libre()}", "CLUBPULSE_ATTENTE_PUBLIQUE": "1",
             "HACKVS_FOIRE": "1", "HACKVS_SEMANTIQUE": "0"}
 
-    def lancer(script: Path) -> subprocess.CompletedProcess:
-        return subprocess.run(["bash", str(script)], env=env, capture_output=True, text=True, timeout=240, cwd=tmp_path)
+    def lancer(script: Path, **en_plus: str) -> subprocess.CompletedProcess:
+        return subprocess.run(["bash", str(script)], env=env | en_plus, capture_output=True, text=True, timeout=240, cwd=tmp_path)
 
     yield {"bureau": bureau, "dossier": dossier, "deck": tmp_path / "deck" / "film.mp4", "port": port, "port_deck": port_deck,
            "lancer": lancer}
@@ -96,7 +99,7 @@ def test_une_video_le_film_copie_tout_demarre_check_list_puis_tout_s_eteint(jour
     assert page["verdict"] == "PASSER EN v1"                                           # la page dit la même chose
     assert (jour_j["dossier"] / "logs" / "prototype.log").exists()
 
-    groupes = {f.name: int(f.read_text()) for f in (jour_j["dossier"] / "pids").iterdir()}
+    groupes = {f.name: int(f.read_text().splitlines()[0]) for f in (jour_j["dossier"] / "pids").iterdir()}   # numéro, puis heure de démarrage
     assert set(groupes) == {"prototype", "deck", "caffeinate"}
     a = jour_j["lancer"](ARRETER)
     assert "Tout est éteint et effacé." in a.stdout, a.stdout + a.stderr
@@ -123,3 +126,50 @@ def test_deux_videos_voyant_rouge_avec_la_liste_et_aucune_copie(jour_j):
     assert "PLUSIEURS VIDÉOS SUR LE BUREAU" in out and "film-v1.mp4" in out and "film-v2.mov" in out, out
     assert not jour_j["deck"].exists()
     assert "Tout est éteint et effacé." in jour_j["lancer"](ARRETER).stdout
+
+
+# ------------------------------------------------------------------ AUDIT JOUR J : I2, I5, I6
+V1 = RACINE / "3 - Passer en v1.command"
+
+
+def test_audit_i2_un_vieux_fichier_pid_ne_fait_jamais_tuer_un_processus_etranger(jour_j):
+    """Le Mac redémarre sans « Arrêter » : les numéros de processus des fichiers pids/ désignent alors d'autres
+    programmes. Un double-clic ne doit tuer que NOS processus (numéro ET heure de démarrage)."""
+    etranger = subprocess.Popen(["sleep", "300"], start_new_session=True)       # chef de son groupe, comme une app
+    try:
+        pids = jour_j["dossier"] / "pids"
+        pids.mkdir(parents=True)
+        (pids / "prototype").write_text(f"{etranger.pid}\n")                    # ancien format, sans heure
+        (pids / "deck").write_text(f"{etranger.pid}\nMon Jan  1 00:00:00 2024\n")  # heure qui ne correspond pas
+        jour_j["lancer"](ARRETER)
+        assert etranger.poll() is None, "un processus étranger a été tué par l'arrêt"
+        (pids / "prototype").write_text(f"{etranger.pid}\n")
+        jour_j["lancer"](LANCER)
+        assert etranger.poll() is None, "un processus étranger a été tué par le lancement"
+    finally:
+        etranger.kill()
+
+
+def test_audit_i5_un_tunnel_qui_attend_ne_fige_pas_le_lanceur(jour_j):
+    r = jour_j["lancer"](LANCER, STUB_TS_BLOQUE="1", CLUBPULSE_ATTENTE_TUNNEL="2")
+    tunnel = next(x for x in r.stdout.splitlines() if "Tunnel" in x)
+    assert "● ROUGE" in tunnel and "tunnel.log" in tunnel, r.stdout
+    assert subprocess.run(["pgrep", "-f", "sleep 301"], capture_output=True).returncode != 0      # le tunnel figé a été abattu
+    assert r.stdout.splitlines()[-1].startswith(("FEU VERT v2", "PASSER EN v1", "RÉPARER D'ABORD")), r.stdout
+
+
+def test_audit_i6_passer_en_v1_sans_rien_taper(jour_j):
+    """« PASSER EN v1 » doit être exécutable : un troisième double-clic arrête le prototype du tunnel, relance la démo v1
+    joignable sur le point d'accès du Mac, ouvre l'Établi et le deck v1, et dit l'adresse du téléphone."""
+    _video(jour_j["bureau"] / "film.mp4")
+    jour_j["lancer"](LANCER)
+    r = jour_j["lancer"](V1, CLUBPULSE_IP="127.0.0.1")
+    assert r.returncode == 0, r.stdout + r.stderr
+    port = jour_j["port"]
+    assert urllib.request.urlopen(f"http://127.0.0.1:{port}/etabli", timeout=10).status == 200
+    stubs = (jour_j["dossier"] / "stubs.log").read_text()
+    assert "tailscale funnel reset" in stubs
+    assert f"http://127.0.0.1:{port}/etabli" in stubs and f"http://127.0.0.1:{jour_j['port_deck']}/index.html" in stubs
+    assert f"http://127.0.0.1:{port}/app" in r.stdout                           # le téléphone de Pauline
+    assert "Tout est éteint et effacé." in jour_j["lancer"](ARRETER).stdout
+    assert _libre(port)
