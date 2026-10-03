@@ -119,7 +119,7 @@ def test_l_ecran_de_la_salle_vit_dans_le_deck_sans_changer_de_fenetre(deck_et_sa
         regie.set_default_timeout(30_000)
         regie.on("dialog", lambda d: d.accept(FAUX_JETON_DECK))                    # la régie demande le jeton UNE fois
         regie.goto(base + "/salle/regie")
-        regie.click("#purger")
+        regie.locator("#etat:has-text('fermée')").wait_for()                     # jeton reçu ; serveur neuf : salle vierge
         regie.click("#ouvrir")
         regie.locator("#etat:has-text('ouverte')").wait_for()
         page = ctx.new_page()
