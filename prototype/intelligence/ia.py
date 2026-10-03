@@ -261,6 +261,39 @@ class Apertus(_CompatibleOpenAI):
     PREFIXE = "APERTUS"
     VAR_BASE = "APERTUS_BASE_URL"                       # obligatoire (aucune valeur par défaut)
 
+    # P3 n°1 — APPEL D'OUTILS natif (APERTUS_APPEL_OUTILS=1, éteint par défaut) : le schéma part comme UNE fonction
+    # imposée, la sortie est l'argument de l'appel. Refus du serveur → consigne seule ; texte malgré tout → texte lu.
+    def _outils(self) -> bool:
+        return os.environ.get("APERTUS_APPEL_OUTILS") == "1"
+
+    def _requete(self, systeme: str, message: Any, schema: Optional[dict]) -> tuple[str, dict, dict]:
+        url, entetes, corps = super()._requete(systeme, message, schema)
+        if schema and self._outils():
+            corps.pop("response_format", None)
+            corps["tools"] = [{"type": "function", "function": {"name": "sortie", "description": "Réponse structurée de la tâche.",
+                                                                "parameters": schema}}]
+            corps["tool_choice"] = {"type": "function", "function": {"name": "sortie"}}
+        return url, entetes, corps
+
+    def completer(self, systeme_txt: str, message: str, schema: Optional[dict]) -> str:
+        sortie = super().completer(systeme_txt, message, schema)
+        if schema and self._outils() and self.contrainte == "serveur":
+            self.contrainte = "outil"
+        return sortie
+
+    def _sans_contrainte(self, corps: dict) -> Optional[dict]:
+        if "tools" in corps:
+            return {k: v for k, v in corps.items() if k not in ("tools", "tool_choice")}
+        return super()._sans_contrainte(corps)
+
+    def _extraire(self, reponse: dict) -> str:
+        m = reponse["choices"][0]["message"]
+        appels = m.get("tool_calls") or []
+        if appels:
+            args = appels[0]["function"]["arguments"]
+            return args if isinstance(args, str) else json.dumps(args, ensure_ascii=False)
+        return str(m["content"] or "")
+
 
 class OpenAI(_CompatibleOpenAI):
     """API OpenAI. Inactif sans OPENAI_API_KEY et OPENAI_MODEL. `max_completion_tokens` (les modèles récents refusent
