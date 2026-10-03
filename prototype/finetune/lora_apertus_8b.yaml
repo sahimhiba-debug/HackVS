@@ -1,0 +1,23 @@
+# AFFINAGE LoRA d'Apertus 1.5 8B sur la classification des métiers — PRÊT, NON LANCÉ (aucun entraînement n'a eu lieu).
+# Format compatible avec les outils courants d'affinage supervisé (« messages » au format chat) ; hyperparamètres de
+# départ, à ajuster sur un jeu de validation. Les données viennent de finetune/donnees_synthetiques.py (filtre
+# aller-retour) ; jamais de données réelles de membres, jamais de phrases Tally.
+lance: false
+modele_de_base: swiss-ai/Apertus-8B-Instruct-2509      # identifiant exact à confirmer au moment de lancer (version 1.5 8B)
+tache: classification des demandes dans la taxonomie des métiers (25 métiers + abstention)
+donnees:
+  entrainement: var/finetune/garde.jsonl            # hors dépôt
+  validation: 10 %                                   # tirée du même fichier, graine fixe
+  evaluation_finale: prototype/eval/cas_comprendre_action.json + feuille d'annotation Tally (quand elle sera remplie)
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  modules_cibles: [q_proj, k_proj, v_proj, o_proj]
+entrainement:
+  epoques: 2
+  taux_apprentissage: 2.0e-4
+  taille_lot: 8
+  longueur_max: 1024
+  graine: 2026
+critere_de_succes: "faire mieux que le modèle de base sur les mêmes cas, sans plus de fausses acceptations — sinon on ne déploie pas"
