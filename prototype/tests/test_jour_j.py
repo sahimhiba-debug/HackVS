@@ -93,6 +93,8 @@ def test_preparer_le_film_copie_et_note_le_film_hors_du_depot(tmp_path):
     assert jj.preparer_film(bureau, cible, RACINE, dossier).detail.count("déjà à jour") == 1
     assert jj.voyant_film(bureau, cible, dossier).couleur == "vert"
     (bureau / "film.mp4").unlink()
+    assert jj.voyant_film(bureau, cible, dossier).couleur == "orange"      # le deck garde sa copie (audit, mineur)
+    cible.unlink()
     assert jj.voyant_film(bureau, cible, dossier).couleur == "rouge"
 
 
@@ -144,7 +146,7 @@ def test_feu_vert_v2_seulement_si_tout_est_vert():
 
 def test_le_film_absent_ne_change_pas_la_version_mais_rappelle_le_plan_b():
     """v1 et v2 lisent le MÊME film : son absence ne se règle pas en passant en v1 — le deck bascule seul sur son plan B."""
-    texte, raisons = jj.verdict(_voyants(film="FILM ABSENT DU BUREAU"))
+    texte, raisons = jj.verdict(_voyants(film="FILM ABSENT DU BUREAU. " + jj.PLAN_B))
     assert texte == "FEU VERT v2"
     assert any("plan B raconté" in r for r in raisons)
 
@@ -246,3 +248,62 @@ def test_audit_i1_l_adresse_publique_est_sondee_depuis_internet_pas_depuis_le_ta
     couleur, detail = jj.sonde_publique(url, resoudre=panne, obtenir=lambda ip, h, c: 200, sonde_locale=lambda u: True)
     assert couleur == "orange" and "4G" in detail                         # seulement vu depuis ce Mac : à confirmer
     assert jj.sonde_publique(url, resoudre=panne, obtenir=lambda ip, h, c: 200, sonde_locale=lambda u: False)[0] == "rouge"
+
+
+# ------------------------------------------------------------------ AUDIT JOUR J : I3, I4, I8 et mineurs du module
+def test_audit_i3_un_film_evacue_vers_icloud_sur_sonoma_est_rouge_sans_le_lire(tmp_path, monkeypatch):
+    """Depuis macOS 14, un fichier évacué vers iCloud garde nom et taille : seule la marque « dataless » le trahit. Le
+    lire déclencherait un téléchargement silencieux (Wi-Fi de la salle) ou une erreur."""
+    _video(tmp_path / "film.mp4")
+    monkeypatch.setattr(jj, "_hors_disque", lambda p: True)
+    lu = []
+    monkeypatch.setattr(jj, "open", lambda *a, **k: lu.append(a) or open(*a, **k), raising=False)
+    r = jj.chercher_film(tmp_path)
+    assert r["couleur"] == "rouge" and "iCloud" in r["message"] and "Télécharger maintenant" in r["message"]
+    assert lu == []
+
+
+def test_audit_i3_la_marque_dataless_est_lue_dans_st_flags():
+    class St:
+        st_flags = 0x40000000
+    assert jj._hors_disque_st(St()) is True
+    St.st_flags = 0
+    assert jj._hors_disque_st(St()) is False
+    assert jj._hors_disque_st(object()) is False                 # Linux : pas de st_flags
+
+
+def test_audit_i4_hors_depot_git_le_gitignore_fait_foi(tmp_path):
+    """Code téléchargé en zip : `git check-ignore` répond 128 (pas un dépôt) — on relit .gitignore."""
+    (tmp_path / ".gitignore").write_text("# film\n" + jj.FILM_DU_DECK + "\n")
+    assert jj.film_ignore_par_git(tmp_path) is True
+    (tmp_path / ".gitignore").write_text("autre\n")
+    assert jj.film_ignore_par_git(tmp_path) is False
+
+
+def test_audit_i8_une_salle_deja_remplie_avant_l_invitation_est_orange():
+    """Deux téléphones d'équipe : normal (« < 3 »). Trois ou plus avant le pitch : répétition oubliée, ou QR qui a fuité."""
+    assert jj.voyant_salle({"ouverte": True, "invitee": False, "demande": None, "vue": "salle", "participants": "< 3"}).couleur == "vert"
+    v = jj.voyant_salle({"ouverte": True, "invitee": False, "demande": None, "vue": "salle", "participants": 4})
+    assert v.couleur == "orange" and "4" in v.detail and "Réinitialiser" in v.detail
+
+
+def test_audit_mineur_film_retire_du_bureau_apres_la_copie_le_deck_garde_sa_copie(tmp_path):
+    bureau, cible, d = tmp_path / "b", tmp_path / "deck" / "film.mp4", tmp_path / "d"
+    bureau.mkdir()
+    _video(bureau / "film.mp4")
+    jj.preparer_film(bureau, cible, RACINE, d)
+    (bureau / "film.mp4").unlink()
+    v = jj.voyant_film(bureau, cible, d)
+    assert v.couleur == "orange" and "plan B" not in v.detail and "copie" in v.detail
+    _video(bureau / "a.mp4")
+    _video(bureau / "b.mp4")
+    v = jj.voyant_film(bureau, cible, d)
+    assert v.couleur == "rouge" and "le deck garde" in v.detail
+
+
+def test_audit_mineur_origines_du_deck_seulement_locales_et_en_chiffres_ascii():
+    from app.protections import origines_deck
+    for mauvaise in ("http://exemple.ch:8765", "https://127.0.0.1:8765", "http://localhost:８７６５", "http://127.0.0.1.evil:80"):
+        with pytest.raises(ValueError):
+            origines_deck(mauvaise)
+    assert origines_deck("http://127.0.0.1:9000") == "http://127.0.0.1:9000"

@@ -69,6 +69,17 @@ def _est_video(nom: str) -> bool:
     return nom.lower().endswith(EXTENSIONS)
 
 
+SF_DATALESS = 0x40000000                 # macOS 14+ : fichier évacué vers iCloud (nom et taille gardés, contenu absent)
+
+
+def _hors_disque_st(st: object) -> bool:
+    return bool(getattr(st, "st_flags", 0) & SF_DATALESS)
+
+
+def _hors_disque(p: Path) -> bool:
+    return _hors_disque_st(p.stat())
+
+
 def chercher_film(dossier_bureau: Path) -> dict:
     """La vidéo du Bureau, directement sur le Bureau (pas dans les sous-dossiers). Ne devine jamais."""
     if not dossier_bureau.is_dir():
@@ -91,6 +102,10 @@ def chercher_film(dossier_bureau: Path) -> dict:
         return {"couleur": "rouge", "source": None,
                 "message": "PLUSIEURS VIDÉOS SUR LE BUREAU : " + " · ".join(noms) + " — n'en laisser qu'une"}
     film = videos[0]
+    if _hors_disque(film):                      # AUDIT I3 : avant toute lecture (qui lancerait un téléchargement silencieux)
+        return {"couleur": "rouge", "source": None,
+                "message": f"LE FILM EST DANS iCloud, PAS SUR LE DISQUE ({film.name}) : "
+                           "Finder → clic droit sur le film → « Télécharger maintenant »"}
     taille = film.stat().st_size
     if taille < TAILLE_MIN:
         return {"couleur": "rouge", "source": None,
@@ -133,8 +148,12 @@ def copier_film(source: Path, cible: Path) -> bool:
 
 
 def film_ignore_par_git(depot: Path) -> bool:
-    """Le film ne doit JAMAIS être commité : il est ignoré par git, et pas suivi."""
+    """Le film ne doit JAMAIS être commité : il est ignoré par git, et pas suivi. Hors dépôt (code téléchargé en zip,
+    audit I4) ou sans git : le .gitignore fait foi."""
     try:
+        depot_git = subprocess.run(["git", "-C", str(depot), "rev-parse", "--is-inside-work-tree"], capture_output=True, timeout=10)
+        if depot_git.returncode != 0:
+            raise OSError("pas un dépôt git")
         ignore = subprocess.run(["git", "-C", str(depot), "check-ignore", "-q", FILM_DU_DECK], capture_output=True, timeout=10)
         suivi = subprocess.run(["git", "-C", str(depot), "ls-files", "--error-unmatch", FILM_DU_DECK], capture_output=True, timeout=10)
         return ignore.returncode == 0 and suivi.returncode != 0
@@ -178,13 +197,23 @@ def _detail_sonde(note: dict) -> str:
     return " · ".join(morceaux)
 
 
+def _sans_film_du_bureau(r: dict, cible: Path) -> Voyant:
+    """Rien à copier : le deck lit-il encore une copie précédente ? Alors ce n'est pas le plan B — le dire juste."""
+    if cible.exists():
+        copie = f"le deck garde sa copie précédente ({_taille(cible.stat().st_size)})"
+        if r["message"] == "FILM ABSENT DU BUREAU":
+            return Voyant("film", "orange", "Film", f"plus de film sur le Bureau : {copie} — vérifier que c'est le bon")
+        return Voyant("film", "rouge", "Film", f"{r['message']} — {copie}")
+    return Voyant("film", "rouge", "Film", r["message"] + ". " + PLAN_B)
+
+
 def preparer_film(dossier_bureau: Path, cible: Path, depot: Path, dossier_jj: Path) -> Voyant:
     """Étape a du lanceur : trouver, vérifier, copier, noter (hors du dépôt) — et le dire en un voyant."""
     if not film_ignore_par_git(depot):
         return Voyant("film", "rouge", "Film", f"{FILM_DU_DECK} n'est PAS ignoré par git : copie refusée (le film ne doit jamais être commité)")
     r = chercher_film(dossier_bureau)
     if r["source"] is None:
-        return Voyant("film", "rouge", "Film", r["message"] + ". " + PLAN_B)
+        return _sans_film_du_bureau(r, cible)
     source: Path = r["source"]
     copie = copier_film(source, cible)
     note = {"source": source.name, "taille": r["taille"], **sonder_film(cible)}
@@ -198,7 +227,7 @@ def voyant_film(dossier_bureau: Path, cible: Path, dossier_jj: Path) -> Voyant:
     """Pour la check-list : sans copier ni hacher (la page se rafraîchit toutes les 3 s)."""
     r = chercher_film(dossier_bureau)
     if r["source"] is None:
-        return Voyant("film", "rouge", "Film", r["message"] + ". " + PLAN_B)
+        return _sans_film_du_bureau(r, cible)
     if not cible.exists() or cible.stat().st_size != r["taille"]:
         return Voyant("film", "rouge", "Film", f"{r['message']} · PAS ENCORE COPIÉ dans le deck : relancer « 1 - Lancer Club Pulse »")
     note = _note(dossier_jj)
@@ -317,6 +346,10 @@ def voyant_salle(etat: Optional[dict]) -> Voyant:
         return Voyant("salle", "rouge", "Salle réinitialisée", "état de la salle illisible (serveur local arrêté ?)")
     if etat.get("invitee") or etat.get("demande") or etat.get("vue") == "bilan":
         return Voyant("salle", "rouge", "Salle réinitialisée", "la salle a déjà servi : régie → « Réinitialiser : tout effacer »")
+    n = etat.get("participants")
+    if isinstance(n, int) and n >= 3:           # AUDIT I8 : deux téléphones d'équipe s'affichent « < 3 » ; au-delà, inattendu
+        return Voyant("salle", "orange", "Salle réinitialisée",
+                      f"déjà {n} participants avant le pitch (répétition ? QR qui a fuité ?) : régie → « Réinitialiser : tout effacer »")
     ouverte = f"ouverte · participants : {etat.get('participants', 0)}" if etat.get("ouverte") else "pas encore ouverte (régie → « 1 · Ouvrir la salle »)"
     return Voyant("salle", "vert", "Salle réinitialisée", ouverte)
 
@@ -346,7 +379,7 @@ def verdict(vs: list[Voyant]) -> tuple[str, list[str]]:
     """« FEU VERT v2 » si tout est vert. Le film n'entre pas dans le choix : v1 et v2 lisent le même film."""
     raisons = [f"{v.titre} : {v.detail}" for v in vs if v.cle != "film" and v.couleur != "vert"]
     film = next((v for v in vs if v.cle == "film"), None)
-    notes = [PLAN_B] if film and film.couleur == "rouge" else []
+    notes = [PLAN_B] if film and PLAN_B in film.detail else []
     return ("FEU VERT v2" if not raisons else "PASSER EN v1"), raisons + notes
 
 

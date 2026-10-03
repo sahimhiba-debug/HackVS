@@ -65,12 +65,12 @@ def politique_contenu(pages: Iterable[Path], ancetres: str = "'self'") -> bytes:
 
 # JOUR J : l'écran de la salle s'affiche DANS le deck v2 (iframe), servi par cette machine sur 127.0.0.1:8765 — et
 # nulle part ailleurs. Seules des origines de boucle locale sont acceptées (HACKVS_DECK_ORIGINES, pour les tests).
-_ORIGINE_LOCALE = re.compile(r"^http://(127\.0\.0\.1|localhost):\d{2,5}$")
+_ORIGINE_LOCALE = re.compile(r"^http://(127\.0\.0\.1|localhost):[0-9]{2,5}$")      # [0-9] : pas de chiffres Unicode
 
 
 def origines_deck(valeur: Optional[str]) -> str:
     origines = (valeur or "http://127.0.0.1:8765 http://localhost:8765").split()
-    if not origines or not all(_ORIGINE_LOCALE.match(o) for o in origines):
+    if not origines or not all(_ORIGINE_LOCALE.fullmatch(o) for o in origines):
         raise ValueError("HACKVS_DECK_ORIGINES : seulement http://127.0.0.1:<port> ou http://localhost:<port>")
     return " ".join(origines)
 
