@@ -41,7 +41,7 @@ ceux de `docs/audit/club-pulse-pivot/PREUVES.md` après le tag `gel-demo` (`06_S
 > Après, en général, il ne se passe rien. Pas par mauvaise volonté. Parce que la Foire, c'est dix jours de
 > rencontres, et qu'entre deux événements du Club, chacun retourne à son entreprise.
 >
-> Le Club des Affaires, c'est une cinquantaine de membres. Ils ne manquent pas de rencontres. Ce qui manque, c'est
+> Le Club des Affaires, c'est 145 entreprises et 173 représentants. Ils ne manquent pas de rencontres. Ce qui manque, c'est
 > l'après : le moment où une rencontre devient quelque chose qu'on fait ensemble.
 >
 > [temps] Et quand ça arrive quand même, c'est parce que quelqu'un a dit oui. Pas « on s'appelle ». Oui.
@@ -274,6 +274,6 @@ change ce carton, la phrase finale change avec lui, mot pour mot.
 
 « Dix secondes ». « Sans compte » (sauf : « passe juré, quinze minutes, sans compte » ; le passe découverte se dit
 « sans être membre »). « Deux cents rencontres », « plus que n'importe qui dans ce canton » (retirés le 03.10 : le
-Club compte une cinquantaine de membres). « Conversion » (on dit « intention d'adhésion »). « Nos utilisateurs ».
+Club compte 145 entreprises et 173 représentants). « Conversion » (on dit « intention d'adhésion »). « Nos utilisateurs ».
 « Propulsé par Apertus ». « Révolutionnaire ». Un nom de technologie. Un chiffre qui n'est pas sur la slide 14.
 Une paraphrase du carton de fin du film.

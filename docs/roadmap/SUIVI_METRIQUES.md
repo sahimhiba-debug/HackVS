@@ -52,7 +52,7 @@ Le Suivi mesure des gestes faits par des personnes, pas une activité supposée.
 ## Critères du pilote de 45 jours (à valider avec le Club)
 
 Fixés d'avance dans [ROADMAP.md](ROADMAP.md) et lus sur cet écran, période « trimestre » : au moins 25 demandes, au
-moins 30 % de oui, premier oui en moins de 72 h en médiane, au moins 15 membres actifs sur 50, zéro incident de
+moins 30 % de oui, premier oui en moins de 72 h en médiane, au moins 15 membres actifs sur les 50 volontaires du pilote, zéro incident de
 confidentialité. Avec ce volume, le taux de réponse est **un signal, pas une mesure fine**.
 
 ## Mode salle (pitch)

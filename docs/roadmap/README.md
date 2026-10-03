@@ -1,7 +1,7 @@
 # Club Pulse — où on en est, où on va
 
 Prototype présenté à la Foire du Valais 2026, sur un **monde de démonstration** (150 profils fictifs, horloge
-simulée). Le Club réel compte **une cinquantaine de membres** ; rien ici n'a encore tourné sur ses données.
+simulée). Le Club réel compte **145 entreprises et 173 représentants** ; rien ici n'a encore tourné sur ses données.
 
 | Document | Contenu |
 |---|---|
@@ -29,7 +29,7 @@ simulée). Le Club réel compte **une cinquantaine de membres** ; rien ici n'a e
 | Prêt à déployer (VPS, HTTPS) et charge de 80 téléphones mesurée en local | ✅ Construit | test_deploiement.py |
 | La carte devient le profil — photo de sa carte, Apertus propose, le membre confirme | ✅ Construit | test_carte_profil.py, test_e2e_foire.py |
 | Phrases recueillies par le QR de la Foire (21, en agrégats) | 🟢 Validé sur le terrain | 21 réponses réelles du 03.10.2026 ; 20 fr, 1 en ; classées par Apertus seulement (21 validées, 20 abstentions) — PREUVES.md |
-| Pilote de 45 jours avec les 50 membres (janvier – mi-février 2027) | ⬜ Prévu | critères à valider avec le Club |
+| Pilote de 45 jours avec 50 membres volontaires parmi les 173 représentants (janvier – mi-février 2027) | ⬜ Prévu | critères à valider avec le Club |
 | Analyse d'impact nLPD / RGPD avec un juriste | ⬜ Prévu | — |
 | Audit de sécurité externe avant le lancement | ⬜ Prévu | — |
 | Premier partenaire français (adhésion croisée) | ⬜ Prévu | aucun partenaire acquis |

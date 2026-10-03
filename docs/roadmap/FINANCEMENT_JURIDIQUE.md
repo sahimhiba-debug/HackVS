@@ -12,6 +12,7 @@
 | **Innosuisse** | agence suisse pour l'innovation | **chèque d'innovation** puis **projet d'innovation** avec une haute école (HES-SO Valais-Wallis) ; **40 à 60 % de contribution propre** | jalon « Prouver » (chèque d'innovation) : évaluation d'Apertus sur les demandes du Club ([APERTUS_PLAN.md](APERTUS_PLAN.md)) |
 | **Fondation The Ark** | promotion de l'innovation en Valais | à préciser au rendez-vous CimArk | pont avec le concours de pitch (jalon « Grandir ») |
 | **NPR** (Nouvelle politique régionale) | soutien régional | à préciser avec le canton | ancrage valaisan, Haut-Valais |
+| **Crans-Montana 2027** (Mondiaux, 1er – 14.02.2027) | un appel à projets pour les associations existerait | **existence et conditions à vérifier** — piste « à contacter » | le pilote culmine pendant les Mondiaux |
 
 ## Cadre juridique
 
@@ -30,5 +31,9 @@
   FR / DE ; relecture par des germanophones au jalon « Lancer »).
 - **Pas de décision automatisée** au sens de l'art. 21 nLPD / art. 22 RGPD : **l'IA propose, le membre décide** ;
   aucune capacité, aucun consentement, aucun destinataire n'est choisi par un modèle (testé : `test_frontiere_ia.py`).
-- **Liste d'entreprises** (`docs/data/entreprises.csv`, facultative) : sert uniquement à compter des métiers ; aucun
-  nom lu ni affiché, aucune offre attribuée à une vraie entreprise.
+- **Liste d'entreprises** (`docs/data/entreprises.csv`, reçue du Club le 3 octobre : 145 lignes, **colonne métier
+  seule**, aucun nom dans le dépôt) : sert uniquement à compter des métiers ; aucune offre attribuée à une vraie
+  entreprise ; classification proposée par l'équipe, à confirmer avec le Club.
+- **Seuil « < 3 » en entreprises distinctes** : deux représentants d'une même entreprise ne comptent qu'une fois.
+- **Service d'IA** : Apertus 1.5 est servi par le **CSCS (Lugano)**. Ses conditions d'utilisation doivent être vérifiées
+  pour un pilote (jalon « Lancer ») ; à défaut, relais par Public AI ou un hébergeur suisse.

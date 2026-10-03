@@ -1,6 +1,6 @@
 """FOIRE 2026 · C — ANONYMAT À PETITE ÉCHELLE (interrupteur HACKVS_FOIRE).
 
-Le Club compte une cinquantaine de membres : dire « transport : ce composant n'est plus disponible » quand une seule
+Le Club compte 145 entreprises (173 représentants) : dire « transport : ce composant n'est plus disponible » quand une seule
 personne du Club porte ce rôle, c'est la désigner. Règle : quand un rôle est porté par MOINS DE 3 membres (k = 3),
 l'avis de retrait ne dit pas le rôle — « un composant n'est plus disponible ». Le message du téléphone devient
 « Consentement retiré. Personne ne sera prévenu que c'est vous. » (on ne promet pas l'impossible : dans un petit club

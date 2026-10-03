@@ -37,7 +37,7 @@ Et après ?
 Après, en général… rien. Pas par mauvaise volonté. La Foire, c'est dix jours de rencontres. Et le
 lendemain, chacun retourne à son entreprise, à ses mails, à ses clients.
 
-Le Club des Affaires, c'est une cinquantaine de membres. Ils ne manquent pas de rencontres. Ce qui manque,
+Le Club des Affaires, c'est 145 entreprises et 173 représentants. Ils ne manquent pas de rencontres. Ce qui manque,
 c'est l'après. Le moment où une rencontre devient quelque chose qu'on fait ensemble.
 
 Et quand ça arrive quand même, vous savez pourquoi ? Parce que quelqu'un a dit oui. Pas « on s'appelle ». Oui.

@@ -137,7 +137,7 @@ une IA facultative facturée à l'appel. Le modèle économique — abonnement d
 hypothèse à valider avec le Club, pas une promesse.
 
 **Combien de membres, combien d'utilisateurs ?**
-Le Club compte une cinquantaine de membres. Utilisateurs réels du prototype : zéro — tout ce que vous avez vu est un
+Le Club compte 145 entreprises et 173 représentants (liste fournie par le Club). Utilisateurs réels du prototype : zéro — tout ce que vous avez vu est un
 monde fictif (150 profils), et chaque écran le dit. On n'a pas voulu simuler une
 adoption. La première chose à faire après ce week-end, c'est cinq vrais membres et cinq vraies demandes.
 
