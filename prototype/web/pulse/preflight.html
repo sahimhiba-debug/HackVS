@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Club Pulse · Check-list</title>
+  <meta name="description" content="Check-list du jour J : voyants vert, orange, rouge, et le feu vert de la v2. Cette machine seulement.">
+  <link rel="icon" href="/static/pulse/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/pulse/pulse.css">
+  <style>
+    body { background: var(--papier); }
+    .page { max-width: 760px; margin: 0 auto; padding: 16px; }
+    h1 { font-size: 22px; margin: 12px 0 4px; }
+    .sous { color: var(--ink-2, #5b6270); font-size: 14px; margin: 0 0 14px; }
+    ul.voyants { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    ul.voyants li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; background: var(--card);
+                    border-radius: var(--r-card); padding: 12px 14px; box-shadow: var(--sh-card-light); }
+    .pastille { width: 18px; height: 18px; border-radius: 50%; margin-top: 2px; }
+    .vert .pastille { background: #1F8A4C; } .orange .pastille { background: #D98A00; } .rouge .pastille { background: #CD2128; }
+    .titre { font-weight: 700; } .detail { font-size: 14px; overflow-wrap: anywhere; }
+    .couleur { font-family: "JetBrains Mono", Menlo, monospace; font-size: 12px; letter-spacing: .04em; margin-left: 6px; }
+    .verdict { margin-top: 18px; padding: 18px; border-radius: var(--r-card); font-size: 28px; font-weight: 800; text-align: center; color: #fff; }
+    .verdict.ok { background: #1F8A4C; } .verdict.ko { background: #CD2128; }
+    ul.raisons { margin: 10px 0 0; padding-left: 20px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <span class="marque"><span class="pouls-point" aria-hidden="true"></span>Check-list · jour J</span>
+    <h1>Avant de monter sur scène</h1>
+    <p class="sous" id="maj" aria-live="polite">lecture…</p>
+    <ul class="voyants" id="voyants"></ul>
+    <div class="verdict ko" id="verdict" aria-live="polite">…</div>
+    <ul class="raisons" id="raisons"></ul>
+  </main>
+  <script type="module">
+    const $ = (s) => document.querySelector(s);
+    function ligne(v) {
+      const li = document.createElement("li");
+      li.className = v.couleur;
+      li.dataset.cle = v.cle;
+      const p = document.createElement("span"); p.className = "pastille"; p.setAttribute("aria-hidden", "true");
+      const bloc = document.createElement("div");
+      const t = document.createElement("div"); t.className = "titre"; t.textContent = v.titre;
+      const c = document.createElement("span"); c.className = "couleur"; c.textContent = v.couleur.toUpperCase();
+      t.appendChild(c);
+      const d = document.createElement("div"); d.className = "detail"; d.textContent = v.detail;
+      bloc.append(t, d); li.append(p, bloc);
+      return li;
+    }
+    async function lire() {
+      try {
+        const r = await fetch("/preflight.json", { cache: "no-store" });
+        if (!r.ok) throw new Error(String(r.status));
+        const d = await r.json();
+        $("#voyants").replaceChildren(...d.voyants.map(ligne));
+        $("#verdict").textContent = d.verdict;
+        $("#verdict").className = "verdict " + (d.verdict === "FEU VERT v2" ? "ok" : "ko");
+        $("#raisons").replaceChildren(...d.raisons.map((x) => { const li = document.createElement("li"); li.textContent = x; return li; }));
+        $("#maj").textContent = "mis à jour à " + new Date().toLocaleTimeString("fr-CH") + " · se rafraîchit toutes les 3 s";
+      } catch (e) {
+        $("#verdict").textContent = "PASSER EN v1";
+        $("#verdict").className = "verdict ko";
+        $("#maj").textContent = "serveur local injoignable : relancer « 1 - Lancer Club Pulse »";
+      }
+    }
+    lire();
+    setInterval(lire, 3000);
+  </script>
+</body>
+</html>

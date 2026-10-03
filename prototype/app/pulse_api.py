@@ -422,8 +422,9 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     ajouter_routes_foire(r, au_monde, membre, console, limiter=limiter, nouveau_limiteur=Limiteur, qr=qr_svg,
                          hors_verrou=hors_verrou)
     ajouter_routes_visite(r, qr_svg)
-    r.lien_salle = ajouter_routes_salle(r, console,  # type: ignore[attr-defined]
-                                         lambda: etat["demo"].club.reglages.secret, limiter=limiter, nouveau_limiteur=Limiteur, qr=qr_svg)
+    r.lien_salle, r.apercu_salle = ajouter_routes_salle(r, console,  # type: ignore[attr-defined]
+                                                         lambda: etat["demo"].club.reglages.secret, limiter=limiter,
+                                                         nouveau_limiteur=Limiteur, qr=qr_svg)
 
     @r.get("/console/personas", dependencies=[Depends(console)])
     def personas() -> list[dict]:

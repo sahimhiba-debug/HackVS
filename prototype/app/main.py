@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Literal, Optional
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
-from fastapi.responses import FileResponse, HTMLResponse, Response, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -35,6 +35,7 @@ from .models import Besoin, Profil
 from .protections import Perimetre as _Perimetre
 from .protections import Protections as _Protections
 from .protections import politique_contenu as _politique_contenu
+from .protections import origines_deck as _origines_deck
 from .store import STATUTS_PUBLICS, ErreurMetier, Interdit, Magasin
 from .taxonomy import DATA_DIR, charger_taxonomie
 from adaptateurs.club import cycle as cycle_club
@@ -100,10 +101,14 @@ WEB_PULSE = Path(__file__).resolve().parent.parent / "web" / "pulse"
 _observabilite.configurer(_observabilite.niveau_depuis_env(os.environ))
 # ordre : la dernière ajoutée est la plus EXTÉRIEURE → l'identifiant de requête couvre aussi les refus 413
 PAGES_PULSE = ("app.html", "console.html", "projection.html", "regie.html", "etabli.html", "suivi.html", "decouverte.html",
-               "reponse.html", "salle.html", "salle-ecran.html", "salle-regie.html", "feuille-de-route.html")
+               "reponse.html", "salle.html", "salle-ecran.html", "salle-regie.html", "feuille-de-route.html", "preflight.html")
 app.add_middleware(_Protections, csp=_politique_contenu([WEB_PULSE / f for f in PAGES_PULSE]),
                    chemins_csp=("/app", "/console", "/etabli", "/suivi", "/decouverte", "/reponse", "/salle", "/salle/ecran",
-                                "/salle/regie", "/feuille-de-route", "/projection", "/demo/regie"))
+                                "/salle/regie", "/feuille-de-route", "/projection", "/demo/regie", "/preflight"),
+                   # JOUR J : l'écran de la salle (et l'Établi, où mène la bascule scriptée) s'affichent DANS le deck local
+                   csp_integrable=_politique_contenu([WEB_PULSE / f for f in PAGES_PULSE],
+                                                     ancetres="'self' " + _origines_deck(os.environ.get("HACKVS_DECK_ORIGINES"))),
+                   chemins_integrables=("/salle/ecran", "/etabli"))
 app.add_middleware(_Perimetre, ancien_actif=lambda: ANCIEN_PROTOTYPE, jeton=lambda: _CONSOLE_JETON)
 app.add_middleware(_observabilite.MiddlewareRequete)
 
@@ -809,15 +814,19 @@ _SALLE_FERMEE = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
                  '<text x="200" y="210" font-family="sans-serif" font-size="28" text-anchor="middle" fill="#141923">salle fermée</text></svg>')
 
 
+def _cette_machine(request: Request) -> bool:
+    """Cette machine (adresse locale, aucun en-tête de relais), ou le jeton de console."""
+    from .protections import est_local
+    fourni = request.headers.get("x-pulse-console", "")
+    return est_local(request.client.host if request.client else "", request.headers.raw) or (
+        bool(_CONSOLE_JETON) and hmac.compare_digest(fourni, _CONSOLE_JETON or ""))
+
+
 def _lien_salle(request: Request) -> Optional[str]:
     """AUDIT D5 : le QR porte le jeton de la salle ; il ne sort QUE vers cette machine (le deck, l'écran géant) ou avec
     le jeton de console — jamais vers une requête relayée par le tunnel (sinon n'importe qui occupe les 80 places)."""
-    from .protections import est_local
-    fourni = request.headers.get("x-pulse-console", "")
-    autorise = est_local(request.client.host if request.client else "", request.headers.raw) or (
-        bool(_CONSOLE_JETON) and hmac.compare_digest(fourni, _CONSOLE_JETON or ""))
     lien = getattr(globals().get("_PULSE"), "lien_salle", None)
-    return lien(request) if lien and autorise else None
+    return lien(request) if lien and _cette_machine(request) else None
 
 
 @app.get("/qr/salle.svg")
@@ -1044,6 +1053,30 @@ def page_reponse():
     if MODE != "demo":
         raise HTTPException(501, "Club Pulse est présenté en mode démo (monde fictif).")
     return FileResponse(WEB / "pulse" / "reponse.html")
+
+
+@app.get("/preflight")
+def page_preflight(request: Request):
+    """JOUR J : la check-list à voyants (film, serveur, adresse publique, deck, secteur, salle) — CETTE MACHINE
+    seulement : elle nomme le film du Bureau et décrit le Mac ; à travers le tunnel, elle n'existe pas (404)."""
+    if not _cette_machine(request):
+        raise HTTPException(404, "Not Found")
+    return FileResponse(WEB / "pulse" / "preflight.html", headers={"Cache-Control": "no-store"})
+
+
+@app.get("/preflight.json")
+def preflight_json(request: Request):
+    """Les voyants et le verdict (« FEU VERT v2 » / « PASSER EN v1 »), recalculés à chaque lecture (app/jour_j.py)."""
+    if not _cette_machine(request):
+        raise HTTPException(404, "Not Found")
+    from . import jour_j
+    apercu = getattr(globals().get("_PULSE"), "apercu_salle", None)
+    port = request.url.port or 8000
+    vs = jour_j.controles(bureau=jour_j.bureau(), cible=jour_j.cible_film(), dossier=jour_j.dossier(),
+                          base_locale=f"http://127.0.0.1:{port}", base_publique=os.environ.get("PUBLIC_BASE_URL") or None,
+                          deck_url=os.environ.get("CLUBPULSE_DECK_URL", "http://127.0.0.1:8765/v2.html"),
+                          salle=apercu() if apercu else None, sonde=lambda u: jour_j.sonde_http(u), pmset=jour_j.pmset)
+    return JSONResponse(jour_j.en_dict(vs), headers={"Cache-Control": "no-store"})
 
 
 @app.get("/sante")

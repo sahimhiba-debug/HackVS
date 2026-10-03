@@ -37,7 +37,8 @@ def est_local(client_hote: str, entetes: "list[tuple[bytes, bytes]] | dict") -> 
 CLUB_PULSE_EXACTS = {"/app", "/app/", "/app/manifest.webmanifest", "/app/sw.js", "/console", "/projection", "/demo/regie", "/etabli",
                      "/suivi", "/decouverte", "/reponse", "/salle", "/salle/ecran", "/salle/regie",
                      "/favicon.ico", "/sante", "/feuille-de-route",
-                     "/qr/salle.svg", "/qr/salle.txt", "/qr/feuille-de-route.svg", "/confidentialite"}   # Foire 2026 : Suivi, passe découverte, réponse e-mail
+                     "/qr/salle.svg", "/qr/salle.txt", "/qr/feuille-de-route.svg", "/confidentialite",
+                     "/preflight", "/preflight.json"}   # Foire 2026 : Suivi, passe découverte, réponse e-mail
 CLUB_PULSE_PREFIXES = ("/api/pulse/", "/static/pulse/")
 TROP_GROS = '{"detail": "Corps de requête trop volumineux (64 Kio au plus)."}'.encode()
 _SCRIPT = re.compile(r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>", re.S | re.I)
@@ -56,15 +57,29 @@ def empreintes(pages: Iterable[Path]) -> list[str]:
     return sorted(set(res))
 
 
-def politique_contenu(pages: Iterable[Path]) -> bytes:
+def politique_contenu(pages: Iterable[Path], ancetres: str = "'self'") -> bytes:
     return ("default-src 'self'; script-src 'self' " + " ".join(empreintes(pages)) + "; style-src 'self' 'unsafe-inline'; "
-            "img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; frame-ancestors 'self'; "
+            f"img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; frame-ancestors {ancetres}; "
             "base-uri 'none'; form-action 'self'; object-src 'none'").encode()
 
 
+# JOUR J : l'écran de la salle s'affiche DANS le deck v2 (iframe), servi par cette machine sur 127.0.0.1:8765 — et
+# nulle part ailleurs. Seules des origines de boucle locale sont acceptées (HACKVS_DECK_ORIGINES, pour les tests).
+_ORIGINE_LOCALE = re.compile(r"^http://(127\.0\.0\.1|localhost):\d{2,5}$")
+
+
+def origines_deck(valeur: Optional[str]) -> str:
+    origines = (valeur or "http://127.0.0.1:8765 http://localhost:8765").split()
+    if not origines or not all(_ORIGINE_LOCALE.match(o) for o in origines):
+        raise ValueError("HACKVS_DECK_ORIGINES : seulement http://127.0.0.1:<port> ou http://localhost:<port>")
+    return " ".join(origines)
+
+
 class Protections:
-    def __init__(self, app: ASGIApp, csp: bytes, chemins_csp: tuple[str, ...] = ("/app", "/console")):
+    def __init__(self, app: ASGIApp, csp: bytes, chemins_csp: tuple[str, ...] = ("/app", "/console"),
+                 csp_integrable: Optional[bytes] = None, chemins_integrables: tuple[str, ...] = ()):
         self.app, self.csp, self.chemins_csp = app, csp, chemins_csp
+        self.csp_integrable, self.chemins_integrables = csp_integrable, chemins_integrables
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
@@ -97,8 +112,12 @@ class Protections:
                 return
             if m["type"] == "http.response.start":
                 h = [(k, v) for k, v in m.get("headers", []) if k.lower() not in BASE]
-                h += list(BASE.items())
-                if chemin in self.chemins_csp or chemin.rstrip("/") in self.chemins_csp:
+                integrable = self.csp_integrable is not None and chemin.rstrip("/") in self.chemins_integrables
+                # intégrable par le deck local : frame-ancestors le dit ; X-Frame-Options SAMEORIGIN le contredirait
+                h += [(k, v) for k, v in BASE.items() if not (integrable and k == b"x-frame-options")]
+                if integrable and self.csp_integrable is not None:
+                    h.append((b"content-security-policy", self.csp_integrable))
+                elif chemin in self.chemins_csp or chemin.rstrip("/") in self.chemins_csp:
                     h.append((b"content-security-policy", self.csp))
                 if chemin.startswith("/api/pulse/"):
                     h.append((b"cache-control", b"no-store"))    # données personnelles : jamais en cache intermédiaire

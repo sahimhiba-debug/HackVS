@@ -33,9 +33,10 @@ class Choix(BaseModel):
 
 
 def ajouter_routes(r: APIRouter, console: Callable, secret: Callable[[], bytes], *, limiter: Callable, nouveau_limiteur: Callable,
-                   qr: Callable[[str], str]) -> Callable[[Request], Optional[str]]:
+                   qr: Callable[[str], str]) -> tuple[Callable[[Request], Optional[str]], Callable[[], Optional[dict]]]:
     """Ajoute les routes ; renvoie l'URL courante de la salle (None si fermée) — pour le QR servi EN DIRECT à la racine
-    (/qr/salle.svg, app/main.py), qui suit l'adresse publique du moment (PUBLIC_BASE_URL : l'adresse du tunnel)."""
+    (/qr/salle.svg, app/main.py), qui suit l'adresse publique du moment (PUBLIC_BASE_URL : l'adresse du tunnel) — et
+    l'aperçu de l'écran géant (None : salle jamais créée depuis le lancement), pour la check-list locale /preflight."""
     etat: dict[str, Optional[Salle]] = {"salle": None}
     limite_entree = nouveau_limiteur(600, 60.0)        # 80 téléphones qui scannent en même temps, avec de la marge
     limite_passe = nouveau_limiteur(120, 60.0)         # un téléphone qui relit toutes les 2 s, plus ses gestes
@@ -76,6 +77,10 @@ def ajouter_routes(r: APIRouter, console: Callable, secret: Callable[[], bytes],
         if not actif() or s is None or s.ouverte_le is None:
             return None
         return base_publique(request) + "/salle#s=" + s.ouvrir()["jeton_salle"]
+
+    def apercu() -> Optional[dict]:
+        s = etat["salle"]
+        return None if not actif() or s is None else s.ecran()
 
     # ------------------------------------------------------------------ téléphones (public : seulement entrer)
     @r.post("/salle/entrer")
@@ -136,4 +141,4 @@ def ajouter_routes(r: APIRouter, console: Callable, secret: Callable[[], bytes],
     def purger() -> dict:
         return faire(lambda s: s.purger())
 
-    return url_courante
+    return url_courante, apercu

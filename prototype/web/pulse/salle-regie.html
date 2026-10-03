@@ -37,7 +37,7 @@
       $("#etat").textContent = r.ok ? (j.simule || j.message || "fait") : "refusé : " + (j.detail || r.status);
       lire();
     }
-    $("#ouvrir").addEventListener("click", () => { window.open("/salle/ecran", "salle-ecran"); poster("ouvrir"); });
+    $("#ouvrir").addEventListener("click", () => poster("ouvrir"));   // jour J : l'écran de la salle vit dans le deck v2 (slide « constellation »)
     $("#inviter").addEventListener("click", () => poster("inviter"));
     $("#lancer").addEventListener("click", () => poster("lancer"));
     $("#retrait").addEventListener("click", () => poster("retrait"));
