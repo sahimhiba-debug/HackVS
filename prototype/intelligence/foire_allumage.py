@@ -78,7 +78,8 @@ def importer_exposants(c: "ClubPulse", texte: str, base: str) -> dict:
     w = csv.writer(sortie, delimiter=";", lineterminator="\n")
     w.writerow(["exposant", "metier", "stand", "lien", "reference"])
     for (nom, mid, stand), p in zip(lignes, passes, strict=True):
-        w.writerow([nom, metiers.libelle(mid) if mid else "", stand, base.rstrip("/") + p["chemin"], _ref(p["nonce"])])
+        w.writerow([_cellule(nom), metiers.libelle(mid) if mid else "", _cellule(stand), base.rstrip("/") + p["chemin"],
+                    _ref(p["nonce"])])
     par_metier: dict[str, int] = {}
     for _, mid, _ in lignes:
         par_metier[mid or "inconnu"] = par_metier.get(mid or "inconnu", 0) + 1
@@ -88,21 +89,25 @@ def importer_exposants(c: "ClubPulse", texte: str, base: str) -> dict:
             "note": "fichier à télécharger maintenant : il n'est pas gardé (le Club ne garde que des décomptes)"}
 
 
+def _cellule(x: str) -> str:
+    """Pas de formule dans un tableur (audit des lots 9-10, I3) : la liste vient d'un tiers ; une cellule qui commence par
+    = + - @ (ou une tabulation, un retour) est préfixée d'une apostrophe, que le tableur affiche comme du texte."""
+    return "'" + x if x[:1] in ("=", "+", "-", "@", "\t", "\r") else x
+
+
 # ------------------------------------------------------------------ entonnoir et adhésions
 def _ref(nonce: str) -> str:
     return "P-" + hashlib.sha256(nonce.encode()).hexdigest()[:8].upper()
 
 
 def intentions(c: "ClubPulse") -> list[dict]:
-    """Les passes dont l'invité a dit vouloir adhérer : une RÉFÉRENCE (celle que l'invité voit sur son passe), son métier
-    et sa région déclarés — jamais son entreprise ni son nom."""
+    """Les passes dont l'invité a dit vouloir adhérer : une RÉFÉRENCE (celle que l'invité voit sur son passe), rien d'autre
+    (ni métier ni région : audit des lots 9-10, I2). Usage interne : la console ne reçoit plus cette liste."""
     faites = {e.donnees["reference"] for e in c.journal.evenements("ADHESION_CONFIRMEE")}
     res = []
     for p in c.decouverte.passes().values():
-        if p["intention"]:
-            d = p["declaration"] or {}
-            res.append({"reference": _ref(p["nonce"]), "origine": p["origine"], "metier": d.get("metier"), "zone": d.get("zone"),
-                        "confirmee": _ref(p["nonce"]) in faites})
+        if p["intention"] and not p["revoque"]:          # un invité qui a retiré son consentement n'est plus listé (I2)
+            res.append({"reference": _ref(p["nonce"]), "confirmee": _ref(p["nonce"]) in faites})
     return res
 
 
@@ -135,7 +140,7 @@ def entonnoir(c: "ClubPulse") -> dict:
         adh = [p for p in ps if _ref(p["nonce"]) in faites]
         assez = len({ent(p) for p in adh}) >= k
         res[o] = {"emis": len(ps), "actives": kk(actives), "ont_aide": kk([p for p in ps if any(r["aide"] for r in p["reponses"])]),
-                  "intentions": kk([p for p in ps if p["intention"]]), "adhesions": kk(adh),
+                  "intentions": kk([p for p in ps if p["intention"] and not p["revoque"]]), "adhesions": kk(adh),
                   "taux_adhesion": round(100 * len(adh) / len(ps)) if adh and assez else None}
     return {"par_origine": res, "regle": f"adhésions CONFIRMÉES par le secrétariat ; « < {k} » compté en entreprises ; "
                                          "taux = adhésions / passes émis"}
@@ -167,12 +172,13 @@ class Borne:
         maintenant = self._h()
         if maintenant - self._dernier.get(nom, -1e9) < BORNE_INTERVALLE_S:
             raise TropVite("un visiteur à la fois : un instant")
-        cle = (nom, c.jour.isoformat())
+        # le jour RÉEL de l'horloge, pas la date simulée du Club (avancer le temps ne remet pas le plafond à zéro : M2)
+        cle = (nom, time.strftime("%Y-%m-%d", time.gmtime(maintenant)))
         if self._jour.get(cle, 0) >= BORNE_PAR_JOUR:
             raise TropVite("plafond du jour atteint pour cette borne")
         self._dernier[nom] = maintenant
-        self._jour[cle] = self._jour.get(cle, 0) + 1
         p = c.decouverte.emettre("borne")
+        self._jour[cle] = self._jour.get(cle, 0) + 1                 # compté seulement si le passe a bien été émis
         return p | {"reference": _ref(p["nonce"])}
 
 

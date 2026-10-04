@@ -14,3 +14,9 @@
 
 **Limites.** La référence s'affiche sur la borne et dans le fichier des exposants ; l'écran du passe découverte (la page
 de la démo) ne la montre pas encore. Le rythme de la borne est gardé en mémoire (un redémarrage le remet à zéro).
+
+**Après l'audit des lots 9-10** ([AUDIT_LOT910.md](../AUDIT_LOT910.md)) : la console ne reçoit plus la liste des
+intentions (le secrétariat saisit la référence que l'invité montre) ; un invité qui a retiré son consentement n'est
+plus compté ni confirmable ; les cellules du fichier rendu qui ressembleraient à une formule de tableur sont
+neutralisées ; le plafond de la borne suit le jour réel. Non fait : un jeton de borne n'expire pas et ne se révoque
+pas (seul recours : changer le secret du serveur).

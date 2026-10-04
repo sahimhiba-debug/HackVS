@@ -25,7 +25,12 @@ prototype suit le profil « Public Beta » (`vc+sd-jwt`).
 
 **Preuves.** Signature, divulgation et période vérifiées ; trois falsifications refusées (divulgation, corps,
 signature) ; attestation échue refusée ; aucun identifiant du membre dans l'attestation ; vérifiée dans un vrai
-navigateur : `prototype/tests/test_annee1_attestations.py`.
+navigateur : `prototype/tests/test_annee1_attestations.py`. Depuis l'audit des lots 9-10
+([AUDIT_LOT910.md](../AUDIT_LOT910.md)) : le vérificateur ne reconnaît QUE l'émetteur de ce serveur (une clé étrangère
+est refusée) ; une divulgation ne peut ni porter un nom réservé (`iss`, `vct`…) ni être répétée ; une entrée malformée
+est refusée sans erreur du serveur ; `exp` ne dépasse pas la fin de l'accord ; le statut est « valable », « retire » ou
+« invalide » (`prototype/tests/test_annee1_audit_lot910.py`). Non fait : pas d'empreintes leurres, donc le nombre
+d'affirmations (divulguées ou non) se lit dans `_sd`.
 
 **Dates.** L'émission suit l'heure réelle du serveur ; le monde de démonstration suit une date simulée (d'où « émise le
 03.10 » pour un accord « donné le 06.10 » sur la capture).

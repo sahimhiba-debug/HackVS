@@ -177,7 +177,7 @@ class LotPasses(BaseModel):
 
 
 class ImportExposants(BaseModel):
-    csv: str = Field(min_length=5, max_length=200_000)
+    csv: str = Field(min_length=5, max_length=60_000)    # sous le plafond de 64 Kio du corps (M3)
 
 
 class Adhesion(BaseModel):
@@ -540,7 +540,7 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
         """PUBLIQUE : le vérificateur LOCAL de démonstration (lecture seule, aucun état)."""
         from intelligence import attestations as at
         limiter(limite_acces_global, "attestations")
-        return at.verifier(x.sd_jwt)
+        return at.verifier(x.sd_jwt, emetteurs={emetteur().did})       # seul l'émetteur de CE serveur (B1)
 
     @r.get("/moi/notes")
     def notes(pid: str = Depends(membre)) -> list[dict]:
@@ -726,7 +726,9 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     @r.get("/secretariat/foire", dependencies=[Depends(foire_allumee)])
     def sec_foire(s: str = Depends(secretariat)) -> dict:
         from intelligence import foire_allumage as fa
-        return au_monde(lambda c: fa.entonnoir(c) | {"intentions": fa.intentions(c)})
+        # l'entonnoir seul (audit des lots 9-10, I2) : la liste des intentions, avec métier et région par ligne, aurait
+        # contourné le seuil « < 3 » de ce même entonnoir ; le secrétariat saisit la référence que l'invité montre
+        return au_monde(fa.entonnoir)
 
     @r.post("/secretariat/foire/passes", dependencies=[Depends(foire_allumee)])
     def sec_foire_passes(x: LotPasses, request: Request, s: str = Depends(secretariat)) -> dict:

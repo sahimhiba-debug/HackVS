@@ -45,7 +45,7 @@ def test_le_format_suit_le_profil_suisse(emis):
 
 def test_le_verificateur_local_accepte_et_lit(emis):
     c, e, sd = emis
-    r = at.verifier(sd, maintenant=at.maintenant_s())
+    r = at.verifier(sd, emetteurs={e.did}, maintenant=at.maintenant_s())
     assert r["valide"] is True and r["affirmations"]["vct"] == at.VCT and "finalite" in r["affirmations"]
     assert r["mention"] == "prototype, non connecté à swiyu"
 
@@ -54,7 +54,7 @@ def test_divulgation_selective(emis):
     c, e, sd = emis
     jwt, *disclosures = sd.split("~")
     garde = [d for d in disclosures if d and _b64(d)[1] != "titre"]
-    r = at.verifier("~".join([jwt, *garde]) + "~", maintenant=at.maintenant_s())
+    r = at.verifier("~".join([jwt, *garde]) + "~", emetteurs={e.did}, maintenant=at.maintenant_s())
     assert r["valide"] and "titre" not in r["affirmations"] and "finalite" in r["affirmations"]
 
 
@@ -73,14 +73,14 @@ def test_une_falsification_est_refusee(emis, falsification):
         p = base64.urlsafe_b64encode(json.dumps(corps).encode()).decode().rstrip("=")
     else:
         s = s[:-4] + ("AAAA" if s[-4:] != "AAAA" else "BBBB")
-    r = at.verifier("~".join([f"{h}.{p}.{s}", *disclosures]), maintenant=at.maintenant_s())
+    r = at.verifier("~".join([f"{h}.{p}.{s}", *disclosures]), emetteurs={e.did}, maintenant=at.maintenant_s())
     assert r["valide"] is False and r["raison"]
 
 
 def test_une_attestation_echue_est_refusee(emis):
     c, e, sd = emis
     corps = _b64(sd.split("~")[0].split(".")[1])
-    r = at.verifier(sd, maintenant=corps["exp"] + 1)
+    r = at.verifier(sd, emetteurs={e.did}, maintenant=corps["exp"] + 1)
     assert r["valide"] is False and "échue" in r["raison"]
 
 

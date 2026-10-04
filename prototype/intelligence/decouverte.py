@@ -80,11 +80,12 @@ class Decouverte:
                                        "active_le": None, "revoque": False, "declaration": None, "reponses": [], "intention": False}
         for type_, f in (("DECOUVERTE_ACTIVE", lambda p, e: p.update(active_le=e.le)),
                          ("DECOUVERTE_REVOQUE", lambda p, e: p.update(revoque=True)),
-                         ("DECOUVERTE_RETRAIT", lambda p, e: p.update(revoque=True, declaration=None)),
                          ("DECOUVERTE_DECLARATION", lambda p, e: p.update(declaration=e.donnees | {"le": e.le,
                                                                          "entreprise": self._noms.get(e.donnees["nonce"], "—")})),
                          ("DECOUVERTE_REPONSE", lambda p, e: p["reponses"].append(e.donnees | {"le": e.le})),
-                         ("DECOUVERTE_INTENTION", lambda p, e: p.update(intention=True))):
+                         ("DECOUVERTE_INTENTION", lambda p, e: p.update(intention=True)),
+                         # le RETRAIT en dernier (audit des lots 9-10, I2) : appliqué avant, la déclaration le recréait
+                         ("DECOUVERTE_RETRAIT", lambda p, e: p.update(revoque=True, declaration=None))):
             for e in self._evs(type_):
                 if e.donnees["nonce"] in res:
                     f(res[e.donnees["nonce"]], e)
