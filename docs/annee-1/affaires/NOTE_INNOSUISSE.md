@@ -11,6 +11,9 @@
 - conditions : PME ou start-up de **moins de 250 EPT** (groupe compris), **basée en Suisse**, avec un **numéro IDE** ;
   un **partenaire de recherche suisse** déjà identifié ; **pas de chèque obtenu dans les deux années précédentes** ;
 - demandes déposées sur la plateforme **InnoLink**.
+- l'étude doit être terminée dans les **6 mois** suivant l'approbation (à confirmer) ;
+- l'instrument vise les PME, start-up **ou autres organisations** de moins de 250 EPT avec IDE : l'association du Club
+  pourrait donc demander elle-même (à vérifier).
 
 **Condition à vérifier en premier :** l'entité qui demande. L'équipe doit être (ou créer) une entité suisse éligible ;
 le Club des Affaires lui-même est une association — son éligibilité comme « partenaire de mise en valeur » n'a pas été

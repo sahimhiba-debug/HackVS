@@ -19,6 +19,10 @@ secrétariat, accordée ou refusée, est journalisée.
 **Intelligence artificielle.** Facultative. Si elle est allumée, vos textes (jamais votre nom) sont envoyés à Apertus
 1.5, servi par le CSCS, en Suisse. Le Club fonctionne pareil sans elle.
 
+**Sur votre téléphone.** Votre session reste dans l'onglet (elle disparaît à la fermeture). Si la file hors ligne est
+allumée, une réponse donnée sans réseau reste sur votre téléphone (stockage du navigateur) jusqu'à son envoi au retour
+du réseau ; « Se déconnecter » et « Tout effacer » l'effacent. Aucun jeton de session n'y est gardé.
+
 **Vos droits.** Voir vos données et les télécharger (« Mes données ») ; corriger votre profil ; vous mettre en pause ;
 vous désinscrire d'un canal en un clic ; **supprimer votre compte** : vos textes, votre nom et vos coordonnées sont
 retirés du journal, y compris là où ils avaient été recopiés. Les sauvegardes suivent leur durée de conservation

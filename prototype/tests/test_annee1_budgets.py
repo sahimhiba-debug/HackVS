@@ -30,19 +30,13 @@ def test_chaque_page_tient_son_budget(tmp_path):
         for chemin in PAGES:
             ctx = b.new_context()
             pg = ctx.new_page()
-            total = {"requetes": 0, "octets": 0}
-
-            def compter(r, total=total):
-                total["requetes"] += 1
-                try:
-                    total["octets"] += len(r.body())
-                except Exception:                     # redirection ou corps indisponible : compté, sans octets
-                    pass
-            pg.on("response", compter)
             t0 = time.perf_counter()
             pg.goto(base + chemin, wait_until="load")
             charge_ms = (time.perf_counter() - t0) * 1000
-            pg.wait_for_timeout(800)                  # les lectures de données lancées au chargement
+            pg.wait_for_load_state("networkidle")     # les lectures de données lancées au chargement
+            # octets et requêtes lus par l'API Performance du navigateur (fiable sous charge ; r.body() ne l'était pas)
+            total = pg.evaluate("""() => { const e = [...performance.getEntriesByType('navigation'), ...performance.getEntriesByType('resource')];
+                return {requetes: e.length, octets: e.reduce((s, x) => s + (x.decodedBodySize || 0), 0)}; }""")
             mesures[chemin] = total | {"chargement_ms": round(charge_ms)}
             if total["octets"] > b_["octets_max"] or total["requetes"] > b_["requetes_max"] or charge_ms > b_["chargement_ms_max"]:
                 hors[chemin] = mesures[chemin]
@@ -55,4 +49,4 @@ def test_chaque_page_tient_son_budget(tmp_path):
 def test_les_budgets_d_api_sont_ecrits_pour_500_et_1000_membres():
     assert set(BUDGETS["api_p95_ms"]) == {"500", "1000"}
     for b in BUDGETS["api_p95_ms"].values():
-        assert set(b) == {"lecture_membre", "reponse_demande", "console"} and all(v > 0 for v in b.values())
+        assert set(b) == {"lecture_membre", "reponse_demande", "ecriture_membre", "console"} and all(v > 0 for v in b.values())

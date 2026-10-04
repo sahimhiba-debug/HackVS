@@ -5,7 +5,8 @@
 Passe de cohérence des pages de l'année 1 avec [DESIGN_SYSTEM.md](../../design/DESIGN_SYSTEM.md) : chaque couleur est
 un jeton (`var(--…)`), plus aucune valeur de repli inventée ; lignes de tableau en `--hairline-3`, succès en
 `--green-deep`, erreurs en `--brand`. Vérifié par un test : `prototype/tests/test_annee1_coherence_design.py` (rouge
-avant la passe sur 4 pages, vert après ; contre-preuve d'une couleur inventée).
+avant la passe sur 4 pages, vert après ; contre-preuve d'une couleur inventée). Le test lit les couleurs hexadécimales
+seulement (aucune couleur `rgb()` ni nommée dans ces pages aujourd'hui).
 
 | Page | Avant | Après |
 |---|---|---|
@@ -14,6 +15,7 @@ avant la passe sur 4 pages, vert après ; contre-preuve d'une couleur inventée)
 | Compte | ![avant](lot12-compte-avant.png) | ![après](lot12-compte-apres.png) |
 | Borne | ![avant](lot12-borne-avant.png) | ![après](lot12-borne-apres.png) |
 
-**Différences visibles : faibles** (nuances de gris des filets, vert et rouge des messages) : les pages utilisaient
+**Différences visibles : faibles** (`compte` : captures identiques à l'octet, aucune différence visible ; secrétariat :
+filets de tableau plus pâles, `--hairline-3` comme le prévoit le Design System pour les lignes de table ; ailleurs, nuances du vert et du rouge des messages) : les pages utilisaient
 déjà les feuilles communes. **Pas de refonte plus profonde** cette nuit (ADR 0010) : elle demanderait des planches
 validées et la barrière. **Écrans de la démo non retouchés** (régie, écran de salle, preflight : couleurs voulues).

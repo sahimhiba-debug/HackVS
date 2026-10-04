@@ -87,7 +87,7 @@ def test_eteint_rien_n_est_garde_hors_ligne_comme_dans_la_demo(tmp_path):
         assert "hors_ligne" not in _api(base, "/api/pulse/moi/date", session=pg.evaluate("sessionStorage.getItem('pulse-session')"))
         ctx.set_offline(True)
         pg.click("#ask-oui")
-        pg.locator(".toast:has-text('Hors ligne')").wait_for()
+        pg.locator(".toast:has-text('Hors ligne')").first.wait_for()      # deux toasts possibles : coupure + action
         assert pg.evaluate(f"localStorage.getItem('{FILE}')") is None
         assert pg.locator("[data-role=en-attente]").count() == 0
         ctx.set_offline(False)
@@ -113,3 +113,74 @@ def test_l_application_est_installable_selon_chromium(tmp_path):
         pg.wait_for_timeout(1000)
         assert ctx.new_cdp_session(pg).send("Page.getInstallabilityErrors")["installabilityErrors"] == []
         ctx.close()
+
+
+def _en_file_puis_bloquee(ctx, pg):
+    """Une réponse mise en file hors ligne ; le réseau revient, mais l'envoi de la réponse échoue encore (coupure du seul
+    point d'accès) : la file reste pleine pendant qu'on navigue."""
+    ctx.set_offline(True)
+    pg.click("#ask-oui")
+    pg.locator("[data-role=en-attente]").wait_for()
+    pg.route("**/reponse", lambda r: r.abort())
+    ctx.set_offline(False)
+    pg.wait_for_timeout(500)
+    assert pg.evaluate(f"localStorage.getItem('{FILE}')") not in (None, "[]")
+
+
+def test_audit_i1_se_deconnecter_vide_la_file_et_aucun_jeton_n_y_est_garde(tmp_path):
+    from playwright.sync_api import sync_playwright
+
+    from tests.test_e2e_scene import _chromium, serveur
+    with serveur(HACKVS_HORS_LIGNE="1", HACKVS_ESSAIS_DB=str(tmp_path / "j.db")) as base, sync_playwright() as p:
+        b = _chromium(p)
+        ctx, pg = _pauline_aux_demandes(b, base, [])
+        _en_file_puis_bloquee(ctx, pg)
+        session = pg.evaluate("sessionStorage.getItem('pulse-session')")
+        assert session not in pg.evaluate(f"localStorage.getItem('{FILE}')")   # jamais le jeton de session sur l'appareil
+        pg.click("nav.onglets a[data-o=souvenirs]")
+        pg.click("text=Se déconnecter")
+        pg.wait_for_selector("#code")
+        assert pg.evaluate(f"localStorage.getItem('{FILE}')") is None
+        b.close()
+
+
+def test_audit_i2_fermer_puis_rouvrir_l_application_la_reponse_part_quand_meme(tmp_path):
+    from playwright.sync_api import sync_playwright
+
+    from tests.test_e2e_scene import _chromium, serveur
+    with serveur(HACKVS_HORS_LIGNE="1", HACKVS_ESSAIS_DB=str(tmp_path / "j.db")) as base, sync_playwright() as p:
+        b = _chromium(p)
+        ctx, pg = _pauline_aux_demandes(b, base, [])
+        _en_file_puis_bloquee(ctx, pg)
+        pg.close()                                              # l'application est fermée : la session (onglet) disparaît
+        code = {q["id"]: q["code"] for q in _api(base, "/api/pulse/console/personas")}["s01"]
+        pg2 = ctx.new_page()                                    # rouverte : même appareil, nouvelle session
+        pg2.goto(f"{base}/app?code={code}#acces")
+        pg2.click("text=Continuer")
+        pg2.wait_for_selector("h1:has-text('Mes actions')")
+        pg2.locator(".toast:has-text('Réponse envoyée')").wait_for()
+        assert pg2.evaluate(f"localStorage.getItem('{FILE}')") is None
+        assert [c["finalite"] for c in _consentements(base, pg2)] == ["delegation_acheteurs"]
+        b.close()
+
+
+def test_audit_la_reponse_d_un_autre_membre_n_est_jamais_envoyee_elle_est_effacee(tmp_path):
+    from playwright.sync_api import sync_playwright
+
+    from tests.test_e2e_scene import _chromium, serveur
+    with serveur(HACKVS_HORS_LIGNE="1", HACKVS_ESSAIS_DB=str(tmp_path / "j.db")) as base, sync_playwright() as p:
+        b = _chromium(p)
+        envoyees: list[str] = []
+        ctx = b.new_context(viewport={"width": 390, "height": 844})
+        pg = ctx.new_page()
+        pg.on("request", lambda r: envoyees.append(r.url) if r.url.endswith("/reponse") else None)
+        pg.goto(base + "/app")
+        autre = {"chemin": "/api/pulse/moi/asks/x/reponse", "corps": {"oui": True, "attributs": {}}, "qui": "s14"}
+        pg.evaluate(f"(e) => localStorage.setItem('{FILE}', JSON.stringify([e]))", autre)
+        _api(base, "/api/pulse/demo/reinitialiser", {})
+        code = {q["id"]: q["code"] for q in _api(base, "/api/pulse/console/personas")}["s01"]
+        pg.goto(f"{base}/app?code={code}#acces")
+        pg.click("text=Continuer")
+        pg.locator(".toast:has-text('pour un autre compte')").wait_for()
+        assert pg.evaluate(f"localStorage.getItem('{FILE}')") is None and envoyees == []
+        b.close()

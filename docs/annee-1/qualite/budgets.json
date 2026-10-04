@@ -6,7 +6,17 @@
     "chargement_ms_max": 2000
   },
   "api_p95_ms": {
-    "500": {"lecture_membre": 500, "reponse_demande": 1000, "console": 2000},
-    "1000": {"lecture_membre": 1000, "reponse_demande": 2000, "console": 4000}
+    "500": {
+      "lecture_membre": 500,
+      "reponse_demande": 1000,
+      "console": 2000,
+      "ecriture_membre": 1000
+    },
+    "1000": {
+      "lecture_membre": 1000,
+      "reponse_demande": 2000,
+      "console": 4000,
+      "ecriture_membre": 2000
+    }
   }
 }

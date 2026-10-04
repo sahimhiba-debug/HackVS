@@ -15,24 +15,35 @@
 
 ## Résultats de charge (machine de cette nuit : Linux, 4 cœurs, boucle locale)
 
+Chaque membre simulé lit quatre écrans, ÉCRIT une note privée (fictive), relit « Mes données », et répond à sa demande
+s'il en a une ; la console relit l'Établi en parallèle.
+
 | | 500 membres | 1 000 membres |
 |---|---|---|
-| comptes activés | 500 / 500 | 1000 / 1 000 |
+| comptes activés | 500 / 500 | 1 000 / 1 000 |
 | erreurs | 0 | 0 |
+| écritures (notes) | 500 | 1000 |
 | « oui » acceptés sans reçu | 0 | 0 |
-| lecture d'un membre, pire p95 (budget) | 86.0 ms (500) — respecté | 78.7 ms (1000) — respecté |
-| réponse à une demande, p95 (budget) | 144.6 ms (1000) — respecté | 237.7 ms (2000) — respecté |
-| console, pire p95 (budget) | 96.9 ms (2000) — respecté | 127.4 ms (4000) — respecté |
+| lecture d'un membre, pire p95 (budget) | 461.9 ms (500) — tenu | 988.2 ms (1000) — tenu |
+| écriture d'un membre (note privée), p95 (budget) | 371.4 ms (1000) — tenu | 900.6 ms (2000) — tenu |
+| réponse à une demande, p95 (budget) | 549.7 ms (1000) — tenu | 1167.5 ms (2000) — tenu |
+| console, pire p95 (budget) | 309.9 ms (2000) — tenu | 650.1 ms (4000) — tenu |
 
-**Premier passage : budget des lectures DÉPASSÉ** (540 ms pour 500 ; 1 594 ms pour 1 000). Les budgets ont été écrits
-AVANT la mesure et n'ont pas été relevés. Cause trouvée au profileur : « Mes données » reconstruisait l'index
-bi-temporel des claims de TOUT le Club à chaque lecture (163 ms à 1 000 membres, contre 4 ms pour les autres
-lectures), et chaque lecture attend les autres derrière le verrou du monde. Correctif : l'index est gardé tant que la
-version du journal ne change pas (toute écriture, annulation ou purge le fait recalculer — testé, purge comprise :
-`prototype/tests/test_annee1_charge_lectures.py`). Le tableau ci-dessus est le second passage, même script, mêmes
-budgets.
+**Tenus, mais de justesse avec des écritures** (lectures : 461.9 ms pour un budget de 500 ;
+988.2 ms pour 1 000). Historique, budgets écrits AVANT toute mesure et jamais relevés :
+
+1. **premier passage, presque sans écriture : budget des lectures DÉPASSÉ** (540 ms pour 500 ; 1 594 ms pour 1 000 —
+   [charge_500_passage1.json](../qualite/charge_500_passage1.json), [charge_1000_passage1.json](../qualite/charge_1000_passage1.json)).
+   Cause trouvée au profileur : « Mes données » reconstruisait l'index bi-temporel des claims de TOUT le Club à chaque
+   lecture (≈ 160 ms à 1 000 membres, contre ≈ 4 ms pour les autres lectures — mesure de la nuit, non conservée en
+   fichier), et chaque lecture attend les autres derrière le verrou du monde ;
+2. correctif : l'index est gardé tant que la version du journal ne change pas (écriture, annulation, purge le font
+   recalculer — testé, purge comprise : `prototype/tests/test_annee1_charge_lectures.py`) ; second passage presque sans
+   écriture : 86 / 79 ms ;
+3. **audit des lots 11-12 (I4)** : ce second passage ne contenait qu'une écriture acceptée. Chaque écriture refait payer
+   l'index (≈ 160 ms à 1 000 membres). Le script ajoute donc une écriture par membre : c'est le tableau ci-dessus.
 
 **Limites.** Pas de vrais téléphones ni de vrai réseau ; journal SQLite (pas PostgreSQL) ; sur 15 réponses tentées
-par membre ayant une demande, une seule est acceptée (la pièce est trouvée au premier oui, les autres demandes ne
+(membres ayant une demande), une seule est acceptée (la pièce est trouvée au premier oui, les autres demandes ne
 sont plus d'actualité : 404 attendu). L'accessibilité vérifiée est celle des règles AUTOMATISABLES d'axe : l'usage
 réel au lecteur d'écran, l'ordre de lecture et le sens des textes restent à éprouver par des personnes.

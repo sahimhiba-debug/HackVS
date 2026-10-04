@@ -22,9 +22,9 @@
 |---|---|---|
 | Regarder le tableau du pilote | « Pilote » | suivre les critères, sans les changer |
 | Relancer les membres qui ont des demandes en attente | « Notifications » | une relance, pas un harcèlement : chaque membre reçoit au plus un e-mail de ce type par jour, jamais pendant sa pause ni après s'être désinscrit |
-| Inviter des entreprises d'un métier qui manque (passes découverte) | « Campagnes » | au plus 20 invitations par campagne et 100 par jour |
+| Inviter des entreprises d'un métier qui manque (passes découverte) | « Le Club cherche → campagne d'invitation » | au plus 20 invitations par campagne et 100 par jour |
 | Confirmer les adhésions venues d'un passe découverte | « Foire » → saisir la **référence** que l'invité montre (`P-XXXXXXXX`) | une intention n'est jamais une adhésion : seule une adhésion confirmée compte |
-| Regarder le suivi de l'IA | « IA » | taux d'acceptation des propositions ; rien en dessous de 3 entreprises |
+| Regarder le suivi de l'IA | « Ce que le Club comprend des demandes » | taux d'acceptation des propositions ; rien en dessous de 3 entreprises |
 | **Noter votre temps passé** | sur papier ou tableur | c'est la mesure qui décidera si le Club peut porter le service après le pilote |
 
 ## Ce que vous ne verrez jamais (et c'est voulu)
@@ -38,14 +38,14 @@
 
 | Demande | Réponse |
 |---|---|
-| « Que sait le Club de moi ? » | « Mes données », sur son téléphone ; il peut aussi exporter ses données depuis « Mon espace » |
+| « Que sait le Club de moi ? » | « Mes données », sur son téléphone ; il peut aussi « Télécharger mes données (JSON) » depuis « Mon espace » |
 | « Je veux tout effacer » | « Mes données » → Tout effacer ; c'est définitif, il n'y a rien à faire de votre côté |
-| « Je ne veux plus d'e-mails » | le lien de désinscription en bas de chaque e-mail |
-| « Je suis débordé » (Mondiaux…) | « Mon espace » → Pause : il ne sera plus sollicité jusqu'à la date choisie |
+| « Je ne veux plus d'e-mails » | le lien « Ne plus recevoir ces e-mails » en bas de chaque e-mail |
+| « Je suis débordé » (Mondiaux…) | « Mon espace » → « Mode pause » → « Me mettre en pause » : il ne sera plus sollicité jusqu'à la date choisie |
 
 ## À la fin du pilote
 
-1. Console → « Bilan » : exportez le bilan trimestriel (Markdown, CSV ou HTML).
+1. Console → « Bilan » : exportez le bilan trimestriel (Markdown, CSV ou PDF).
 2. Présentez-le au comité **contre les critères gelés**, y compris s'ils ne sont pas atteints.
 3. Joignez votre temps passé par semaine.
 

@@ -1,8 +1,9 @@
 """ANNÉE 1 · LOT 11 — TEST DE CHARGE à N membres SIMULÉS (500 puis 1 000) : un vrai serveur uvicorn sur un monde
 synthétique de N membres (`HACKVS_TAILLE_MONDE`, données générées, aucune personne réelle), N comptes activés par
 leur code d'invitation (au rythme permis par la limite d'accès du serveur : 300 par minute), puis N membres en
-parallèle (16 fils) qui lisent leurs écrans, et répondent à leurs demandes s'ils en ont, pendant que la console relit
-l'Établi. Mesures : p50 / p95 / max par route, erreurs, cohérence finale (chaque « oui » accepté a son reçu).
+parallèle (16 fils) qui lisent leurs écrans, écrivent une note privée (une écriture par membre, puis une relecture),
+et répondent à leurs demandes s'ils en ont, pendant que la console relit l'Établi. Mesures : p50 / p95 / max par
+route, erreurs, cohérence finale (chaque « oui » accepté a son reçu).
 
     python scripts/charge_membres.py --n 500 --json ../docs/annee-1/qualite/charge_500.json
     python scripts/charge_membres.py --n 1000 --json ../docs/annee-1/qualite/charge_1000.json
@@ -136,6 +137,10 @@ def main() -> int:
             _, asks = m.appel(base, "GET /moi/asks", "/api/pulse/moi/asks", entetes=h)
             m.appel(base, "GET /moi/donnees", "/api/pulse/moi/donnees", entetes=h)
             m.appel(base, "GET /moi/souvenirs", "/api/pulse/moi/souvenirs", entetes=h)
+            # une ÉCRITURE par membre (note privée, fictive) puis une relecture : l'index des claims est invalidé à chaque
+            # écriture (audit des lots 11-12, I4) — la charge n'est plus presque uniquement en lecture
+            m.appel(base, "POST /moi/notes", "/api/pulse/moi/notes", {"texte": "Note privée de test de charge (fictive)."}, entetes=h)
+            m.appel(base, "GET /moi/donnees (après écriture)", "/api/pulse/moi/donnees", entetes=h)
             for ask in (asks or [])[:1]:
                 attributs = {k: v for k, v in ask["minimums"].items()}
                 st, _ = m.appel(base, "POST /asks/reponse", f"/api/pulse/moi/asks/{ask['id']}/reponse",
@@ -170,6 +175,7 @@ def main() -> int:
         # 4. budgets (docs/annee-1/qualite/budgets.json) : le pire p95 de chaque famille de routes
         budgets = json.loads((RACINE.parent / "docs/annee-1/qualite/budgets.json").read_text(encoding="utf-8"))["api_p95_ms"]
         familles = {"lecture_membre": lambda r: r.startswith("GET /moi/"), "reponse_demande": lambda r: r == "POST /asks/reponse",
+                    "ecriture_membre": lambda r: r == "POST /moi/notes",
                     "console": lambda r: r.startswith("console ")}
         budget = budgets.get(str(o.n))
         res["budgets"] = None if budget is None else {

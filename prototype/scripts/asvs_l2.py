@@ -60,7 +60,8 @@ EVAL: dict[str, tuple[str, str]] = {
     "V4.3.2": ("conforme", "aucune liste de répertoire (FastAPI, fichiers statiques nommés)"),
     "V8.1.1": ("conforme", "Cache-Control: no-store sur /api/pulse/ (protections.py)"),
     "V8.2.1": ("conforme", "Cache-Control: no-store sur les données personnelles et les pages des lots"),
-    "V8.2.2": ("partiel", "seule la session est en sessionStorage ; aucune donnée personnelle stockée côté navigateur"),
+    "V8.2.2": ("partiel", "la session est en sessionStorage ; avec HACKVS_HORS_LIGNE=1 (lot 11), une réponse donnée hors "
+                          "ligne reste dans localStorage jusqu'à son envoi (ADR 0009, dit dans la politique)"),
     "V8.3.1": ("partiel", "invitation et désinscription dans le fragment (#) ; MAIS ?jure=, ?code=, ?session= dans des adresses de la démo"),
     "V8.3.2": ("conforme", "export et suppression définitive (lot 3, test_annee1_espace_membre*.py, test_annee1_audit_lot23.py)"),
     "V8.3.3": ("partiel", "politique de confidentialité FR/DE rédigée — à valider par un juriste (conformite/)"),

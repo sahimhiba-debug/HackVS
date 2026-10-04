@@ -34,17 +34,22 @@ Mitglieder, die es haben könnten. Sie antworten mit **Ja**, **Nein** oder **Die
 
 | Ich möchte … | Wo |
 |---|---|
-| eine Einwilligung widerrufen | « Anfragen » → meine Einwilligungen → **Einwilligung widerrufen** |
+| eine Einwilligung widerrufen | « Anfragen » → Einwilligungen → Schaltfläche **« Retirer mon consentement »** (vorerst nur auf Französisch beschriftet) |
 | wissen, was der Club über mich weiss | « Meine Daten » |
-| eine Pause machen | « Mon espace » → Pause (Seite vorerst nur auf Französisch) |
-| meine Daten erhalten | « Mon espace » → Exporter (Seite vorerst nur auf Französisch) |
-| alles löschen | « Meine Daten » → Alles löschen (endgültig) |
-| keine E-Mails mehr erhalten | der Link « Abmelden » unten in jeder E-Mail |
+| eine Pause machen | « Mon espace » → « Mode pause » → **« Me mettre en pause »** (Seite vorerst nur auf Französisch) |
+| meine Daten erhalten | « Mon espace » → **« Télécharger mes données (JSON) »** (Seite vorerst nur auf Französisch) |
+| alles löschen | « Meine Daten » → Schaltfläche **« Tout effacer »** (endgültig; vorerst nur auf Französisch beschriftet) |
+| keine E-Mails mehr erhalten | der Link « Diese E-Mails nicht mehr erhalten » unten in jeder E-Mail |
 
 ## Künstliche Intelligenz
 
 Wenn sie eingeschaltet ist, kann ein schweizerisches, offenes Modell (**Apertus 1.5, betrieben vom CSCS**) **vorschlagen**,
 das Formular aus Ihren Worten auszufüllen. **Sie prüfen und Sie entscheiden.** Es entscheidet nie an Ihrer Stelle.
+
+## Auf Ihrem Telefon
+
+Ist die Offline-Warteschlange eingeschaltet, bleibt eine ohne Netz gegebene Antwort auf Ihrem Telefon, bis sie gesendet
+wird; « Se déconnecter » und « Tout effacer » löschen sie.
 
 ## Das Pilotprojekt
 

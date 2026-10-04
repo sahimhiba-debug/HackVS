@@ -35,8 +35,8 @@ Une grille ne se fixe pas avant le pilote. Ce que l'on peut préparer, c'est **l
 - un forfait annuel par Club, par tranche de représentants (le Club compte 173 représentants dans la liste reçue le
   03.10.2026) ;
 - le forfait couvre l'hébergement, les e-mails, l'audit annuel et une part du support ;
-- les clubs partenaires (adhésion croisée, lot 8) paient leur propre forfait, réduit tant qu'ils n'ont pas atteint le
-  seuil « < 3 » de membres actifs (rien à mesurer en dessous).
+- les clubs partenaires (adhésion croisée, lot 8) paient leur propre forfait, réduit tant qu'ils comptent moins de 3 entreprises actives (en dessous, le service ne peut rien leur montrer : le
+  seuil de confidentialité « < 3 » est compté par entreprise).
 
 **Ce qu'il faut savoir avant de chiffrer** : le temps de secrétariat mesuré pendant le pilote ; les devis
 d'hébergement et d'audit ; ce que le Club dépense aujourd'hui pour l'animation de son réseau (à demander au Club).

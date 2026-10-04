@@ -48,3 +48,10 @@ def test_une_reecriture_sans_fait_nouveau_change_la_version(monkeypatch, tmp_pat
     v = c.journal.version()
     c.journal.reecrire(lambda e: e)                         # aucune modification, aucun fait ajouté
     assert c.journal.version() != v                                      # une réécriture invalide tout index dérivé
+
+
+def test_l_index_garde_ne_peut_pas_etre_altere_par_un_appelant(monkeypatch, tmp_path):
+    c = _club(monkeypatch, tmp_path)
+    n = len(c.claims())
+    c.claims().clear()
+    assert len(c.claims()) == n

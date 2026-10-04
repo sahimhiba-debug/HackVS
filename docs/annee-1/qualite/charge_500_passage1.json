@@ -1,0 +1,81 @@
+{
+ "membres_simules": 500,
+ "comptes_actives": 500,
+ "fils": 16,
+ "demarrage_s": 1.9,
+ "activation_s": 103.2,
+ "phase_parallele_s": 31.3,
+ "ouis_acceptes": 1,
+ "ouis_sans_recu": 0,
+ "erreurs": {},
+ "routes": {
+  "GET /moi/actions": {
+   "n": 500,
+   "p50_ms": 216.5,
+   "p95_ms": 421.7,
+   "max_ms": 593.0
+  },
+  "GET /moi/asks": {
+   "n": 500,
+   "p50_ms": 201.0,
+   "p95_ms": 404.3,
+   "max_ms": 621.4
+  },
+  "GET /moi/donnees": {
+   "n": 501,
+   "p50_ms": 273.5,
+   "p95_ms": 539.7,
+   "max_ms": 869.4
+  },
+  "GET /moi/souvenirs": {
+   "n": 500,
+   "p50_ms": 221.6,
+   "p95_ms": 470.1,
+   "max_ms": 792.8
+  },
+  "POST /acces": {
+   "n": 500,
+   "p50_ms": 5.5,
+   "p95_ms": 6.7,
+   "max_ms": 20.4
+  },
+  "POST /asks/reponse": {
+   "n": 15,
+   "p50_ms": 109.2,
+   "p95_ms": 127.8,
+   "max_ms": 139.3
+  },
+  "console capacites": {
+   "n": 37,
+   "p50_ms": 173.6,
+   "p95_ms": 451.5,
+   "max_ms": 656.5
+  },
+  "console suivi": {
+   "n": 36,
+   "p50_ms": 148.2,
+   "p95_ms": 254.3,
+   "max_ms": 311.7
+  }
+ },
+ "machine": "Linux x86_64, Python 3.11.15, 4 cœurs",
+ "date": "2026-10-04 00:53 UTC",
+ "etat_initial_capacites": 5,
+ "budgets": {
+  "lecture_membre": {
+   "p95_pire_ms": 539.7,
+   "budget_ms": 500,
+   "respecte": false
+  },
+  "reponse_demande": {
+   "p95_pire_ms": 127.8,
+   "budget_ms": 1000,
+   "respecte": true
+  },
+  "console": {
+   "p95_pire_ms": 451.5,
+   "budget_ms": 2000,
+   "respecte": true
+  }
+ }
+}

@@ -19,6 +19,10 @@ verweigert, wird protokolliert.
 **Künstliche Intelligenz.** Freiwillig. Wenn sie eingeschaltet ist, gehen Ihre Texte (nie Ihr Name) an Apertus 1.5,
 betrieben vom CSCS in der Schweiz. Der Club funktioniert auch ohne sie.
 
+**Auf Ihrem Telefon.** Ihre Sitzung bleibt im Tab (sie verschwindet beim Schliessen). Ist die Offline-Warteschlange
+eingeschaltet, bleibt eine ohne Netz gegebene Antwort auf Ihrem Telefon (Browserspeicher), bis sie bei Rückkehr des
+Netzes gesendet wird; « Se déconnecter » und « Tout effacer » löschen sie. Es wird kein Sitzungstoken gespeichert.
+
 **Ihre Rechte.** Ihre Daten einsehen und herunterladen («Meine Daten»); Ihr Profil berichtigen; eine Pause einlegen;
 sich mit einem Klick von einem Kanal abmelden; **Ihr Konto löschen**: Ihre Texte, Ihr Name und Ihre Kontaktdaten werden
 aus dem Journal entfernt, auch dort, wo sie kopiert wurden. Sicherungen folgen ihrer Aufbewahrungsdauer *[zu

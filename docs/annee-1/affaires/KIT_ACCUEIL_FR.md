@@ -37,16 +37,21 @@ C'est tout.
 |---|---|
 | retirer un consentement | « Demandes » → mes consentements → **Retirer mon consentement** |
 | savoir ce que le Club sait de moi | « Mes données » |
-| faire une pause (vacances, période chargée) | « Mon espace » → Pause |
-| recevoir mes données | « Mon espace » → Exporter |
-| tout effacer | « Mes données » → Tout effacer (définitif) |
-| ne plus recevoir d'e-mails | le lien « se désinscrire » en bas de chaque e-mail |
+| faire une pause (vacances, période chargée) | « Mon espace » → « Mode pause » → **Me mettre en pause** |
+| recevoir mes données | « Mon espace » → **Télécharger mes données (JSON)** |
+| tout effacer | « Mes données » → **Tout effacer** (définitif) |
+| ne plus recevoir d'e-mails | le lien « Ne plus recevoir ces e-mails » en bas de chaque e-mail |
 
 ## L'intelligence artificielle
 
 Si elle est allumée, un modèle suisse et ouvert (**Apertus 1.5, servi par le CSCS**) peut **proposer** de remplir le
 formulaire à partir de vos mots. **Vous vérifiez et vous décidez.** Il ne décide jamais à votre place, et vous pouvez
 toujours remplir le formulaire vous-même.
+
+## Sur votre téléphone
+
+Si la file hors ligne est allumée, une réponse donnée sans réseau reste sur votre téléphone jusqu'à son envoi ;
+« Se déconnecter » et « Tout effacer » l'effacent.
 
 ## Le pilote
 

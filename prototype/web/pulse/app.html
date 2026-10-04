@@ -122,7 +122,9 @@
       return d;
     }
     // ANNÉE 1 · LOT 11 — FILE D'ATTENTE HORS LIGNE des réponses (interrupteur HACKVS_HORS_LIGNE, dit par /moi/date).
-    // Seules les réponses aux demandes y entrent ; une par demande (la dernière gagne) ; liée à la session qui l'a donnée.
+    // Seules les réponses aux demandes y entrent ; une par demande (la dernière gagne) ; liée au MEMBRE qui l'a donnée
+    // (identifiant seul, jamais le jeton de session : audit des lots 11-12, I1), elle survit à la fermeture de
+    // l'application (I2) ; vidée par « Se déconnecter » et « Tout effacer ».
     // Au retour du réseau, chacune est envoyée ; le serveur reste seul juge : une demande qui n'est plus d'actualité est
     // refusée, retirée de la file, et le membre le sait. Rien n'est jamais renvoyé deux fois après un refus.
     const horsLigne = (() => {
@@ -131,18 +133,24 @@
       const ecrireL = (k, v) => { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* stockage indisponible */ } };
       const file = () => { try { return JSON.parse(lireL(CLE) || "[]"); } catch { return []; } };
       const poser = (f) => ecrireL(CLE, f.length ? JSON.stringify(f) : null);
+      const moi = () => (session || "").split(".")[0];
       let enCours = false;
       return {
         actif: () => lireL(DRAPEAU) === "1",
         regler: (oui) => { ecrireL(DRAPEAU, oui ? "1" : null); if (!oui) poser([]); },
-        garder: (chemin, corps) => poser([...file().filter((x) => x.chemin !== chemin), { chemin, corps, session }]),
+        garder: (chemin, corps) => poser([...file().filter((x) => x.chemin !== chemin), { chemin, corps, qui: moi() }]),
+        oublier: () => poser([]),
         async vider() {
           if (enCours || !session || !file().length) return;
           enCours = true;
           let parties = 0;
           try {
             for (const x of file()) {
-              if (x.session !== session) continue;               // la réponse d'une autre session ne part jamais sous celle-ci
+              if (x.qui !== moi()) {                             // la réponse d'un AUTRE membre ne part jamais sous ce compte :
+                poser(file().filter((y) => !(y.chemin === x.chemin && y.qui === x.qui)));   // effacée de ce téléphone, et c'est dit
+                toast("Une réponse gardée hors ligne pour un autre compte a été effacée de ce téléphone.", "erreur");
+                continue;
+              }
               try { await api(x.chemin, { corps: x.corps }); parties += 1; }
               catch (e) {
                 if (e.reseau) return;                            // toujours hors ligne : on réessaiera
@@ -449,7 +457,7 @@
         section("Observations", s.observations.length ? s.observations.map((o) => h("a", { class: "carte cliquable", href: `#essai/${o.essai}`, style: "display:block;text-decoration:none;color:inherit" },
           h("p", {}, h("span", { class: "puce" }, o.qualification), " « ", o.question, " »"), h("p", { class: "note" }, `${o.nature} · portée : ${o.limites} · visible par : ${o.niveau_effectif}`))) : vide("Aucune.")),
         section("Réutilisable par le Club", s.reutilisables.length ? s.reutilisables.map((o) => h("p", {}, `« ${o.question} » — ${o.qualification}`)) : vide("Rien : chaque participant doit l'autoriser explicitement.")),
-        h("div", { class: "actions", style: "margin-top:18px" }, h("button", { class: "btn discret petit", onclick: () => { ecrire("pulse-session", null); session = null; location.hash = "#acces"; } }, "Se déconnecter")));
+        h("div", { class: "actions", style: "margin-top:18px" }, h("button", { class: "btn discret petit", onclick: () => { horsLigne.oublier(); ecrire("pulse-session", null); session = null; location.hash = "#acces"; } }, "Se déconnecter")));
     }
     function offreForm() {
       const q = h("input", { id: "o-quoi", "aria-label": "Ce que vous offrez", maxlength: 200, placeholder: "Ce que vous acceptez de donner" });
@@ -528,7 +536,7 @@
               + "technique sans nom ni contact, qu'aucun écran ne montrera plus.")) return;
             try {
               const r = await api("/api/pulse/moi/effacer", { corps: { confirme: true } });
-              ecrire("pulse-session", null); session = null;
+              horsLigne.oublier(); ecrire("pulse-session", null); session = null;
               afficher(h("h1", { class: "grand" }, "Effacé"), ...r.efface.map((x) => h("p", {}, "— " + x)), h("p", { class: "note" }, "Ce qui reste : " + r.reste));
             } catch (e) { toast(e.message, "erreur"); }
           } }, "Tout effacer")));

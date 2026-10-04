@@ -321,7 +321,7 @@ class ClubPulse:
         if cache is None or cache[0] != v:
             cache = (v, index_claims(self.journal, self._profils_depart))
             self._index_claims = cache
-        return cache[1]
+        return list(cache[1])                       # une copie : un appelant ne peut pas altérer l'index gardé
 
     def sollicitable(self, pid: str) -> bool:
         from .espace_membre import en_pause            # ANNÉE 1 · lot 3 (audit B3) : en pause, on ne reçoit plus rien

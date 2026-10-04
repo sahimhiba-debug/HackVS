@@ -24,7 +24,7 @@ ETIQUETTES = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]
 CONSOLE = {"Content-Type": "application/json", "X-Pulse-Console": "1"}
 TOUT_ALLUME = dict(HACKVS_FOIRE="1", HACKVS_COMPTES="1", HACKVS_ESPACE_MEMBRE="1", HACKVS_SECRETARIAT="1",
                    HACKVS_NOTIFICATIONS="1", HACKVS_MULTICLUB="1", HACKVS_FOIRE_ALLUMAGE="1", HACKVS_EID="1",
-                   HACKVS_SUIVI_IA="1", HACKVS_SECRET="a" * 40,
+                   HACKVS_SUIVI_IA="1", HACKVS_HORS_LIGNE="1", HACKVS_SECRET="a" * 40,
                    HACKVS_CRITERES_PILOTE=str(Path(__file__).resolve().parents[2] / "docs/annee-1/pilote/criteres.json"))
 ECRANS = ("/console", "/etabli", "/projection", "/suivi", "/salle", "/salle/ecran", "/salle/regie", "/demo/regie",
           "/decouverte", "/reponse", "/confidentialite", "/feuille-de-route", "/preflight")
@@ -38,7 +38,8 @@ def _axe() -> str:
 
 def _violations(pg) -> list[str]:
     """axe dans la page (evaluate : hors de la CSP de la page, qui reste celle servie aux membres)."""
-    pg.wait_for_timeout(900)
+    pg.wait_for_load_state("networkidle")              # les lectures de données de l'écran sont terminées (audit M3)
+    pg.wait_for_timeout(300)
     pg.evaluate(_axe())
     r = pg.evaluate("""async (tags) => (await axe.run(document, {runOnly: {type: 'tag', values: tags}})).violations
         .map(v => `${v.id} (${v.impact}) : ` + v.nodes.slice(0, 3).map(n => n.target.join(' ')).join(' ; '))""", ETIQUETTES)
