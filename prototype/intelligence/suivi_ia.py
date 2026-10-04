@@ -42,8 +42,11 @@ def taux(c: "ClubPulse") -> dict:
         props = [e for e in c.journal.evenements("PROPOSITION") if e.donnees["source"] == src]
         qui = {e.acteurs[0] for e in props}
         ok = [e for e in props if e.donnees["id"] in acceptees]
-        assez = anonymat.entreprises(c, qui) >= c.reglages.k_anonymat
-        res[src] = {"proposees": anonymat.seuil(c, qui, len(props)), "acceptees": anonymat.seuil(c, qui, len(ok)),
+        qui_ok = {e.acteurs[0] for e in ok}                # audit des lots 6-8, I1 : le seuil des acceptations se compte
+        qui_non = {e.acteurs[0] for e in props if e not in ok}   # sur CEUX QUI ONT ACCEPTÉ (et le reste, sur les autres)
+        k = c.reglages.k_anonymat
+        assez = all(anonymat.entreprises(c, g) >= k for g in (qui_ok, qui_non) if g)
+        res[src] = {"proposees": anonymat.seuil(c, qui, len(props)), "acceptees": anonymat.seuil(c, qui_ok, len(ok)),
                     "taux": round(100 * len(ok) / len(props)) if props and assez else None}
     return {"par_source": res, "regle": "décomptes seulement ; moins de 3 entreprises : « < 3 », taux non dit",
             "note": "« modele » : la compréhension d'Apertus a été retenue ; « regles » : le repli déterministe"}

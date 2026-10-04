@@ -15,5 +15,5 @@
 | Voix, Apertus Mini (expérimental) | **non fait** | — |
 
 **Vérifié cette nuit, pour de vrai.** L'API d'Apertus (CSCS, `swiss-ai/Apertus-v1.5-70B`) répond depuis la session :
-un appel trivial a répondu en 1,5 s. Aucun nouveau chiffre de qualité n'est publié ici : le banc des 26 cas n'a pas été
+un appel trivial a répondu (sortie lue dans la session, non conservée comme preuve). Aucun nouveau chiffre de qualité n'est publié ici : le banc des 26 cas n'a pas été
 relancé (son protocole interdit de le rejouer pour « améliorer » un résultat publié).

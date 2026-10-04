@@ -30,7 +30,6 @@ export const DE = {
   "Mes réponses aux demandes": "Meine Antworten auf Anfragen", "Mes accords": "Meine Zusagen", "Aucun accord.": "Keine Zusage.",
   "Ce que j'ai déclaré": "Was ich angegeben habe", "Ce qui sera partagé": "Was geteilt wird", "Pourquoi": "Warum",
   "Historique": "Verlauf", "Navigation": "Navigation",
-  "Vous êtes déjà membre : pas d'inscription. Le code figure sur l'invitation du Club.": "Sie sind bereits Mitglied: keine Anmeldung. Der Code steht auf der Einladung des Clubs.",
 };
 export const EN = {
   "Mes actions": "My actions", "Agir à plusieurs": "Act together", "Proposer un essai": "Propose a trial",

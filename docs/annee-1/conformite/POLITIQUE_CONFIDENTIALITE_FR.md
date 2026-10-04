@@ -12,8 +12,9 @@ votre téléphone sont gardés à part, dans un coffre : le moteur de mise en re
 **Pourquoi.** Faire circuler une demande vers les membres qui peuvent aider — **avec votre accord d'abord**. Rien
 n'est proposé à personne sans l'accord de chacun ; aucun nom n'est révélé avant l'accord des deux.
 
-**Ce que le secrétariat voit.** Des décomptes seulement ; tout décompte venant de moins de trois entreprises s'affiche
-« < 3 ». Chaque consultation de la console est journalisée.
+**Ce que le secrétariat voit.** Des décomptes (tout décompte venant de moins de trois entreprises s'affiche « < 3 »),
+et la liste des comptes (leur étiquette et leur rôle) pour les gérer. Chaque consultation de la console du
+secrétariat, accordée ou refusée, est journalisée.
 
 **Intelligence artificielle.** Facultative. Si elle est allumée, vos textes (jamais votre nom) sont envoyés à Apertus
 1.5, servi par le CSCS, en Suisse. Le Club fonctionne pareil sans elle.

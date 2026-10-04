@@ -489,6 +489,12 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
         if os.environ.get("HACKVS_MULTICLUB") != "1":
             raise HTTPException(404, "Not Found")
 
+    @r.get("/langues", dependencies=[Depends(multiclub_allume)])
+    def langues() -> dict:
+        """PUBLIQUE : les langues de l'interface au-delà du français et de l'allemand (audit des lots 6-8, I4 : l'anglais
+        suit l'interrupteur — éteint, la route n'existe pas et le téléphone reste en français)."""
+        return {"en": True, "a_relire": "traduction à relire par un natif"}
+
     @r.get("/moi/clubs", dependencies=[Depends(multiclub_allume)])
     def mes_clubs(pid: str = Depends(membre)) -> dict:
         from intelligence import clubs
@@ -631,13 +637,18 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
         _origine_sure(request)
         if not x_pulse_compte:
             raise HTTPException(401, "session de compte requise (X-Pulse-Compte)")
+        route = request.scope.get("route")                 # ANNÉE 1 · lot 6 : journal des accès (la route, jamais
+        nom = f"{request.method} {getattr(route, 'path', request.url.path)}"   # les données)
         try:
             comptes().exiger_console(x_pulse_compte)
             if request.method != "GET":
                 comptes().compter_ecriture(x_pulse_compte)
-            route = request.scope.get("route")             # ANNÉE 1 · lot 6 : journal des accès (la route, jamais
-            comptes().tracer_acces(x_pulse_compte, f"{request.method} {getattr(route, 'path', request.url.path)}")  # les données)
+            comptes().tracer_acces(x_pulse_compte, nom)
         except ErreurMetier as e:
+            try:                                           # audit des lots 6-8, I2 : un REFUS d'une session valide est
+                comptes().tracer_acces(x_pulse_compte, nom + " (refusé)")   # tracé aussi
+            except ErreurMetier:
+                pass                                       # session invalide : il n'y a personne à qui l'attribuer
             raise traduire(e) from None
         return x_pulse_compte
 

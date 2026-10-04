@@ -37,8 +37,8 @@ def liste(c: "ClubPulse") -> list[dict]:
 def declarer(c: "ClubPulse", cid: str, nom: str, *, region: str, pays: str, fictif: bool) -> dict:
     if not fictif:
         raise Invalide("seul un club EXEMPLE FICTIF peut être déclaré : aucun partenaire n'est présenté comme acquis")
-    if "fictif" not in nom.lower():
-        raise Invalide("le nom d'un club exemple dit « fictif »")
+    if not nom.lower().rstrip(" )").endswith("exemple fictif") or "pas fictif" in nom.lower():
+        raise Invalide("le nom d'un club exemple se termine par « exemple fictif »")
     if not cid or len(cid) > 40 or not cid.replace("-", "").isalnum() or cid in _declares(c):
         raise Invalide("identifiant de club vide, invalide ou déjà pris")
     c.banc._ecrire("CLUB_DECLARE", [], Statut.SYNTHETIQUE, id=cid, nom=nom[:80], region=region[:60], pays=pays[:2].upper(),
@@ -93,11 +93,12 @@ def peut_etre_sollicite(c: "ClubPulse", pid: str, cid: str) -> bool:
 
 
 def vue_console(c: "ClubPulse") -> dict:
-    croises = _croises(c)
+    # audit des lots 6-8, I6 : un membre effacé (absent du coffre) ne compte plus
+    croises = {pid: s for pid, s in _croises(c).items() if c.coffre.identite(pid) is not None}
     res = []
     for x in liste(c):
         qui = {pid for pid, s in croises.items() if x["id"] in s}
         res.append({**x, "membres_croises": anonymat.seuil(c, qui, len(qui))})
-    loin = _a_distance(c)
+    loin = {pid for pid in _a_distance(c) if c.coffre.identite(pid) is not None}
     return {"clubs": res, "membres_a_distance": anonymat.seuil(c, loin, len(loin)),
             "limite": "la mise en relation ne lit pas encore le club d'une demande"}

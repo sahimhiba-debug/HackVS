@@ -12,8 +12,9 @@ einem Tresor aufbewahrt: Die Vermittlung sieht nur ein Pseudonym.
 **Wozu.** Eine Anfrage an die Mitglieder weiterleiten, die helfen können — **zuerst mit Ihrer Zustimmung**. Niemandem
 wird etwas ohne dessen Zustimmung vorgeschlagen; kein Name wird vor der Zustimmung beider Seiten genannt.
 
-**Was das Sekretariat sieht.** Nur Zahlen; jede Zahl aus weniger als drei Unternehmen erscheint als «< 3». Jeder Zugriff
-auf die Konsole wird protokolliert.
+**Was das Sekretariat sieht.** Zahlen (jede Zahl aus weniger als drei Unternehmen erscheint als «< 3») und die Liste
+der Konten (Bezeichnung und Rolle), um sie zu verwalten. Jeder Zugriff auf die Sekretariatskonsole, gewährt oder
+verweigert, wird protokolliert.
 
 **Künstliche Intelligenz.** Freiwillig. Wenn sie eingeschaltet ist, gehen Ihre Texte (nie Ihr Name) an Apertus 1.5,
 betrieben vom CSCS in der Schweiz. Der Club funktioniert auch ohne sie.

@@ -88,16 +88,16 @@ def _cles(js: str, nom: str) -> set[str]:
 def test_l_anglais_couvre_chaque_libelle_de_l_allemand():
     js = (WEB / "traduction-de.js").read_text(encoding="utf-8")
     de, en = _cles(js, "DE"), _cles(js, "EN")
-    assert len(de) > 40 and en == de
+    assert len(de) > 40 and en >= de                                       # l'anglais couvre au moins tout l'allemand
     assert "native speaker" in js and "à relire" in js
 
 
-def test_l_interface_en_anglais_dans_un_vrai_navigateur(tmp_path):
+def test_l_interface_en_anglais_dans_un_vrai_navigateur(tmp_path):        # interrupteur allumé (audit I4)
     from playwright.sync_api import sync_playwright
 
     from tests.test_e2e_scene import _chromium, serveur
     erreurs: list[str] = []
-    with serveur(HACKVS_ESSAIS_DB=str(tmp_path / "j.db"), HACKVS_FOIRE="1") as base, sync_playwright() as p:
+    with serveur(HACKVS_ESSAIS_DB=str(tmp_path / "j.db"), HACKVS_FOIRE="1", HACKVS_MULTICLUB="1") as base, sync_playwright() as p:
         b = _chromium(p)
         pg = b.new_page()
         pg.on("pageerror", lambda e: erreurs.append(str(e)))

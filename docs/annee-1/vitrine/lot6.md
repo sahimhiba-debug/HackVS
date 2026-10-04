@@ -12,11 +12,12 @@ vérifie désormais chaque terme. **La démo (`foire-2026`) garde les deux ancie
 question.
 
 **ASVS 4.0.3, niveau 2** ([ASVS_L2.md](../conformite/ASVS_L2.md)) : 259 exigences, généré depuis le fichier officiel
-de l'OWASP — 38 conformes (chacune avec sa preuve), 13 partielles, 2 non conformes (durées de conservation non
+de l'OWASP — 30 conformes (chacune avec sa preuve), 21 partielles (après l'audit des lots 6-8, qui en a trouvé 8 surévaluées), 2 non conformes (durées de conservation non
 appliquées, pas de SBOM), 23 sans objet (aucun mot de passe, aucun cookie de session), **183 non évaluées**.
 
-**Journal des accès** : chaque consultation de la console du secrétariat est un fait (qui, quelle route, quand —
-jamais les données rendues), lisible par l'administration seulement.
+**Journal des accès** : chaque consultation de la console du secrétariat et de l'administration, refus compris, est
+un fait (qui, quelle route, quand — jamais les données rendues), lisible par l'administration seulement, jamais réécrit
+par une purge. La console de démonstration (jeton partagé) n'y figure pas.
 
 **Textes** : [registre](../conformite/REGISTRE_TRAITEMENTS.md), [analyse d'impact](../conformite/AIPD_MODELE.md),
 politique de confidentialité [FR](../conformite/POLITIQUE_CONFIDENTIALITE_FR.md) / [DE](../conformite/POLITIQUE_CONFIDENTIALITE_DE.md),

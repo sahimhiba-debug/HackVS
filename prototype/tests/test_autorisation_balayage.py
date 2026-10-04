@@ -33,7 +33,8 @@ PUBLIQUES = {("POST", "/api/pulse/acces"), ("POST", "/api/pulse/jure"), ("POST",
              ("GET", "/api/pulse/monde"), ("GET", "/api/pulse/feuille-de-route"),                 # publics, lecture seule
              ("POST", "/api/pulse/notifications/desinscrire"),                                    # lien d'e-mail : signé
              ("POST", "/api/pulse/borne/passe"),                                                  # jeton de borne : signé
-             ("POST", "/api/pulse/attestations/verifier")}                                        # vérificateur local, sans état
+             ("POST", "/api/pulse/attestations/verifier"),                                        # vérificateur local, sans état
+             ("GET", "/api/pulse/langues")}                                                       # langues de l'interface
 VALEURS = {"n": "1", "index": "0", "etape": "0"}
 
 

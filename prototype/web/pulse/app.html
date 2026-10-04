@@ -618,8 +618,9 @@
       const lireJson = async (c) => { const r = await fetch(c, { headers: session ? { "X-Pulse-Session": session } : {} }); return r.ok ? r.json() : {}; };
       try { if (session && (await lireJson("/api/pulse/moi/foire")).actif) { const x = await lireJson("/api/pulse/moi/distance"); declaree = x.profil && x.profil.langue; } }
       catch (e) { /* sans session ou interrupteur éteint : la langue de l'adresse seulement */ }
-      const lg = langueVoulue(declaree);
-      if (lg !== "fr") activerAllemand(lg);                // allemand ou anglais (ANNÉE 1 · lot 8), à relire par un natif
+      let lg = langueVoulue(declaree);
+      if (lg === "en" && !(await lireJson("/api/pulse/langues")).en) lg = "fr";   // l'anglais suit son interrupteur (lot 8)
+      if (lg !== "fr") activerAllemand(lg);                // allemand ou anglais, à relire par un natif
     })();
     window.addEventListener("online", () => toast("De retour en ligne."));
     window.addEventListener("offline", () => toast("Hors ligne : les actions attendront le réseau.", "erreur"));

@@ -25,7 +25,12 @@ PAUSE_MAX_JOURS = 183
 GARDES = {"membre", "auteur", "id", "type", "finalite", "concept", "statut", "kind", "nature", "essai", "etape", "oui",
           "reponse", "valide_du", "valide_au", "valid_until", "recorded_at", "le", "n", "t", "jusqu_au", "seq", "du", "au",
           "superseded_at", "provenance", "sens", "disponible", "accepte_introductions", "jour", "debut", "fin", "echeance",
-          "offre_id", "nonce", "empreinte", "trace", "role", "langue", "canal", "resultat", "emplacement", "ask"}
+          "offre_id", "nonce", "empreinte", "trace", "role", "langue", "canal", "resultat", "emplacement", "ask",
+          "route", "etiquette", "action", "cible", "par", "compte", "reference"}
+# AUDIT des lots 6-8, B1 : les faits de SÉCURITÉ et de gouvernance ne sont jamais réécrits par la purge d'un membre (le
+# journal des accès, les comptes, les clubs déclarés, les traces de notification et de purge)
+PROTEGES = ("ACCES_CONSOLE", "COMPTE_", "SESSION_", "TOTP_", "ADMIN_ACTION", "CLUB_DECLARE", "NOTIF_", "PURGE",
+            "CRITERES_GELES", "METIER_CONFIRME", "CAMPAGNE", "EXPOSANTS_IMPORTES", "ADHESION_CONFIRMEE")
 EFFACE = "[effacé]"
 
 
@@ -95,7 +100,7 @@ def mes_demandes(c: "ClubPulse", pid: str) -> list[dict]:
 
 def exporter(c: "ClubPulse", pid: str) -> dict:
     """Mes données, en un fichier : ce que le Club sait de moi, mes préférences, ma pause, mes demandes, mon solde."""
-    from . import reciprocite
+    from . import clubs, reciprocite
     ident, org = c.coffre.identite(pid), c.coffre.organisation_de(pid)
     # AUDIT des lots 2-3, I6 (droit d'accès, LPD art. 25 / RGPD art. 15 et 20) : l'identité du coffre et le CONTENU des
     # notes privées, en plus de ce que le moteur sait de moi
@@ -104,6 +109,7 @@ def exporter(c: "ClubPulse", pid: str) -> dict:
             "identite": None if ident is None else {"nom": ident.nom, "courriel": ident.courriel, "telephone": ident.telephone,
                                                     "organisation": getattr(org, "nom", None)},
             "notes_privees": c.vues.notes_de(pid),
+            "clubs": clubs.clubs_de(c, pid),
             "mes_donnees": c.vues_capacites.mes_donnees(pid), "preferences": preferences(c, pid),
             "pause": etat_pause(c, pid), "demandes": mes_demandes(c, pid), "reciprocite": reciprocite.balance(c, pid)}
 
@@ -178,6 +184,8 @@ def _verifier_rejouable(c: "ClubPulse", evts: list[Evt]) -> None:
 
 def _purger(c: "ClubPulse", textes: list[str], trace: Optional[Evt]) -> int:
     def transformer(e: Evt) -> Evt:
+        if e.type.startswith(PROTEGES):
+            return e
         d = _remplacer(e.donnees, textes)
         return e if d == e.donnees else e.model_copy(update={"donnees": d})
     avant = c.journal.evenements()

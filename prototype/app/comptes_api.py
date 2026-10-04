@@ -67,6 +67,12 @@ def creer_routeur_comptes(comptes: Callable[[], Comptes]) -> APIRouter:
         faire(lambda: comptes().compter_ecriture(s))
         return s
 
+    def admin(request: Request, s: str = Depends(session)) -> str:
+        """ANNÉE 1 · audit des lots 6-8, I2 : les routes d'administration entrent au journal des accès."""
+        route = request.scope.get("route")
+        faire(lambda: comptes().tracer_acces(s, f"{request.method} {getattr(route, 'path', request.url.path)}"))
+        return s
+
     @r.post("/invitations/accepter")
     def accepter(a: Acceptation) -> dict:
         return {"session": faire(lambda: comptes().accepter(a.jeton, a.appareil))}
@@ -108,21 +114,21 @@ def creer_routeur_comptes(comptes: Callable[[], Comptes]) -> APIRouter:
         return faire(lambda: comptes().exiger_console(s))
 
     @r.post("/admin/invitations")
-    def inviter(i: Invitation, s: str = Depends(ecriture)) -> object:
+    def inviter(i: Invitation, s: str = Depends(ecriture), _a: str = Depends(admin)) -> object:
         return faire(lambda: comptes().inviter(s, role=i.role, etiquette=i.etiquette, duree_s=i.duree_s))
 
     @r.post("/admin/comptes/{compte}/role")
-    def role(compte: str, x: Role, s: str = Depends(ecriture)) -> dict:
+    def role(compte: str, x: Role, s: str = Depends(ecriture), _a: str = Depends(admin)) -> dict:
         faire(lambda: comptes().attribuer_role(s, compte, x.role))
         return {"ok": True}
 
     @r.post("/admin/comptes/{compte}/revoquer")
-    def revoquer(compte: str, s: str = Depends(ecriture)) -> dict:
+    def revoquer(compte: str, s: str = Depends(ecriture), _a: str = Depends(admin)) -> dict:
         faire(lambda: comptes().revoquer(s, compte))
         return {"ok": True}
 
     @r.get("/admin/journal")
-    def journal(s: str = Depends(session)) -> object:
+    def journal(s: str = Depends(session), _a: str = Depends(admin)) -> object:
         return faire(lambda: comptes().journal_admin(s))
 
     return r

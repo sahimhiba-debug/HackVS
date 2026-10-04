@@ -1,6 +1,6 @@
 # Analyse d'impact relative à la protection des données (AIPD) — modèle pré-rempli
 
-> **À VALIDER PAR UN JURISTE.** Base : nLPD art. 22 (et RGPD art. 35 pour les membres frontaliers). Modèle de
+> **À VALIDER PAR UN JURISTE.** Base : nLPD art. 22 (et RGPD art. 35 si le RGPD s'applique, art. 3 al. 2 — à évaluer). Modèle de
 > l'équipe : il dit ce que l'on sait aujourd'hui, et ce qui reste à décider. **Construit — branche `annee-1`.**
 
 ## 1. Description

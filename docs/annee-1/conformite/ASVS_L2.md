@@ -5,7 +5,7 @@
 > (`asvs-4.0.3-en.csv`, CC BY-SA 3.0). Une exigence n'est « conforme » qu'avec une preuve (test ou fichier) ;
 > sans examen, elle reste « non évaluée ».
 
-**259 exigences de niveau 2** : conforme : 38 · partiel : 13 · non conforme : 2 · sans objet : 23 · non évaluée : 183
+**259 exigences de niveau 2** : conforme : 30 · partiel : 21 · non conforme : 2 · sans objet : 23 · non évaluée : 183
 
 | Exigence | Intitulé (OWASP, anglais) | Statut | Preuve |
 |---|---|---|---|
@@ -73,7 +73,7 @@
 | V2.5.1 | Verify that a system generated initial activation or recovery secret is not sent in clear text to the user. | conforme | le jeton d'invitation n'est jamais écrit dans le journal (test_aucun_secret_en_clair_dans_le_journal) |
 | V2.5.2 | Verify password hints or knowledge-based authentication (so-called "secret questions") are not present. | conforme | aucune question secrète ni indice (comptes.py) |
 | V2.5.3 | Verify password credential recovery does not reveal the current password in any way. | sans objet | aucun mot de passe : invitation à usage unique + second facteur TOTP (lot 2) |
-| V2.5.4 | Verify shared or default accounts are not present (e.g. "root", "admin", or "sa"). | conforme | comptes nominatifs ; l'amorçage crée UN compte d'administration étiqueté (test_tout_survit_a_un_redemarrage) |
+| V2.5.4 | Verify shared or default accounts are not present (e.g. "root", "admin", or "sa"). | partiel | comptes nominatifs (lots 2-4) ; MAIS le jeton « console » de la DÉMO est un secret partagé qui peut incarner chaque membre (audit des lots 6-8) |
 | V2.5.5 | Verify that if an authentication factor is changed or replaced, that the user is notified of this event. | partiel | remplacement du second facteur journalisé (ADMIN_ACTION « remplacer_totp ») ; pas encore d'avis envoyé au membre |
 | V2.5.6 | Verify forgotten password, and other recovery paths use a secure recovery mechanism, such as time-based OTP (TOTP) or other soft token, mobile push, or another … | non évaluée |  |
 | V2.5.7 | Verify that if OTP or multi-factor authentication factors are lost, that evidence of identity proofing is performed at the same level as during enrollment. | non évaluée |  |
@@ -100,22 +100,22 @@
 | V2.10.2 | Verify that if passwords are required for service authentication, the service account used is not a default credential. (e.g. root/root or admin/admin are defau… | non évaluée |  |
 | V2.10.3 | Verify that passwords are stored with sufficient protection to prevent offline recovery attacks, including local system access. | non évaluée |  |
 | V2.10.4 | Verify passwords, integrations with databases and third-party systems, seeds and internal secrets, and API keys are managed securely and not included in the sou… | conforme | secrets par l'environnement seulement (CONFIGURATION.md, verifier_secrets, test_le_depot_est_propre) |
-| V3.1.1 | Verify the application never reveals session tokens in URL parameters. | conforme | session en en-tête (X-Pulse-Compte / X-Pulse-Session), jamais dans l'adresse ; /espace la retire (AUDIT_LOT23 M5) |
+| V3.1.1 | Verify the application never reveals session tokens in URL parameters. | partiel | comptes : session en en-tête ; MAIS le téléphone de la démo accepte ?session= (régie, app.html) — audit des lots 6-8 |
 | V3.2.1 | Verify the application generates a new session token on user authentication. | conforme | nouvelle session à chaque acceptation (comptes.accepter) |
 | V3.2.2 | Verify that session tokens possess at least 64 bits of entropy. | conforme | identifiant de session secrets.token_urlsafe(12) = 96 bits, signé HMAC-SHA256 |
 | V3.2.3 | Verify the application only stores session tokens in the browser using secure methods such as appropriately secured cookies (see section 3.4) or HTML 5 session … | partiel | sessionStorage (onglet seulement), pas de cookie ; un script injecté pourrait la lire (pas de cookie HttpOnly) |
 | V3.2.4 | Verify that session tokens are generated using approved cryptographic algorithms. | conforme | HMAC-SHA256 (comptes._mac) |
-| V3.3.1 | Verify that logout and expiration invalidate the session token, such that the back button or a downstream relying party does not resume an authenticated session… | conforme | déconnexion et expiration invalident la session (test_sessions_appareils_et_deconnexion) |
-| V3.3.2 | If authenticators permit users to remain logged in, verify that re-authentication occurs periodically both when actively used or after an idle period. | conforme | session de 30 jours ; la console exige une élévation par code valable 12 h |
+| V3.3.1 | Verify that logout and expiration invalidate the session token, such that the back button or a downstream relying party does not resume an authenticated session… | partiel | comptes : déconnexion et expiration (test_sessions_appareils_et_deconnexion) ; sessions de membre de la démo sans état côté serveur |
+| V3.3.2 | If authenticators permit users to remain logged in, verify that re-authentication occurs periodically both when actively used or after an idle period. | partiel | console : élévation de 12 h ; MAIS session de compte de 30 jours sans délai d'inactivité (le niveau 2 demande 12 h ou 30 min d'inactivité) |
 | V3.3.3 | Verify that the application gives the option to terminate all other active sessions after a successful password change (including change via password reset/reco… | non évaluée |  |
-| V3.3.4 | Verify that users are able to view and (having re-entered login credentials) log out of any or all currently active sessions and devices. | conforme | liste des appareils et déconnexion de chacun (test_sessions_appareils_et_deconnexion) |
+| V3.3.4 | Verify that users are able to view and (having re-entered login credentials) log out of any or all currently active sessions and devices. | partiel | comptes : liste et déconnexion des appareils ; pas pour les sessions de membre de la démo |
 | V3.4.1 | Verify that cookie-based session tokens have the 'Secure' attribute set. | sans objet | aucun cookie de session (en-tête) |
 | V3.4.2 | Verify that cookie-based session tokens have the 'HttpOnly' attribute set. | sans objet | aucun cookie de session (en-tête) |
 | V3.4.3 | Verify that cookie-based session tokens utilize the 'SameSite' attribute to limit exposure to cross-site request forgery attacks. | sans objet | aucun cookie de session (en-tête) |
 | V3.4.4 | Verify that cookie-based session tokens use the "__Host-" prefix so cookies are only sent to the host that initially set the cookie. | sans objet | aucun cookie de session (en-tête) |
 | V3.4.5 | Verify that if the application is published under a domain name with other applications that set or use session cookies that might disclose the session cookies,… | sans objet | aucun cookie de session (en-tête) |
 | V3.5.1 | Verify the application allows users to revoke OAuth tokens that form trust relationships with linked applications. | non évaluée |  |
-| V3.5.2 | Verify the application uses session tokens rather than static API secrets and keys, except with legacy implementations. | conforme | sessions par personne ; le jeton « console » de la DÉMO reste un secret partagé (hors lots année 1) |
+| V3.5.2 | Verify the application uses session tokens rather than static API secrets and keys, except with legacy implementations. | partiel | sessions par personne pour les comptes ; le jeton « console » de la DÉMO reste un secret partagé |
 | V3.5.3 | Verify that stateless session tokens use digital signatures, encryption, and other countermeasures to protect against tampering, enveloping, replay, null cipher… | conforme | jeton de session signé HMAC, expiration couverte par la signature |
 | V3.7.1 | Verify the application ensures a full, valid login session or requires re-authentication or secondary verification before allowing any sensitive transactions or… | conforme | actions d'administration : session élevée par un code exigée (AUDIT_LOT23 I1) |
 | V4.1.1 | Verify that the application enforces access control rules on a trusted service layer, especially if client-side access control is present and could be bypassed. | conforme | contrôles côté serveur ; balayage automatique de chaque route (test_autorisation_balayage.py) |
@@ -189,11 +189,11 @@
 | V8.2.1 | Verify the application sets sufficient anti-caching headers so that sensitive data is not cached in modern browsers. | conforme | Cache-Control: no-store sur les données personnelles et les pages des lots |
 | V8.2.2 | Verify that data stored in browser storage (such as localStorage, sessionStorage, IndexedDB, or cookies) does not contain sensitive data. | partiel | seule la session est en sessionStorage ; aucune donnée personnelle stockée côté navigateur |
 | V8.2.3 | Verify that authenticated data is cleared from client storage, such as the browser DOM, after the client or session is terminated. | non évaluée |  |
-| V8.3.1 | Verify that sensitive data is sent to the server in the HTTP message body or headers, and that query string parameters from any HTTP verb do not contain sensiti… | conforme | données sensibles en corps ou en-tête ; invitation et désinscription dans le fragment (#), jamais envoyé au serveur |
+| V8.3.1 | Verify that sensitive data is sent to the server in the HTTP message body or headers, and that query string parameters from any HTTP verb do not contain sensiti… | partiel | invitation et désinscription dans le fragment (#) ; MAIS ?jure=, ?code=, ?session= dans des adresses de la démo |
 | V8.3.2 | Verify that users have a method to remove or export their data on demand. | conforme | export et suppression définitive (lot 3, test_annee1_espace_membre*.py, test_annee1_audit_lot23.py) |
 | V8.3.3 | Verify that users are provided clear language regarding collection and use of supplied personal information and that users have provided opt-in consent for the … | partiel | politique de confidentialité FR/DE rédigée — à valider par un juriste (conformite/) |
 | V8.3.4 | Verify that all sensitive data created and processed by the application has been identified, and ensure that a policy is in place on how to deal with sensitive … | partiel | registre des traitements (conformite/REGISTRE_TRAITEMENTS.md) — à valider par un juriste |
-| V8.3.5 | Verify accessing sensitive data is audited (without logging the sensitive data itself), if the data is collected under relevant data protection directives or wh… | conforme | journal des accès à la console, sans les données (test_chaque_consultation_de_la_console_est_journalisee) |
+| V8.3.5 | Verify accessing sensitive data is audited (without logging the sensitive data itself), if the data is collected under relevant data protection directives or wh… | partiel | console du secrétariat et administration journalisées, refus compris ; la console de DÉMO (jeton partagé) ne l'est pas |
 | V8.3.6 | Verify that sensitive information contained in memory is overwritten as soon as it is no longer required to mitigate memory dumping attacks, using zeroes or ran… | non évaluée |  |
 | V8.3.7 | Verify that sensitive or private information that is required to be encrypted, is encrypted using approved algorithms that provide both confidentiality and inte… | non évaluée |  |
 | V8.3.8 | Verify that sensitive personal information is subject to data retention classification, such that old or out of date data is deleted automatically, on a schedul… | non conforme | durées de conservation proposées dans le registre, pas encore appliquées automatiquement |

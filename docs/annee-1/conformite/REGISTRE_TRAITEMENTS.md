@@ -1,7 +1,7 @@
 # Registre des activités de traitement — Club Pulse
 
 > **À VALIDER PAR UN JURISTE.** Modèle rédigé par l'équipe, pas un avis juridique. Base : loi fédérale sur la
-> protection des données (nLPD, RS 235.1), art. 12 ; pour les membres frontaliers, RGPD art. 30. **Construit —
+> protection des données (nLPD, RS 235.1), art. 12 ; pour les personnes dans l'Union européenne visées par le traitement (RGPD art. 3 al. 2, à évaluer), RGPD art. 30. **Construit —
 > branche `annee-1`, pas dans la démo** : aucun membre réel n'a encore été traité.
 
 Responsable du traitement : *[le Club — raison sociale, adresse, contact protection des données : à compléter]*.

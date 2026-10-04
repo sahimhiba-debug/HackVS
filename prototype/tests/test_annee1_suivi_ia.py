@@ -33,14 +33,21 @@ def test_eteint_rien_n_est_ecrit(demo, monkeypatch):
 def test_taux_d_acceptation_par_source(demo, monkeypatch):
     monkeypatch.setenv("HACKVS_SUIVI_IA", "1")
     c = demo.club
-    membres = [md.PAULINE, md.MARKUS, md.SOPHIE, "s02", "s03"]
+    membres, vues = [], set()                       # 7 membres de 7 entreprises distinctes
+    for p in c.r.profils:
+        e = c.coffre.cle_entreprise(p.id)
+        if e not in vues and c.coffre.identite(p.id):
+            vues.add(e)
+            membres.append(p.id)
+        if len(membres) == 7:
+            break
     for i, pid in enumerate(membres):
         p = c.demander(pid, f"Je cherche une salle pour {20 + i} personnes à Martigny jeudi soir.")
         if i < 4:
-            c.confirmer_demande(pid, p["proposition"])               # 4 acceptées, 1 abandonnée (reformulée ou non publiée)
+            c.confirmer_demande(pid, p["proposition"])               # 4 acceptées (4 entreprises), 3 non (3 entreprises)
     t = suivi_ia.taux(c)
     regles = t["par_source"]["regles"]                             # sans clé d'IA : le repli déterministe
-    assert regles["proposees"] == 5 and regles["acceptees"] == 4 and regles["taux"] == 80
+    assert regles["proposees"] == 7 and regles["acceptees"] == 4 and regles["taux"] == 57
     assert "modele" in t["par_source"] and t["par_source"]["modele"]["proposees"] == 0
     brut = json.dumps(t, ensure_ascii=False)
     assert "Pauline" not in brut and "salle pour" not in brut      # décomptes seulement

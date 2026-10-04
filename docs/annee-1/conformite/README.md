@@ -16,4 +16,6 @@
 
 Dans le code : reçus alignés ISO/IEC TS 27560 exportés en JSON-LD (termes DPV vérifiés, `test_annee1_dpv.py`) ;
 journal des accès à la console (`/api/pulse/secretariat/acces`, administration seulement) ; en-têtes de sécurité
-(CSP, nosniff, Referrer-Policy, Permissions-Policy, COOP, X-Frame-Options ; HSTS si `HACKVS_HSTS=1`).
+(CSP, nosniff, Referrer-Policy, Permissions-Policy, COOP, X-Frame-Options ; HSTS si `HACKVS_HSTS=1`, sans
+`includeSubDomains`). Le journal des accès couvre la console du secrétariat et l'administration, refus compris ; il ne
+couvre pas la console de DÉMONSTRATION (jeton partagé).

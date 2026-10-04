@@ -17,6 +17,7 @@
 
 **Limites, dites telles quelles.** La mise en relation ne lit pas encore le club d'une demande : toutes les demandes
 restent celles du club principal (`peut_etre_sollicite` est la règle prête à brancher). « À distance » est déclaré et
-compté, pas encore utilisé pour choisir qui solliciter. La couche de traduction couvre les libellés du téléphone
-(« Mon espace », la console et les pages du secrétariat restent en français) ; les textes des membres restent dans leur
+compté, pas encore utilisé pour choisir qui solliciter. La couche de traduction couvre le dictionnaire du téléphone (environ 55 libellés) : beaucoup de textes restent en
+français, et « Mon espace », la console et les pages du secrétariat aussi. L'anglais n'est servi que si l'interrupteur
+est allumé (audit des lots 6-8) ; les textes des membres restent dans leur
 langue.

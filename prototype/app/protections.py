@@ -123,7 +123,8 @@ class Protections:
                 elif chemin in self.chemins_csp or chemin.rstrip("/") in self.chemins_csp:
                     h.append((b"content-security-policy", self.csp))
                 if os.environ.get("HACKVS_HSTS") == "1":      # ANNÉE 1 · lot 6 : derrière HTTPS seulement (production)
-                    h.append((b"strict-transport-security", b"max-age=31536000; includeSubDomains"))
+                    h.append((b"strict-transport-security", b"max-age=31536000"))   # sans includeSubDomains : le Club
+                    #                                                                  peut avoir d'autres sous-domaines
                 if chemin.startswith("/api/pulse/"):
                     h.append((b"cache-control", b"no-store"))    # données personnelles : jamais en cache intermédiaire
                 m["headers"] = h
