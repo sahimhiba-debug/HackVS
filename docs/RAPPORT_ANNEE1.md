@@ -98,7 +98,7 @@ le JSON-LD d'un reçu) ne valait pas le risque. Aucune ligne de la voie produit 
 
 ## 7. À faire par Hiba, après le pitch
 
-- **Fusionner `foire-2026` dans `main`** et **poser le tag** (aucun tag n'a été posé, rien n'a été poussé sur `main`).
+- **Fusionner `foire-2026` dans `main`** et **poser le tag** (aucun tag n'a été posé cette nuit — les tags existants `gel-demo` et `technical-freeze-v1` datent des 29.09 et 02.10 —, rien n'a été poussé sur `main`).
   Attention : il n'existe pas de branche `main` sur le dépôt distant (branches : `foire-2026`, `pitch-stable`,
   `annee-1`, `audit-nuit`, et la branche par défaut `claude/modest-bohr-xvk53n`) — choisir la branche cible avant de
   fusionner.
