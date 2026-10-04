@@ -15,8 +15,8 @@ yeux, et on dit : « On s'appelle. »
 Levez la main si vous avez déjà dit « on s'appelle » en donnant votre carte. [On attend les mains.] Gardez-la levée si
 vous avez vraiment appelé. [Rires.] Merci. Ici, personne ne juge.
 
-Ce matin, le Club nous a dit quelque chose de très simple. / Entre deux événements, il ne sait jamais où en sont les
-partenariats. [clic] Cette nuit, on a construit de quoi le savoir.
+Hier, Émilie nous a dit quelque chose de très simple. / Entre deux événements, il ne sait jamais où en sont les
+partenariats. [clic] On y a travaillé jusqu'au soir. Et on a construit de quoi le savoir.
 
 Dans le monde des salons, on entend souvent que la plupart des contacts ne sont jamais rappelés. / Ce chiffre,
 personne ne peut le vérifier. [clic] Et c'est bien ça, le problème. / L'après, personne ne le mesure.
@@ -76,7 +76,7 @@ comptent le plus. Pas les proches.
 
 Maintenant, ce qu'on a vraiment prouvé. Rien de plus. [clic] Chaque oui laisse un reçu. Daté, numéroté, et on peut le
 retirer. [clic] On a simulé 80 téléphones en même temps : zéro erreur. / C'était sur notre machine, on le précise.
-[clic] 21 réponses nous sont arrivées par le QR code de la Foire. / Seule notre IA suisse lit ces phrases, et on ne
+[clic] Hier, on a reçu 21 vraies demandes avec le QR code de la Foire. / Seule notre IA suisse lit ces demandes, et on ne
 montre que des totaux. [clic] Justement, l'IA. C'est Apertus, l'IA suisse, servie par le CSCS, le centre de calcul de
 Lugano. Sur 26 tests écrits à l'avance, elle a trouvé la bonne réponse… une fois. [lentement] Une fois sur 26. Et ça
 ne change rien pour le Club. Quand elle se trompe, nos règles l'arrêtent, et le membre remplit le formulaire. Avec ou

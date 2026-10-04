@@ -13,7 +13,7 @@ membre, aucune phrase Tally, aucun partenaire présenté comme acquis.
 | # | id | Acte | Ce qu'on voit | Source |
 |---|---|---|---|---|
 | 1 | `1` | 1 | la carte de Sophie (fictive) | — |
-| 2 | `matin` | 1 | « Ce matin, vous nous avez dit… » / « Cette nuit, nous l'avons construit. » | — |
+| 2 | `matin` | 1 | « Hier, vous nous avez dit… » / « On y a travaillé jusqu'au soir. Et on a construit de quoi le savoir. » | — |
 | 3 | `stat` | 1 | « La statistique la plus citée du monde des salons est invérifiable. » / « personne ne mesure l'après. » | american-image.com, PREUVES « Contexte » |
 | 4 | `2` | 1 | Et après ? (1/3) | — |
 | 5 | `cinema` | 2 | carton « Cette année, la Foire fait son cinéma. Nous aussi. » | — |

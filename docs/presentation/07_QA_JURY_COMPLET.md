@@ -35,7 +35,7 @@ Réponses à dire en 15 à 30 secondes. « Preuve » et « Ne pas dire » sont p
 
 **Q** : Vous dites que personne ne mesure l'après. Vous, comment vous le mesurez ?
 
-**Réponse (15–30 s à l'oral)** : Chaque oui laisse un reçu. Le reçu passe par quatre étapes : accord, essai, résultat, ou retiré. C'est le Club qui déclare le résultat : signé, test sans suite, contact établi, abandonné. L'écran Suivi compte tout ça, en agrégats. Ce soir, les chiffres viennent d'un monde fictif. Les vrais chiffres viendront du pilote.
+**Réponse (15–30 s à l'oral)** : Chaque oui laisse un reçu. Le reçu passe par quatre étapes : accord, essai, résultat, ou retiré. C'est le Club qui déclare le résultat : signé, test sans suite, contact établi, abandonné. L'écran Suivi compte tout ça, en agrégats. Aujourd'hui, les chiffres viennent d'un monde fictif. Les vrais chiffres viendront du pilote.
 
 **Preuve** : CLAIMS n° 47 (test_foire_suivi.py::test_machine_a_etats_explicite) ; n° 43 ; docs/roadmap/SUIVI_METRIQUES.md
 
@@ -81,9 +81,9 @@ Réponses à dire en 15 à 30 secondes. « Preuve » et « Ne pas dire » sont p
 
 **Ne pas dire** : « Ça ne peut pas planter. »
 
-### 7. Les visiteurs qui scannent votre QR ce soir : vous gardez leurs données ?
+### 7. Les visiteurs qui scannent votre QR aujourd'hui : vous gardez leurs données ?
 
-**Q** : Les visiteurs qui scannent votre QR ce soir : vous gardez leurs données ?
+**Q** : Les visiteurs qui scannent votre QR aujourd'hui : vous gardez leurs données ?
 
 **Réponse (15–30 s à l'oral)** : Non. Aucun nom, aucun compte : chaque scan donne un passe de deux heures. Après la présentation, une commande efface tout : participants, réponses, reçus. La clé change, donc les anciens QR ne marchent plus. Et chaque écran le dit : « vos données sont effacées après la présentation ».
 
@@ -193,9 +193,9 @@ Ce qui l'intéresse : où tournent les données, le tunnel, la console, la charg
 
 Réponses à dire en 15 à 30 secondes. « Preuve » et « Ne pas dire » sont pour nous, pas pour l'oral.
 
-### 1. Ce soir, concrètement, où tourne la démo et où sont les données ? · TOP 20 n° 4
+### 1. Aujourd'hui, concrètement, où tourne la démo et où sont les données ? · TOP 20 n° 4
 
-**Q** : Ce soir, concrètement, où tourne la démo et où sont les données ?
+**Q** : Aujourd'hui, concrètement, où tourne la démo et où sont les données ?
 
 **Réponse (15–30 s à l'oral)** : Sur notre machine, ici à Martigny. Le serveur n'écoute que sur la machine elle-même ; un tunnel chiffré lui donne une adresse publique. Le tunnel principal, c'est Tailscale Funnel ; en secours, Cloudflare. On n'a pas de budget d'hébergement pour la Foire. Le pilote, lui, serait hébergé en Suisse : ce n'est pas encore fait.
 
@@ -485,7 +485,7 @@ Réponses à dire en 15 à 30 secondes. « Preuve » et « Ne pas dire » sont p
 
 **Q** : Votre « moins de trois », c'est vraiment du k-anonymat ?
 
-**Réponse (15–30 s à l'oral)** : C'est un seuil d'affichage, pas une garantie mathématique sur toute la base. Tout chiffre qui vient de moins de trois entreprises distinctes s'affiche « moins de trois ». Un rôle porté par moins de trois n'est jamais dit dans un avis de retrait. Ça empêche de compter, pas toujours de deviner. En salle ce soir, le seuil porte sur des passes : la salle est anonyme, et purgée après.
+**Réponse (15–30 s à l'oral)** : C'est un seuil d'affichage, pas une garantie mathématique sur toute la base. Tout chiffre qui vient de moins de trois entreprises distinctes s'affiche « moins de trois ». Un rôle porté par moins de trois n'est jamais dit dans un avis de retrait. Ça empêche de compter, pas toujours de deviner. En salle aujourd'hui, le seuil porte sur des passes : la salle est anonyme, et purgée après.
 
 **Preuve** : CLAIMS n° 41, 43, 92 ; docs/roadmap/FINANCEMENT_JURIDIQUE.md (seuil en entreprises distinctes) ; docs/RAPPORT_NUIT.md (Audit, constat 11, « dit, non corrigé »)
 
@@ -505,15 +505,15 @@ Réponses à dire en 15 à 30 secondes. « Preuve » et « Ne pas dire » sont p
 
 **Q** : Qui sont vos sous-traitants ? Le CSCS, le tunnel, l'hébergeur, l'e-mail ?
 
-**Réponse (15–30 s à l'oral)** : Pour le pilote, on ne prévoit aucun transfert hors de Suisse. Le modèle d'IA est servi par le CSCS, à Lugano : ses conditions sont à vérifier. Hébergeur et e-mails : pas encore choisis. Ce soir, la démo passe par un tunnel : avec Tailscale Funnel, le relais ne peut pas lire les données ; avec le secours Cloudflare, il le peut techniquement. Les contrats avec ces tiers : pas encore faits, c'est pour l'analyse d'impact.
+**Réponse (15–30 s à l'oral)** : Pour le pilote, on ne prévoit aucun transfert hors de Suisse. Le modèle d'IA est servi par le CSCS, à Lugano : ses conditions sont à vérifier. Hébergeur et e-mails : pas encore choisis. Aujourd'hui, la démo passe par un tunnel : avec Tailscale Funnel, le relais ne peut pas lire les données ; avec le secours Cloudflare, il le peut techniquement. Les contrats avec ces tiers : pas encore faits, c'est pour l'analyse d'impact.
 
 **Preuve** : docs/conformite/REGISTRE_TRAITEMENTS.md (Transferts hors de Suisse) ; docs/roadmap/ROADMAP.md (Jalon 1) ; docs/DEMO_TUNNEL.md ; CLAIMS n° 84
 
 **Ne pas dire** : « Aucun tiers ne voit rien » ; « le relais ne peut pas lire » sans préciser le tunnel ; « Public AI ».
 
-### 7. Les jurés qui scannent ce soir : où est l'information, et peuvent-ils retirer leur accord ?
+### 7. Les jurés qui scannent aujourd'hui : où est l'information, et peuvent-ils retirer leur accord ?
 
-**Q** : Les jurés qui scannent ce soir : où est l'information, et peuvent-ils retirer leur accord ?
+**Q** : Les jurés qui scannent aujourd'hui : où est l'information, et peuvent-ils retirer leur accord ?
 
 **Réponse (15–30 s à l'oral)** : Aucun nom, aucun compte : chaque scan donne un passe de deux heures. Sans consentement, rien n'est déclaré. Chaque écran dit que tout est effacé après la présentation, et la purge est testée. Une limite qu'on connaît : en salle, on ne peut retirer qu'après avoir dit oui. Ce sera corrigé après le gel.
 

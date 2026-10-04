@@ -13,7 +13,7 @@ Personne, en vrai : monde fictif de 150 profils, dit sur chaque écran. Le seul 
 **3. Avec 145 entreprises, on finira toujours par deviner qui a dit non.** _(Comité du Club des Affaires)_  
 Parfois, oui, on ne promet pas le contraire. Garanti et testé : jamais de nom, jamais de « pourquoi », et sous trois entreprises distinctes l'écran dit « moins de trois ».
 
-**4. Ce soir, concrètement, où tourne la démo et où sont les données ?** _(Expert technique)_  
+**4. Aujourd'hui, concrètement, où tourne la démo et où sont les données ?** _(Expert technique)_  
 Sur notre machine, à Martigny, via un tunnel chiffré (Tailscale Funnel ; secours Cloudflare). Pas de budget d'hébergement pour la Foire ; le pilote serait hébergé en Suisse, pas encore fait.
 
 **5. Quel est votre modèle économique ? Qui paie ?** _(Financeur)_  

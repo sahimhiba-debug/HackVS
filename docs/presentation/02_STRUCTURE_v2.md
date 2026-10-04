@@ -10,7 +10,7 @@ La fin tombe toujours à 18:00.
 
 | Acte | Temps | Durée | Ce qui se passe | Slides (deck v2) | Qui |
 |---|---|---|---|---|---|
-| 1 | 0:00–2:00 | 2:00 | **La carte.** Mains levées. « Ce matin, vous nous avez dit… Cette nuit, nous l'avons construit. » « La statistique la plus citée du monde des salons est invérifiable. Et c'est exactement le problème : personne ne mesure l'après. » « Et après ? » (1/3) | 1, matin, stat, 2 | V1 |
+| 1 | 0:00–2:00 | 2:00 | **La carte.** Mains levées. « Hier, vous nous avez dit… On y a travaillé jusqu'au soir. Et on a construit de quoi le savoir. » « La statistique la plus citée du monde des salons est invérifiable. Et c'est exactement le problème : personne ne mesure l'après. » « Et après ? » (1/3) | 1, matin, stat, 2 | V1 |
 | 2 | 2:00–5:30 | 3:30 | « Cette année, la Foire fait son cinéma. Nous aussi. » **Le film** (3:21), puis « Jean-Marc a dit oui. Et après ? » (2/3) | cinema, film, 8 | V1 |
 | 3 | 5:30–9:30 | 4:00 | **« Sortez vos téléphones. »** Mode salle : QR en direct, deux gestes, constellation sur l'écran géant ; la demande part, les oui ferment l'anneau, un retrait simulé, la réserve recompose, tableau final | salle, constellation (+ écran géant en direct) | V1 parle, V2 régie |
 | 4 | 9:30–12:15 | 2:45 | **Le côté Club.** Le Club cherche → passe découverte (exposant invité d'Annecy) → Suivi (« < 3 ») ; **Votre Club en chiffres** (145 / 173, 8 sur 9, la pièce qui manque) ; **Ce que votre Club pourrait assembler** ; la carte → profil **seulement si 5/5** | cote-club, cherche, chiffres-club, assembler, (carte-profil) | V1 |

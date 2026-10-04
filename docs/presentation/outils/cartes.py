@@ -23,7 +23,7 @@ BOUTONS = [  # (minute, libellé exact du bouton, ce qu'on doit voir)
     ("9:00", "4 · Afficher le bilan (Suivi de la salle)", "le tableau final ; V1 conclut et avance"),
 ]
 PANNES = [
-    ("L'écran du deck dit « ne répond pas », ou reste noir", "Faire signe à V1 : <b>touche B</b> — la vidéo de 30 s. V1 dit : « Voici ce que vous auriez vu — une séance simulée, enregistrée hier soir. »"),
+    ("L'écran du deck dit « ne répond pas », ou reste noir", "Faire signe à V1 : <b>touche B</b> — la vidéo de 30 s. V1 dit : « Voici ce que vous auriez vu — une séance simulée, enregistrée hier. »"),
     ("Rien ne bouge après le bouton 2", "Faire signe à V1 : <b>⌘-R</b> (le deck recharge et revient sur la même slide). Toujours rien : <b>touche B</b>."),
     ("Moins de 5 téléphones une minute après « 1 bis »", "Ne rien faire : la démonstration scriptée prend le relais seule (bandeau « démonstration scriptée dans 5 s »)."),
     ("Aucun « oui » sur une pièce", "Répondre <b>Oui</b> avec ton téléphone de secours (QR scanné avant le pitch)."),

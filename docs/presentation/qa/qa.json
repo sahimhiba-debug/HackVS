@@ -10,7 +10,7 @@
   {
     "jury": "Direction de la Foire du Valais",
     "q": "Vous dites que personne ne mesure l'après. Vous, comment vous le mesurez ?",
-    "r": "Chaque oui laisse un reçu. Le reçu passe par quatre étapes : accord, essai, résultat, ou retiré. C'est le Club qui déclare le résultat : signé, test sans suite, contact établi, abandonné. L'écran Suivi compte tout ça, en agrégats. Ce soir, les chiffres viennent d'un monde fictif. Les vrais chiffres viendront du pilote.",
+    "r": "Chaque oui laisse un reçu. Le reçu passe par quatre étapes : accord, essai, résultat, ou retiré. C'est le Club qui déclare le résultat : signé, test sans suite, contact établi, abandonné. L'écran Suivi compte tout ça, en agrégats. Aujourd'hui, les chiffres viennent d'un monde fictif. Les vrais chiffres viendront du pilote.",
     "preuve": "CLAIMS n° 47 (test_foire_suivi.py::test_machine_a_etats_explicite) ; n° 43 ; docs/roadmap/SUIVI_METRIQUES.md",
     "ne_pas_dire": "« 80 % des contacts de salon ne sont jamais rappelés. » (statistique contestée, invérifiable — PREUVES.md, section Contexte)",
     "top20": false
@@ -49,7 +49,7 @@
   },
   {
     "jury": "Direction de la Foire du Valais",
-    "q": "Les visiteurs qui scannent votre QR ce soir : vous gardez leurs données ?",
+    "q": "Les visiteurs qui scannent votre QR aujourd'hui : vous gardez leurs données ?",
     "r": "Non. Aucun nom, aucun compte : chaque scan donne un passe de deux heures. Après la présentation, une commande efface tout : participants, réponses, reçus. La clé change, donc les anciens QR ne marchent plus. Et chaque écran le dit : « vos données sont effacées après la présentation ».",
     "preuve": "CLAIMS n° 67, 73 (test_salle.py::test_purge_totale…, E2E test_e2e_salle.py)",
     "ne_pas_dire": "« On n'a collecté aucune donnée. » (on en collecte pendant la séance, puis on purge) ; « on vous recontactera ».",
@@ -129,7 +129,7 @@
   },
   {
     "jury": "Expert technique",
-    "q": "Ce soir, concrètement, où tourne la démo et où sont les données ?",
+    "q": "Aujourd'hui, concrètement, où tourne la démo et où sont les données ?",
     "r": "Sur notre machine, ici à Martigny. Le serveur n'écoute que sur la machine elle-même ; un tunnel chiffré lui donne une adresse publique. Le tunnel principal, c'est Tailscale Funnel ; en secours, Cloudflare. On n'a pas de budget d'hébergement pour la Foire. Le pilote, lui, serait hébergé en Suisse : ce n'est pas encore fait.",
     "preuve": "docs/DEMO_TUNNEL.md ; CLAIMS n° 83 (classe B : vrai le jour J seulement si lancé ainsi) ; docs/roadmap/ROADMAP.md (Jalon 1)",
     "ne_pas_dire": "« C'est hébergé dans un cloud suisse » ; « c'est en production ».",
@@ -346,7 +346,7 @@
   {
     "jury": "Juriste données",
     "q": "Votre « moins de trois », c'est vraiment du k-anonymat ?",
-    "r": "C'est un seuil d'affichage, pas une garantie mathématique sur toute la base. Tout chiffre qui vient de moins de trois entreprises distinctes s'affiche « moins de trois ». Un rôle porté par moins de trois n'est jamais dit dans un avis de retrait. Ça empêche de compter, pas toujours de deviner. En salle ce soir, le seuil porte sur des passes : la salle est anonyme, et purgée après.",
+    "r": "C'est un seuil d'affichage, pas une garantie mathématique sur toute la base. Tout chiffre qui vient de moins de trois entreprises distinctes s'affiche « moins de trois ». Un rôle porté par moins de trois n'est jamais dit dans un avis de retrait. Ça empêche de compter, pas toujours de deviner. En salle aujourd'hui, le seuil porte sur des passes : la salle est anonyme, et purgée après.",
     "preuve": "CLAIMS n° 41, 43, 92 ; docs/roadmap/FINANCEMENT_JURIDIQUE.md (seuil en entreprises distinctes) ; docs/RAPPORT_NUIT.md (Audit, constat 11, « dit, non corrigé »)",
     "ne_pas_dire": "« Anonymat garanti » ; « k-anonymat au sens strict ».",
     "top20": false
@@ -362,14 +362,14 @@
   {
     "jury": "Juriste données",
     "q": "Qui sont vos sous-traitants ? Le CSCS, le tunnel, l'hébergeur, l'e-mail ?",
-    "r": "Pour le pilote, on ne prévoit aucun transfert hors de Suisse. Le modèle d'IA est servi par le CSCS, à Lugano : ses conditions sont à vérifier. Hébergeur et e-mails : pas encore choisis. Ce soir, la démo passe par un tunnel : avec Tailscale Funnel, le relais ne peut pas lire les données ; avec le secours Cloudflare, il le peut techniquement. Les contrats avec ces tiers : pas encore faits, c'est pour l'analyse d'impact.",
+    "r": "Pour le pilote, on ne prévoit aucun transfert hors de Suisse. Le modèle d'IA est servi par le CSCS, à Lugano : ses conditions sont à vérifier. Hébergeur et e-mails : pas encore choisis. Aujourd'hui, la démo passe par un tunnel : avec Tailscale Funnel, le relais ne peut pas lire les données ; avec le secours Cloudflare, il le peut techniquement. Les contrats avec ces tiers : pas encore faits, c'est pour l'analyse d'impact.",
     "preuve": "docs/conformite/REGISTRE_TRAITEMENTS.md (Transferts hors de Suisse) ; docs/roadmap/ROADMAP.md (Jalon 1) ; docs/DEMO_TUNNEL.md ; CLAIMS n° 84",
     "ne_pas_dire": "« Aucun tiers ne voit rien » ; « le relais ne peut pas lire » sans préciser le tunnel ; « Public AI ».",
     "top20": false
   },
   {
     "jury": "Juriste données",
-    "q": "Les jurés qui scannent ce soir : où est l'information, et peuvent-ils retirer leur accord ?",
+    "q": "Les jurés qui scannent aujourd'hui : où est l'information, et peuvent-ils retirer leur accord ?",
     "r": "Aucun nom, aucun compte : chaque scan donne un passe de deux heures. Sans consentement, rien n'est déclaré. Chaque écran dit que tout est effacé après la présentation, et la purge est testée. Une limite qu'on connaît : en salle, on ne peut retirer qu'après avoir dit oui. Ce sera corrigé après le gel.",
     "preuve": "CLAIMS n° 67, 68, 73 (test_salle.py) ; docs/RAPPORT_NUIT.md (Audit, constat 20) ; page /confidentialite (CLAIMS n° 94, « à valider par un juriste »)",
     "ne_pas_dire": "« Ils peuvent tout retirer à tout moment » ; « on ne collecte rien ».",

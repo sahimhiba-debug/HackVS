@@ -225,7 +225,7 @@ Pour régénérer la version imprimable après une modification du script :
 
 | Acte | Chrono | Durée | V1 dit | V2 fait |
 |---|---|---|---|---|
-| 1 · La carte | 0:00–2:00 | 2:00 | la carte, les mains levées, « Ce matin… Cette nuit, nous l'avons construit », la statistique, « Et après ? » | — |
+| 1 · La carte | 0:00–2:00 | 2:00 | la carte, les mains levées, « Hier, vous nous avez dit… On y a travaillé jusqu'au soir. Et on a construit de quoi le savoir. », la statistique, « Et après ? » | — |
 | 2 · Le film | 2:00–5:30 | 3:30 | « Cette année, la Foire fait son cinéma. Nous aussi… Il s'appelle Jean-Marc. » — silence pendant le film (3:21) — « Jean-Marc a dit oui. Et après ? » | — |
 | 3 · Sortez vos téléphones | 5:30–9:30 | 4:00 | les deux gestes, « En dessous de trois… », la demande, le retrait simulé, le tableau final ; V1 passe à la slide « constellation » (l'écran géant y est en direct) | régie : **1 bis** à 5:30 → **2** à 7:30 → **3** à 8:30 → **4** à 9:00 |
 | 4 · Le côté Club | 9:30–12:15 | 2:45 | Le Club cherche / invite / suit ; 145 entreprises, 173 représentants ; 8 sur 9 ; « Votre liste dit ce que le Club pourrait faire… » | manœuvre les écrans réels si on les montre en direct |
@@ -330,7 +330,7 @@ Plans B :
 - **Moins de 5 téléphones une minute après « 1 bis »** : une démonstration scriptée prend le relais toute seule
   (bandeau « démonstration scriptée dans 5 s »).
 - **Plus rien ne marche** : revenir au deck, slide « constellation », touche **B** : la vidéo de 30 s. Dire « Voici
-  ce que vous auriez vu — une séance simulée, enregistrée hier soir. »
+  ce que vous auriez vu — une séance simulée, enregistrée hier. »
 - **Tailscale en panne** : le secours Cloudflare est décrit dans `docs/DEMO_TUNNEL.md` (son adresse change à chaque
   fois ; il faut relancer le Terminal 1 avec la nouvelle adresse). Avec lui, ne **jamais** dire « le relais ne peut
   pas lire les données ».
