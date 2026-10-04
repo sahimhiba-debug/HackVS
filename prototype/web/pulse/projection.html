@@ -124,7 +124,7 @@
       const axe = h("div", { class: "axe" });
       for (let m = t0; m <= t1; m += 60) axe.append(h("span", { style: `left:${((m - t0) / (t1 - t0)) * 100}%` }, `${String(m / 60).padStart(2, "0")}:00`));
       const pistes = p.offres.map((o) => h("div", { class: "piste" }, h("div", { class: "nom" }, o.genre, h("small", {}, "une personne du Club")),
-        h("div", { class: "zone" }, o.fenetres.map((f) => h("div", { class: "barre", style: `left:${pos(f.debut)};width:${larg(f.debut, f.fin)};background:#6b7a90` }, `${f.debut}–${f.fin}`)))));
+        h("div", { class: "zone" }, o.fenetres.map((f) => h("div", { class: "barre", style: `left:${pos(f.debut)};width:${larg(f.debut, f.fin)};background:var(--secondary)` }, `${f.debut}–${f.fin}`)))));
       $("#page").replaceChildren(h("h1", { class: "titre" }, `${p.jour_libelle} : ${p.offres.length} contributions proposées, dispersées`),
         h("p", { class: "phrase attente" }, "Des offres éparses, chacune avec ses horaires. Aucune action n'est montrée ici sans l'accord de sa porteuse."),
         h("div", { class: "ligne-temps large", style: "margin-top:22px" }, axe, ...pistes),

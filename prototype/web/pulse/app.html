@@ -560,8 +560,8 @@
       let assoc = null;
       let rec = null;
       try { if (!(await api("/api/pulse/moi/foire")).actif) return; x = await api("/api/pulse/moi/distance"); assoc = await api("/api/pulse/moi/associe"); rec = await api("/api/pulse/moi/reciprocite"); } catch (e) { return; }
-      const zone = h("select", { id: "dist-zone" }, x.zones.map((z) => h("option", { value: z, selected: x.profil && x.profil.zone === z }, z)));
-      const langue = h("select", { id: "dist-langue" }, x.langues.map((l) => h("option", { value: l, selected: x.profil && x.profil.langue === l }, l === "fr" ? "français" : "Deutsch")));
+      const zone = h("select", { id: "dist-zone", "aria-label": "Ma zone" }, x.zones.map((z) => h("option", { value: z, selected: x.profil && x.profil.zone === z }, z)));
+      const langue = h("select", { id: "dist-langue", "aria-label": "Ma langue" }, x.langues.map((l) => h("option", { value: l, selected: x.profil && x.profil.langue === l }, l === "fr" ? "français" : "Deutsch")));
       const bloc = $("#foire-distance"); if (!bloc) return;
       bloc.replaceChildren(...[sectionCarte(), sectionAnnonces(),
         rec ? section("Ma balance (privée)", h("p", { "data-role": "reciprocite" }, `Donné : ${rec.donne} · Reçu : ${rec.recu}`), h("p", { class: "note" }, rec.prive)) : null,
