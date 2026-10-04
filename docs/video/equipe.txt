@@ -1,4 +1,4 @@
 # La carte de fin de la vidéo. Modifiez les deux lignes ci-dessous, enregistrez, relancez ./docs/video/monter.sh.
 # Prénoms et noms séparés par des virgules ; une seule ligne de contact (e-mail ou téléphone).
-Équipe : Hiba, et toute l'équipe Club Pulse
+Équipe : Équipe Spectrum, Hiba Sahim
 Contact : À COMPLÉTER — votre e-mail
