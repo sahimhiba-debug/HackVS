@@ -1,4 +1,29 @@
-# Club Pulse — le registre vivant de ce que le Club peut faire ensemble (Hack VS 2026)
+# Club Pulse
+
+**Club Pulse transforme les « on s'appelle » de la Foire en vrais coups de main, toute l'année, entre les membres du
+Club des Affaires de la Foire du Valais.**
+
+- **Ce que fait l'application.** Quand un membre a besoin d'aide (un minibus, une salle, un interprète), Club Pulse
+  envoie une demande précise aux seuls membres qui peuvent aider. Ils répondent d'un geste : oui, non, ou pas cette
+  fois. Personne ne voit qui a dit non. Chaque oui laisse un reçu, que le membre peut retirer quand il veut.
+- **Ce que le Club y gagne.** Il voit enfin où en sont les collaborations, toujours en chiffres globaux, jamais avec
+  des noms. Avec sa propre liste (145 entreprises, 173 représentants), il pourrait déjà monter 8 projets types sur 9 :
+  il ne lui manque qu'un interprète, et Club Pulse le montre.
+- **Notre demande.** Un pilote de 45 jours avec 50 membres volontaires, de janvier à mi-février 2027, pendant les
+  Mondiaux de ski de Crans-Montana.
+
+▶ **[Regarder la vidéo de présentation](docs/video/out/club-pulse-presentation.mp4)** (10 min 35 s, sous-titrée) ·
+[le résumé d'une page](docs/video/RESUME_JURY.pdf)
+
+**Démonstration en direct sur demande.**
+
+*La Foire crée la rencontre. Club Pulse crée l'après.* — Équipe Spectrum · Hiba Sahim · Hack VS 2026
+
+---
+
+## Partie technique
+
+### Le registre vivant de ce que le Club peut faire ensemble
 
 **IA → moteur déterministe → décision humaine.** Un modèle de langage peut seulement *proposer* (relever une quantité
 dans une phrase, rapprocher un mot du catalogue, raconter des faits fermés) ; un moteur déterministe compose, vérifie
