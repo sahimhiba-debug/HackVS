@@ -16,6 +16,7 @@ direct ne change pas (`docs/presentation/`).
 | `equipe.txt` | l'équipe et le contact de la carte de fin : **à compléter** |
 | `monter.sh` | le montage, sur le Mac → `out/club-pulse-presentation.mp4` |
 | `RESUME_JURY.pdf` | une page pour le jury : problème, solution, ce qu'y gagne le Club, la demande, l'équipe |
+| `voix_mac.sh` | les 8 voix avec une voix française « Premium » de macOS (commande say) → `voix/` |
 | `outils/` | `video.py` (prompteur, sous-titres, montage, vérifications, secours HTML), `images.py` (refait les clips, pas besoin sur le Mac) |
 
 ## Sur le Mac, étape par étape (voix de synthèse, vrai film)
@@ -30,11 +31,11 @@ direct ne change pas (`docs/presentation/`).
 6. **Regarder en entier, avec le son**, puis envoyer : le MP4 ; si demandé `RESUME_JURY.pdf` ; en secours
    `out/club-pulse-presentation-secours.html` ; `out/club-pulse-presentation.srt` si la plateforme veut les sous-titres à part.
 
-Changer de voix : écouter `voix-synthese/comparaison/`, puis (une fois `pip install sherpa-onnx soundfile numpy`)
-`python3 docs/video/outils/voix_synthese.py` régénère les 8 fichiers. **Plan B** si la voix de synthèse ne vous plaît
-pas : la voix « Premium » de macOS — Réglages Système → Accessibilité → Contenu énoncé → Voix du système → Gérer les
-voix → Français → télécharger « Audrey (Premium) » (ou « Aurélie (Premium) ») — puis
-`python3 docs/video/outils/voix_synthese.py --mac "Audrey (Premium)"` et l'étape 5.
+**Voix Premium de macOS** (au lieu de la synthèse Piper) : `./docs/video/voix_mac.sh` sans argument liste les voix
+françaises installées et dit comment télécharger une voix « Premium » ; `./docs/video/voix_mac.sh "Audrey (Premium)"`
+fabrique `voix/01.m4a` … `08.m4a` (même texte, mêmes corrections de prononciation, pause à chaque « / », débit 165
+mots/min, réglable : `DEBIT=155 ./docs/video/voix_mac.sh "Audrey (Premium)"`), puis l'étape 5. La carte de fin garde
+« Voix de synthèse ». Revenir à Piper : supprimer `voix/0*.m4a` et `voix/.synthese`.
 Votre propre voix, plus tard : `GUIDE_ENREGISTREMENT.md`, les fichiers dans `voix/` passent devant.
 
 Une vérification en `[KO]` :

@@ -153,3 +153,59 @@ def test_la_carte_de_fin_dit_voix_de_synthese(tmp_path):
         f = tmp_path / f"{synth}.ass"
         video._ass([(0.0, 1.0, "Bonjour.")], (5.0, 9.0), f, synthese=synth)
         assert ("Voix de synthèse · texte écrit par l'équipe Spectrum" in f.read_text(encoding="utf-8")) is synth
+
+
+# ── voix_mac.sh : la voix Premium de macOS (say), testée avec de faux say / afconvert ────────────────────────────
+FAUX_SAY = r"""#!/bin/bash
+if [ "$1" = "-v" ] && [ "$2" = "?" ]; then
+  printf 'Alice               it_IT    # Ciao\nAudrey (Premium)    fr_FR    # Bonjour\nThomas              fr_FR    # Bonjour\n'; exit 0; fi
+o=""; while [ $# -gt 1 ]; do case "$1" in -v|-r) echo "$1 $2" >> "$SAY_LOG"; shift 2;; -o) o="$2"; shift 2;; *) break;; esac; done
+echo "TEXTE $*" >> "$SAY_LOG"; printf 'AIFF' > "$o"
+"""
+FAUX_AFCONVERT = r"""#!/bin/bash
+cp "${@: -2:1}" "${@: -1}"
+"""
+
+
+def _mac(tmp_path, *args):
+    import os
+    racine = tmp_path / "depot"
+    shutil.copytree(VIDEO, racine / "docs" / "video", ignore=shutil.ignore_patterns("images", "out", "sources", "*.m4a", "*.pdf"))
+    bin_ = tmp_path / "bin"
+    bin_.mkdir()
+    for nom, contenu in (("say", FAUX_SAY), ("afconvert", FAUX_AFCONVERT)):
+        (bin_ / nom).write_text(contenu)
+        (bin_ / nom).chmod(0o755)
+    env = {**os.environ, "PATH": f"{bin_}:{os.environ['PATH']}", "SAY_LOG": str(tmp_path / "say.log")}
+    r = subprocess.run(["bash", str(racine / "docs" / "video" / "voix_mac.sh"), *args], capture_output=True, text=True, env=env)
+    return r, racine / "docs" / "video" / "voix", tmp_path / "say.log"
+
+
+def test_voix_mac_sans_argument_liste_les_voix_francaises(tmp_path):
+    r, voix, _ = _mac(tmp_path)
+    assert r.returncode == 0 and "Audrey (Premium)" in r.stdout and "Thomas" in r.stdout and "Alice" not in r.stdout
+    assert not list(voix.glob("0*.m4a"))
+
+
+def test_voix_mac_refuse_une_voix_absente(tmp_path):
+    r, voix, _ = _mac(tmp_path, "Audrey")                       # « Audrey » n'est pas « Audrey (Premium) »
+    assert r.returncode == 1 and "introuvable" in r.stdout and not list(voix.glob("0*.m4a"))
+
+
+def test_voix_mac_fabrique_les_8_voix_avec_la_graphie_et_les_pauses(tmp_path):
+    r, voix, log = _mac(tmp_path, "Audrey (Premium)")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert sorted(p.name for p in voix.glob("0*.m4a")) == [f"{n:02d}.m4a" for n in range(1, 9)]
+    assert (voix / ".synthese").read_text().strip() == "Audrey (Premium)"
+    texte = log.read_text(encoding="utf-8")
+    assert texte.count("-v Audrey (Premium)") == 8 and texte.count("-r 165") == 8
+    assert "Apertusse" in texte and "Club Peulse" in texte and "Apertus," not in texte
+    assert "[[slnc 800]]" in texte and "« On s'appelle. » [[slnc" in texte
+
+
+def test_voix_mac_sh_bash_32():
+    sh = (VIDEO / "voix_mac.sh").read_text(encoding="utf-8")
+    for bash4 in ("declare -A", "mapfile", "readarray", ",,}", "^^}", "&>>", "coproc"):
+        assert bash4 not in sh, bash4
+    assert subprocess.run(["bash", "-n", str(VIDEO / "voix_mac.sh")]).returncode == 0
+    assert (VIDEO / "voix_mac.sh").stat().st_mode & 0o111

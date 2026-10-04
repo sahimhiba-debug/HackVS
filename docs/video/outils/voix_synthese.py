@@ -58,7 +58,7 @@ def morceaux(seq: dict) -> list[tuple[str, float]]:
     for k, ligne in enumerate(seq["phrases"]):
         parts = [p.strip() for p in ligne.split("/") if p.strip()]
         for j, part in enumerate(parts):
-            phrases = [p for p in re.split(r"(?<=[.?!])\s+", part) if p]
+            phrases = [p for p in re.split(r"(?<=[.?!])\s+(?![»”])", part) if p]   # « … » reste entier
             for i, ph in enumerate(phrases):
                 fin_part = i == len(phrases) - 1
                 if not fin_part:
@@ -118,18 +118,25 @@ def generer(dossier_modeles: Path, vitesse: float, seulement: set[str] | None) -
     return faits
 
 
+def texte_say(seq: dict) -> str:
+    """Le texte pour la commande say de macOS : même graphie, et les silences en commandes intégrées [[slnc ms]]."""
+    return " ".join(f"{t} [[slnc {int(p * 1000)}]]" if p else t for t, p in morceaux(seq))
+
+
 def generer_mac(nom_voix: str, mots_par_minute: int, seulement: set[str] | None) -> list[Path]:
-    """PLAN B, sur le Mac : la voix française « Premium » de macOS (commande say), mêmes pauses, même graphie."""
-    SORTIE.mkdir(parents=True, exist_ok=True)
+    """Sur le Mac : la voix française « Premium » de macOS (commande say) → docs/video/voix/ (passe devant la synthèse).
+    C'est ce que fait docs/video/voix_mac.sh."""
+    sortie = VIDEO / "voix"
+    sortie.mkdir(parents=True, exist_ok=True)
     faits = []
     for s in video.lire_script():
         if seulement and s["num"] not in seulement:
             continue
-        texte = " ".join(f"{t} [[slnc {int(p * 1000)}]]" for t, p in morceaux(s))
+        texte = texte_say(s)
         with tempfile.TemporaryDirectory() as td:
             aiff = Path(td) / "v.aiff"
             subprocess.run(["say", "-v", nom_voix, "-r", str(mots_par_minute), "-o", str(aiff), texte], check=True)
-            m4a = SORTIE / f"{s['num']}.m4a"
+            m4a = sortie / f"{s['num']}.m4a"
             subprocess.run(["afconvert", "-f", "m4af", "-d", "aac", "-b", "128000", str(aiff), str(m4a)], check=True)
         faits.append(m4a)
         print(f"  {m4a.name}")
@@ -143,7 +150,14 @@ def main(argv: list[str]) -> int:
     p.add_argument("--seulement", default="")
     p.add_argument("--mac", metavar="VOIX", help="plan B sur le Mac : say -v VOIX, par exemple « Audrey (Premium) »")
     p.add_argument("--mots-par-minute", type=int, default=165)
+    p.add_argument("--texte-say", metavar="NN", help="affiche le texte de la séquence NN pour say (utilisé par voix_mac.sh)")
     a = p.parse_args(argv)
+    if a.texte_say:
+        s = [x for x in video.lire_script() if x["num"] == a.texte_say]
+        if not s:
+            raise SystemExit(f"séquence inconnue : {a.texte_say}")
+        print(texte_say(s[0]))
+        return 0
     seulement = {x.strip() for x in a.seulement.split(",") if x.strip()} or None
     if a.mac:
         generer_mac(a.mac, a.mots_par_minute, seulement)

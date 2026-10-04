@@ -19,6 +19,7 @@ docs/data/tally_phrases.csv
 # vidéo de présélection : les voix et la vidéo montée restent sur le Mac
 docs/video/voix/*.m4a
 docs/video/voix/*.wav
+docs/video/voix/.synthese
 docs/video/out/
 
 # le film source (branche video-sources) reste hors de cette branche

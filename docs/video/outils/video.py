@@ -360,6 +360,9 @@ def monter(voix: Path, film: Path | None, ff: FF, sortie: Path, garder: bool = F
     if manquants:
         raise SystemExit(f"VOIX MANQUANTES (ni dans {voix}, ni dans {SYNTHESE}) : " + ", ".join(manquants))
     synthese = [n for n, f in sources.items() if f.parent == SYNTHESE]
+    voix_mac = (voix / ".synthese").exists()             # voix fabriquées par voix_mac.sh (say) : synthèse aussi
+    if voix_mac:
+        print(f"  voix macOS (say) : {(voix / '.synthese').read_text(encoding='utf-8').strip()}")
     print("  voix : " + ("vos enregistrements" if not synthese else
                          "synthèse" if len(synthese) == len(sources) else "vos enregistrements + synthèse pour " + ", ".join(synthese)))
     if not film and FILM_SOURCES.exists():
@@ -418,7 +421,7 @@ def monter(voix: Path, film: Path | None, ff: FF, sortie: Path, garder: bool = F
     sortie.parent.mkdir(parents=True, exist_ok=True)
     ecrire_srt(cartons, srt)
     ass = tmp / "incrustation.ass"
-    _ass(cartons, fin, ass, synthese=bool(synthese))
+    _ass(cartons, fin, ass, synthese=bool(synthese) or voix_mac)
     print("  incrustation des sous-titres et encodage final…")
     chemin_ass = str(ass).replace("\\", "/").replace(":", "\\:").replace("'", "\\'")
     ff.run("-i", str(brut), "-vf", f"ass='{chemin_ass}'", "-c:v", "libx264", "-preset", "medium", "-crf", "23",
