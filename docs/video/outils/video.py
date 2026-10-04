@@ -33,7 +33,8 @@ EQUIPE = Path(os.environ.get("CLUBPULSE_EQUIPE") or VIDEO / "equipe.txt")
 
 W, H, IPS = 1920, 1080, 30
 AVANT, APRES = 0.6, 0.8                           # respiration avant / après chaque voix (secondes)
-APRES_FIN = 2.6                                   # la carte de fin reste à l'écran après « Merci. » (< 3 s de silence)
+APRES_FILM = 1.6                                  # « Et après ? » muet après le film (+ 0,6 s avant la voix < 3 s)
+APRES_FIN = 2.2                                   # la carte de fin reste à l'écran après « Merci. » (< 3 s de silence)
 LUFS = -16
 DUREE_MIN, DUREE_MAX = 600, 720                   # 10 à 12 minutes
 SILENCE_MAX = 3.0
@@ -147,7 +148,7 @@ def plan_cible(seqs: list[dict], film: float = 201.0) -> list[dict]:
     for s in seqs:
         voix = s["cible"] - (0 if s["num"] != "03" else 0)
         plan.append({"num": s["num"], "debut_voix": t + AVANT, "voix": voix - AVANT - APRES})
-        t += voix + (film + 2.4 if s["num"] == "03" else 0)
+        t += voix + (film + APRES_FILM if s["num"] == "03" else 0)
     return plan
 
 
@@ -256,8 +257,19 @@ def _plan_video(ff: FF, images: list[dict], duree: float, tmp: Path, nom: str) -
     return sortie
 
 
+ROGNER = ("silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.15,areverse,"
+          "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.25,areverse")
+
+
+def _rogner(ff: FF, f: Path, tmp: Path, nom: str) -> Path:
+    """La voix sans la seconde de blanc du début et de la fin (le guide demande d'attendre avant et après)."""
+    sortie = tmp / f"{nom}-rognee.wav"
+    ff.run("-i", str(f), "-af", ROGNER, "-ac", "2", "-ar", "48000", str(sortie))
+    return sortie
+
+
 def _voix(ff: FF, f: Path, total: float, tmp: Path, nom: str, avant: float = AVANT) -> Path:
-    """La voix normalisée vers -16 LUFS, posée après `avant` secondes, complétée de silence jusqu'à `total`."""
+    """La voix (déjà rognée) normalisée vers -16 LUFS, posée après `avant` secondes, complétée de silence jusqu'à `total`."""
     sortie = tmp / f"{nom}-voix.wav"
     ms = int(avant * 1000)
     ff.run("-i", str(f), "-af", f"loudnorm=I={LUFS}:TP=-1.5:LRA=11,aresample=48000,adelay={ms}|{ms},apad",
@@ -342,7 +354,7 @@ def monter(voix: Path, film: Path | None, ff: FF, sortie: Path, garder: bool = F
     fin = (0.0, 0.0)
     for s in seqs:
         n = s["num"]
-        f_voix = voix / f"{n}.m4a"
+        f_voix = _rogner(ff, voix / f"{n}.m4a", tmp, n)
         d_voix = ff.duree(f_voix)
         apres = APRES_FIN if n == "08" else APRES
         total = AVANT + d_voix + apres
@@ -365,10 +377,10 @@ def monter(voix: Path, film: Path | None, ff: FF, sortie: Path, garder: bool = F
             morceaux.append(filmv)
             t += d_film
             silence = tmp / "silence.wav"
-            ff.run("-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo", "-t", "2.4", str(silence))
-            v = _plan_video(ff, apres_film, 2.4, tmp, f"{n}b")
+            ff.run("-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo", "-t", f"{APRES_FILM}", str(silence))
+            v = _plan_video(ff, apres_film, APRES_FILM, tmp, f"{n}b")
             morceaux.append(_assembler(ff, v, silence, tmp / f"{n}b.mp4"))
-            t += 2.4
+            t += APRES_FILM
             continue
         if n == "08":                                   # la carte de fin couvre « Merci. » et la respiration finale
             fin_fixe = 2.0 + APRES_FIN
@@ -419,8 +431,13 @@ def verifier(ff: FF, f: Path) -> bool:
     silences = []
     for m in re.finditer(r"silence_start: ([\d.]+)[\s\S]*?silence_end: ([\d.]+) \| silence_duration: ([\d.]+)", err):
         a, b, dd = float(m.group(1)), float(m.group(2)), float(m.group(3))
-        if not (a >= film[0] - 0.5 and b <= film[1] + 0.5):     # les silences voulus DANS le film ne comptent pas
-            silences.append(f"{a:.1f}–{b:.1f} s ({dd:.1f} s)")
+        if a >= film[0] - 0.5 and b <= film[1] + 0.5:          # les silences voulus DANS le film ne comptent pas
+            continue
+        if film[0] <= a < film[1] < b:                          # un silence qui déborde du film : seule la part après compte
+            dd = b - film[1]
+            if dd <= SILENCE_MAX:
+                continue
+        silences.append(f"{a:.1f}–{b:.1f} s ({dd:.1f} s)")
     ligne(not silences, "aucun silence de plus de 3 s" + ("" if not silences else " — trouvés : " + ", ".join(silences)))
     seqs = lire_script()
     textes = [propre(p) for s in seqs for p in s["phrases"]]
@@ -453,9 +470,9 @@ def secours(ff: FF, f: Path, chemin: Path | None = None, pas: float = 2.0) -> Pa
     with tempfile.TemporaryDirectory() as td:
         tdp = Path(td)
         ff.run("-i", str(f), "-vf", f"fps=1/{pas},scale=960:-2", "-q:v", "6", str(tdp / "i%04d.jpg"))
-        ff.run("-i", str(f), "-vn", "-c:a", "aac", "-b:a", "64k", "-ac", "1", str(tdp / "son.m4a"))
+        ff.run("-i", str(f), "-vn", "-c:a", "libmp3lame", "-b:a", "64k", "-ac", "1", str(tdp / "son.mp3"))   # MP3 : lu partout
         images = [base64.b64encode(p.read_bytes()).decode() for p in sorted(tdp.glob("i*.jpg"))]
-        son = base64.b64encode((tdp / "son.m4a").read_bytes()).decode()
+        son = base64.b64encode((tdp / "son.mp3").read_bytes()).decode()
     cartons = []
     srt = f.with_suffix(".srt")
     if srt.exists():
@@ -479,7 +496,7 @@ input[type=range]{{flex:1}}
 </style></head><body>
 <div id="cadre"><img id="img" alt="Image de la présentation"><div id="st"></div><button id="lecture">▶ Lecture</button></div>
 <nav><button id="pp">▶</button><input id="barre" type="range" min="0" max="1000" value="0" aria-label="Position"><span id="tps">0:00</span></nav>
-<audio id="son" preload="auto" src="data:audio/mp4;base64,{son}"></audio>
+<audio id="son" preload="auto" src="data:audio/mpeg;base64,{son}"></audio>
 <script>
 const I={json.dumps(images)}, C={json.dumps(cartons, ensure_ascii=False)}, PAS={pas};
 const son=document.getElementById("son"), img=document.getElementById("img"), st=document.getElementById("st"), b=document.getElementById("lecture"), pp=document.getElementById("pp"), barre=document.getElementById("barre");

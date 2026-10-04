@@ -19,7 +19,7 @@ Durée visée : **11 min 30 s** environ (voix 8 min 10 s + film 3 min 21 s). Fou
 
 ## 01 — L'équipe et l'accroche · 0:40
 
-Images : 01-titre.mp4, 01-carte.mp4
+Images : 01-titre.mp4=5, 01-carte.mp4
 
 > Bonjour. On est l'équipe Club Pulse. / On a construit cet outil pour le Club des Affaires de la Foire du Valais.
 > Le Club, ce sont des entreprises qui se retrouvent chaque année à Martigny. / Elles pourraient s'entraider toute l'année.

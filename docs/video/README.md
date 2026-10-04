@@ -41,7 +41,7 @@ Une vérification en `[KO]` :
 
 ## Ce qui a été vérifié ici (fausses voix, faux film)
 
-En cours : montage de bout en bout avec des voix de synthèse et un faux film ; le résultat chiffré sera ajouté ici.
+Montage de bout en bout avec 8 voix de synthèse et un faux film de 3 min 21 s posé sur un faux Bureau (même détection que le lanceur) : **tout est vert** (11 min 31 s, 96 Mo, -16,1 LUFS, aucun silence de plus de 3 s, aucun mot interdit). Détail : [RAPPORT_MONTAGE.md](RAPPORT_MONTAGE.md).
 
 ## Refaire les images (pas nécessaire sur le Mac)
 

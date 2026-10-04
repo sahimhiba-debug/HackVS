@@ -86,7 +86,7 @@ CLIPS_DECK = [
     ("07-demande", [("aller", "demande", 0), ("debut",), ("attendre", 3200), ("suivant",), ("attendre", 4200)]),
     ("08-recu", [("aller", "18", 0), ("debut",), ("attendre", 2000), ("suivant",), ("attendre", 4400)]),
     ("08-phrase", [("aller", "19", 0), ("debut",), ("attendre", 6400)]),
-    ("01-titre", [("aller", "21", 0), ("js", "document.querySelector('[data-id=\"21\"] .etiq').textContent = 'Hack VS 2026 · le défi du Club des Affaires de la Foire du Valais'"),
+    ("01-titre", [("aller", "21", 0), ("js", "const e = document.querySelector('[data-id=\"21\"] .etiq'); e.textContent = 'Hack VS 2026 · le défi du Club des Affaires de la Foire du Valais'; e.style.bottom = 'auto'; e.style.top = '600px'"),
                   ("debut",), ("attendre", 6000)]),
     ("08-fin", [("aller", "21", 0), ("js", "document.querySelector('[data-id=\"21\"] .etiq').style.display = 'none'"),
                 ("debut",), ("attendre", 8000)]),
