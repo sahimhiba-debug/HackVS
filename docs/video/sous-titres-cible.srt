@@ -1,618 +1,637 @@
 1
-00:00:00,600 --> 00:00:01,317
+00:00:01,000 --> 00:00:01,704
 Bonjour.
 
 2
-00:00:01,357 --> 00:00:03,101
-On est l'équipe Club Pulse.
+00:00:01,744 --> 00:00:03,350
+On est l'équipe Spectrum.
 
 3
-00:00:03,141 --> 00:00:08,021
-On a construit cet outil pour le Club
+00:00:03,390 --> 00:00:07,970
+On a créé Club Pulse pour le Club
 des Affaires de la Foire du Valais.
 
 4
-00:00:08,061 --> 00:00:12,399
+00:00:08,010 --> 00:00:12,272
 Le Club, ce sont des entreprises qui
 se retrouvent chaque année à Martigny.
 
 5
-00:00:12,439 --> 00:00:15,697
+00:00:12,312 --> 00:00:15,511
 Elles pourraient s'entraider toute l'année.
 
 6
-00:00:15,737 --> 00:00:20,509
+00:00:15,551 --> 00:00:20,238
 Notre question est simple : comment passer
 d'une rencontre à un vrai coup de main ?
 
 7
-00:00:20,549 --> 00:00:24,023
+00:00:20,278 --> 00:00:23,690
 Voici le document le plus
 optimiste du monde professionnel.
 
 8
-00:00:24,063 --> 00:00:26,023
+00:00:23,730 --> 00:00:25,655
 La carte de visite.
 
 9
-00:00:26,063 --> 00:00:26,942
+00:00:25,695 --> 00:00:26,558
 On la tend.
 
 10
-00:00:26,982 --> 00:00:28,780
+00:00:26,598 --> 00:00:28,363
 On se regarde dans les yeux.
 
 11
-00:00:28,820 --> 00:00:29,699
+00:00:28,403 --> 00:00:29,266
 Et on dit :
 
 12
-00:00:29,739 --> 00:00:30,943
+00:00:29,306 --> 00:00:30,488
 « On s'appelle. »
 
 13
-00:00:30,983 --> 00:00:32,889
+00:00:30,528 --> 00:00:32,400
 Vous l'avez sûrement déjà dit.
 
 14
-00:00:32,929 --> 00:00:35,754
+00:00:32,440 --> 00:00:35,214
 Et vous n'avez pas toujours appelé.
 
 15
-00:00:35,794 --> 00:00:36,998
+00:00:35,254 --> 00:00:36,436
 Personne ne juge.
 
 16
-00:00:37,038 --> 00:00:39,160
+00:00:36,476 --> 00:00:38,560
 On a tous fait pareil.
 
 17
-00:00:40,600 --> 00:00:47,450
+00:00:41,000 --> 00:00:47,721
 Hier, Émilie nous a dit
 quelque chose de très simple.
 
 18
-00:00:47,490 --> 00:00:56,792
+00:00:47,761 --> 00:00:56,889
 Entre deux événements, le Club ne sait
 jamais où en sont les partenariats.
 
 19
-00:00:56,832 --> 00:01:01,113
+00:00:56,929 --> 00:01:01,129
 On y a travaillé jusqu'au soir.
 
 20
-00:01:01,153 --> 00:01:06,017
+00:01:01,169 --> 00:01:05,942
 Et on a construit de quoi le savoir.
 
 21
-00:01:06,057 --> 00:01:16,877
+00:01:05,982 --> 00:01:16,600
 Dans les salons, on entend souvent que la
 plupart des contacts ne sont jamais rappelés.
 
 22
-00:01:16,917 --> 00:01:22,366
+00:01:16,640 --> 00:01:21,986
 Ce chiffre, personne ne peut le vérifier.
 
 23
-00:01:22,406 --> 00:01:26,570
+00:01:22,026 --> 00:01:26,111
 Et c'est bien ça, le problème.
 
 24
-00:01:26,610 --> 00:01:32,292
+00:01:26,151 --> 00:01:31,726
 L'après, personne ne le mesure.
 
 25
-00:01:32,332 --> 00:01:34,160
+00:01:31,766 --> 00:01:33,560
 Et après ?
 
 26
-00:01:35,600 --> 00:01:40,403
+00:01:36,000 --> 00:01:40,542
 Cette année, la Foire fait son cinéma.
 
 27
-00:01:40,443 --> 00:01:42,274
+00:01:40,582 --> 00:01:42,313
 Nous aussi.
 
 28
-00:01:42,314 --> 00:01:49,648
+00:01:42,353 --> 00:01:49,290
 Voici quelqu'un qui dit oui à
 tout le monde depuis vingt ans.
 
 29
-00:01:49,688 --> 00:01:54,160
+00:01:49,330 --> 00:01:53,560
 Il s'appelle Jean-Marc.
 
 30
-00:05:18,200 --> 00:05:20,108
+00:05:18,600 --> 00:05:20,328
 Jean-Marc a dit oui.
 
 31
-00:05:20,148 --> 00:05:22,205
+00:05:20,368 --> 00:05:22,232
 Et après ?
 
 32
-00:05:22,245 --> 00:05:26,026
+00:05:22,272 --> 00:05:25,699
 Imaginez une salle pleine
 de membres du Club.
 
 33
-00:05:26,066 --> 00:05:28,198
+00:05:25,739 --> 00:05:27,671
 Chacun a son téléphone.
 
 34
-00:05:28,238 --> 00:05:33,666
+00:05:27,711 --> 00:05:32,634
 Chacun choisit une chose qu'il
 pourrait faire pour un autre membre.
 
 35
-00:05:33,706 --> 00:05:35,015
+00:05:32,674 --> 00:05:33,858
 Une voiture.
 
 36
-00:05:35,055 --> 00:05:36,213
+00:05:33,898 --> 00:05:34,946
 Une salle.
 
 37
-00:05:36,253 --> 00:05:37,861
+00:05:34,986 --> 00:05:36,442
 Parler allemand.
 
 38
-00:05:37,901 --> 00:05:41,307
+00:05:36,482 --> 00:05:39,570
 Chaque point lumineux, c'est l'un d'eux.
 
 39
-00:05:41,347 --> 00:05:42,431
+00:05:39,610 --> 00:05:40,589
 Sans nom.
 
 40
-00:05:42,471 --> 00:05:43,779
+00:05:40,629 --> 00:05:41,813
 Sans visage.
 
 41
-00:05:43,819 --> 00:05:47,824
+00:05:41,853 --> 00:05:45,485
 Voici une demande, écrite
 pour la démonstration.
 
 42
-00:05:47,864 --> 00:05:52,319
+00:05:45,525 --> 00:05:49,564
 Il faut accueillir des
 acheteurs qui parlent allemand.
 
 43
-00:05:52,359 --> 00:05:56,364
+00:05:49,604 --> 00:05:53,236
 Il faut un minibus, une
 salle, et un interprète.
 
 44
-00:05:56,404 --> 00:06:00,334
+00:05:53,276 --> 00:05:56,840
 Sophie, par exemple, a
 un minibus de 14 places.
 
 45
-00:06:00,374 --> 00:06:03,256
+00:05:56,880 --> 00:05:59,491
 Il est libre vendredi après-midi.
 
 46
-00:06:03,296 --> 00:06:06,327
+00:05:59,531 --> 00:06:02,279
 Elle ne connaît pas l'organisateur.
 
 47
-00:06:06,367 --> 00:06:09,099
+00:06:02,319 --> 00:06:04,795
 Elle ne l'aurait jamais appelé.
 
 48
-00:06:09,139 --> 00:06:12,694
+00:06:04,835 --> 00:06:08,058
 Les bonnes personnes reçoivent la demande.
 
 49
-00:06:12,734 --> 00:06:14,417
+00:06:08,098 --> 00:06:09,622
 Pas tout le Club.
 
 50
-00:06:14,457 --> 00:06:15,765
+00:06:09,662 --> 00:06:10,846
 Juste elles.
 
 51
-00:06:15,805 --> 00:06:19,511
+00:06:10,886 --> 00:06:14,245
 Trois boutons : oui, non, ou pas cette fois.
 
 52
-00:06:19,551 --> 00:06:22,283
+00:06:14,285 --> 00:06:16,761
 Personne ne voit qui a dit non.
 
 53
-00:06:22,323 --> 00:06:25,728
+00:06:16,801 --> 00:06:19,889
 Personne ne le verra jamais.
 
 54
-00:06:25,768 --> 00:06:27,302
-Sophie dit oui.
+00:06:19,929 --> 00:06:23,832
+Sur l'écran de la salle,
+chaque oui allume un trait.
 
 55
-00:06:27,342 --> 00:06:29,249
-Elle reçoit un reçu.
+00:06:23,872 --> 00:06:28,456
+Quand l'anneau se ferme,
+la demande peut se faire.
 
 56
-00:06:29,289 --> 00:06:30,822
-Daté, numéroté.
+00:06:28,496 --> 00:06:29,884
+Sophie dit oui.
 
 57
-00:06:30,862 --> 00:06:34,043
-Elle peut le retirer quand elle veut.
+00:06:29,924 --> 00:06:31,651
+Elle reçoit un reçu.
 
 58
-00:06:34,083 --> 00:06:37,115
-Son oui ne sert qu'à cette demande.
+00:06:31,691 --> 00:06:33,079
+Daté, numéroté.
 
 59
-00:06:37,155 --> 00:06:40,785
-Personne d'autre ne voit son nom à l'écran.
+00:06:33,119 --> 00:06:36,003
+Elle peut le retirer quand elle veut.
 
 60
-00:06:40,825 --> 00:06:43,557
-Et si quelqu'un change d'avis ?
+00:06:36,043 --> 00:06:38,791
+Son oui ne sert qu'à cette demande.
 
 61
-00:06:43,597 --> 00:06:45,355
-On ne dit pas qui.
+00:06:38,831 --> 00:06:42,122
+Personne d'autre ne voit son nom à l'écran.
 
 62
-00:06:45,395 --> 00:06:47,153
-On dit seulement :
+00:06:42,162 --> 00:06:44,638
+Et si quelqu'un change d'avis ?
 
 63
-00:06:47,193 --> 00:06:50,299
-« une pièce n'est plus disponible ».
+00:06:44,678 --> 00:06:46,270
+On ne dit pas qui.
 
 64
-00:06:50,339 --> 00:06:53,445
-Et le Club trouve quelqu'un d'autre.
+00:06:46,310 --> 00:06:47,902
+On dit seulement :
 
 65
-00:06:53,485 --> 00:06:56,367
-C'est ça, Club Pulse.
+00:06:47,942 --> 00:06:50,757
+« une pièce n'est plus disponible ».
 
 66
-00:06:56,407 --> 00:07:01,760
+00:06:50,797 --> 00:06:53,613
+Et le Club trouve quelqu'un d'autre.
+
+67
+00:06:53,653 --> 00:06:56,265
+C'est ça, Club Pulse.
+
+68
+00:06:56,305 --> 00:07:01,160
 Une demande précise, au bon moment,
 aux gens qui peuvent dire oui.
 
-67
-00:07:03,200 --> 00:07:06,052
+69
+00:07:03,600 --> 00:07:06,146
 Et pour le Club, toute l'année ?
 
-68
-00:07:06,092 --> 00:07:10,619
+70
+00:07:06,186 --> 00:07:10,228
 Quand une demande reste sans
 réponse, le Club le voit.
 
-69
-00:07:10,659 --> 00:07:13,435
+71
+00:07:10,268 --> 00:07:12,746
 Il sait quel métier lui manque.
 
-70
-00:07:13,475 --> 00:07:17,926
+72
+00:07:12,786 --> 00:07:16,760
 Alors il peut inviter
 quelqu'un qui n'est pas membre.
 
-71
-00:07:17,966 --> 00:07:21,198
+73
+00:07:16,800 --> 00:07:19,686
 Avec un passe découverte de 90 jours.
 
-72
-00:07:21,238 --> 00:07:27,211
+74
+00:07:19,726 --> 00:07:25,061
 Par exemple, un exposant d'Annecy,
 qui rend service avant même d'adhérer.
 
-73
-00:07:27,251 --> 00:07:31,397
+75
+00:07:25,101 --> 00:07:28,803
 Le Club voit enfin où en
 sont les collaborations.
 
-74
-00:07:31,437 --> 00:07:35,127
+76
+00:07:28,843 --> 00:07:32,137
 Combien de demandes ont trouvé une réponse.
 
-75
-00:07:35,167 --> 00:07:40,759
+77
+00:07:32,177 --> 00:07:37,172
 Et combien d'entreprises travaillent
 ensemble pour la première fois.
 
-76
-00:07:40,799 --> 00:07:43,423
+78
+00:07:37,212 --> 00:07:39,554
 Toujours en chiffres globaux.
 
-77
-00:07:43,463 --> 00:07:45,021
+79
+00:07:39,594 --> 00:07:40,983
 Jamais de noms.
 
-78
-00:07:45,061 --> 00:07:49,664
+80
+00:07:41,023 --> 00:07:47,038
+Tout cela tient sur une seule page, que le
+secrétariat du Club peut ouvrir quand il
+
+81
+00:07:47,078 --> 00:07:47,787
+veut.
+
+82
+00:07:47,827 --> 00:07:51,937
 Votre Club, c'est 145
 entreprises et 173 représentants.
 
-79
-00:07:49,704 --> 00:07:54,307
+83
+00:07:51,977 --> 00:07:56,088
 On a pris neuf projets types
 et votre liste de membres.
 
-80
-00:07:54,347 --> 00:07:59,635
+84
+00:07:56,128 --> 00:08:00,851
 Le Club pourrait en monter huit
 sur neuf avec ses seuls membres.
 
-81
-00:07:59,675 --> 00:08:03,288
+85
+00:08:00,891 --> 00:08:04,117
 Il manque une seule pièce : un interprète.
 
-82
-00:08:03,328 --> 00:08:07,703
+86
+00:08:04,157 --> 00:08:08,063
 Aucune des 145 entreprises n'en propose.
 
-83
-00:08:07,743 --> 00:08:11,661
+87
+00:08:08,103 --> 00:08:11,601
 Votre liste dit ce que
 le Club pourrait faire.
 
-84
-00:08:11,701 --> 00:08:16,760
+88
+00:08:11,641 --> 00:08:16,160
 Club Pulse dit ce qu'il
 peut faire cette semaine.
 
-85
-00:08:18,200 --> 00:08:21,308
+89
+00:08:18,600 --> 00:08:21,672
 Pourquoi une demande précise, ça marche ?
 
-86
-00:08:21,348 --> 00:08:27,201
+90
+00:08:21,712 --> 00:08:27,499
 Quand on demande de l'aide, on pense
 recevoir jusqu'à deux fois moins de oui qu'en
 
-87
-00:08:27,241 --> 00:08:28,138
+91
+00:08:27,539 --> 00:08:28,426
 réalité.
 
-88
-00:08:28,178 --> 00:08:30,750
+92
+00:08:28,466 --> 00:08:31,008
 On oublie que dire non, ça coûte.
 
-89
-00:08:30,790 --> 00:08:33,831
+93
+00:08:31,048 --> 00:08:34,054
 Ce coût-là, c'est Jean-Marc.
 
-90
-00:08:33,871 --> 00:08:39,523
+94
+00:08:34,094 --> 00:08:39,682
 À Harvard, dans un exercice d'entraide,
 24 demandes ont reçu 114 offres d'aide.
 
-91
-00:08:39,563 --> 00:08:41,465
+95
+00:08:39,722 --> 00:08:41,602
 Les gens veulent aider.
 
-92
-00:08:41,505 --> 00:08:44,479
+96
+00:08:41,642 --> 00:08:44,582
 Ils attendent juste qu'on leur demande.
 
-93
-00:08:44,519 --> 00:08:50,037
+97
+00:08:44,622 --> 00:08:50,077
 Une autre étude, sur 20 millions de
 personnes, publiée dans la revue Science.
 
-94
-00:08:50,077 --> 00:08:55,931
+98
+00:08:50,117 --> 00:08:55,904
 Pour trouver un nouveau travail, ce sont
 souvent les gens qu'on connaît un peu qui
 
-95
-00:08:55,971 --> 00:08:57,471
+99
+00:08:55,944 --> 00:08:57,427
 comptent le plus.
 
-96
-00:08:57,511 --> 00:08:58,944
+100
+00:08:57,467 --> 00:08:58,884
 Pas les proches.
 
-97
-00:08:58,984 --> 00:09:01,958
+101
+00:08:58,924 --> 00:09:01,863
 Maintenant, ce qu'on a vraiment prouvé.
 
-98
-00:09:01,998 --> 00:09:03,230
+102
+00:09:01,903 --> 00:09:03,121
 Rien de plus.
 
-99
-00:09:03,270 --> 00:09:05,373
+103
+00:09:03,161 --> 00:09:05,240
 Chaque oui laisse un reçu.
 
-100
-00:09:05,413 --> 00:09:08,320
+104
+00:09:05,280 --> 00:09:08,154
 Daté, numéroté, et on peut le retirer.
 
-101
-00:09:08,360 --> 00:09:13,811
+105
+00:09:08,194 --> 00:09:13,583
 On a simulé 80 téléphones en même temps,
 sur notre ordinateur : zéro erreur.
 
-102
-00:09:13,851 --> 00:09:19,370
+106
+00:09:13,623 --> 00:09:19,079
 Hier, avec notre formulaire affiché à
 la Foire, on a reçu 21 vraies demandes.
 
-103
-00:09:19,410 --> 00:09:21,781
+107
+00:09:19,119 --> 00:09:21,462
 On n'en montre que des totaux.
 
-104
-00:09:21,821 --> 00:09:24,325
+108
+00:09:21,502 --> 00:09:23,979
 Et l'intelligence artificielle ?
 
-105
-00:09:24,365 --> 00:09:27,205
+109
+00:09:24,019 --> 00:09:26,826
 C'est Apertus, l'IA suisse, à Lugano.
 
-106
-00:09:27,245 --> 00:09:32,897
+110
+00:09:26,866 --> 00:09:32,454
 Sur 26 questions préparées à l'avance,
 elle a trouvé la bonne réponse une fois.
 
-107
-00:09:32,937 --> 00:09:35,174
+111
+00:09:32,494 --> 00:09:34,705
 Une fois sur 26.
 
-108
-00:09:35,214 --> 00:09:37,853
+112
+00:09:34,745 --> 00:09:37,354
 Et ça ne change rien pour le Club.
 
-109
-00:09:37,893 --> 00:09:41,202
+113
+00:09:37,394 --> 00:09:40,664
 Quand elle se trompe, nos règles l'arrêtent.
 
-110
-00:09:41,242 --> 00:09:43,746
+114
+00:09:40,704 --> 00:09:43,180
 Le membre remplit un formulaire.
 
-111
-00:09:43,786 --> 00:09:46,760
+115
+00:09:43,220 --> 00:09:46,160
 Avec ou sans IA, le Club marche pareil.
 
-112
-00:09:48,200 --> 00:09:49,518
+116
+00:09:48,600 --> 00:09:49,900
 Où en est-on ?
 
-113
-00:09:49,558 --> 00:09:51,554
+117
+00:09:49,940 --> 00:09:51,911
 22 chantiers construits.
 
-114
-00:09:51,594 --> 00:09:53,658
+118
+00:09:51,951 --> 00:09:53,988
 Un validé sur le terrain.
 
-115
-00:09:53,698 --> 00:09:55,694
+119
+00:09:54,028 --> 00:09:55,998
 Huit prévus.
 
-116
-00:09:55,734 --> 00:09:57,798
+120
+00:09:56,038 --> 00:09:58,076
 Trente jours pour lancer.
 
-117
-00:09:57,838 --> 00:10:00,445
+121
+00:09:58,116 --> 00:10:00,689
 Quarante-cinq jours pour prouver.
 
-118
-00:10:00,485 --> 00:10:03,975
+122
+00:10:00,729 --> 00:10:04,174
 Le pilote irait de début
 janvier à mi-février.
 
-119
-00:10:04,015 --> 00:10:08,862
+123
+00:10:04,214 --> 00:10:08,999
 En plein pendant les Mondiaux
 de ski de Crans-Montana.
 
-120
-00:10:08,902 --> 00:10:10,491
+124
+00:10:09,039 --> 00:10:10,607
 C'est fait exprès.
 
-121
-00:10:10,531 --> 00:10:15,310
+125
+00:10:10,647 --> 00:10:15,365
 Quand tout le monde manque de
 tout, est-ce que l'entraide tient ?
 
-122
-00:10:15,350 --> 00:10:19,790
+126
+00:10:15,405 --> 00:10:19,788
 Ce qui comptera comme une
 réussite, on l'a écrit à l'avance.
 
-123
-00:10:19,830 --> 00:10:21,894
+127
+00:10:19,828 --> 00:10:21,865
 On le validera avec vous.
 
-124
-00:10:21,934 --> 00:10:28,275
+128
+00:10:21,905 --> 00:10:28,164
 L'identité pourra être suisse aussi : l'identité
 électronique suisse arrive en décembre.
 
-125
-00:10:28,315 --> 00:10:31,261
+129
+00:10:28,204 --> 00:10:31,113
 Ça, c'est prévu, pas encore construit.
 
-126
-00:10:31,301 --> 00:10:35,334
+130
+00:10:31,153 --> 00:10:35,133
 Nos premiers partenaires à
 aller voir sont à la Foire.
 
-127
-00:10:35,374 --> 00:10:38,863
+131
+00:10:35,173 --> 00:10:38,618
 La Haute-Savoie, région
 d'honneur cette année.
 
-128
-00:10:38,903 --> 00:10:40,492
+132
+00:10:38,658 --> 00:10:40,226
 La Vallée d'Aoste.
 
-129
-00:10:40,532 --> 00:10:42,189
+133
+00:10:40,266 --> 00:10:41,902
 Crans-Montana 2027.
 
-130
-00:10:42,229 --> 00:10:43,750
+134
+00:10:41,942 --> 00:10:43,443
 Rien n'est signé.
 
-131
-00:10:43,790 --> 00:10:45,990
+135
+00:10:43,483 --> 00:10:45,654
 On va frapper à leur porte.
 
-132
-00:10:46,030 --> 00:10:51,895
+136
+00:10:45,694 --> 00:10:51,484
 Pendant ces 45 jours, on mesurera une
 seule chose : est-ce que les membres disent
 
-133
-00:10:51,935 --> 00:10:54,950
+137
+00:10:51,524 --> 00:10:54,500
 oui, et est-ce qu'ils tiennent parole ?
 
-134
-00:10:54,990 --> 00:10:59,769
+138
+00:10:54,540 --> 00:10:59,258
 Alors, comme le ferait le Club,
 on vous fait une demande précise.
 
-135
-00:10:59,809 --> 00:11:03,638
+139
+00:10:59,298 --> 00:11:03,077
 Un pilote de 45 jours, avec
 50 membres volontaires.
 
-136
-00:11:03,678 --> 00:11:06,760
+140
+00:11:03,117 --> 00:11:06,160
 Oui, non, ou pas cette fois.
 
-137
-00:11:08,200 --> 00:11:09,499
+141
+00:11:08,600 --> 00:11:09,842
 Et après ?
 
-138
-00:11:09,539 --> 00:11:12,177
+142
+00:11:09,882 --> 00:11:12,407
 Chaque oui laisse un reçu.
 
-139
-00:11:12,217 --> 00:11:17,617
+143
+00:11:12,447 --> 00:11:17,616
 C'est le même geste
 qu'avec la carte de visite.
 
-140
-00:11:17,657 --> 00:11:21,466
+144
+00:11:17,656 --> 00:11:21,303
 Sauf que cette fois, ça engage vraiment.
 
-141
-00:11:21,506 --> 00:11:24,228
+145
+00:11:21,343 --> 00:11:23,947
 La Foire crée la rencontre.
 
-142
-00:11:24,268 --> 00:11:26,739
+146
+00:11:23,987 --> 00:11:26,351
 Club Pulse crée l'après.
 
-143
-00:11:26,779 --> 00:11:30,756
+147
+00:11:26,391 --> 00:11:30,198
 Si Jean-Marc dit oui, c'est que c'est oui.
 
-144
-00:11:30,796 --> 00:11:31,760
+148
+00:11:30,238 --> 00:11:31,160
 Merci.

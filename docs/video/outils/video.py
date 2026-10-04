@@ -29,10 +29,13 @@ RACINE = VIDEO.parents[1]
 SCRIPT = VIDEO / "SCRIPT_VIDEO.md"
 IMAGES = VIDEO / "images"
 SORTIE = VIDEO / "out" / "club-pulse-presentation.mp4"
+SYNTHESE = VIDEO / "voix-synthese"
+NOTE_SYNTHESE = "Voix de synthèse · texte écrit par l'équipe Spectrum"
+FILM_SOURCES = VIDEO / "sources" / "film.mp4"
 EQUIPE = Path(os.environ.get("CLUBPULSE_EQUIPE") or VIDEO / "equipe.txt")
 
 W, H, IPS = 1920, 1080, 30
-AVANT, APRES = 0.6, 0.8                           # respiration avant / après chaque voix (secondes)
+AVANT, APRES = 1.0, 1.4                           # respiration avant / après chaque voix (secondes)
 APRES_FILM = 1.6                                  # « Et après ? » muet après le film (+ 0,6 s avant la voix < 3 s)
 APRES_FIN = 2.2                                   # la carte de fin reste à l'écran après « Merci. » (< 3 s de silence)
 LUFS = -16
@@ -295,7 +298,7 @@ def lire_equipe() -> tuple[list[str], str]:
     return noms, contact
 
 
-def _ass(cartons: list[tuple[float, float, str]], fin: tuple[float, float], chemin: Path) -> None:
+def _ass(cartons: list[tuple[float, float, str]], fin: tuple[float, float], chemin: Path, synthese: bool = False) -> None:
     """Un seul fichier ASS : les sous-titres (bas de l'écran) et la carte de fin (équipe, contact)."""
     noms, contact = lire_equipe()
     def e(s: str) -> str:
@@ -310,6 +313,7 @@ WrapStyle: 0
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Sous,Helvetica,50,&H00F3F1EC,&H00FFFFFF,&H00000000,&HA0000000,1,0,0,0,100,100,0,0,3,14,0,2,160,160,54,1
 Style: Fin,Helvetica,56,&H00F3F1EC,&H00FFFFFF,&H00000000,&H00000000,1,0,0,0,100,100,0,0,1,0,0,7,160,160,0,1
+Style: FinNote,Helvetica,30,&H00A1938A,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,7,160,160,0,1
 Style: FinPetit,Helvetica,42,&H00C2B6AE,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,7,160,160,0,1
 
 [Events]
@@ -324,6 +328,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     lignes.append(f"Dialogue: 1,{t(a)},{t(b)},Fin,,0,0,0,,{{\\pos(160,690)\\fad(240,0)}}{e(equipe)}")
     if contact:
         lignes.append(f"Dialogue: 1,{t(a)},{t(b)},FinPetit,,0,0,0,,{{\\pos(160,780)\\fad(240,0)}}{e(contact)}")
+    if synthese:                                         # honnêteté : la voix n'est pas humaine
+        lignes.append(f"Dialogue: 1,{t(a)},{t(b)},FinNote,,0,0,0,,{{\\pos(160,960)\\fad(240,0)}}{e(NOTE_SYNTHESE)}")
     chemin.write_text(entete + "\n".join(lignes) + "\n", encoding="utf-8")
 
 
@@ -338,14 +344,27 @@ def chercher_film() -> Path:
     return Path(r["source"])
 
 
+def sources_voix(seqs: list[dict], voix: Path, synthese: Path = SYNTHESE) -> dict[str, Path]:
+    """Vos enregistrements gardent la priorité, fichier par fichier ; la voix de synthèse comble le reste."""
+    return {s["num"]: voix / f"{s['num']}.m4a" if (voix / f"{s['num']}.m4a").exists() else synthese / f"{s['num']}.m4a"
+            for s in seqs}
+
+
 def monter(voix: Path, film: Path | None, ff: FF, sortie: Path, garder: bool = False) -> Path:
     seqs = lire_script()
     trouves = mots_interdits([propre(p) for s in seqs for p in s["phrases"]])
     if trouves:
         raise SystemExit("MOTS INTERDITS dans le script :\n  " + "\n  ".join(trouves))
-    manquants = [f"{s['num']}.m4a" for s in seqs if not (voix / f"{s['num']}.m4a").exists()]
+    sources = sources_voix(seqs, voix)
+    manquants = [f"{n}.m4a" for n, f in sources.items() if not f.exists()]
     if manquants:
-        raise SystemExit(f"VOIX MANQUANTES dans {voix} : " + ", ".join(manquants))
+        raise SystemExit(f"VOIX MANQUANTES (ni dans {voix}, ni dans {SYNTHESE}) : " + ", ".join(manquants))
+    synthese = [n for n, f in sources.items() if f.parent == SYNTHESE]
+    print("  voix : " + ("vos enregistrements" if not synthese else
+                         "synthèse" if len(synthese) == len(sources) else "vos enregistrements + synthèse pour " + ", ".join(synthese)))
+    if not film and FILM_SOURCES.exists():
+        film = FILM_SOURCES
+        print(f"  film : {film} · {film.stat().st_size / 1024 / 1024:.0f} Mo")
     film = film or chercher_film()
     tmp = Path(tempfile.mkdtemp(prefix="clubpulse-video-"))
     print(f"  dossier de travail : {tmp}")
@@ -354,7 +373,7 @@ def monter(voix: Path, film: Path | None, ff: FF, sortie: Path, garder: bool = F
     fin = (0.0, 0.0)
     for s in seqs:
         n = s["num"]
-        f_voix = _rogner(ff, voix / f"{n}.m4a", tmp, n)
+        f_voix = _rogner(ff, sources[n], tmp, n)
         d_voix = ff.duree(f_voix)
         apres = APRES_FIN if n == "08" else APRES
         total = AVANT + d_voix + apres
@@ -399,7 +418,7 @@ def monter(voix: Path, film: Path | None, ff: FF, sortie: Path, garder: bool = F
     sortie.parent.mkdir(parents=True, exist_ok=True)
     ecrire_srt(cartons, srt)
     ass = tmp / "incrustation.ass"
-    _ass(cartons, fin, ass)
+    _ass(cartons, fin, ass, synthese=bool(synthese))
     print("  incrustation des sous-titres et encodage final…")
     chemin_ass = str(ass).replace("\\", "/").replace(":", "\\:").replace("'", "\\'")
     ff.run("-i", str(brut), "-vf", f"ass='{chemin_ass}'", "-c:v", "libx264", "-preset", "medium", "-crf", "23",

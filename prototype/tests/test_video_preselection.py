@@ -105,3 +105,51 @@ def test_prompteur_et_resume_sans_rien_d_exterieur():
         assert not re.search(r"""(src|href)=["']?https?:""", p)
     for titre in ("Le problème", "La solution", "Ce qu'y gagne le Club", "La demande", "L'équipe"):
         assert titre in resume, titre
+
+
+# ── voix de synthèse (Piper siwis, hors ligne) ─────────────────────────────────────────────────────────────────
+_spec2 = importlib.util.spec_from_file_location("voix_outils", VIDEO / "outils" / "voix_synthese.py")
+
+
+def _voix():
+    import sys
+    sys.path.insert(0, str(VIDEO / "outils"))
+    m = importlib.util.module_from_spec(_spec2)
+    _spec2.loader.exec_module(m)
+    return m
+
+
+def test_l_equipe_spectrum_se_presente():
+    assert "Bonjour. On est l'équipe Spectrum. On a créé Club Pulse" in DIT
+
+
+def test_graphie_phonetique_pour_le_moteur_seulement():
+    v = _voix()
+    assert v.pour_le_moteur("C'est Apertus, l'IA suisse. Club Pulse. Annecy. Avec ou sans IA.") == \
+        "C'est Apertusse, l'i a suisse. Club Peulse. Anne-ci. Avec ou sans i a."
+    for faux in ("Apertusse", "Peulse", "Anne-ci", "sans i a", "l'i a"):
+        assert faux not in DIT                                   # jamais dans le script ni les sous-titres
+
+
+def test_pauses_aux_barres_et_respirations():
+    v = _voix()
+    m = v.morceaux({"phrases": ["Un. Deux / trois.", "Quatre."]})
+    assert m == [("Un.", v.RESPIRATION), ("Deux", v.PAUSE), ("trois.", v.LIGNE), ("Quatre.", 0.0)]
+
+
+def test_les_huit_voix_de_synthese_existent():
+    assert sorted(p.name for p in (VIDEO / "voix-synthese").glob("*.m4a")) == [f"{n:02d}.m4a" for n in range(1, 9)]
+
+
+def test_vos_enregistrements_gardent_la_priorite(tmp_path):
+    (tmp_path / "voix").mkdir()
+    (tmp_path / "voix" / "04.m4a").write_bytes(b"x")
+    s = video.sources_voix(SEQS, tmp_path / "voix", tmp_path / "synthese")
+    assert s["04"] == tmp_path / "voix" / "04.m4a" and s["01"] == tmp_path / "synthese" / "01.m4a"
+
+
+def test_la_carte_de_fin_dit_voix_de_synthese(tmp_path):
+    for synth in (True, False):
+        f = tmp_path / f"{synth}.ass"
+        video._ass([(0.0, 1.0, "Bonjour.")], (5.0, 9.0), f, synthese=synth)
+        assert ("Voix de synthèse · texte écrit par l'équipe Spectrum" in f.read_text(encoding="utf-8")) is synth

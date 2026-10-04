@@ -21,7 +21,7 @@ Durée visée : **11 min 30 s** environ (voix 8 min 10 s + film 3 min 21 s). Fou
 
 Images : 01-titre.mp4=5, 01-carte.mp4
 
-> Bonjour. On est l'équipe Club Pulse. / On a construit cet outil pour le Club des Affaires de la Foire du Valais.
+> Bonjour. On est l'équipe Spectrum. / On a créé Club Pulse pour le Club des Affaires de la Foire du Valais.
 > Le Club, ce sont des entreprises qui se retrouvent chaque année à Martigny. / Elles pourraient s'entraider toute l'année.
 > Notre question est simple : comment passer d'une rencontre à un vrai coup de main ?
 > Voici le document le plus optimiste du monde professionnel. / La carte de visite.
@@ -64,6 +64,7 @@ Images : 04-jean-marc.mp4, 04-constellation.mp4, 04-demande.mp4, 04-boutons.mp4,
 > Les bonnes personnes reçoivent la demande. Pas tout le Club. Juste elles.
 > Trois boutons : oui, non, ou pas cette fois.
 > Personne ne voit qui a dit non. / Personne ne le verra jamais.
+> Sur l'écran de la salle, chaque oui allume un trait. / Quand l'anneau se ferme, la demande peut se faire.
 > Sophie dit oui. Elle reçoit un reçu. Daté, numéroté. Elle peut le retirer quand elle veut.
 > Son oui ne sert qu'à cette demande. Personne d'autre ne voit son nom à l'écran.
 > Et si quelqu'un change d'avis ? On ne dit pas qui. On dit seulement : « une pièce n'est plus disponible ».
@@ -80,6 +81,7 @@ Images : 05-anneau.mp4, 05-cherche.mp4, 05-passe.mp4, 05-suivi.mp4, 05-chiffres.
 > Par exemple, un exposant d'Annecy, qui rend service avant même d'adhérer.
 > Le Club voit enfin où en sont les collaborations. Combien de demandes ont trouvé une réponse.
 > Et combien d'entreprises travaillent ensemble pour la première fois. Toujours en chiffres globaux. Jamais de noms.
+> Tout cela tient sur une seule page, que le secrétariat du Club peut ouvrir quand il veut.
 > Votre Club, c'est 145 entreprises et 173 représentants.
 > On a pris neuf projets types et votre liste de membres.
 > Le Club pourrait en monter huit sur neuf avec ses seuls membres.

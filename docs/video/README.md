@@ -8,7 +8,9 @@ direct ne change pas (`docs/presentation/`).
 | [SCRIPT_VIDEO.md](SCRIPT_VIDEO.md) | le script, 8 séquences numérotées, avec leur durée visée et leurs images |
 | `prompteur.html` | le prompteur pour enregistrer la voix, séquence par séquence (flèches, espace = chrono) |
 | [GUIDE_ENREGISTREMENT.md](GUIDE_ENREGISTREMENT.md) | une page : enregistrer 01.m4a … 08.m4a avec QuickTime |
-| `voix/` | vos 8 enregistrements (ils restent sur le Mac, git les ignore) |
+| `voix-synthese/` | **les 8 voix de synthèse** (Piper, voix « siwis », hors ligne) utilisées par défaut ; [CHOIX_DE_LA_VOIX.md](voix-synthese/CHOIX_DE_LA_VOIX.md), échantillons dans `comparaison/` |
+| `voix/` | vos propres enregistrements, s'il y en a un jour : **ils passent devant la synthèse, fichier par fichier** (git les ignore) |
+| `sources/film.mp4` | le film (branche `video-sources`) : pris en premier par le montage, sinon la seule vidéo du Bureau |
 | `images/` | 31 clips 1920 × 1080 : le deck en motion design (fond sombre) et l'application réelle (monde fictif, IA éteinte) |
 | `sous-titres-cible.srt` | les sous-titres calés sur les durées visées ; le montage refait le SRT exact sur votre voix |
 | `equipe.txt` | l'équipe et le contact de la carte de fin : **à compléter** |
@@ -16,23 +18,24 @@ direct ne change pas (`docs/presentation/`).
 | `RESUME_JURY.pdf` | une page pour le jury : problème, solution, ce qu'y gagne le Club, la demande, l'équipe |
 | `outils/` | `video.py` (prompteur, sous-titres, montage, vérifications, secours HTML), `images.py` (refait les clips, pas besoin sur le Mac) |
 
-## Sur le Mac, étape par étape
+## Sur le Mac, étape par étape (voix de synthèse, vrai film)
 
 1. **Récupérer la branche** (Terminal, dans le dossier du dépôt) :
    `git fetch origin && git checkout foire-2026 && git pull`
-2. **ffmpeg**, une seule fois : `conda install -y -c conda-forge ffmpeg` (environ 2 minutes ; `ffmpeg -version` doit répondre).
-3. **L'équipe et le contact** : ouvrir `docs/video/equipe.txt` avec TextEdit, remplir les deux lignes, enregistrer.
-4. **La voix** : suivre [GUIDE_ENREGISTREMENT.md](GUIDE_ENREGISTREMENT.md) avec `docs/video/prompteur.html` ouvert dans
-   Safari. Huit fichiers dans `docs/video/voix/` : `01.m4a` … `08.m4a`.
-5. **Le film** sur le Bureau : la **seule** vidéo du Bureau, comme pour le lanceur (ou `--film /chemin/du/film.mp4`).
-6. **Monter** : `./docs/video/monter.sh` (environ 10 à 20 minutes). À la fin, chaque vérification affiche `[OK]` ou `[KO]` :
-   durée entre 10 et 12 minutes, aucun silence de plus de 3 secondes (hors film), aucun mot interdit dans le script et
-   les sous-titres, taille de 400 Mo au plus, son autour de -16 LUFS, image H.264 1920 × 1080, carte de fin remplie.
-7. **Regarder** `docs/video/out/club-pulse-presentation.mp4` en entier, avec le son. Une séquence à refaire ? Réenregistrer
-   seulement son fichier `NN.m4a`, puis relancer l'étape 6.
-8. **Envoyer** au jury : `club-pulse-presentation.mp4`, et si demandé `RESUME_JURY.pdf`. Secours, si le jury ne peut pas
-   lire le MP4 : `out/club-pulse-presentation-secours.html`, un seul fichier, qui s'ouvre dans n'importe quel navigateur
-   (bouton Lecture). `out/club-pulse-presentation.srt` : les sous-titres seuls, si la plateforme d'envoi les demande.
+2. **Le film** : `mkdir -p docs/video/sources && git show origin/video-sources:docs/video/sources/film.mp4 > docs/video/sources/film.mp4`
+   (le dossier `sources/` est ignoré sur cette branche : rien à committer).
+3. **ffmpeg**, une seule fois : `conda install -y -c conda-forge ffmpeg`.
+4. **Le contact** de la carte de fin : `docs/video/equipe.txt`, ligne « Contact : » (TextEdit).
+5. **Monter** : `./docs/video/monter.sh` → `docs/video/out/club-pulse-presentation.mp4`, et toutes les lignes `[OK]`.
+6. **Regarder en entier, avec le son**, puis envoyer : le MP4 ; si demandé `RESUME_JURY.pdf` ; en secours
+   `out/club-pulse-presentation-secours.html` ; `out/club-pulse-presentation.srt` si la plateforme veut les sous-titres à part.
+
+Changer de voix : écouter `voix-synthese/comparaison/`, puis (une fois `pip install sherpa-onnx soundfile numpy`)
+`python3 docs/video/outils/voix_synthese.py` régénère les 8 fichiers. **Plan B** si la voix de synthèse ne vous plaît
+pas : la voix « Premium » de macOS — Réglages Système → Accessibilité → Contenu énoncé → Voix du système → Gérer les
+voix → Français → télécharger « Audrey (Premium) » (ou « Aurélie (Premium) ») — puis
+`python3 docs/video/outils/voix_synthese.py --mac "Audrey (Premium)"` et l'étape 5.
+Votre propre voix, plus tard : `GUIDE_ENREGISTREMENT.md`, les fichiers dans `voix/` passent devant.
 
 Une vérification en `[KO]` :
 - **durée trop courte** : lire plus lentement (les séquences 4, 5 et 6 surtout) ; **trop longue** : resserrer les pauses ;
