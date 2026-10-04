@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Club Pulse v3 — Hack VS 2026</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='.5' y='.5' width='23' height='23' rx='7' fill='%23CD2128'/%3E%3Ccircle cx='12' cy='12' r='7' fill='none' stroke='%23FFF' stroke-width='2.7' stroke-linecap='round' stroke-dasharray='33 11' transform='rotate(-90 12 12)'/%3E%3Ccircle cx='7.05' cy='7.05' r='1.8' fill='%23FFF'/%3E%3C/svg%3E">
+<style>
+/* ── Polices locales (aucune requête réseau) ─────────────────────────────── */
+@font-face { font-family: "Plus Jakarta Sans"; src: url(assets/fonts/plus-jakarta-sans-latin-wght-normal.woff2) format("woff2"); font-weight: 200 800; font-display: block; }
+@font-face { font-family: "Plus Jakarta Sans"; src: url(assets/fonts/plus-jakarta-sans-latin-ext-wght-normal.woff2) format("woff2"); font-weight: 200 800; font-display: block;
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "JetBrains Mono"; src: url(assets/fonts/jetbrains-mono-latin-400-normal.woff2) format("woff2"); font-weight: 400; font-display: block; }
+@font-face { font-family: "JetBrains Mono"; src: url(assets/fonts/jetbrains-mono-latin-500-normal.woff2) format("woff2"); font-weight: 500; font-display: block; }
+
+/* ── Tokens : design system v1.0 (docs/design/DESIGN_SYSTEM.md § 1.1) + mouvement ─ */
+:root {
+  --brand: #CD2128; --brand-tint: #FDEDEE; --brand-tint-2: #FDF5F5; --brand-dash: #EFC3C5;
+  --ink: #141923; --ink-2: #3A414B; --secondary: #596273; --tertiary: #9AA3B0; --disabled: #C2C8D1;
+  --bg: #F2F3F5; --card: #FFFFFF; --hairline: #EEF0F2; --hairline-2: #E7EAEE;
+  --green: #0DA254; --green-deep: #0A7A3F; --green-tint: #E7F6EE;
+  --ombre-carte: 0 1px 2px rgba(16,24,40,.05), 0 10px 28px rgba(16,24,40,.07);
+  --ombre-fiche: 0 2px 6px rgba(16,24,40,.06), 0 28px 70px rgba(16,24,40,.18);
+  /* mouvement : trois durées, un seul easing */
+  --t-micro: 240ms; --t-entree: 480ms; --t-signature: 720ms;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  /* grille */
+  --marge: 160px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+body { font-family: "Plus Jakarta Sans", sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
+.mono { font-family: "JetBrains Mono", monospace; }
+
+/* ── Scène 1920×1080, mise à l'échelle (propre en 3840×2160 : tout est vectoriel) ─ */
+#scene { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; transform-origin: 0 0; background: #000; }
+.slide { position: absolute; inset: 0; visibility: hidden; opacity: 0; background: var(--card); }
+.slide.active { visibility: visible; opacity: 1; z-index: 2; }
+.slide.fondu { transition: opacity var(--t-micro) var(--ease), visibility 0s linear var(--t-micro); }
+.slide.fondu.active { transition: opacity var(--t-micro) var(--ease), visibility 0s; }
+.slide.gris { background: var(--bg); }
+.slide.noir { background: #000; color: #fff; }
+
+/* ── Fragments : une idée entre au clic (480 ms) ─────────────────────────── */
+.fr { opacity: 0; transform: translateY(24px); transition: opacity var(--t-entree) var(--ease), transform var(--t-entree) var(--ease); }
+.fr.on { opacity: 1; transform: none; }
+.fr.fade { transform: none; }
+
+/* ── Typographie ─────────────────────────────────────────────────────────── */
+.affiche { font-weight: 800; letter-spacing: -0.035em; line-height: 1.02; }
+.corps { font-size: 40px; font-weight: 500; line-height: 1.35; color: var(--secondary); letter-spacing: -0.005em; }
+.etiq { font-family: "JetBrains Mono", monospace; font-size: 28px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--secondary); }
+.rouge { color: var(--brand); }
+.abs { position: absolute; }
+
+/* ── M3 · cartons d'acte : noir, une phrase, entrée 480 ms, rien d'autre ne bouge ─ */
+.carton { display: flex; align-items: center; justify-content: center; text-align: center; }
+.carton p { text-wrap: balance; font-weight: 800; font-size: 112px; letter-spacing: -0.035em; line-height: 1.08; color: #fff; max-width: 1500px;
+  opacity: 0; transition: opacity var(--t-entree) var(--ease); }
+.slide.active .carton-in p, .carton.active p { opacity: 1; }
+
+/* ── M2 · « Et après ? » : une seule composition, réutilisée au pixel près ─── */
+.ea { position: absolute; left: var(--marge); top: 392px; font-size: 220px; font-weight: 800; letter-spacing: -0.045em; line-height: 1; }
+
+/* ── M1 · la carte de visite ─────────────────────────────────────────────── */
+.carte { position: absolute; left: 450px; top: 196px; width: 1020px; height: 660px; border-radius: 18px; background: #fff;
+  transform: rotate(-3deg); padding: 84px 92px; }
+.carte::before { content: ""; position: absolute; inset: 0; border-radius: 18px; box-shadow: var(--ombre-fiche); }
+.carte .lieu { font-family: "JetBrains Mono", monospace; font-size: 28px; font-weight: 500; color: var(--secondary); letter-spacing: .08em; }
+.carte .bas { position: absolute; left: 92px; right: 92px; bottom: 84px; display: flex; justify-content: space-between; align-items: flex-end; }
+.carte .nom { font-size: 136px; font-weight: 800; letter-spacing: -0.045em; line-height: .92; }
+.carte .metier { font-size: 40px; font-weight: 500; color: var(--secondary); margin-top: 24px; letter-spacing: -0.01em; }
+.carte .filets { display: grid; gap: 18px; justify-items: end; padding-bottom: 10px; }
+.carte .filets i { display: block; height: 12px; border-radius: 6px; background: var(--hairline-2); }
+@keyframes pose { from { opacity: 0; transform: translateY(-56px) rotate(-7deg) scale(1.04); } to { opacity: 1; transform: rotate(-3deg); } }
+.pose { animation: pose var(--t-signature) var(--ease) both; }
+.fictif { left: var(--marge); bottom: 72px; }
+
+/* ── M4 · l'anneau (construction exacte, tuile-sigle) ───────────────────── */
+.tuile { position: absolute; left: var(--marge); top: 320px; width: 440px; height: 440px; }
+.tuile .arc { stroke-dasharray: 44 44; stroke-dashoffset: 11; }
+.tuile .point { transform: translate(4.95px, 4.95px); opacity: 0; }
+@keyframes dessine { from { stroke-dashoffset: 44; } to { stroke-dashoffset: 11; } }
+@keyframes ferme { from { stroke-dashoffset: 11; } to { stroke-dashoffset: 0; } }
+@keyframes glisse { 0% { opacity: 0; transform: translate(4.95px, 4.95px) scale(.4); } 30% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+.slide.active .dessin .arc { animation: dessine var(--t-signature) var(--ease) both; }
+.slide.active .fermeture .arc { animation: ferme calc(var(--t-signature) / 2) var(--ease) calc(var(--t-signature) / 2) both; }
+.slide.active .fermeture .point { animation: glisse calc(var(--t-signature) / 2) var(--ease) both, absorbe var(--t-micro) var(--ease) var(--t-signature) both; }
+@keyframes absorbe { from { opacity: 1; } to { opacity: 0; } }
+.statut { position: absolute; left: 720px; top: 470px; font-size: 120px; }
+
+/* ── Le vide ─────────────────────────────────────────────────────────────── */
+.ligne { position: absolute; left: 280px; right: 280px; top: 686px; height: 4px; background: var(--ink); border-radius: 2px; }
+.noeud { position: absolute; top: 672px; width: 32px; height: 32px; border-radius: 50%; }
+.noeud-lab { position: absolute; top: 748px; font-size: 44px; font-weight: 700; letter-spacing: -0.015em; }
+.mono-pastille { position: absolute; width: 132px; height: 132px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-family: "JetBrains Mono", monospace; font-weight: 500; font-size: 32px; }
+
+/* ── Captures réelles + emplacement si le fichier manque ─────────────────── */
+.capture { display: block; }
+/* 18b · Les six prochains mois */
+.entonnoir { position: absolute; left: var(--marge); right: var(--marge); top: 200px; display: flex; align-items: stretch; gap: 28px; }
+.entonnoir i { align-self: center; }
+.entonnoir div { flex: 1; background: #fff; border-radius: 18px; box-shadow: var(--ombre-fiche); padding: 40px 36px; border: 3px solid transparent; }
+.entonnoir div.rouge-bord { border-color: var(--brand); }
+.entonnoir b { display: block; font-size: 60px; font-weight: 800; letter-spacing: -0.03em; }
+.entonnoir span { display: block; font-size: 32px; font-weight: 500; color: var(--secondary); margin-top: 12px; }
+.entonnoir i { font-style: normal; font-size: 64px; color: var(--secondary); }
+.ajouts { position: absolute; left: var(--marge); right: var(--marge); top: 620px; display: flex; flex-wrap: wrap; gap: 16px; }
+.ajouts span { font-size: 36px; font-weight: 700; padding: 16px 28px; border-radius: 999px; background: var(--hairline-2); color: var(--ink); }
+.emplacement { position: absolute; display: none; border: 3px dashed var(--brand-dash); background: var(--brand-tint-2); border-radius: 18px;
+  align-items: center; justify-content: center; flex-direction: column; gap: 18px; text-align: center; }
+.emplacement b { font-family: "JetBrains Mono", monospace; font-weight: 500; font-size: 40px; color: var(--brand); }
+.emplacement span { font-size: 32px; color: var(--secondary); font-weight: 600; }
+.manque .capture { display: none; }
+.manque .emplacement { display: flex; }
+
+/* ── Démo : fond discret ─────────────────────────────────────────────────── */
+.reperes { position: absolute; left: var(--marge); right: var(--marge); bottom: 120px; display: flex; gap: 0; border-top: 2px solid var(--hairline-2); }
+.reperes li { list-style: none; flex: 1; padding-top: 28px; font-family: "JetBrains Mono", monospace; font-size: 28px; font-weight: 500; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--secondary); position: relative; transition: color var(--t-micro) var(--ease); }
+.reperes li::before { content: ""; position: absolute; left: 0; top: -2px; height: 2px; width: 100%; background: var(--ink); transform: scaleX(0); transform-origin: left;
+  transition: transform var(--t-entree) var(--ease); }
+.reperes li.fait { color: var(--ink-2); }
+.reperes li.fait::before { transform: scaleX(1); }
+.reperes li.ici { color: var(--ink); }
+#secours { position: absolute; inset: 0; background: var(--bg); display: none; align-items: center; justify-content: center; z-index: 5; }
+#secours.on { display: flex; }
+#secours img { max-height: 940px; max-width: 1760px; border-radius: 18px; box-shadow: var(--ombre-carte); }
+#secours .etiq { position: absolute; left: var(--marge); top: 64px; }
+
+/* ── Preuves, chiffres, IA ───────────────────────────────────────────────── */
+.preuve { position: absolute; left: var(--marge); right: var(--marge); display: grid; grid-template-columns: 120px 1fr; align-items: baseline;
+  padding: 44px 0; border-top: 2px solid var(--hairline-2); }
+.preuve .n { font-family: "JetBrains Mono", monospace; font-size: 32px; font-weight: 500; color: var(--secondary); }
+.preuve h3 { font-size: 80px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; }
+.preuve p { font-size: 40px; font-weight: 500; color: var(--secondary); margin-top: 12px; }
+.chiffres { position: absolute; left: var(--marge); right: var(--marge); top: 232px; }
+.chiffre { display: grid; grid-template-columns: 720px 1fr; align-items: center; height: 136px; border-top: 2px solid var(--hairline-2); }
+.chiffre b { font-family: "JetBrains Mono", monospace; font-weight: 500; font-size: 104px; letter-spacing: -0.04em; line-height: 1; display: flex; align-items: center; gap: 28px; white-space: nowrap; }
+.chiffre b.gel { color: var(--secondary); font-size: 72px; letter-spacing: 0; }
+.chiffre b.gel::after { content: ""; display: block; width: 180px; border-bottom: 3px dashed var(--disabled); align-self: flex-end; margin-bottom: 10px; }
+.chiffre span { font-size: 36px; font-weight: 500; color: var(--secondary); line-height: 1.25; }
+.medaillon { width: 64px; height: 64px; flex: none; }
+.alerte { position: absolute; left: var(--marge); bottom: 64px; font-family: "JetBrains Mono", monospace; font-size: 28px; color: var(--brand);
+  background: var(--brand-tint); padding: 14px 24px; border-radius: 999px; display: none; }
+.sans-gel .alerte { display: block; }
+.trois { position: absolute; left: var(--marge); top: 232px; }
+.trois p { font-size: 140px; font-weight: 800; letter-spacing: -0.04em; line-height: 1.12; }
+.souligne { position: relative; display: inline-block; }
+.souligne::after { content: ""; position: absolute; left: 0; right: 0; bottom: 6px; height: 12px; border-radius: 6px; background: var(--brand);
+  transform: scaleX(0); transform-origin: left; transition: transform var(--t-signature) var(--ease) var(--t-micro); }
+.fr.on .souligne::after { transform: scaleX(1); }
+.point-oui { display: inline-block; width: .2em; height: .2em; border-radius: 50%; background: var(--brand); margin-left: .035em; }
+.cases { position: absolute; left: var(--marge); top: 760px; display: flex; gap: 14px; }
+.cases i { width: 44px; height: 44px; border-radius: 10px; border: 3px solid var(--disabled); }
+.cases i.pleine { background: var(--brand); border-color: var(--brand); }
+
+/* ── M6 · la carte et le reçu ────────────────────────────────────────────── */
+.s18 .carte { transition: transform var(--t-signature) var(--ease); }
+.s18.ecarte .carte { transform: translateX(-330px) rotate(-3deg); }
+.recu { position: absolute; left: 1080px; top: 236px; width: 740px; height: 653px; opacity: 0; }
+.recu .capture { width: 740px; height: 653px; border-radius: 26px; object-fit: cover; box-shadow: var(--ombre-fiche); background: #fff; }
+.recu .emplacement { inset: 0; }
+.s18.ecarte .recu { animation: pose var(--t-signature) var(--ease) both; }
+@keyframes poseRecu { from { opacity: 0; transform: translateY(-56px) rotate(-4deg) scale(1.04); } to { opacity: 1; transform: rotate(0); } }
+.s18.ecarte .recu { animation-name: poseRecu; }
+
+/* ── Indicateur de progression : l'anneau qui se remplit au fil des 9 actes ─ */
+#progres { position: absolute; right: 64px; bottom: 56px; width: 72px; height: 72px; z-index: 6; transition: opacity var(--t-micro) var(--ease); }
+#progres path { fill: none; stroke-width: 3.2; stroke-linecap: round; stroke: var(--hairline-2); transition: stroke var(--t-micro) var(--ease); }
+#progres path.fait { stroke: var(--ink); }
+
+/* ── Noir (N), répétition (R) ───────────────────────────────────────────── */
+#noir { position: absolute; inset: 0; background: #000; z-index: 20; opacity: 0; visibility: hidden; transition: opacity var(--t-micro) var(--ease), visibility 0s linear var(--t-micro); }
+#noir.on { opacity: 1; visibility: visible; transition: opacity var(--t-micro) var(--ease), visibility 0s; }
+
+/* ── Mode jour (J, ?mode=jour) : un projecteur ne fait pas de noir en salle éclairée.
+      Seuls changent les slides sombres (5 cartons, film/plan B, noir final) et l'écran N :
+      même composition au pixel, même apparition, fondus clairs. ─────────────────────── */
+body.jour #scene { background: var(--bg); }
+body.jour .slide.noir { background: var(--bg); color: var(--ink); }
+body.jour .carton p { color: var(--ink); }
+body.jour .planb { color: var(--ink); }
+body.jour .planb .etiq { color: var(--secondary); }
+body.jour #noir { background: var(--bg); }
+#bascule { position: absolute; right: 64px; top: 56px; z-index: 25; padding: 12px 24px; border-radius: 999px; background: #fff; color: var(--ink-2);
+  border: 2px solid var(--hairline-2); font-family: "JetBrains Mono", monospace; font-size: 26px; font-weight: 500; letter-spacing: .06em;
+  opacity: 0; transition: opacity var(--t-micro) var(--ease); pointer-events: none; }
+#bascule.on { opacity: 1; }
+#repet { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; background: #fff; border-top: 2px solid var(--hairline-2); z-index: 15; display: none;
+  align-items: center; gap: 28px; padding: 0 32px; font-family: "JetBrains Mono", monospace; font-size: 26px; font-weight: 500; color: var(--ink-2); }
+#repet.on { display: flex; }
+#repet .pil { padding: 6px 18px; border-radius: 999px; display: inline-flex; align-items: center; gap: 10px; }
+#repet .ok { background: var(--green-tint); color: var(--green-deep); }
+#repet .ko { background: var(--brand-tint); color: var(--brand); }
+#repet .coupe { color: var(--brand); font-family: "Plus Jakarta Sans", sans-serif; font-weight: 700; }
+
+/* ── Film ───────────────────────────────────────────────────────────────── */
+#film { position: absolute; inset: 0; width: 1920px; height: 1080px; background: #000; object-fit: contain; display: none; }
+.film-ok #film { display: block; }
+.planb { display: none; position: absolute; inset: 0; padding: 200px var(--marge) 0; color: #fff; }
+.film-ko .planb { display: block; }
+.planb .etiq { color: #9AA3B0; }
+.planb p.l { font-size: 52px; font-weight: 700; line-height: 1.3; letter-spacing: -0.015em; max-width: 1500px; margin-top: 48px; }
+
+/* ── Mouvement réduit : tout devient fondu simple ───────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .fr, .fr.on { transform: none !important; }
+  .pose, .s18.ecarte .recu { animation: fondu var(--t-micro) linear both !important; }
+  .slide.active .dessin .arc, .slide.active .fermeture .arc, .slide.active .fermeture .point { animation: none !important; }
+  .fermeture .arc { stroke-dashoffset: 0 !important; }
+  .fermeture .point { opacity: 0 !important; }
+  .s18 .carte { transition: none; }
+  .souligne::after { transition: opacity var(--t-micro) linear; transform: none; opacity: 0; }
+  .fr.on .souligne::after { opacity: 1; }
+}
+@keyframes fondu { from { opacity: 0; } to { opacity: 1; } }
+/* rendu de revue : état final, sans transition */
+.statique *, .statique *::before, .statique *::after { transition: none !important; animation-duration: 0s !important; animation-delay: 0s !important; }
+
+/* ── v2 (03.10) : sources, QR en direct, trio de captures, chiffres du Club, grille de 9, statuts, la demande ─ */
+.source { left: var(--marge); right: 400px; bottom: 56px; font-family: "JetBrains Mono", monospace; font-size: 22px; color: var(--secondary); letter-spacing: .01em; }
+.qr-grand { position: absolute; right: var(--marge); top: 170px; width: 640px; height: 640px; background: #fff; border-radius: 28px; box-shadow: var(--ombre-fiche); padding: 36px; }
+.qr-grand img, .qr-moyen img { width: 100%; height: 100%; display: block; }
+.qr-absent { display: none; position: absolute; inset: 0; border: 3px dashed var(--brand-dash); background: var(--brand-tint-2); border-radius: 28px;
+  flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 24px; }
+.qr-absent b { font-family: "JetBrains Mono", monospace; font-weight: 500; font-size: 34px; color: var(--brand); }
+.qr-absent span { font-size: 26px; color: var(--secondary); font-weight: 600; }
+.qr-ko img { visibility: hidden; } .qr-ko .qr-absent { display: flex; }
+.qr-moyen { position: absolute; right: var(--marge); top: 260px; width: 380px; height: 380px; background: #fff; border-radius: 22px; box-shadow: var(--ombre-carte); padding: 22px; }
+.qr-moyen > span { position: absolute; left: 0; right: 0; top: 396px; text-align: center; font-size: 26px; color: var(--secondary); font-weight: 600; }
+#qr-coin { position: absolute; right: 160px; bottom: 40px; width: 150px; height: 150px; background: #fff; border-radius: 16px; padding: 10px; z-index: 6;
+  box-shadow: var(--ombre-carte); opacity: 0; transition: opacity var(--t-micro) var(--ease); }
+#qr-coin.on { opacity: 1; } #qr-coin img { width: 100%; height: 100%; } #qr-coin.qr-ko { display: none; }
+.trio { position: absolute; left: var(--marge); right: var(--marge); top: 170px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px; }
+.trio figure { position: relative; height: 760px; background: #fff; border-radius: 18px; box-shadow: var(--ombre-carte); overflow: hidden; }
+.trio .capture { width: 100%; height: 640px; object-fit: contain; object-position: center top; background: #fff; }
+.abs.corps { max-width: 1600px; }
+.trio.duo { grid-template-columns: 520px 1fr; }
+.trio.duo figure:last-child .capture { object-fit: cover; object-position: left top; height: 660px; }
+.trio .emplacement { inset: 0 0 120px 0; }
+.trio figcaption { position: absolute; left: 24px; right: 24px; bottom: 20px; font-size: 28px; font-weight: 700; line-height: 1.25; }
+.club-n { position: absolute; left: var(--marge); right: var(--marge); top: 200px; display: flex; gap: 96px; }
+.club-n b { display: block; font-family: "JetBrains Mono", monospace; font-weight: 500; font-size: 180px; letter-spacing: -0.05em; line-height: 1; }
+.club-n b small { font-size: 96px; color: var(--secondary); }
+.club-n > div > span { display: block; font-size: 36px; color: var(--secondary); font-weight: 600; margin-top: 10px; }
+.grille9 { position: absolute; left: var(--marge); right: var(--marge); top: 180px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.grille9 span { display: flex; flex-direction: column; justify-content: center; height: 168px; padding: 0 32px; border-radius: 18px; background: var(--green-tint);
+  color: var(--green-deep); font-size: 40px; font-weight: 800; letter-spacing: -0.02em; border: 3px solid transparent; }
+.grille9 span.manque9 { background: #fff; color: var(--ink); border: 3px dashed var(--brand); }
+.grille9 small { font-family: "JetBrains Mono", monospace; font-size: 24px; font-weight: 500; color: var(--brand); margin-top: 8px; letter-spacing: .02em; }
+.statuts { position: absolute; left: var(--marge); top: 220px; display: grid; gap: 40px; }
+.statuts div { display: flex; align-items: baseline; gap: 36px; }
+.statuts b { font-family: "JetBrains Mono", monospace; font-weight: 500; font-size: 150px; letter-spacing: -0.05em; line-height: 1; width: 220px; }
+.statuts span { font-size: 48px; font-weight: 700; }
+.ask { position: absolute; left: var(--marge); right: var(--marge); top: 220px; background: #fff; border-radius: 28px; box-shadow: var(--ombre-fiche); padding: 72px 80px; }
+.ask p { font-size: 84px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.12; }
+.boutons { display: flex; gap: 28px; margin-top: 64px; }
+.boutons span { font-size: 44px; font-weight: 800; padding: 26px 56px; border-radius: 999px; border: 3px solid var(--hairline-2); color: var(--ink); }
+.boutons span.oui { background: var(--ink); color: #fff; border-color: var(--ink); }
+.chiffre b span { display: inline; font-size: inherit; color: inherit; }
+.chiffre b.mot { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; }
+.plan-b-video { position: absolute; inset: 0; width: 1920px; height: 1080px; background: #000; object-fit: contain; display: none; z-index: 4; }
+.plan-b-video.on { display: block; }
+.ecran-live { position: absolute; inset: 0; width: 1920px; height: 1080px; border: 0; background: #000; display: none; z-index: 3; pointer-events: none; }
+.ecran-live.on { display: block; }
+body.jour .plan-b-video { background: var(--bg); }
+
+/* ═══ v3 (04.10) : MODE NUIT par défaut, pour une salle dans la pénombre ════════════════════════════════════════
+   Fond très sombre et profond, jamais de grand aplat blanc, le rouge #CD2128 en accent seulement (les textes rouges
+   prennent un rouge éclairci pour rester AA sur le noir), des tailles généreuses (lisible à 25 m). Le mode jour (J)
+   retrouve exactement le rendu de v2, sans le champ de points. ──────────────────────────────────────────────────── */
+body:not(.jour) {
+  --card: #0D1119; --bg: #05070B; --ink: #F3F1EC; --ink-2: #D6DAE1; --secondary: #AEB6C2; --tertiary: #8A93A1; --disabled: #4C5563;
+  --hairline: #1B2230; --hairline-2: #2A3342; --brand-tint: #2B1013; --brand-tint-2: #160A0C; --brand-dash: #8C3036;
+  --green: #22C55E; --green-deep: #5BE38F; --green-tint: #0E2619; --rouge-texte: #FF5A61;
+  --ombre-carte: 0 0 0 2px #1E2633, 0 20px 50px rgba(0,0,0,.6); --ombre-fiche: 0 0 0 2px #253040, 0 30px 80px rgba(0,0,0,.7);
+}
+body:not(.jour) #scene { background: #05070B; }
+#points { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 1; display: block; }
+body.jour #points { display: none; }
+body:not(.jour) .slide, body:not(.jour) .slide.gris, body:not(.jour) .slide.noir { background: transparent; }
+body:not(.jour) .rouge { color: var(--rouge-texte); }
+body:not(.jour) .source { font-weight: 500; }
+body:not(.jour) .etiq { font-size: 30px; }
+body:not(.jour) .corps { color: var(--ink-2); }
+body:not(.jour) .carte { background: linear-gradient(150deg, #161C27 0%, #0F141D 100%); border: 2px solid #2A3342; }
+body:not(.jour) .carte::before { box-shadow: 0 40px 120px rgba(0,0,0,.75); }
+body:not(.jour) .ask, body:not(.jour) .grille9 span.manque9, body:not(.jour) .trio figure, body:not(.jour) #repet, body:not(.jour) #bascule { background: var(--card); }
+body:not(.jour) .grille9 small { color: var(--rouge-texte); }
+/* lisible à 25 m : plus rien sous 30 px dans ce qui se lit (les sources restent en petit, elles ne se lisent pas) */
+.grille9 small { font-size: 36px; }
+.trio figcaption { font-size: 36px; }
+.qr-moyen > span, .qr-absent span { font-size: 34px; }
+.carte .lieu, .alerte { font-size: 32px; }
+.reperes li { font-size: 34px; }
+body:not(.jour) .source { font-size: 30px; }
+body:not(.jour) { --hairline-2: #3A4556; }
+body:not(.jour) .boutons span { border-color: #8A93A1; }
+body:not(.jour) .boutons span.oui { border-color: var(--brand); }
+body:not(.jour) .ask { background: #111722; border: 2px solid #3A4556; }
+body:not(.jour) .grille9 span:not(.manque9) { background: #141A24; color: var(--ink); border: 2px solid #3A4556; }
+body:not(.jour) .grille9 span:not(.manque9)::before { content: ""; display: block; width: 14px; height: 14px; border-radius: 50%; background: #FFD6AA; box-shadow: 0 0 18px 6px rgba(255,214,170,.45); margin-bottom: 10px; }
+body:not(.jour) .affiche .rouge, body:not(.jour) .carton .rouge, body:not(.jour) .ea .rouge { color: #E0333A; }
+body:not(.jour) .boutons span.oui { background: var(--brand); border-color: var(--brand); color: #fff; }
+body:not(.jour) .alerte { color: var(--rouge-texte); }
+body:not(.jour) .emplacement b { color: var(--rouge-texte); }
+body:not(.jour) .trio .capture, body:not(.jour) .recu .capture { filter: brightness(.86); }
+
+/* « Et après ? » : seul, au centre, les trois fois */
+.ea { left: 0; right: 0; text-align: center; }
+
+/* typographie animée : les mots montent, un par un (cinéma, phrase finale) */
+.motv3 { display: inline-block; opacity: 0; transform: translateY(.32em); }
+.slide.active .motv3 { animation: motMonte 480ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes motMonte { to { opacity: 1; transform: none; } }
+
+/* acte 4 : 8 capacités sur 9 s'allument, la neuvième reste creuse et pulse */
+.slide.active .grille9 span:not(.manque9) { animation: allume 480ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes allume { from { opacity: .12; transform: scale(.96); } to { opacity: 1; transform: none; } }
+.slide.active .grille9 span.manque9 { animation: creux calc(720ms * 2) cubic-bezier(0.22, 1, 0.36, 1) calc(720ms * 3) infinite alternate; }
+@keyframes creux { from { box-shadow: 0 0 0 0 rgba(205,33,40,0); } to { box-shadow: 0 0 0 10px rgba(205,33,40,.35); } }
+
+/* acte 6 : la frise se dessine (30 jours, 45 jours, les Mondiaux, la Foire 2027) ; les trois boutons arrivent un à un */
+.frise { position: absolute; left: var(--marge); top: 856px; width: 1440px; height: 160px; }
+.frise path { fill: none; stroke: var(--ink-2); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 1440; stroke-dashoffset: 1440; }
+.slide.active .frise path { animation: trace 720ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes trace { to { stroke-dashoffset: 0; } }
+.frise .jalon { opacity: 0; }
+.slide.active .frise .jalon { animation: fondu 480ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.frise text { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 40px; fill: var(--ink); }
+.frise text.sous { font-weight: 600; font-size: 34px; fill: var(--secondary); }
+.frise circle { fill: var(--ink); } .frise .mondiaux circle { fill: var(--brand); }
+.boutons.fr span { opacity: 0; transform: translateY(16px); transition: opacity 480ms cubic-bezier(0.22, 1, 0.36, 1), transform 480ms cubic-bezier(0.22, 1, 0.36, 1); }
+.boutons.fr.on span { opacity: 1; transform: none; }
+.boutons.fr.on span:nth-child(2) { transition-delay: 240ms; } .boutons.fr.on span:nth-child(3) { transition-delay: 480ms; }
+
+/* acte 3 : l'écran réel de la salle apparaît en fondu, à la place des points */
+.ecran-live { display: block; opacity: 0; visibility: hidden; transition: opacity 720ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 720ms; }
+.ecran-live.on { opacity: 1; visibility: visible; transition: opacity 720ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s; }
+
+/* acte 7 : la carte du début SE TRANSFORME en reçu (même rectangle, elle se redresse, son contenu change) */
+.s18 .carte { transition: transform 720ms cubic-bezier(0.22, 1, 0.36, 1); }
+.s18 .carte > * { transition: opacity 240ms linear; }
+.s18.ecarte .carte { transform: rotate(0deg); }
+.s18.ecarte .carte > * { opacity: 0; }
+.s18 .recu { left: 450px; top: 196px; width: 1020px; height: 660px; border-radius: 18px; padding: 64px 80px; opacity: 0;
+  transform: rotate(-3deg); background: linear-gradient(150deg, #161C27 0%, #0F141D 100%); border: 2px solid #3A4556;
+  display: flex; flex-direction: column; gap: 22px; color: var(--ink); }
+.s18.ecarte .recu { animation: none; opacity: 1; transform: none;
+  transition: transform 720ms cubic-bezier(0.22, 1, 0.36, 1), opacity 240ms linear 240ms; }
+.recu .r-tete { font-family: "JetBrains Mono", monospace; font-size: 30px; letter-spacing: .08em; color: var(--secondary); }
+.recu .r-titre { font-size: 64px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.06; }
+.recu .r-valable { align-self: flex-start; font-size: 34px; font-weight: 800; padding: 8px 26px; border-radius: 999px; background: #0E2619; color: #5BE38F; }
+.recu .r-piece { font-size: 40px; font-weight: 600; color: var(--ink-2); line-height: 1.2; }
+.recu .r-ref { font-family: "JetBrains Mono", monospace; font-size: 36px; color: var(--ink); margin-top: auto; }
+.s18 .r-note { right: var(--marge); left: auto; }
+body.jour .s18 .recu { background: #fff; border-color: var(--hairline-2); }
+
+/* écrans de secours : les consignes de régie ne se montrent qu'en répétition (R) ; le public lit une phrase */
+#scene:not(:has(#repet.on)) #ecran-raison, #scene:not(:has(#repet.on)) .ecran-consigne, #scene:not(:has(#repet.on)) .qr-absent span { display: none; }
+#scene:not(:has(#repet.on)) #ecran-absent { font-size: 0; }
+#scene:not(:has(#repet.on)) #ecran-absent::before { display: block; content: "Le Club, en direct, dans un instant."; font-size: 48px; font-weight: 800; color: var(--ink); }
+#ecran-absent { max-width: 900px !important; }
+body:not(.jour) .qr-absent b { color: var(--rouge-texte); }
+
+/* les chiffres se construisent (compteur), ils ne surgissent pas */
+.compte { font-variant-numeric: tabular-nums; }
+
+/* mouvement coupé : touche M (urgence) ou préférence du système → simples fondus */
+body.sans-mouvement .fr, body.sans-mouvement .fr.on { transform: none !important; }
+body.sans-mouvement .motv3 { opacity: 1; transform: none; animation: none !important; }
+body.sans-mouvement .grille9 span, body.sans-mouvement .frise path, body.sans-mouvement .frise .jalon,
+body.sans-mouvement .pose { animation: none !important; opacity: 1; stroke-dashoffset: 0; }
+body.sans-mouvement .s18 .carte, body.sans-mouvement .s18 .recu { transition: opacity 240ms linear !important; transform: none !important; }
+body.sans-mouvement .boutons.fr span { transition: opacity 240ms linear; transform: none; transition-delay: 0s !important; }
+@media (prefers-reduced-motion: reduce) {
+  .motv3 { opacity: 1; transform: none; animation: none !important; }
+  .grille9 span, .frise path, .frise .jalon { animation: none !important; opacity: 1; stroke-dashoffset: 0; }
+  .boutons.fr span { transform: none; transition-delay: 0s !important; }
+  .s18 .carte, .s18 .recu { transition: opacity 240ms linear !important; transform: none !important; }
+}
+</style>
+</head>
+<body>
+<div id="scene">
+<canvas id="points" width="1920" height="1080" aria-hidden="true"></canvas>
+
+<!-- ═══ Acte 1 · 0:00–2:00 · La carte ═══ -->
+<section class="slide gris s1" data-id="1" data-acte="1" data-pas="0">
+  <div class="carte" id="carte-1">
+    <div class="lieu">ORSIÈRES · VALAIS</div>
+    <div class="bas"><div><div class="nom">Sophie</div><div class="metier">Tisanes de plantes alpines</div></div>
+      <div class="filets"><i style="width:260px"></i><i style="width:190px"></i></div></div>
+  </div>
+  <div class="abs etiq fictif">Personnage fictif</div>
+</section>
+
+<section class="slide" data-id="matin" data-acte="1" data-pas="1">
+  <div class="abs affiche" style="left:var(--marge);top:300px;font-size:104px;line-height:1.12">Hier, vous nous avez dit…</div>
+  <div class="abs affiche fr" data-f="1" style="left:var(--marge);top:500px;font-size:84px;line-height:1.16">On y a travaillé jusqu'au soir.<br>Et on a <span class="rouge">construit</span> de quoi le savoir.</div>
+</section>
+
+<section class="slide" data-id="stat" data-acte="1" data-pas="1">
+  <div class="abs affiche" style="left:var(--marge);top:250px;font-size:88px;line-height:1.15;max-width:1600px">La statistique la plus citée du monde des salons est invérifiable.</div>
+  <div class="abs affiche fr" data-f="1" style="left:var(--marge);top:560px;font-size:88px;line-height:1.15;max-width:1600px">C'est exactement le problème :<br>personne ne mesure <span class="rouge">l'après.</span></div>
+  <div class="abs source">« 80 % des contacts de salon jamais rappelés » : très citée, contestée et invérifiable — american-image.com · PREUVES.md, Contexte</div>
+</section>
+
+<section class="slide" data-id="2" data-acte="1"><div class="ea">Et après<span class="rouge"> ?</span></div></section>
+
+<!-- ═══ Acte 2 · 2:00–5:30 · Le film (verrouillé : 3:21) ═══ -->
+<section class="slide noir carton" data-id="cinema" data-acte="2" data-carton="1"><p>Cette année, la Foire fait son cinéma.<br>Nous aussi.</p></section>
+
+<section class="slide noir" data-id="film" data-acte="2" data-film="1" data-carton="1">
+  <video id="film" src="assets/film.mp4" preload="auto" playsinline></video>
+  <div class="planb">
+    <div class="etiq">Plan B · le film ne se lance pas · on vous le raconte</div>
+    <p class="l fr fade" data-f="1">Jean-Marc est membre du Club depuis vingt ans. À chaque événement, quelqu'un lui demande un coup de main — un contact, une salle, un camion — et Jean-Marc dit oui. Toujours. Avec sa carte, et un « on s'appelle ».</p>
+    <p class="l fr fade" data-f="2">Il a dit oui cent fois. Il a été rappelé trois fois.</p>
+    <p class="l fr fade" data-f="3">Ce n'est pas Jean-Marc, le problème. C'est ce qui vient après le oui.</p>
+  </div>
+</section>
+
+<section class="slide" data-id="8" data-acte="2" data-carton-voisin="1"><div class="ea">Et après<span class="rouge"> ?</span></div></section>
+
+<!-- ═══ Acte 3 · 5:30–9:30 · Sortez vos téléphones (mode salle + constellation) ═══ -->
+<section class="slide gris" data-id="salle" data-acte="3" data-qr="grand">
+  <div class="abs affiche" style="left:var(--marge);top:150px;font-size:136px">Sortez vos<br>téléphones.</div>
+  <div class="abs corps" style="left:var(--marge);top:470px;max-width:820px;color:var(--ink-2)">Pendant cinq minutes, vous êtes le Club.<br>Aucun nom, aucun compte. Deux gestes.</div>
+  <div class="abs etiq" style="left:var(--marge);top:740px;max-width:820px;text-transform:none;letter-spacing:.02em;line-height:1.4">Démonstration : vos données sont effacées après la présentation.</div>
+  <div class="qr-grand"><img class="qr-live" data-chemin="/qr/salle.svg" alt="QR de la salle, servi en direct">
+    <div class="qr-absent"><b>QR servi en direct</b><span>lancer ./demo-tunnel.sh puis ouvrir la salle (régie)</span></div></div>
+</section>
+
+<section class="slide gris" data-id="constellation" data-acte="3" data-pas="3" data-constellation="1">
+  <div class="abs etiq" style="left:var(--marge);top:96px">L'écran géant · en direct · intégré au deck</div>
+  <ol class="reperes"><li>La demande part</li><li>Les oui ferment l'anneau</li><li>Un retrait, le Club recompose</li></ol>
+  <div class="abs corps" id="ecran-absent" style="left:var(--marge);top:300px;max-width:1300px"><span id="ecran-raison">L'écran de la salle ne répond pas (prototype arrêté ?).</span><br>Touche <span class="mono">B</span> : la vidéo de 30 s, séance simulée, enregistrée sur le vrai écran.</div>
+  <!-- JOUR J : l'écran de la salle EN DIRECT (APP/salle/ecran), sans ⌘-Tab. Il ne prend ni le focus ni les clics : le
+       clavier et la télécommande restent au deck. Jeton de console : transmis par la régie ouverte dans le même Chrome. -->
+  <iframe id="ecran-salle" class="ecran-live" tabindex="-1" title="L'écran de la salle, en direct" aria-hidden="true"></iframe>
+  <video id="video-constellation" class="plan-b-video" src="review/constellation/nuit/seance-nuit.webm" muted playsinline preload="none"></video>
+</section>
+
+<!-- ═══ Acte 4 · 9:30–12:15 · Le côté Club ═══ -->
+<section class="slide noir carton" data-id="cote-club" data-acte="4" data-carton="1"><p>Et pour le Club,<br>toute l'année ?</p></section>
+
+<section class="slide gris" data-id="cherche" data-acte="4" data-pas="1" data-qr="grand">
+  <div class="abs etiq" style="left:var(--marge);top:96px">Le Club cherche, il invite, il suit · écrans réels · monde de démonstration</div>
+  <div class="trio duo">
+    <figure><img class="capture" src="assets/captures/tel-4-decouverte.png" alt="Passe découverte"><div class="emplacement"><b>tel-4-decouverte.png</b><span>passe découverte</span></div>
+      <figcaption>Passe découverte : un exposant invité d'Annecy aide sans être membre</figcaption></figure>
+    <figure class="fr" data-f="1"><img class="capture" src="assets/captures/suivi-1.png" alt="Suivi"><div class="emplacement"><b>suivi-1.png</b><span>Suivi</span></div>
+      <figcaption>Suivi : où en sont les partenariats, les nouveaux liens tissés ; « &lt; 3 » sous trois entreprises</figcaption></figure>
+  </div>
+</section>
+
+<section class="slide" data-id="chiffres-club" data-acte="4" data-pas="2">
+  <div class="abs etiq" style="left:var(--marge);top:96px">Votre Club en chiffres · <span id="club-source"></span></div>
+  <div class="club-n"><div><b id="club-entreprises">[GEL]</b><span>entreprises</span></div><div><b id="club-representants">[GEL]</b><span>représentants</span></div>
+    <div class="fr" data-f="1"><b><span id="club-assemblables">[GEL]</span><small> / <span id="club-capacites">[GEL]</span></small></b><span>capacités que la liste permet d'assembler</span></div></div>
+  <div class="abs corps fr" data-f="2" style="left:var(--marge);top:640px;color:var(--ink)">La pièce qui manque : <b class="rouge" id="club-manque">[GEL]</b>. Personne dans la liste ne la tient.</div>
+  <div class="abs source">aucun nom de membre à l'écran · décomptes de la liste du Club (colonne métier seule) · PREUVES.md, « Liste du Club »</div>
+</section>
+
+<section class="slide" data-id="assembler" data-acte="4" data-pas="1">
+  <div class="abs etiq" style="left:var(--marge);top:96px">Ce que votre Club pourrait assembler</div>
+  <div class="grille9">
+    <span>Événement d'entreprise</span><span class="manque9">Délégation germanophone<small>manque : interprète</small></span><span>Rénovation</span>
+    <span>Stand à la Foire</span><span>Création d'entreprise</span><span>Renfort pour les Mondiaux</span>
+    <span>Produit du terroir</span><span>Séjour premium</span><span>Digitalisation d'une PME</span>
+  </div>
+  <div class="abs corps fr" data-f="1" style="left:var(--marge);top:760px;max-width:1400px;color:var(--ink);font-weight:700">Votre liste dit ce que le Club pourrait faire. Club Pulse dit ce qu'il peut faire cette semaine.</div>
+  <div class="abs source">d'après la liste du Club, classification à confirmer · console : Suivi → « Ce que votre Club pourrait assembler »</div>
+</section>
+
+<section class="slide gris" data-id="carte-profil" data-acte="4" data-condition="carte">
+  <div class="abs etiq" style="left:var(--marge);top:96px">La carte devient le profil · seulement si 5 / 5 au rituel</div>
+  <div class="abs affiche" style="left:var(--marge);top:300px;font-size:120px;line-height:1.1">Une photo de votre carte.<br>Apertus propose.<br><span class="rouge">Vous confirmez.</span></div>
+  <div class="abs source">l'image n'est jamais conservée · l'entreprise confirmée reste hors du journal · IA éteinte : le même formulaire</div>
+</section>
+
+<!-- ═══ Acte 5 · 12:15–14:00 · La science et les preuves ═══ -->
+<section class="slide" data-id="science" data-acte="5" data-pas="3">
+  <div class="abs etiq" style="left:var(--marge);top:96px">La science de la demande</div>
+  <div class="preuve fr" data-f="1" style="top:170px"><span class="n">01</span><div><h3>On sous-estime le oui d'environ 50 %.</h3><p>Le coût social du non, c'est Jean-Marc. — Flynn &amp; Lake, 2008</p></div></div>
+  <div class="preuve fr" data-f="2" style="top:430px"><span class="n">02</span><div><h3>24 demandes, 114 offres.</h3><p>On veut aider ; on demande peu. Des demandes précises (SMART). — Reciprocity Ring, Harvard</p></div></div>
+  <div class="preuve fr" data-f="3" style="top:690px"><span class="n">03</span><div><h3>Les liens faibles font bouger.</h3><p>20 millions de personnes. — Science, 2022</p></div></div>
+  <div class="abs source">faits externes, tels que relevés par l'équipe : ecommons.cornell.edu · archive.harbus.org · digitaleconomy.stanford.edu — PREUVES.md, Contexte</div>
+</section>
+
+<section class="slide" data-id="preuves" data-acte="5" data-pas="4">
+  <div class="abs etiq" style="left:var(--marge);top:96px">Ce qui est prouvé · rien de plus</div>
+  <div class="chiffre fr" data-f="1" style="position:absolute;left:var(--marge);right:var(--marge);top:190px"><b class="mot">Reçu</b><span>daté, référencé, révocable — chaque oui en laisse un</span></div>
+  <div class="chiffre fr" data-f="2" style="position:absolute;left:var(--marge);right:var(--marge);top:340px"><b><span id="ch-telephones">[GEL]</span>&nbsp;tél.</b><span>en parallèle, <span id="ch-erreurs">[GEL]</span> erreur, p95 <span id="ch-p95">[GEL]</span> — <span id="ch-cible"></span></span></div>
+  <div class="chiffre fr" data-f="3" style="position:absolute;left:var(--marge);right:var(--marge);top:490px"><b id="ch-tally">[GEL]</b><span id="ch-tally-l"></span></div>
+  <div class="chiffre fr" data-f="4" style="position:absolute;left:var(--marge);right:var(--marge);top:640px"><b><span class="rouge" id="ch-ia">[GEL]</span>/<span id="ch-ia-cas">[GEL]</span></b><span><span id="ch-ia-source"></span>. IA allumée ou éteinte : même état du Club — testé.</span></div>
+  <div class="alerte">data/gel.json non lu — lancer le deck avec lancer.py</div>
+</section>
+
+<!-- ═══ Acte 6 · 14:00–16:20 · La feuille de route ═══ -->
+<section class="slide" data-id="ou" data-acte="6" data-pas="1" data-qr="grand">
+  <div class="abs etiq" style="left:var(--marge);top:96px">Où nous en sommes · feuille de route vivante</div>
+  <div class="statuts"><div><b id="et-construit">[GEL]</b><span>construit, testé</span></div><div><b id="et-valide">[GEL]</b><span>validé sur le terrain</span></div><div><b id="et-prevu">[GEL]</b><span>prévu</span></div></div>
+  <div class="qr-moyen fr" data-f="1"><img class="qr-live" data-chemin="/qr/feuille-de-route.svg" alt="QR de la feuille de route"><div class="qr-absent"><b>QR en direct</b><span>serveur lancé ?</span></div><span>la feuille de route, sur votre téléphone</span></div>
+</section>
+
+<section class="slide" data-id="jalons" data-acte="6" data-pas="3">
+  <div class="abs affiche" style="left:var(--marge);top:150px;font-size:112px;line-height:1.1">30 jours pour lancer.<br>45 pour <span class="rouge">prouver.</span></div>
+  <div class="abs corps fr" data-f="1" style="left:var(--marge);top:470px;color:var(--ink)">Pilote : début janvier → mi-février 2027, au plus fort des Mondiaux de Crans-Montana (1er – 14 février).</div>
+  <div class="abs corps fr" data-f="2" style="left:var(--marge);top:600px">Le risque, nommé : quand tout le monde manque de tout, l'entraide tient-elle ?</div>
+  <div class="abs corps fr" data-f="3" style="left:var(--marge);top:740px;font-size:34px">≥ 25 demandes · ≥ 30 % de oui · premier oui &lt; 72 h · ≥ 15 actifs sur 50 · 0 incident — à valider avec le Club ; un signal, pas une mesure fine</div>
+  <svg class="frise" viewBox="0 0 1440 160" aria-label="Frise : 30 jours, 45 jours, les Mondiaux, la Foire 2027">
+    <path d="M 12 40 L 1428 40"/>
+    <g class="jalon" style="animation-delay:240ms"><circle cx="12" cy="40" r="14"/><text x="0" y="104">30 jours</text><text class="sous" x="0" y="140">lancer</text></g>
+    <g class="jalon" style="animation-delay:480ms"><circle cx="420" cy="40" r="14"/><text x="390" y="104">45 jours</text><text class="sous" x="390" y="140">prouver</text></g>
+    <g class="jalon mondiaux" style="animation-delay:720ms"><circle cx="840" cy="40" r="18"/><text x="770" y="104">Les Mondiaux</text><text class="sous" x="770" y="140">1er – 14 février 2027</text></g>
+    <g class="jalon" style="animation-delay:calc(240ms * 4)"><circle cx="1428" cy="40" r="14"/><text x="1210" y="104">Foire 2027</text><text class="sous" x="1268" y="140">grandir</text></g>
+  </svg>
+</section>
+
+<section class="slide" data-id="suisse" data-acte="6" data-pas="2">
+  <div class="abs etiq" style="left:var(--marge);top:96px">Une pile suisse · des partenaires à contacter</div>
+  <div class="preuve" style="top:150px"><span class="n">IA</span><div><h3>Apertus, servi par le CSCS.</h3><p>Lugano. Conditions d'utilisation à vérifier pour le pilote.</p></div></div>
+  <div class="preuve fr" data-f="1" style="top:370px"><span class="n">ID</span><div><h3>e-ID swiyu, dès décembre 2026.</h3><p>Prévu, pas construit. Hébergement suisse pour le pilote.</p></div></div>
+  <div class="preuve fr" data-f="2" style="top:590px"><span class="n">FR</span><div><h3>Haute-Savoie, région d'honneur : premier partenaire à contacter.</h3><p>Puis la Vallée d'Aoste, Crans-Montana 2027. Aucun n'est acquis.</p></div></div>
+</section>
+
+<section class="slide gris" data-id="demande" data-acte="6" data-pas="1">
+  <div class="abs etiq" style="left:var(--marge);top:96px">Le Club vous demande</div>
+  <div class="ask"><p>Un pilote de 45 jours avec 50 membres volontaires parmi vos 173 représentants.</p>
+    <div class="boutons fr" data-f="1"><span class="oui">Oui</span><span>Non</span><span>Pas cette fois</span></div></div>
+</section>
+
+<!-- ═══ Acte 7 · 16:20–17:20 · Le reçu, la carte, la phrase finale ═══ -->
+<section class="slide" data-id="ea3" data-acte="7" data-carton-voisin="1"><div class="ea">Et après<span class="rouge"> ?</span></div></section>
+
+<section class="slide noir carton" data-id="regardez" data-acte="7" data-carton="1"><p>Regardez votre téléphone :<br>vous avez un reçu.</p></section>
+
+<section class="slide gris s18" data-id="18" data-acte="7" data-pas="1">
+  <div class="carte">
+    <div class="lieu">ORSIÈRES · VALAIS</div>
+    <div class="bas"><div><div class="nom">Sophie</div><div class="metier">Tisanes de plantes alpines</div></div>
+      <div class="filets"><i style="width:260px"></i><i style="width:190px"></i></div></div>
+  </div>
+  <div class="abs etiq fictif">Personnage fictif</div>
+  <div class="recu abs" role="img" aria-label="Le reçu : accueillir une délégation d'acheteurs germanophones, valable, référence e13e0a5ea022-19">
+    <div class="r-tete">REÇU · CLUB PULSE</div>
+    <div class="r-titre">Accueillir une délégation d'acheteurs germanophones</div>
+    <div class="r-valable">valable</div>
+    <div class="r-piece">Votre pièce : un minibus de 14 places, libre vendredi après-midi.<br>Donné le mardi 06.10 · jusqu'au vendredi 09.10</div>
+    <div class="r-ref">référence e13e0a5ea022-19</div>
+  </div>
+  <div class="abs etiq r-note">le reçu de la démo, recomposé en grand</div>
+</section>
+
+<section class="slide" data-id="19" data-acte="7" data-carton-voisin="1">
+  <div class="abs affiche" style="left:var(--marge);top:356px;font-size:120px;line-height:1.15">La Foire crée la rencontre.<br>Club Pulse crée <span class="rouge">l'après.</span></div>
+</section>
+
+<section class="slide noir" data-id="20" data-acte="7" data-carton="1"></section>
+
+<section class="slide gris" data-id="21" data-acte="7" data-carton-voisin="1">
+  <svg class="abs" style="left:var(--marge);top:340px" width="200" height="200" viewBox="0 0 24 24"><rect x=".5" y=".5" width="23" height="23" rx="7" fill="#CD2128"/>
+    <circle cx="12" cy="12" r="7" fill="none" stroke="#FFF" stroke-width="2.7" stroke-linecap="round" stroke-dasharray="33 11" transform="rotate(-90 12 12)"/><circle cx="7.05" cy="7.05" r="1.8" fill="#FFF"/></svg>
+  <div class="abs affiche" style="left:400px;top:352px;font-size:128px">Club Pulse</div>
+  <div class="abs corps" style="left:404px;top:500px;font-weight:600">Club des Affaires · Foire du Valais</div>
+  <div class="abs etiq" style="left:var(--marge);bottom:96px;text-transform:none;letter-spacing:.02em">monde de démonstration fictif · démo servie depuis notre machine, à Martigny, via un tunnel chiffré · chaque affirmation : docs/audit/CLAIMS.md</div>
+</section>
+
+<div id="qr-coin"><img class="qr-live" data-chemin="/qr/salle.svg" alt="QR de la salle"></div>
+
+<div id="secours"><div class="etiq" id="secours-lab"></div><img alt="capture de secours"></div>
+<svg id="progres" viewBox="0 0 24 24" aria-hidden="true"></svg>
+<div id="repet"></div>
+<div id="noir"></div>
+<div id="bascule" aria-live="polite"></div>
+</div>
+
+<script src="assets/v3-points.js"></script>
+<script>
+"use strict";
+/* ── État ─────────────────────────────────────────────────────────────── */
+const scene = document.getElementById("scene");
+const S = [...document.querySelectorAll(".slide")];
+const ID = s => s.dataset.id;
+let i = 0, pas = 0, vus = new Set();
+const params = new URLSearchParams(location.search);
+const STATIQUE = params.has("statique");
+if (STATIQUE) document.body.classList.add("statique");
+
+/* ── Jour / nuit : tout le deck bascule ensemble. ?mode= fige le choix au lancement ;
+      J bascule ; le choix survit à un rechargement (incident) dans le même onglet. ─── */
+function lireMode() { const m = params.get("mode"); if (m === "jour" || m === "nuit") return m;
+  try { const v = sessionStorage.getItem("deck-mode"); if (v === "jour" || v === "nuit") return v; } catch (e) {} return "nuit"; }
+let basculeMinuteur = null;
+function appliquerMode(m, annoncer) {
+  document.body.classList.toggle("jour", m === "jour");
+  try { sessionStorage.setItem("deck-mode", m); } catch (e) {}
+  const ec = document.getElementById("ecran-salle");           // l'écran de la salle suit le deck (J)
+  if (ec && ec.getAttribute("src")) ec.src = ec.getAttribute("src").replace(/mode=(jour|nuit)/, "mode=" + m);
+  if (!annoncer) return;
+  const b = document.getElementById("bascule"); b.textContent = m === "jour" ? "MODE JOUR · rendu clair de v2" : "MODE NUIT · points lumineux";
+  b.classList.add("on"); clearTimeout(basculeMinuteur); basculeMinuteur = setTimeout(() => b.classList.remove("on"), 2000);
+}
+appliquerMode(lireMode(), false);
+window.modeDeck = () => document.body.classList.contains("jour") ? "jour" : "nuit";
+
+/* ── Mise à l'échelle 1920×1080 → fenêtre ─────────────────────────────── */
+function ajuster() { const k = Math.min(innerWidth / 1920, innerHeight / 1080);
+  scene.style.transform = `translate(${(innerWidth - 1920 * k) / 2}px, ${(innerHeight - 1080 * k) / 2}px) scale(${k})`; }
+addEventListener("resize", ajuster); ajuster();
+
+/* ── Captures : si le fichier manque, l'emplacement porte son nom ─────── */
+document.querySelectorAll("img.capture").forEach(img => {
+  const marque = () => img.parentElement.classList.add("manque");
+  img.addEventListener("error", marque); if (img.complete && img.naturalWidth === 0) marque();
+});
+
+/* ── Données du gel (un seul fichier) ─────────────────────────────────── */
+const medaillon = `<svg class="medaillon" viewBox="0 0 24 24" aria-label="vérifié"><circle cx="12" cy="12" r="11" fill="#0DA254" stroke="#fff" stroke-width="1.4"/>
+  <path d="M7 12.4l3.2 3.1L17 8.8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function remplirV2(v) {
+  const m = { "club-entreprises": v && v.club.entreprises, "club-representants": v && v.club.representants, "club-assemblables": v && v.club.assemblables,
+    "club-capacites": v && v.club.capacites, "club-manque": v && v.club.manque, "club-source": v && v.club.source,
+    "ch-telephones": v && v.charge.telephones, "ch-erreurs": v && v.charge.erreurs, "ch-p95": v && v.charge.p95, "ch-cible": v && v.charge.cible,
+    "ch-tally": v && v.tally.reponses, "ch-tally-l": v && v.tally.legende, "ch-ia": v && v.ia.justes, "ch-ia-cas": v && v.ia.cas, "ch-ia-source": v && v.ia.source,
+    "et-construit": v && v.etat.construit, "et-valide": v && v.etat.valide, "et-prevu": v && v.etat.prevu };
+  for (const [id, val] of Object.entries(m)) { const el = document.getElementById(id); if (el) el.textContent = val == null ? "[GEL]" : val; }
+  if (!v) document.querySelectorAll('[data-id="preuves"],[data-id="chiffres-club"]').forEach(s => s.classList.add("sans-gel"));
+}
+function remplir(g) { remplirV2(g && g.v2); }
+const gelPret = fetch("data/gel.json", { cache: "no-store" }).then(r => r.json()).then(g => { remplir(g); return true; })
+  .catch(() => { remplir(null); return false; });
+
+/* ── QR servis EN DIRECT par le serveur Club Pulse (?app=, défaut http://127.0.0.1:8000) : ils suivent PUBLIC_BASE_URL,
+      donc l'adresse du tunnel. Jamais figés dans le deck. Serveur absent : l'emplacement le dit. ─────────────── */
+const APP = (params.get("app") || "http://127.0.0.1:8000").replace(/\/$/, "");
+function rafraichirQr() {
+  document.querySelectorAll("img.qr-live").forEach(img => {
+    const boite = img.parentElement;
+    img.onload = () => boite.classList.remove("qr-ko"); img.onerror = () => boite.classList.add("qr-ko");
+    img.src = `${APP}${img.dataset.chemin}?t=${Date.now()}`;
+  });
+}
+rafraichirQr(); setInterval(rafraichirQr, 10000);
+
+/* ── Acte 3 : l'écran de la salle EN DIRECT dans la slide « constellation » (iframe vers APP/salle/ecran ; le
+      prototype n'accepte d'être intégré que par ce deck local). Injoignable : le message, et B pour la vidéo. ─ */
+const ecranSalle = document.getElementById("ecran-salle"), ecranAbsent = document.getElementById("ecran-absent");
+let sondeSalle = null, sansJeton = 0;
+// l'écran intégré n'a pas le jeton (régie du Mac fermée, ou jeton jamais collé) : il le dit, sans rien demander (audit B1)
+addEventListener("message", e => { if (e.origin === APP && e.data && e.data.type === "club-pulse-jeton-manquant") { sansJeton = Date.now(); verifierEcran(); } });
+async function salleJoignable() {
+  const c = new AbortController(), t = setTimeout(() => c.abort(), 1500);
+  try { await fetch(`${APP}/sante`, { mode: "no-cors", cache: "no-store", signal: c.signal }); return true; }
+  catch (e) { return false; } finally { clearTimeout(t); }
+}
+async function verifierEcran() {
+  if (sansJeton && Date.now() - sansJeton > 10000) { sansJeton = 0; ecranSalle.removeAttribute("src"); }  // réessayer : la régie a pu le recevoir
+  const ok = await salleJoignable(), pret = ok && !sansJeton;
+  if (ok && !ecranSalle.getAttribute("src")) ecranSalle.src = `${APP}/salle/ecran?mode=${window.modeDeck()}`;
+  if (!ok) ecranSalle.removeAttribute("src");
+  document.getElementById("ecran-raison").textContent = !ok ? "L'écran de la salle ne répond pas (prototype arrêté ?)."
+    : "Jeton manquant : coller le jeton dans la régie du Mac (onglet ouvert par le lanceur).";
+  ecranSalle.classList.toggle("on", pret); ecranAbsent.style.display = pret ? "none" : "";
+}
+// chargé DÈS L'OUVERTURE du deck : l'écran reçoit le jeton pendant que la régie du Mac est encore active (audit B1)
+if (!STATIQUE) { verifierEcran(); sondeSalle = setInterval(verifierEcran, 3000); }
+
+/* ── Slides conditionnelles : « la carte devient le profil » n'existe que si ?carte=1 (5/5 au rituel) ─ */
+const CONDITIONS = new Set((params.get("carte") === "1") ? ["carte"] : []);
+S.filter(s => s.dataset.condition && !CONDITIONS.has(s.dataset.condition)).forEach(s => { s.remove(); S.splice(S.indexOf(s), 1); });
+
+/* ── Film : local, plein écran ; sans fichier → plan B ────────────────── */
+const film = document.getElementById("film"), sFilm = S.find(s => s.dataset.film);
+let filmEtat = "inconnu";       // inconnu | ok | ko
+film.addEventListener("loadeddata", () => { filmEtat = "ok"; sFilm.classList.add("film-ok"); sFilm.classList.remove("film-ko"); });
+film.addEventListener("error", () => { filmEtat = "ko"; sFilm.classList.add("film-ko"); });
+setTimeout(() => { if (filmEtat === "inconnu") { filmEtat = "ko"; sFilm.classList.add("film-ko"); } }, 2500);
+film.addEventListener("ended", () => { film.pause(); });  // le dernier plan reste figé (ancienne slide 7)
+
+/* ── Nombre de pas d'une slide ────────────────────────────────────────── */
+function pasMax(s) { if (s.dataset.film) return filmEtat === "ko" ? 3 : 0; return +(s.dataset.pas || 0); }
+
+/* ── Affichage ────────────────────────────────────────────────────────── */
+const ACTES = 7, progres = document.getElementById("progres");
+progres.innerHTML = Array.from({ length: ACTES }, (_, k) => {           // 9 arcs, un par acte, en partant du haut
+  const a0 = (k / ACTES) * 2 * Math.PI + 0.2, a1 = ((k + 1) / ACTES) * 2 * Math.PI - 0.2, r = 9;
+  const P = a => `${(12 + r * Math.sin(a)).toFixed(3)} ${(12 - r * Math.cos(a)).toFixed(3)}`;
+  return `<path d="M${P(a0)} A${r} ${r} 0 0 1 ${P(a1)}"/>`; }).join("");
+document.querySelectorAll("img[data-recadrage]").forEach(im => { im.style.objectViewBox = `inset(${im.dataset.recadrage})`; });
+function montrer(n, p, depuis) {
+  const a = S[i], b = S[n];
+  if (window.points) window.points.finir();                 // v3 : un clic au milieu d'une animation la termine aussitôt
+  finirComptes();
+  const fondu = !STATIQUE && (a.dataset.carton || b.dataset.carton);
+  S.forEach(s => s.classList.toggle("fondu", !!fondu && (s === a || s === b)));
+  if (a !== b) { a.classList.remove("active"); if (a.dataset.film) film.pause(); }
+  i = n; pas = p; b.classList.add("active");
+  // fragments
+  b.querySelectorAll("[data-f]").forEach(f => f.classList.toggle("on", +f.dataset.f <= pas));
+  // M1 : la carte se pose une seule fois
+  if (ID(b) === "1" && !vus.has("1")) { const c = document.getElementById("carte-1"); c.classList.remove("pose"); void c.offsetWidth; c.classList.add("pose"); }
+  vus.add(ID(b));
+  // M4 : redéclencher dessin / fermeture à chaque entrée
+  if (a !== b) b.querySelectorAll(".dessin, .fermeture").forEach(svg => { const c = svg.getAttribute("class"); svg.setAttribute("class", "tuile"); void svg.getBBox(); svg.setAttribute("class", c); });
+  // M6 : la carte s'écarte, le reçu se pose
+  if (ID(b) === "18") b.classList.toggle("ecarte", pas >= 1);
+  // démo : repères
+  if (b.dataset.demo) b.querySelectorAll(".reperes li").forEach((li, k) => { li.classList.toggle("fait", k < pas); li.classList.toggle("ici", k === pas - 1); });
+  document.getElementById("secours").classList.remove("on");
+  const v = document.getElementById("video-constellation"); if (v && !b.dataset.constellation) { v.classList.remove("on"); v.pause(); }
+  // QR en coin : de « Sortez vos téléphones » jusqu'à la demande au Club (jamais sur noir, film, carte finale)
+  const coin = document.getElementById("qr-coin"), a3 = +b.dataset.acte >= 3 && +b.dataset.acte <= 6;
+  coin.classList.toggle("on", a3 && !b.classList.contains("noir") && b.dataset.qr !== "grand" && !b.dataset.constellation);  // l'écran montre son QR
+  // indicateur de progression (masqué sur noir, film, ouverture et finale)
+  const acte = +b.dataset.acte, cache = b.classList.contains("noir") || ["1", "18", "19", "21", "salle", "constellation"].includes(ID(b));
+  progres.style.opacity = cache ? 0 : 1;
+  progres.querySelectorAll("path").forEach((pa, k) => pa.classList.toggle("fait", k < acte));
+  repetition(depuis);
+  if (window.points) window.points.viser(ID(b), pas);       // v3 : les points lumineux suivent la slide et le pas
+  if (a !== b || depuis === "avance") construireChiffres(b);
+  if (!STATIQUE) history.replaceState(null, "", `#${ID(b)}${pas ? "." + pas : ""}`);
+}
+function suivant() {
+  const s = S[i];
+  if (s.dataset.film && filmEtat === "ok") {               // clic 1 : lecture ; clic suivant : on passe
+    if (film.paused && !film.ended && film.currentTime === 0) { film.play(); return; }
+    if (!film.paused && !film.ended) { film.pause(); return; }
+  }
+  if (pas < pasMax(s)) return montrer(i, pas + 1, "avance");
+  if (i < S.length - 1) montrer(i + 1, 0, "avance");
+}
+function precedent() {
+  if (pas > 0) return montrer(i, pas - 1);
+  if (i > 0) montrer(i - 1, pasMax(S[i - 1]));
+}
+
+/* ── Plan B de la démo : capture de secours de l'étape (touche B) ──────── */
+const SECOURS = [];   // v2 : le plan B de la démo est la vidéo de la constellation (touche B sur la slide « constellation »)
+function secours() {
+  const s = S[i];
+  if (s.dataset.constellation) { const v = document.getElementById("video-constellation");
+    if (v.classList.toggle("on")) { v.src = `review/constellation/${window.modeDeck()}/seance-${window.modeDeck()}.webm`; v.currentTime = 0; v.play().catch(() => {}); } else v.pause();
+    return; }
+  if (!s.dataset.demo) return;
+  const box = document.getElementById("secours"); if (box.classList.contains("on")) return box.classList.remove("on");
+  const f = SECOURS[Math.max(0, pas - 1)], img = box.querySelector("img");
+  img.src = "assets/captures/" + f; document.getElementById("secours-lab").textContent = "Secours · capture réelle · " + f; box.classList.add("on");
+}
+
+/* ── Mode répétition (R) : chrono + 8 points de contrôle de 02_STRUCTURE ─ */
+const CP = [
+  { s: "2", p: 0, lab: "« Et après ? » (1/3)", cible: 115, coupe: "Couper la deuxième relance des mains levées." },
+  { s: "8", p: 0, lab: "Fin du film", cible: 330, coupe: "Respiration en une phrase de cinq mots." },
+  { s: "constellation", p: 0, lab: "La demande part vers la salle", cible: 450, coupe: "Lancer la demande sans attendre plus de participants." },
+  { s: "cote-club", p: 0, lab: "Côté Club", cible: 570, coupe: "Plan B constellation : vidéo (B), 30 s." },
+  { s: "science", p: 0, lab: "La science de la demande", cible: 735, coupe: "Sauter la slide « Votre Club en chiffres » (garder « assembler »)." },
+  { s: "ou", p: 0, lab: "Où nous en sommes", cible: 840, coupe: "Lire deux preuves sur quatre." },
+  { s: "demande", p: 0, lab: "La demande au Club", cible: 950, coupe: "Sauter la slide « pile suisse »." },
+  { s: "18", p: 0, lab: "Carte + reçu", cible: 1010, coupe: "La phrase finale, puis noir — rien d'autre." },
+];
+let repetOn = false, t0 = null, atteints = {};
+const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, "0")}`;
+const coche = `<svg width="22" height="22" viewBox="0 0 24 24"><path d="M5 12.5l4.2 4L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const croix = `<svg width="22" height="22" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>`;
+function repetition(depuis) {
+  if (!repetOn || t0 === null) return;
+  const t = (performance.now() - t0) / 1000;
+  CP.forEach((c, k) => { if (!(k in atteints) && ID(S[i]) === c.s && pas === c.p && depuis === "avance") atteints[k] = t; });
+}
+function dessinerRepet() {
+  const el = document.getElementById("repet"); if (!repetOn) return;
+  const t = t0 === null ? 0 : (performance.now() - t0) / 1000;
+  const dernier = Object.keys(atteints).map(Number).sort((a, b) => b - a)[0];
+  const prochain = CP.findIndex((c, k) => !(k in atteints));
+  let html = `<span>R · ${mmss(t)}</span>`;
+  if (dernier !== undefined) { const c = CP[dernier], d = atteints[dernier] - c.cible, ok = d <= 15;
+    html += `<span class="pil ${ok ? "ok" : "ko"}">${ok ? coche : croix}${c.lab} · ${mmss(atteints[dernier])} / ${mmss(c.cible)}</span>`;
+    if (!ok) html += `<span class="coupe">${c.coupe}</span>`; }
+  if (prochain >= 0) { const c = CP[prochain], retard = t - c.cible > 15;
+    html += `<span style="margin-left:auto" class="${retard ? "coupe" : ""}">${retard ? "En retard · " + c.coupe : "Prochain : " + c.lab + " · " + mmss(c.cible)}</span>`; }
+  el.innerHTML = html;
+}
+setInterval(dessinerRepet, 250);
+
+
+/* ── v3 : les chiffres se CONSTRUISENT (compteur 720 ms, easing du design system) ─────────────────────────────── */
+const COMPTES = new Set();
+function easeDS(x) { return window.points ? 1 - Math.pow(1 - x, 3) : x; }
+function construireChiffres(s) {
+  if (!window.points || !window.points.mouvement()) return;
+  s.querySelectorAll("#club-entreprises, #club-representants, #club-assemblables, #ch-telephones, #ch-tally, #ch-ia, #ch-ia-cas, #et-construit, #et-valide, #et-prevu")
+    .forEach(el => {
+      const visible = !el.closest(".fr") || el.closest(".fr").classList.contains("on");
+      const fin = el.dataset.fin || el.textContent; if (!/^\d+$/.test(fin) || !visible || el.dataset.construit === "1") return;
+      el.dataset.fin = fin; el.dataset.construit = "1"; const N = +fin, t0 = performance.now(), d = 720;
+      const pas = now => { if (!COMPTES.has(el)) return; const u = Math.min(1, (now - t0) / d); el.textContent = String(Math.round(N * easeDS(u)));
+        if (u < 1) requestAnimationFrame(pas); else COMPTES.delete(el); };
+      COMPTES.add(el); el.textContent = "0"; requestAnimationFrame(pas);
+    });
+}
+function finirComptes() { COMPTES.forEach(el => { el.textContent = el.dataset.fin; }); COMPTES.clear(); }
+// une nouvelle visite d'une slide reconstruit ses chiffres
+const _reconstruire = () => document.querySelectorAll("[data-construit]").forEach(el => { if (!el.closest(".slide.active")) el.dataset.construit = ""; });
+setInterval(_reconstruire, 1000);
+
+/* ── v3 : typographie animée, mot par mot (le cinéma ; la phrase finale) ─────────────────────────────────────── */
+function enMots(el) {
+  let k = 0;
+  const marcher = n => { [...n.childNodes].forEach(c => {
+    if (c.nodeType === 3) { const f = document.createDocumentFragment();
+      c.textContent.split(/(\s+)/).forEach(m => { if (!m) return; if (/^\s+$/.test(m)) { f.appendChild(document.createTextNode(m)); return; }
+        const s = document.createElement("span"); s.className = "motv3"; s.style.animationDelay = `${k++ * 240}ms`; s.textContent = m; f.appendChild(s); });
+      c.replaceWith(f); }
+    else if (c.nodeType === 1 && c.tagName !== "BR") marcher(c); }); };
+  marcher(el);
+}
+document.querySelectorAll('[data-id="cinema"] p, [data-id="19"] .affiche').forEach(enMots);
+
+/* ── v3 : M coupe le mouvement en urgence (et la préférence « réduire les animations » est respectée) ───────── */
+function couperMouvement(oui) { document.body.classList.toggle("sans-mouvement", oui); if (window.points) window.points.couper(oui); finirComptes(); }
+if (matchMedia("(prefers-reduced-motion: reduce)").matches) document.body.classList.add("sans-mouvement");
+
+/* ── Clavier, clic, télécommande ─────────────────────────────────────── */
+addEventListener("keydown", e => {
+  const k = e.key;
+  if (["ArrowRight", "ArrowDown", " ", "PageDown", "Enter"].includes(k)) { e.preventDefault(); suivant(); }
+  else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(k)) { e.preventDefault(); precedent(); }
+  else if (k === "Home") montrer(0, 0);
+  else if (k === "End") montrer(S.length - 1, 0);
+  else if (k === "n" || k === "N") document.getElementById("noir").classList.toggle("on");   // jour : écran neutre gris
+  else if (k === "j" || k === "J") appliquerMode(window.modeDeck() === "jour" ? "nuit" : "jour", true);
+  else if (k === "b" || k === "B") secours();
+  else if (k === "m" || k === "M") { const oui = !document.body.classList.contains("sans-mouvement"); couperMouvement(oui);
+    const bb = document.getElementById("bascule"); bb.textContent = oui ? "MOUVEMENT COUPÉ · fondus simples" : "MOUVEMENT RÉTABLI";
+    bb.classList.add("on"); clearTimeout(basculeMinuteur); basculeMinuteur = setTimeout(() => bb.classList.remove("on"), 2000); }
+  else if (k === "r" || k === "R") {
+    if (e.shiftKey) { t0 = performance.now(); atteints = {}; repetOn = true; }
+    else { repetOn = !repetOn; if (repetOn && t0 === null) t0 = performance.now(); }
+    document.getElementById("repet").classList.toggle("on", repetOn); dessinerRepet();
+  }
+  else if (k === "f" || k === "F") document.documentElement.requestFullscreen?.();
+});
+addEventListener("click", e => { if (e.button === 0) suivant(); });
+addEventListener("contextmenu", e => { e.preventDefault(); precedent(); });
+
+/* ── Démarrage : #id ou #id.pas dans l'URL (revue, reprise après incident) ─ */
+window.allerA = (id, p) => { const n = S.findIndex(s => ID(s) === String(id)); if (n >= 0) montrer(n, p === "max" ? pasMax(S[n]) : (p || 0)); };
+window.SLIDES = S.map(ID); window.pasDe = id => pasMax(S.find(s => ID(s) === String(id)));
+window.pret = Promise.all([document.fonts.ready, gelPret]);
+const h = location.hash.slice(1).split(".");
+montrer(0, 0);
+if (h[0]) window.allerA(h[0], +h[1] || 0);
+</script>
+</body>
+</html>

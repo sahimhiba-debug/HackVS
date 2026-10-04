@@ -105,7 +105,8 @@ def deck_et_salle():
         srv.shutdown()
 
 
-def test_l_ecran_de_la_salle_vit_dans_le_deck_sans_changer_de_fenetre(deck_et_salle):
+@pytest.mark.parametrize("version", ["v2.html", "v3.html"])          # v3 : même écran, même plan B
+def test_l_ecran_de_la_salle_vit_dans_le_deck_sans_changer_de_fenetre(deck_et_salle, version):
     """Plus de ⌘-Tab : sur la slide « constellation », l'écran de la salle s'affiche en direct dans le deck. Il reçoit le
     jeton de la console de la régie ouverte dans le même Chrome (jamais par l'URL) ; le clavier et la télécommande
     restent au deck (l'iframe ne prend ni le focus ni les clics)."""
@@ -119,14 +120,15 @@ def test_l_ecran_de_la_salle_vit_dans_le_deck_sans_changer_de_fenetre(deck_et_sa
         regie.set_default_timeout(30_000)
         regie.on("dialog", lambda d: d.accept(FAUX_JETON_DECK))                    # la régie demande le jeton UNE fois
         regie.goto(base + "/salle/regie")
-        regie.locator("#etat:has-text('fermée')").wait_for()                     # jeton reçu ; serveur neuf : salle vierge
-        regie.click("#ouvrir")
+        regie.locator("#etat:has-text('fermée'), #etat:has-text('ouverte')").wait_for()   # jeton reçu (v2 a pu ouvrir la salle)
+        if "fermée" in regie.inner_text("#etat"):
+            regie.click("#ouvrir")
         regie.locator("#etat:has-text('ouverte')").wait_for()
         page = ctx.new_page()
         page.set_default_timeout(30_000)
         page.on("pageerror", lambda e: erreurs.append(str(e)))
         page.on("dialog", lambda d: erreurs.append("le deck a demandé quelque chose : " + d.message) or d.dismiss())
-        page.goto(f"{deck}/v2.html?app={base}")
+        page.goto(f"{deck}/{version}?app={base}")
         page.evaluate("window.pret")
         page.evaluate("allerA('constellation', 0)")
         cadre = page.locator("#ecran-salle")
@@ -147,14 +149,15 @@ def test_l_ecran_de_la_salle_vit_dans_le_deck_sans_changer_de_fenetre(deck_et_sa
     assert not erreurs, erreurs
 
 
-def test_ecran_injoignable_le_deck_le_dit_et_garde_la_video(deck_et_salle):
+@pytest.mark.parametrize("version", ["v2.html", "v3.html"])          # v3 : même écran, même plan B
+def test_ecran_injoignable_le_deck_le_dit_et_garde_la_video(deck_et_salle, version):
     from playwright.sync_api import sync_playwright
     deck, _ = deck_et_salle
     with sync_playwright() as p:
         b = _chromium(p)
         page = b.new_page(viewport={"width": 1920, "height": 1080})
         page.set_default_timeout(30_000)
-        page.goto(f"{deck}/v2.html?app=http://127.0.0.1:9")                     # aucun prototype
+        page.goto(f"{deck}/{version}?app=http://127.0.0.1:9")                     # aucun prototype
         page.evaluate("window.pret")
         page.evaluate("allerA('constellation', 0)")
         page.locator("#ecran-absent").wait_for(state="visible")
@@ -165,7 +168,8 @@ def test_ecran_injoignable_le_deck_le_dit_et_garde_la_video(deck_et_salle):
         b.close()
 
 
-def test_sans_jeton_l_ecran_integre_ne_demande_rien_devant_le_public(deck_et_salle):
+@pytest.mark.parametrize("version", ["v2.html", "v3.html"])          # v3 : même écran, même plan B
+def test_sans_jeton_l_ecran_integre_ne_demande_rien_devant_le_public(deck_et_salle, version):
     """AUDIT JOUR J B1 : régie du Mac fermée (ou jeton jamais collé) → l'écran intégré n'ouvre JAMAIS de fenêtre de saisie
     sur le projecteur ; le deck dit « jeton manquant » et garde la touche B. Le clavier reste au deck."""
     from playwright.sync_api import sync_playwright
@@ -176,7 +180,7 @@ def test_sans_jeton_l_ecran_integre_ne_demande_rien_devant_le_public(deck_et_sal
         page = b.new_page(viewport={"width": 1920, "height": 1080})
         page.set_default_timeout(30_000)
         page.on("dialog", lambda d: dialogues.append(d.message) or d.dismiss())
-        page.goto(f"{deck}/v2.html?app={base}")
+        page.goto(f"{deck}/{version}?app={base}")
         page.evaluate("window.pret")
         page.evaluate("allerA('constellation', 0)")
         page.locator("#ecran-absent:has-text('jeton')").wait_for(state="visible")

@@ -1,5 +1,23 @@
 # Deck « Club Pulse » — mode d'emploi
 
+## v3 (04.10) — le deck en motion design, pour la pénombre · à côté de v2, qui reste le plan B
+
+Ouvrir v3 (le lanceur ouvre toujours v2 ; v3 s'ouvre à la main, dans le même Chrome que la régie) :
+
+```text
+http://127.0.0.1:8765/v3.html?app=http://127.0.0.1:8000
+```
+
+- **Mêmes slides, mêmes clics, même texte que v2** (vérifié par `prototype/tests/test_deck_v3.py`) : le script, le
+  prompteur, les cartes et les chronos (R) restent justes. Film et plan B, écran de la salle intégré, touche **B**,
+  QR servis en direct, « Et après ? » 3 sur 3 : inchangés.
+- **Mode nuit par défaut** (fond très sombre, aucun grand aplat blanc, rouge en accent). **J** : le rendu clair de v2.
+- **Le fil visuel : les membres sont des points lumineux** (`assets/v3-points.js`, un canvas sous les slides).
+- **M** : couper le mouvement en urgence (simples fondus) ; « réduire les animations » du système est respecté.
+- **Un clic au milieu d'une animation la termine aussitôt** et avance : le mouvement ne coûte jamais un clic.
+- **Moins de 30 images/s** pendant 1,5 s : une version allégée (sans halo ni liens) prend le relais toute seule.
+- Vidéo complète en mode nuit et captures des moments forts : `review/deck-v3/` (README de la revue inclus).
+
 Le deck visuel de la finale (Hack VS 2026), construit à partir de `06_SLIDE_CONTENT.md` et `02_STRUCTURE.md` dans le
 design system figé. Foire 2026 (03.10) : slides **11S** (Suivi, capture réelle) et **18b** (les six prochains mois),
 sept repères de démo (passe découverte, Suivi), points de contrôle re-minutés ; `data/gel.json` inchangé. La direction artistique et les intentions slide par slide sont dans `DIRECTION.md`. Les rendus
