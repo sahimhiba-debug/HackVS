@@ -105,7 +105,14 @@ def ajouter_routes(r: APIRouter, au_monde: Callable, membre: Callable, console: 
 
     @r.get("/moi/foire")
     def etat_foire_membre(pid: str = Depends(membre)) -> dict:
-        return au_monde(lambda c: {"actif": c.reglages.foire})
+        def lire(c) -> dict:
+            res: dict = {"actif": c.reglages.foire}
+            if os.environ.get("HACKVS_ESPACE_MEMBRE") == "1":   # ANNÉE 1 (audit des lots 6-8, I5) : la langue choisie dans
+                from intelligence.espace_membre import a_choisi_langue, preferences   # « Mon espace », sans requête de plus
+                if a_choisi_langue(c, pid):
+                    res["langue"] = preferences(c, pid)["langue"]
+            return res
+        return au_monde(lire)
 
     @r.get("/console/suivi", dependencies=[Depends(console)])
     def lire_suivi(periode: str = "demo") -> dict:

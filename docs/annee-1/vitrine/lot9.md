@@ -18,5 +18,5 @@ de la démo) ne la montre pas encore. Le rythme de la borne est gardé en mémoi
 **Après l'audit des lots 9-10** ([AUDIT_LOT910.md](../AUDIT_LOT910.md)) : la console ne reçoit plus la liste des
 intentions (le secrétariat saisit la référence que l'invité montre) ; un invité qui a retiré son consentement n'est
 plus compté ni confirmable ; les cellules du fichier rendu qui ressembleraient à une formule de tableur sont
-neutralisées ; le plafond de la borne suit le jour réel. Non fait : un jeton de borne n'expire pas et ne se révoque
-pas (seul recours : changer le secret du serveur).
+neutralisées ; le plafond de la borne suit le jour réel. Un jeton de borne expire (14 jours) et le secrétariat peut révoquer une borne perdue ;
+la console liste les bornes et leur état.

@@ -673,7 +673,11 @@
     (async () => {
       let declaree = null;
       const lireJson = async (c) => { const r = await fetch(c, { headers: session ? { "X-Pulse-Session": session } : {} }); return r.ok ? r.json() : {}; };
-      try { if (session && (await lireJson("/api/pulse/moi/foire")).actif) { const x = await lireJson("/api/pulse/moi/distance"); declaree = x.profil && x.profil.langue; } }
+      try {
+        const f = session ? await lireJson("/api/pulse/moi/foire") : {};
+        if (f.langue) declaree = f.langue;                 // ANNÉE 1 : la langue choisie dans « Mon espace » (si allumé)
+        else if (f.actif) { const x = await lireJson("/api/pulse/moi/distance"); declaree = x.profil && x.profil.langue; }
+      }
       catch (e) { /* sans session ou interrupteur éteint : la langue de l'adresse seulement */ }
       let lg = langueVoulue(declaree);
       if (lg === "en" && !(await lireJson("/api/pulse/langues")).en) lg = "fr";   // l'anglais suit son interrupteur (lot 8)

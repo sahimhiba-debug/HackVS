@@ -85,6 +85,10 @@ def regler_preferences(c: "ClubPulse", pid: str, *, langue: str, region: str, ca
     return preferences(c, pid)
 
 
+def a_choisi_langue(c: "ClubPulse", pid: str) -> bool:
+    return any(e.acteurs[0] == pid for e in c.journal.evenements("MEMBRE_PREFERENCES"))
+
+
 def preferences(c: "ClubPulse", pid: str) -> dict:
     p = [e for e in c.journal.evenements("MEMBRE_PREFERENCES") if e.acteurs[0] == pid]
     if not p:

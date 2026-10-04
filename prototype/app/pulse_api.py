@@ -180,6 +180,10 @@ class ImportExposants(BaseModel):
     csv: str = Field(min_length=5, max_length=60_000)    # sous le plafond de 64 Kio du corps (M3)
 
 
+class NomBorne(BaseModel):
+    nom: str = Field(min_length=3, max_length=60)
+
+
 class Adhesion(BaseModel):
     reference: str = Field(min_length=3, max_length=20)
 
@@ -729,7 +733,7 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
         from intelligence import foire_allumage as fa
         # l'entonnoir seul (audit des lots 9-10, I2) : la liste des intentions, avec métier et région par ligne, aurait
         # contourné le seuil « < 3 » de ce même entonnoir ; le secrétariat saisit la référence que l'invité montre
-        return au_monde(fa.entonnoir)
+        return au_monde(lambda c: fa.entonnoir(c) | {"bornes": fa.bornes(c)})
 
     @r.post("/secretariat/foire/passes", dependencies=[Depends(foire_allumee)])
     def sec_foire_passes(x: LotPasses, request: Request, s: str = Depends(secretariat)) -> dict:
@@ -753,9 +757,17 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     @r.post("/secretariat/foire/bornes", dependencies=[Depends(foire_allumee)])
     def sec_foire_borne(request: Request, s: str = Depends(secretariat)) -> dict:
         from intelligence import foire_allumage as fa
-        jeton = fa.jeton_borne(secret_bornes(), fa.nouveau_nom_borne())
-        return {"jeton": jeton, "lien": base_publique(request) + f"/borne#b={jeton}",
-                "note": "ouvrez ce lien UNE fois sur la borne : elle le garde ; ne le partagez pas"}
+        par = comptes().verifier(s)["etiquette"]
+        b = au_monde(lambda c: fa.creer_borne(c, secret_bornes(), par))
+        return {"nom": b["nom"], "jusqu_au": time.strftime("%Y-%m-%d", time.gmtime(b["jusqu_a"])),
+                "lien": base_publique(request) + f"/borne#b={b['jeton']}",
+                "note": "ouvrez ce lien UNE fois sur la borne : elle le garde ; ne le partagez pas ; perdu : révoquez la borne"}
+
+    @r.post("/secretariat/foire/bornes/revoquer", dependencies=[Depends(foire_allumee)])
+    def sec_foire_borne_revoquer(x: NomBorne, s: str = Depends(secretariat)) -> dict:
+        from intelligence import foire_allumage as fa
+        par = comptes().verifier(s)["etiquette"]
+        return au_monde(lambda c: fa.revoquer_borne(c, x.nom, par))
 
     @r.post("/borne/passe", dependencies=[Depends(foire_allumee)])
     def borne_passe(request: Request, x_pulse_borne: Optional[str] = Header(None)) -> dict:

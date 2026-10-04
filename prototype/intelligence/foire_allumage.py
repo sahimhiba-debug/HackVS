@@ -15,7 +15,7 @@ import hmac
 import io
 import secrets
 import time
-from typing import TYPE_CHECKING, Callable, Union
+from typing import TYPE_CHECKING, Callable, Optional, Union
 
 from plateforme.affirmations import Statut
 
@@ -147,16 +147,58 @@ def entonnoir(c: "ClubPulse") -> dict:
 
 
 # ------------------------------------------------------------------ borne
-def jeton_borne(secret: bytes, nom: str) -> str:
-    nom = "".join(ch for ch in nom if ch.isalnum() or ch in "-_")[:40] or "borne"
-    return f"b1.{nom}.{hmac.new(secret, f'borne|{nom}'.encode(), hashlib.sha256).hexdigest()[:32]}"
+BORNE_DUREE_S = 14 * 24 * 3600                       # une Foire (10 jours) et sa marge : au-delà, un nouveau jeton
 
 
-def verifier_borne(secret: bytes, jeton: str) -> str:
+def _nom_borne(nom: str) -> str:
+    return "".join(ch for ch in nom if ch.isalnum() or ch in "-_")[:40] or "borne"
+
+
+def jeton_borne(secret: bytes, nom: str, jusqu_a: Optional[int] = None) -> str:
+    """Jeton « b2 » : nom de la borne + ÉCHÉANCE (secondes Unix), signés (audit des lots 9-10, M1 : un appareil perdu
+    n'émet plus rien après l'échéance, et le secrétariat peut le révoquer avant)."""
+    nom = _nom_borne(nom)
+    fin = int(jusqu_a if jusqu_a is not None else time.time() + BORNE_DUREE_S)
+    return f"b2.{nom}.{fin}.{hmac.new(secret, f'borne|{nom}|{fin}'.encode(), hashlib.sha256).hexdigest()[:32]}"
+
+
+def verifier_borne(secret: bytes, jeton: str, revoquees: frozenset[str] = frozenset(),
+                   maintenant: Optional[float] = None) -> str:
     morceaux = (jeton or "").split(".")
-    if len(morceaux) != 3 or morceaux[0] != "b1" or not hmac.compare_digest(jeton_borne(secret, morceaux[1]), jeton):
+    if len(morceaux) != 4 or morceaux[0] != "b2" or not morceaux[2].isdigit():
         raise NonAuthentifie("borne inconnue")
-    return morceaux[1]
+    nom, fin = morceaux[1], int(morceaux[2])
+    if not hmac.compare_digest(jeton_borne(secret, nom, fin), jeton):
+        raise NonAuthentifie("borne inconnue")
+    if (time.time() if maintenant is None else maintenant) >= fin:
+        raise NonAuthentifie("jeton de borne échu : demandez-en un nouveau au secrétariat")
+    if nom in revoquees:
+        raise NonAuthentifie("borne révoquée par le secrétariat")
+    return nom
+
+
+def creer_borne(c: "ClubPulse", secret: bytes, par: str = "") -> dict:
+    nom = nouveau_nom_borne()
+    jeton = jeton_borne(secret, nom)
+    fin = int(jeton.split(".")[2])
+    c.banc._ecrire("BORNE_CREEE", [], Statut.DECLARE, nom=nom, jusqu_a=fin, par=par[:60])   # le nom seul, jamais le jeton
+    return {"nom": nom, "jeton": jeton, "jusqu_a": fin}
+
+
+def revoquer_borne(c: "ClubPulse", nom: str, par: str = "") -> dict:
+    nom = _nom_borne(nom)
+    c.banc._ecrire("BORNE_REVOQUEE", [], Statut.DECLARE, nom=nom, par=par[:60])
+    return {"nom": nom, "revoquee": True}
+
+
+def bornes_revoquees(c: "ClubPulse") -> frozenset[str]:
+    return frozenset(e.donnees["nom"] for e in c.journal.evenements("BORNE_REVOQUEE"))
+
+
+def bornes(c: "ClubPulse") -> list[dict]:
+    rev = bornes_revoquees(c)
+    return [{"nom": e.donnees["nom"], "jusqu_au": time.strftime("%Y-%m-%d", time.gmtime(e.donnees["jusqu_a"])),
+             "revoquee": e.donnees["nom"] in rev} for e in c.journal.evenements("BORNE_CREEE")]
 
 
 class Borne:
@@ -168,8 +210,8 @@ class Borne:
         self._jour: dict[tuple[str, str], int] = {}
 
     def passe(self, c: "ClubPulse", jeton: str) -> dict:
-        nom = verifier_borne(self._secret, jeton)
         maintenant = self._h()
+        nom = verifier_borne(self._secret, jeton, bornes_revoquees(c), maintenant)
         if maintenant - self._dernier.get(nom, -1e9) < BORNE_INTERVALLE_S:
             raise TropVite("un visiteur à la fois : un instant")
         # le jour RÉEL de l'horloge, pas la date simulée du Club (avancer le temps ne remet pas le plafond à zéro : M2)

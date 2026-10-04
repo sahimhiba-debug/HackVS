@@ -188,3 +188,86 @@ def test_m2_avancer_la_date_simulee_ne_remet_pas_le_plafond_de_la_borne(club, mo
     assert club.jour == avant + timedelta(days=1)
     with pytest.raises(fa.TropVite):
         borne.passe(club, jeton)
+
+
+# ------------------------------------------------------------------ M1 (repris) : jeton de borne échu, révocable
+def test_m1_un_jeton_de_borne_echu_est_refuse():
+    from intelligence.erreurs import NonAuthentifie
+    secret = b"b" * 32
+    jeton = fa.jeton_borne(secret, "stand-A", jusqu_a=2_000)
+    assert fa.verifier_borne(secret, jeton, maintenant=1_999) == "stand-A"
+    with pytest.raises(NonAuthentifie):
+        fa.verifier_borne(secret, jeton, maintenant=2_000)
+
+
+def test_m1_l_ancien_format_sans_echeance_est_refuse():
+    import hmac as h
+    from intelligence.erreurs import NonAuthentifie
+    secret = b"b" * 32
+    ancien = f"b1.stand-A.{h.new(secret, b'borne|stand-A', hashlib.sha256).hexdigest()[:32]}"
+    with pytest.raises(NonAuthentifie):
+        fa.verifier_borne(secret, ancien)
+
+
+def test_m1_une_borne_revoquee_n_emet_plus_rien_et_le_journal_ne_garde_que_son_nom(club):
+    secret = b"b" * 32
+    borne = fa.Borne(secret)
+    jeton = fa.jeton_borne(secret, "stand-A")
+    borne.passe(club, jeton)
+    fa.revoquer_borne(club, "stand-A", par="Secrétariat (fictif)")
+    from intelligence.erreurs import NonAuthentifie
+    with pytest.raises(NonAuthentifie):
+        fa.Borne(secret).passe(club, jeton)
+    e = club.journal.evenements("BORNE_REVOQUEE")[-1]
+    assert set(e.donnees) - {"n"} == {"nom", "par"} and e.donnees["nom"] == "stand-A"     # « n » : rang dans le journal
+
+
+def test_m1_par_http_le_secretariat_revoque_une_borne(monkeypatch, tmp_path):
+    from fastapi.testclient import TestClient
+
+    from tests.test_autorisation_balayage import _secretariat_eleve
+    app = _app(monkeypatch, tmp_path, HACKVS_FOIRE_ALLUMAGE="1", HACKVS_COMPTES="1", HACKVS_SECRETARIAT="1")
+    client = TestClient(app)
+    sec = {"X-Pulse-Compte": _secretariat_eleve(app)}
+    r = client.post("/api/pulse/secretariat/foire/bornes", headers=sec).json()
+    assert r["jusqu_au"] and r["nom"].startswith("borne-")
+    jeton = r["lien"].split("#b=")[1]
+    assert client.post("/api/pulse/borne/passe", headers={"X-Pulse-Borne": jeton}).status_code == 200
+    assert client.post("/api/pulse/secretariat/foire/bornes/revoquer", headers=sec, json={"nom": r["nom"]}).status_code == 200
+    assert client.post("/api/pulse/borne/passe", headers={"X-Pulse-Borne": jeton}).status_code == 401
+    assert {"nom": r["nom"], "revoquee": True} in [{k: b[k] for k in ("nom", "revoquee")}
+                                                   for b in client.get("/api/pulse/secretariat/foire", headers=sec).json()["bornes"]]
+
+
+def test_m1_dans_la_console_preparer_puis_revoquer_une_borne(tmp_path):
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    from playwright.sync_api import sync_playwright
+
+    from tests.aide_comptes import elever_http
+    from tests.test_e2e_scene import _chromium, serveur
+    env = {"HACKVS_COMPTES": "1", "HACKVS_SECRETARIAT": "1", "HACKVS_FOIRE_ALLUMAGE": "1", "HACKVS_FOIRE": "1",
+           "HACKVS_ESSAIS_DB": str(tmp_path / "j.db"), "HACKVS_SECRET": "r" * 40}
+    with serveur(**env) as base, sync_playwright() as p:
+        admin = subprocess.run([sys.executable, "scripts/comptes.py", "amorcer", "Administration fictive"], capture_output=True,
+                               text=True, cwd=Path(__file__).resolve().parents[1],
+                               env={**os.environ, **env}).stdout.strip().splitlines()[-1]
+        elever_http(base, admin)
+        erreurs: list[str] = []
+        b = _chromium(p)
+        pg = b.new_page(viewport={"width": 1100, "height": 900})
+        pg.on("pageerror", lambda e: erreurs.append(str(e)))
+        pg.goto(base + "/compte")
+        pg.evaluate("(s) => sessionStorage.setItem('compte-session', s)", admin)
+        pg.goto(base + "/secretariat")
+        pg.click("#borne-ok")
+        pg.locator("#bornes tr:has-text('active')").wait_for()
+        nom = pg.inner_text("#bornes tr td")
+        pg.fill("#borne-nom", nom)
+        pg.click("#borne-revoquer")
+        pg.locator("#bornes tr:has-text('révoquée')").wait_for()
+        b.close()
+    assert not erreurs, erreurs
