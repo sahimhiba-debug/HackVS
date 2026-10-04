@@ -67,6 +67,11 @@ le JSON-LD d'un reçu) ne valait pas le risque. Aucune ligne de la voie produit 
    de retrait n'existe dans la page du passe : déclenchable seulement par l'API (`POST /decouverte/retirer`) ; la démo
    n'en contient aucun.
 3. Contraste des fenêtres de l'écran `/projection` (4,36:1, sous le seuil AA) : corrigé sur `annee-1` seulement.
+4. **Un test E2E intermittent sur le code de la démo** : `test_e2e_pulse.py::test_banc_d_essai_deux_telephones_perturbation_et_resultat_negatif`
+   a échoué UNE fois (configuration `HACKVS_FOIRE=0`, sur `foire-2026`) : le bouton « Mettre à jour mon offre » était
+   redessiné au moment du clic. Relance de la configuration : 34/34 ; le test seul : 10/10 ; il a passé dans tous les
+   autres passages de la nuit (≈ 1 échec sur 20). **Cause non établie, rien corrigé** (barrière fermée ; le code de
+   la démo est celui de `pitch-stable`). En direct : si ce bouton ne réagit pas, attendre une seconde et recliquer.
 
 ## 5. Ce que Hiba doit vérifier
 
@@ -81,10 +86,10 @@ le JSON-LD d'un reçu) ne valait pas le risque. Aucune ligne de la voie produit 
 
 | Porte | `annee-1` (après l'audit final) | `foire-2026` |
 |---|---|---|
-| Suite complète (PostgreSQL de test compris) | **1 952 réussis, 1 ignoré** | _voir ci-dessous_ |
-| E2E, `HACKVS_FOIRE=1` / `HACKVS_FOIRE=0` / mode salle (réseau local seul) | **34 / 34 ×3** | _voir ci-dessous_ |
-| Lanceur et portabilité sous un vrai bash 3.2.57 (`JOUR_J_BASH`) | **29 / 29** | _voir ci-dessous_ |
-| Lint, types, recherche de secrets (`make lint typecheck secrets`) | **vert** | _voir ci-dessous_ |
+| Suite complète (PostgreSQL de test compris sur `annee-1`) | **1 952 réussis, 1 ignoré** | **1 668 réussis, 1 ignoré** |
+| E2E, `HACKVS_FOIRE=1` / `HACKVS_FOIRE=0` / mode salle (réseau local seul) | **34 / 34 ×3** | 34/34 · **33/34 puis 34/34 à la relance** · 34/34 (voir risque 4) |
+| Lanceur et portabilité sous un vrai bash 3.2.57 (`JOUR_J_BASH`) | **29 / 29** | **29 / 29** |
+| Lint, types, recherche de secrets (`make lint typecheck secrets`) | **vert** | **vert** |
 | Démo identique (66 faits, empreintes `51c08b3654e992e1` / `9dc2cd617dfe3d7b`, 17 découvertes) | **oui** | — (aucun code changé) |
 | Audit final par sous-agent | 0 bloquant ; 3 importants **corrigés** ([AUDIT_FINAL](AUDIT_FINAL.md)) | même audit (intégrité de la branche vérifiée) |
 
