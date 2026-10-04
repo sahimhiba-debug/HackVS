@@ -23,6 +23,7 @@ qui n'existe plus.
 | [bilans/bilan-demo.md](bilans/bilan-demo.md) · [bilan-7j](bilans/bilan-7j.md) · [bilan-trimestre](bilans/bilan-trimestre.md) | bilans de période générés par `make bilan` (monde de démonstration, scène Foire 2026 jouée par le script) : mêmes chiffres que Suivi |
 | [RAPPORT_NUIT.md](RAPPORT_NUIT.md) | rapport de la nuit Foire 2026 : fait / non fait, chiffres mesurés, simulé, risques, rituel de 08:00 |
 | [NUIT.md](NUIT.md) | nuit du 3 au 4 octobre (« Foire 2026 ») : plan horaire, statut heure par heure |
+| [RAPPORT_ANNEE1.md](RAPPORT_ANNEE1.md) | mission « Année 1 » (même nuit) : fait par lot sur la branche `annee-1`, pas fait, barrière (rien n'est passé), risques pour le pitch, ce que Hiba doit vérifier |
 | [THREAT_MODEL.md](THREAT_MODEL.md) | modèle de menaces |
 | [design/DESIGN_SYSTEM.md](design/DESIGN_SYSTEM.md) | design system v1.0 et écarts assumés |
 | [ADR/README.md](ADR/README.md) | décisions d'architecture et leur statut relu contre le code |
