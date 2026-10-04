@@ -1,0 +1,1 @@
+Déposez ici vos 8 enregistrements : 01.m4a … 08.m4a (voir ../GUIDE_ENREGISTREMENT.md). Ils restent sur votre Mac (ignorés par git).

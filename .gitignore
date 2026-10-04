@@ -16,3 +16,7 @@ docs/presentation/motion/film.mp4
 # Foire 2026 · H : phrases de répondants (Tally) — données de personnes, jamais dans le dépôt
 prototype/data/eval/
 docs/data/tally_phrases.csv
+# vidéo de présélection : les voix et la vidéo montée restent sur le Mac
+docs/video/voix/*.m4a
+docs/video/voix/*.wav
+docs/video/out/

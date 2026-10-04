@@ -130,7 +130,7 @@
     if (!actif || document.body.classList.contains("jour")) return;
     cadres.push(dt); if (cadres.length > 30) cadres.shift();
     ips = 1000 / (cadres.reduce((a, b) => a + b, 0) / cadres.length);
-    if (cadres.length >= 10 && ips < 30 && !document.hidden) { sousSeuil += dt; if (sousSeuil > 1500 && !allege) { allege = true; document.body.classList.add("allege"); } }
+    if (cadres.length >= 10 && ips < 30 && !document.hidden && !document.body.classList.contains("video")) { /* « video » : export image par image (docs/video), jamais allégé */ sousSeuil += dt; if (sousSeuil > 1500 && !allege) { allege = true; document.body.classList.add("allege"); } }
     else sousSeuil = 0;
 
     const u = duree ? Math.min(1, (now - debut) / duree) : 1;
