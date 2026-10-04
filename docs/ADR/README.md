@@ -12,3 +12,5 @@ Rédigées le 29.09.2026. Statut relu le 01.10.2026 contre le code (chaque modul
 | [0006](0006-abstraction-du-fournisseur-ia.md) | Un seul point d'entrée IA, repli déterministe déclaré, sortie non fiable | en vigueur (`intelligence/ia.py`, `intelligence/roles_ia.py`) |
 | [0007](0007-integration-des-adhesions.md) | Intégration des adhésions par adaptateur | en vigueur (`intelligence/identite.py`) |
 | [0008](0008-pwa-sans-framework.md) | Application du membre : PWA sans framework ni étape de construction | en vigueur (`web/pulse/`) |
+| [0009](0009-file-hors-ligne-des-reponses.md) | File d'attente hors ligne des réponses (exception à l'ADR 0008) | **branche annee-1, pas dans la démo** (`HACKVS_HORS_LIGNE`) |
+| [0010](0010-coherence-visuelle-annee-1.md) | Lot 12 : cohérence avec le Design System d'abord, refonte plus profonde à côté seulement | **branche annee-1** |

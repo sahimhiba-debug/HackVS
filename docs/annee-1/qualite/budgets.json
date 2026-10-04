@@ -1,0 +1,12 @@
+{
+  "note": "ANNÉE 1 · lot 11 — budgets de performance. Pages : vérifiés à chaque suite (tests/test_annee1_budgets.py), octets NON compressés reçus par un vrai Chromium au premier chargement (cache vide), boucle locale. API : vérifiés par scripts/charge_membres.py (code de sortie), p95 en millisecondes, boucle locale, 16 fils.",
+  "pages": {
+    "octets_max": 200000,
+    "requetes_max": 15,
+    "chargement_ms_max": 2000
+  },
+  "api_p95_ms": {
+    "500": {"lecture_membre": 500, "reponse_demande": 1000, "console": 2000},
+    "1000": {"lecture_membre": 1000, "reponse_demande": 2000, "console": 4000}
+  }
+}

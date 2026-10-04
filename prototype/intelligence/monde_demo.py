@@ -10,6 +10,7 @@ Ce que le monde CONTIENT (données) et ce que le moteur en DÉDUIT (calcul) sont
 from __future__ import annotations
 
 import json
+import os
 from datetime import date, timedelta
 
 from app.models import Offre, Profil
@@ -41,6 +42,18 @@ NICOLAS = "s04"
 BESOINS_SUIVANTS = {NICOLAS: [Offre(concept="export_allemagne", texte="Faire connaître nos eaux-de-vie en Allemagne")]}
 
 
+def taille() -> int:
+    """ANNÉE 1 · lot 11 — `HACKVS_TAILLE_MONDE` (tests de charge seulement) : un monde SYNTHÉTIQUE plus grand, de 150 à
+    5 000 membres générés. Absent : 150, le monde de la démonstration, inchangé."""
+    brut = os.environ.get("HACKVS_TAILLE_MONDE", "")
+    if not brut:
+        return TAILLE
+    n = int(brut)
+    if not TAILLE <= n <= 5000:
+        raise ValueError("HACKVS_TAILLE_MONDE : de 150 à 5000 membres")
+    return n
+
+
 def construire(sophie_profilee: bool = True, recherches: list[Offre] | None = None,
                recherches_autres: dict[str, list[Offre]] | None = None) -> Reseau:
     """`sophie_profilee=False` : Sophie vient d'activer son compte — ni capacités, ni intérêts, invisible par défaut.
@@ -66,7 +79,7 @@ def construire(sophie_profilee: bool = True, recherches: list[Offre] | None = No
                  note_disponibilite="disponible à partir du 15 octobre")
     for pid, extra in (recherches_autres or {}).items():
         scene = [p.model_copy(update={"recherche": list(p.recherche) + list(extra)}) if p.id == pid else p for p in scene]
-    fond, _ = generer(TAILLE - len(scene) - 2, GRAINE)
+    fond, _ = generer(taille() - len(scene) - 2, GRAINE)
     profils = fond.profils + scene + [sophie, lea]
     m = fond.memoire
     for r in d["rencontres_passees"]:

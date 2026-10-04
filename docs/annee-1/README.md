@@ -6,6 +6,8 @@
 | Lot | Ce qui est construit | Preuve | Vitrine |
 |---|---|---|---|
 | 10 · Prototype e-ID | attestations SD-JWT VC des reçus, émetteur et vérificateur locaux — prototype, non connecté à swiyu | `test_annee1_attestations.py` · CLAIMS 114 | [vitrine/lot10.md](vitrine/lot10.md) |
+| 11 · Qualité | WCAG 2.2 AA par axe-core dans les E2E ; PWA installable ; file hors ligne des réponses ; charge à 500 et 1 000 membres simulés (budget des lectures DÉPASSÉ, dit) ; budgets de pages | `test_annee1_accessibilite.py`, `test_annee1_hors_ligne.py`, `test_annee1_budgets.py` · CLAIMS 115-117 | [vitrine/lot11.md](vitrine/lot11.md) |
+| 12 · Cohérence visuelle | pages de l'année 1 sur les jetons du Design System, captures avant / après ; pas de refonte (ADR 0010) | `test_annee1_coherence_design.py` · CLAIMS 118 | [vitrine/lot12.md](vitrine/lot12.md) |
 | 9 · Allumage Foire | borne de stand, import des exposants, lots de passes, adhésions confirmées | `test_annee1_foire.py` · CLAIMS 113 | [vitrine/lot9.md](vitrine/lot9.md) |
 | 8 · Plusieurs clubs, FR/DE/EN | club partenaire exemple fictif, adhésion croisée, membres à distance, interface anglaise | `test_annee1_multiclub.py` · CLAIMS 112 | [vitrine/lot8.md](vitrine/lot8.md) |
 | 7 · IA Apertus | suivi du taux d'acceptation (nouveau) ; appel d'outils mesuré, coach SMART, classification, pipeline d'affinage non lancé, parité : faits avant la mission | `test_annee1_suivi_ia.py` · CLAIMS 111 (et 39, 89, 91, 101) | [vitrine/lot7.md](vitrine/lot7.md) |
@@ -17,3 +19,5 @@
 | 1 · Fondations de production | journal SQLite / PostgreSQL, migrations réversibles, sauvegarde vérifiée, configuration documentée, `/sante/pret`, `/metriques`, Docker de production | `test_annee1_stockage.py`, `test_annee1_exploitation.py` · CLAIMS 104–105 | [vitrine/lot1.md](vitrine/lot1.md) |
 
 Documents : [CONFIGURATION.md](CONFIGURATION.md) · [AUDIT_LOT1.md](AUDIT_LOT1.md) · [AUDIT_LOT23.md](AUDIT_LOT23.md) · [AUDIT_LOT45.md](AUDIT_LOT45.md) · [AUDIT_LOT678.md](AUDIT_LOT678.md) · [AUDIT_LOT910.md](AUDIT_LOT910.md) (constats des audits et suites).
+
+Documents d'affaires (hypothèses, rien d'acquis) : [affaires/README.md](affaires/README.md). Qualité (lot 11) : [qualite/budgets.json](qualite/budgets.json), mesures de charge [500](qualite/charge_500.json) et [1 000](qualite/charge_1000.json) membres simulés.

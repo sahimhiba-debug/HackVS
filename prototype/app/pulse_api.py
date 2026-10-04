@@ -418,7 +418,8 @@ def creer_routeur(tax: Taxonomie, console_jeton: Optional[str] = None) -> APIRou
     @r.get("/moi/date")
     def date_du_club(pid: str = Depends(membre)) -> dict:
         """La date du monde (simulée en démonstration) : chaque écran du téléphone l'affiche."""
-        return au_monde(lambda c: {"date": c.jour.isoformat(), "simulee": True})
+        hors_ligne = {"hors_ligne": True} if os.environ.get("HACKVS_HORS_LIGNE") == "1" else {}   # ANNÉE 1 · lot 11
+        return au_monde(lambda c: {"date": c.jour.isoformat(), "simulee": True} | hors_ligne)
 
     @r.get("/moi/profil")
     def profil(pid: str = Depends(membre)) -> dict:

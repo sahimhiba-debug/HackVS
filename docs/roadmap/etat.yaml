@@ -275,3 +275,15 @@
   de: E-ID-Prototyp — Belege als überprüfbare Nachweise SD-JWT VC (Format des Swiss Profile), lokaler Aussteller und Prüfer; Prototyp, nicht mit swiyu verbunden
   en: e-ID prototype — receipts issued as SD-JWT VC verifiable credentials (Swiss profile format), local issuer and verifier; prototype, not connected to swiyu
   tests: test_annee1_attestations.py
+- id: a1-qualite
+  statut: annee1
+  fr: Qualité — accessibilité WCAG 2.2 AA vérifiée par axe-core, application installable, file hors ligne des réponses, charge à 500 et 1 000 membres simulés, budgets de performance (budget des lectures dépassé, dit)
+  de: Qualität — Barrierefreiheit WCAG 2.2 AA mit axe-core geprüft, installierbare App, Offline-Warteschlange für Antworten, Last mit 500 und 1000 simulierten Mitgliedern, Leistungsbudgets (Lesebudget überschritten, offen gesagt)
+  en: Quality — WCAG 2.2 AA accessibility checked with axe-core, installable app, offline queue for answers, load with 500 and 1,000 simulated members, performance budgets (read budget exceeded, stated)
+  tests: test_annee1_accessibilite.py
+- id: a1-design
+  statut: annee1
+  fr: Cohérence visuelle — pages de l'année 1 alignées sur le Design System, captures avant / après ; refonte plus profonde non faite (décision écrite)
+  de: Visuelle Kohärenz — Seiten des Jahres 1 am Design System ausgerichtet, Vorher-/Nachher-Aufnahmen; tiefere Überarbeitung nicht gemacht (schriftlicher Entscheid)
+  en: Visual consistency — year-1 pages aligned with the Design System, before/after captures; deeper redesign not done (written decision)
+  tests: test_annee1_coherence_design.py

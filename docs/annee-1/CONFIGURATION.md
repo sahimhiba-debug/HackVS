@@ -77,6 +77,8 @@ Règles :
 | `HACKVS_MULTICLUB` | `0` | **lot 8** — `1` : plusieurs clubs (exemples fictifs), adhésion croisée choisie par le membre, membres à distance |
 | `HACKVS_FOIRE_ALLUMAGE` | `0` | **lot 9** — `1` : borne du stand (`/borne`), import des exposants, lots de passes, adhésions confirmées |
 | `HACKVS_EID` | `0` | **lot 10** — `1` : attestations SD-JWT VC des reçus (`/moi/attestations`) et vérificateur local (`/attestation`) — prototype, non connecté à swiyu |
+| `HACKVS_HORS_LIGNE` | `0` | **lot 11** — `1` : une réponse donnée sans réseau est gardée sur le téléphone puis envoyée au retour du réseau ([ADR 0009](../ADR/0009-file-hors-ligne-des-reponses.md)) |
+| `HACKVS_TAILLE_MONDE` | `150` | **lot 11** — tests de charge seulement : taille du monde SYNTHÉTIQUE (150 à 5 000 membres générés) ; absent, le monde de la démo est inchangé |
 | `HACKVS_ESPACE_MEMBRE` | `0` | **lot 3** — `1` : espace membre (`/espace` : pause, préférences, mes demandes, export, effacement définitif) |
 
 ## E-mail (lot 5 — sans `SMTP_HOST`, tout est simulé)
