@@ -151,7 +151,8 @@ BORNE_DUREE_S = 14 * 24 * 3600                       # une Foire (10 jours) et s
 
 
 def _nom_borne(nom: str) -> str:
-    return "".join(ch for ch in nom if ch.isalnum() or ch in "-_")[:40] or "borne"
+    # ASCII seulement (audit final : un caractère Unicode ne doit ni viser une autre borne ni faire échouer la comparaison)
+    return "".join(ch for ch in nom if (ch.isascii() and ch.isalnum()) or ch in "-_")[:40] or "borne"
 
 
 def jeton_borne(secret: bytes, nom: str, jusqu_a: Optional[int] = None) -> str:
@@ -165,8 +166,9 @@ def jeton_borne(secret: bytes, nom: str, jusqu_a: Optional[int] = None) -> str:
 def verifier_borne(secret: bytes, jeton: str, revoquees: frozenset[str] = frozenset(),
                    maintenant: Optional[float] = None) -> str:
     morceaux = (jeton or "").split(".")
-    if len(morceaux) != 4 or morceaux[0] != "b2" or not morceaux[2].isdigit():
-        raise NonAuthentifie("borne inconnue")
+    if (len(morceaux) != 4 or morceaux[0] != "b2" or not (morceaux[2].isascii() and morceaux[2].isdigit())
+            or morceaux[1] != _nom_borne(morceaux[1]) or not morceaux[3].isascii()):
+        raise NonAuthentifie("borne inconnue")          # forme refusée AVANT toute comparaison (jamais une erreur 500)
     nom, fin = morceaux[1], int(morceaux[2])
     if not hmac.compare_digest(jeton_borne(secret, nom, fin), jeton):
         raise NonAuthentifie("borne inconnue")
@@ -186,7 +188,12 @@ def creer_borne(c: "ClubPulse", secret: bytes, par: str = "") -> dict:
 
 
 def revoquer_borne(c: "ClubPulse", nom: str, par: str = "") -> dict:
-    nom = _nom_borne(nom)
+    # la borne CRÉÉE de ce nom, sans tenir compte de la casse (une tablette ajoute une majuscule) ; inconnue : refusé,
+    # jamais « révoquée » pour rien (audit final, I-A)
+    creees = {e.donnees["nom"].lower(): e.donnees["nom"] for e in c.journal.evenements("BORNE_CREEE")}
+    if _nom_borne(nom).lower() not in creees:
+        raise Invalide("borne inconnue : vérifiez le nom dans la liste des bornes (rien n'a été révoqué)")
+    nom = creees[_nom_borne(nom).lower()]
     c.banc._ecrire("BORNE_REVOQUEE", [], Statut.DECLARE, nom=nom, par=par[:60])
     return {"nom": nom, "revoquee": True}
 
@@ -197,8 +204,13 @@ def bornes_revoquees(c: "ClubPulse") -> frozenset[str]:
 
 def bornes(c: "ClubPulse") -> list[dict]:
     rev = bornes_revoquees(c)
+    maintenant = time.time()
+
+    def etat(nom: str, fin: int) -> str:
+        return "révoquée" if nom in rev else ("échue" if maintenant >= fin else "active")
     return [{"nom": e.donnees["nom"], "jusqu_au": time.strftime("%Y-%m-%d", time.gmtime(e.donnees["jusqu_a"])),
-             "revoquee": e.donnees["nom"] in rev} for e in c.journal.evenements("BORNE_CREEE")]
+             "revoquee": e.donnees["nom"] in rev, "etat": etat(e.donnees["nom"], e.donnees["jusqu_a"])}
+            for e in c.journal.evenements("BORNE_CREEE")]
 
 
 class Borne:

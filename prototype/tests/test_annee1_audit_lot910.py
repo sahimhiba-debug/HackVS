@@ -212,14 +212,15 @@ def test_m1_l_ancien_format_sans_echeance_est_refuse():
 def test_m1_une_borne_revoquee_n_emet_plus_rien_et_le_journal_ne_garde_que_son_nom(club):
     secret = b"b" * 32
     borne = fa.Borne(secret)
-    jeton = fa.jeton_borne(secret, "stand-A")
+    b = fa.creer_borne(club, secret)                               # une borne ne se révoque que si elle a été créée
+    jeton = b["jeton"]
     borne.passe(club, jeton)
-    fa.revoquer_borne(club, "stand-A", par="Secrétariat (fictif)")
+    fa.revoquer_borne(club, b["nom"], par="Secrétariat (fictif)")
     from intelligence.erreurs import NonAuthentifie
     with pytest.raises(NonAuthentifie):
         fa.Borne(secret).passe(club, jeton)
     e = club.journal.evenements("BORNE_REVOQUEE")[-1]
-    assert set(e.donnees) - {"n"} == {"nom", "par"} and e.donnees["nom"] == "stand-A"     # « n » : rang dans le journal
+    assert set(e.donnees) - {"n"} == {"nom", "par"} and e.donnees["nom"] == b["nom"]     # « n » : rang dans le journal
 
 
 def test_m1_par_http_le_secretariat_revoque_une_borne(monkeypatch, tmp_path):
@@ -271,3 +272,29 @@ def test_m1_dans_la_console_preparer_puis_revoquer_une_borne(tmp_path):
         pg.locator("#bornes tr:has-text('révoquée')").wait_for()
         b.close()
     assert not erreurs, erreurs
+
+
+# ------------------------------------------------------------------ audit final : révocation sûre, état échu, pas de 500
+def test_final_ia_revoquer_un_nom_inconnu_est_refuse_et_la_casse_ne_trompe_pas(club):
+    secret = b"b" * 32
+    b = fa.creer_borne(club, secret)
+    with pytest.raises(ErreurMetier):
+        fa.revoquer_borne(club, "borne-inexistante")              # jamais « révoquée » pour une borne qui n'existe pas
+    fa.revoquer_borne(club, b["nom"].upper())                     # majuscule ajoutée par une tablette : même borne
+    from intelligence.erreurs import NonAuthentifie
+    with pytest.raises(NonAuthentifie):
+        fa.Borne(secret).passe(club, b["jeton"])
+    assert [x["etat"] for x in fa.bornes(club)] == ["révoquée"]
+
+
+def test_final_ma_une_borne_echue_est_dite_echue(club, monkeypatch):
+    b = fa.creer_borne(club, b"b" * 32)
+    monkeypatch.setattr(fa.time, "time", lambda: b["jusqu_a"] + 1)
+    assert [x["etat"] for x in fa.bornes(club)] == ["échue"]
+
+
+@pytest.mark.parametrize("jeton", ["b2.bé.123.00", "b2.borne-x.１２３.00", "b2.BORNE-X.9999999999.00"])
+def test_final_mb_un_jeton_non_ascii_ou_mal_forme_est_refuse_sans_erreur_500(monkeypatch, tmp_path, jeton):
+    from fastapi.testclient import TestClient
+    client = TestClient(_app(monkeypatch, tmp_path, HACKVS_FOIRE_ALLUMAGE="1"), raise_server_exceptions=False)
+    assert client.post("/api/pulse/borne/passe", headers={"X-Pulse-Borne": jeton.encode("utf-8")}).status_code == 401

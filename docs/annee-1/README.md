@@ -18,6 +18,8 @@
 | 2 · Authentification et rôles | invitation à usage unique, sessions et appareils, rôles, comptes nominatifs, TOTP pour la console, journal d'administration, CSRF, limite par session ; page `/compte` | `test_annee1_comptes.py`, `test_annee1_comptes_api.py` · CLAIMS 106 | [vitrine/lot2.md](vitrine/lot2.md) |
 | 1 · Fondations de production | journal SQLite / PostgreSQL, migrations réversibles, sauvegarde vérifiée, configuration documentée, `/sante/pret`, `/metriques`, Docker de production | `test_annee1_stockage.py`, `test_annee1_exploitation.py` · CLAIMS 104–105 | [vitrine/lot1.md](vitrine/lot1.md) |
 
-Documents : [CONFIGURATION.md](CONFIGURATION.md) · [AUDIT_LOT1.md](AUDIT_LOT1.md) · [AUDIT_LOT23.md](AUDIT_LOT23.md) · [AUDIT_LOT45.md](AUDIT_LOT45.md) · [AUDIT_LOT678.md](AUDIT_LOT678.md) · [AUDIT_LOT910.md](AUDIT_LOT910.md) · [AUDIT_LOT1112.md](AUDIT_LOT1112.md) (constats des audits et suites).
+Documents : [CONFIGURATION.md](CONFIGURATION.md) · [AUDIT_LOT1.md](AUDIT_LOT1.md) · [AUDIT_LOT23.md](AUDIT_LOT23.md) · [AUDIT_LOT45.md](AUDIT_LOT45.md) · [AUDIT_LOT678.md](AUDIT_LOT678.md) · [AUDIT_LOT910.md](AUDIT_LOT910.md) · [AUDIT_LOT1112.md](AUDIT_LOT1112.md) · [AUDIT_FINAL.md](AUDIT_FINAL.md) (constats des audits et suites).
 
 Documents d'affaires (hypothèses, rien d'acquis) : [affaires/README.md](affaires/README.md). Qualité (lot 11) : [qualite/budgets.json](qualite/budgets.json), mesures de charge [500](qualite/charge_500.json) et [1 000](qualite/charge_1000.json) membres simulés.
+
+**Rapport de la mission : [RAPPORT_ANNEE1.md](RAPPORT_ANNEE1.md).**
