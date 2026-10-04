@@ -6,7 +6,7 @@
 | Lot | Ce qui est construit | Preuve | Vitrine |
 |---|---|---|---|
 | 10 · Prototype e-ID | attestations SD-JWT VC des reçus, émetteur et vérificateur locaux — prototype, non connecté à swiyu | `test_annee1_attestations.py` · CLAIMS 114 | [vitrine/lot10.md](vitrine/lot10.md) |
-| 11 · Qualité | WCAG 2.2 AA par axe-core dans les E2E ; PWA installable ; file hors ligne des réponses ; charge à 500 et 1 000 membres simulés (budget des lectures DÉPASSÉ, dit) ; budgets de pages | `test_annee1_accessibilite.py`, `test_annee1_hors_ligne.py`, `test_annee1_budgets.py` · CLAIMS 115-117 | [vitrine/lot11.md](vitrine/lot11.md) |
+| 11 · Qualité | WCAG 2.2 AA par axe-core dans les E2E ; PWA installable ; file hors ligne des réponses ; charge à 500 et 1 000 membres simulés (budgets tenus après un correctif, premier passage hors budget dit) ; budgets de pages | `test_annee1_accessibilite.py`, `test_annee1_hors_ligne.py`, `test_annee1_budgets.py` · CLAIMS 115-117 | [vitrine/lot11.md](vitrine/lot11.md) |
 | 12 · Cohérence visuelle | pages de l'année 1 sur les jetons du Design System, captures avant / après ; pas de refonte (ADR 0010) | `test_annee1_coherence_design.py` · CLAIMS 118 | [vitrine/lot12.md](vitrine/lot12.md) |
 | 9 · Allumage Foire | borne de stand, import des exposants, lots de passes, adhésions confirmées | `test_annee1_foire.py` · CLAIMS 113 | [vitrine/lot9.md](vitrine/lot9.md) |
 | 8 · Plusieurs clubs, FR/DE/EN | club partenaire exemple fictif, adhésion croisée, membres à distance, interface anglaise | `test_annee1_multiclub.py` · CLAIMS 112 | [vitrine/lot8.md](vitrine/lot8.md) |

@@ -60,7 +60,7 @@ simulée). Le Club réel compte **145 entreprises et 173 représentants** ; rien
 | Plusieurs clubs — club partenaire (exemple fictif marqué), adhésion croisée choisie par le membre, membres à distance ; interface FR / DE / EN (à relire par un natif) | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_multiclub.py |
 | Allumage Foire — borne de stand, import des exposants en CSV, passes découverte par lots de 500, adhésions venues du passe confirmées par le secrétariat | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_foire.py |
 | Prototype e-ID — reçus émis comme attestations vérifiables SD-JWT VC (format du profil suisse), émetteur et vérificateur locaux ; prototype, non connecté à swiyu | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_attestations.py |
-| Qualité — accessibilité WCAG 2.2 AA vérifiée par axe-core, application installable, file hors ligne des réponses, charge à 500 et 1 000 membres simulés, budgets de performance (budget des lectures dépassé, dit) | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_accessibilite.py |
+| Qualité — accessibilité WCAG 2.2 AA vérifiée par axe-core, application installable, file hors ligne des réponses, charge à 500 et 1 000 membres simulés, budgets de performance tenus (après correction d'un recalcul à chaque lecture) | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_accessibilite.py |
 | Cohérence visuelle — pages de l'année 1 alignées sur le Design System, captures avant / après ; refonte plus profonde non faite (décision écrite) | 🔧 Construit — branche annee-1, pas dans la démo | test_annee1_coherence_design.py |
 <!-- etat:fin -->
 

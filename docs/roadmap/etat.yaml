@@ -277,9 +277,9 @@
   tests: test_annee1_attestations.py
 - id: a1-qualite
   statut: annee1
-  fr: Qualité — accessibilité WCAG 2.2 AA vérifiée par axe-core, application installable, file hors ligne des réponses, charge à 500 et 1 000 membres simulés, budgets de performance (budget des lectures dépassé, dit)
-  de: Qualität — Barrierefreiheit WCAG 2.2 AA mit axe-core geprüft, installierbare App, Offline-Warteschlange für Antworten, Last mit 500 und 1000 simulierten Mitgliedern, Leistungsbudgets (Lesebudget überschritten, offen gesagt)
-  en: Quality — WCAG 2.2 AA accessibility checked with axe-core, installable app, offline queue for answers, load with 500 and 1,000 simulated members, performance budgets (read budget exceeded, stated)
+  fr: Qualité — accessibilité WCAG 2.2 AA vérifiée par axe-core, application installable, file hors ligne des réponses, charge à 500 et 1 000 membres simulés, budgets de performance tenus (après correction d'un recalcul à chaque lecture)
+  de: Qualität — Barrierefreiheit WCAG 2.2 AA mit axe-core geprüft, installierbare App, Offline-Warteschlange für Antworten, Last mit 500 und 1000 simulierten Mitgliedern, Leistungsbudgets eingehalten (nach Korrektur einer Neuberechnung bei jedem Lesen)
+  en: Quality — WCAG 2.2 AA accessibility checked with axe-core, installable app, offline queue for answers, load with 500 and 1,000 simulated members, performance budgets met (after fixing a recomputation on every read)
   tests: test_annee1_accessibilite.py
 - id: a1-design
   statut: annee1

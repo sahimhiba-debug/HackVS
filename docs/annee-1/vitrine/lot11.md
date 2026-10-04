@@ -17,17 +17,20 @@
 
 | | 500 membres | 1 000 membres |
 |---|---|---|
-| comptes activés | 500 / 500 | 1 000 / 1 000 |
+| comptes activés | 500 / 500 | 1000 / 1 000 |
 | erreurs | 0 | 0 |
 | « oui » acceptés sans reçu | 0 | 0 |
-| lecture d'un membre, pire p95 (budget) | **540 ms (500) — budget DÉPASSÉ** | **1 594 ms (1 000) — budget DÉPASSÉ** |
-| réponse à une demande, p95 (budget) | 128 ms (1 000) — respecté | 601 ms (2 000) — respecté |
-| console, pire p95 (budget) | 452 ms (2 000) — respecté | 1 212 ms (4 000) — respecté |
+| lecture d'un membre, pire p95 (budget) | 86.0 ms (500) — respecté | 78.7 ms (1000) — respecté |
+| réponse à une demande, p95 (budget) | 144.6 ms (1000) — respecté | 237.7 ms (2000) — respecté |
+| console, pire p95 (budget) | 96.9 ms (2000) — respecté | 127.4 ms (4000) — respecté |
 
-**Le budget des lectures n'est pas tenu.** Les budgets ont été écrits AVANT la mesure et n'ont pas été relevés
-après. Cause probable (non prouvée) : chaque lecture passe par le verrou du monde et recalcule une projection en
-O(N) ; avec 16 lectures simultanées, elles font la queue. Le script sort donc en échec (code 1) : c'est le signal
-voulu.
+**Premier passage : budget des lectures DÉPASSÉ** (540 ms pour 500 ; 1 594 ms pour 1 000). Les budgets ont été écrits
+AVANT la mesure et n'ont pas été relevés. Cause trouvée au profileur : « Mes données » reconstruisait l'index
+bi-temporel des claims de TOUT le Club à chaque lecture (163 ms à 1 000 membres, contre 4 ms pour les autres
+lectures), et chaque lecture attend les autres derrière le verrou du monde. Correctif : l'index est gardé tant que la
+version du journal ne change pas (toute écriture, annulation ou purge le fait recalculer — testé, purge comprise :
+`prototype/tests/test_annee1_charge_lectures.py`). Le tableau ci-dessus est le second passage, même script, mêmes
+budgets.
 
 **Limites.** Pas de vrais téléphones ni de vrai réseau ; journal SQLite (pas PostgreSQL) ; sur 15 réponses tentées
 par membre ayant une demande, une seule est acceptée (la pièce est trouvée au premier oui, les autres demandes ne

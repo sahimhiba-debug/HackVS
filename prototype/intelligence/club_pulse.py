@@ -314,7 +314,14 @@ class ClubPulse:
 
     def claims(self) -> list[Claim]:
         """Index BI-TEMPOREL des faits déclarés (offres, compétences, intérêts) : projection du journal."""
-        return index_claims(self.journal, self._profils_depart)
+        # ANNÉE 1 · lot 11 (charge à 1 000 membres) : l'index est une fonction PURE du journal ; gardé tant que la version
+        # du journal ne change pas (toute écriture, annulation ou purge le fait recalculer). Lecture seule pour les appelants.
+        v = self.journal.version()
+        cache = getattr(self, "_index_claims", None)
+        if cache is None or cache[0] != v:
+            cache = (v, index_claims(self.journal, self._profils_depart))
+            self._index_claims = cache
+        return cache[1]
 
     def sollicitable(self, pid: str) -> bool:
         from .espace_membre import en_pause            # ANNÉE 1 · lot 3 (audit B3) : en pause, on ne reçoit plus rien
